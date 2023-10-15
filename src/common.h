@@ -17,6 +17,10 @@
 
 #include <cassert>
 #include <ctime>
+#include <cstring>
+
+#include <vector>
+#include <array>
 
 #define _USE_MATH_DEFINES
 #include <cmath>
