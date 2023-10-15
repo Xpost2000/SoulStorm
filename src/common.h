@@ -243,6 +243,28 @@ static inline void zero_memory(void* memory, size_t amount) {
         ((u8*)memory)[index] = 0;
     }
 }
+
+#define TEMPORARY_STORAGE_BUFFER_SIZE (2048)
+#define TEMPORARY_STORAGE_BUFFER_COUNT (8)
+local char* format_temp(const char* fmt, ...) {
+    local int current_buffer = 0;
+    local char temporary_text_buffer[TEMPORARY_STORAGE_BUFFER_COUNT][TEMPORARY_STORAGE_BUFFER_SIZE] = {};
+
+    char* target_buffer = temporary_text_buffer[current_buffer++];
+    zero_memory(target_buffer, TEMPORARY_STORAGE_BUFFER_SIZE);
+    {
+        va_list args;
+        va_start(args, fmt);
+        int written = vsnprintf(target_buffer, TEMPORARY_STORAGE_BUFFER_SIZE-1, fmt, args);
+        va_end(args);
+    }
+
+    if (current_buffer >= TEMPORARY_STORAGE_BUFFER_COUNT) {
+        current_buffer = 0;
+    }
+
+    return target_buffer;
+}
 #define zero_array(x) zero_memory(x, array_count(x))
 #define zero_struct(x) zero_memory(&x, sizeof(x));
 

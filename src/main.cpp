@@ -22,6 +22,7 @@
 #include "sdl_scancode_table.h"
 #include "memory_arena.h"
 #include "v2.h"
+#include "thread_pool.h"
 
 const char* _build_flags =
 #ifdef USE_SIMD_OPTIMIZATIONS
@@ -350,7 +351,7 @@ void initialize() {
 
     global_game_sdl_renderer    = SDL_CreateRenderer(global_game_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-    // initialize_thread_pool();
+    Thread_Pool::initialize();
 
 #ifndef NO_FANCY_FADEIN_INTRO
     set_window_transparency(0);
@@ -362,7 +363,7 @@ void initialize() {
 }
 
 void deinitialize() {
-    // synchronize_and_finish_thread_pool();
+    Thread_Pool::synchronize_and_finish();
     close_all_controllers();
     Audio::deinitialize();
     SDL_Quit();
