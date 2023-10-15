@@ -23,6 +23,7 @@
 #include "memory_arena.h"
 #include "v2.h"
 #include "thread_pool.h"
+#include "engine.h"
 
 const char* _build_flags =
 #ifdef USE_SIMD_OPTIMIZATIONS
@@ -59,8 +60,6 @@ f32 get_average_frametime(void) {
 }
 
 // Globals
-local f32 global_elapsed_time     = 0.0f;
-local f32 last_elapsed_delta_time = (1.0 / 60.0f);
 local SDL_Window*         global_game_window           = nullptr;
 local SDL_Renderer*       global_game_sdl_renderer          = nullptr;
 local SDL_Texture*        global_game_texture_surface  = nullptr; // for blitting images on
@@ -88,8 +87,6 @@ local V2 get_scaled_screen_resolution(V2 base_resolution) {
 local const f32 r16by9Ratio  = 16/9.0f;
 local const f32 r16by10Ratio = 16/10.0f;
 local const f32 r4by3Ratio   = 4/3.0f;
-
-local bool global_game_running = true;
 
 local void set_window_transparency(f32 transparency) {
     SDL_SetWindowOpacity(global_game_window, transparency);
@@ -269,7 +266,7 @@ void handle_sdl_events(void) {
                 } break;
 
                 case SDL_QUIT: {
-                    global_game_running = false;
+                    Global_Engine()->running = false;
                 } break;
                         
                 case SDL_KEYUP:
@@ -357,12 +354,13 @@ void initialize() {
     set_window_transparency(0);
 #endif
     SDL_ShowWindow(global_game_window);
-
     // game_initialize();
     // initialize_framebuffer();
 }
 
 void deinitialize() {
+    Global_Engine()->main_arena.finish();
+    Global_Engine()->scratch_arena.finish();
     Thread_Pool::synchronize_and_finish();
     close_all_controllers();
     Audio::deinitialize();
@@ -387,7 +385,7 @@ void engine_main_loop() {
 
         if (!_did_window_intro_fade_in) {
             const f32 MAX_INTRO_FADE_IN_TIMER = 0.4;
-            f32 effective_frametime = last_elapsed_delta_time;
+            f32 effective_frametime = Global_Engine()->last_elapsed_delta_time;
             if (effective_frametime >= 1.0/45.0f) {
                 effective_frametime = 1.0/45.0f;
             }
@@ -411,9 +409,9 @@ void engine_main_loop() {
 
     // swap_framebuffers_onto_screen();
 
-    last_elapsed_delta_time = (SDL_GetTicks() - start_frame_time) / 1000.0f;
-    global_elapsed_time    += last_elapsed_delta_time;
-    add_frametime_sample(last_elapsed_delta_time);
+    Global_Engine()->last_elapsed_delta_time = (SDL_GetTicks() - start_frame_time) / 1000.0f;
+    Global_Engine()->global_elapsed_time += Global_Engine()->last_elapsed_delta_time;
+    add_frametime_sample(Global_Engine()->last_elapsed_delta_time);
 
     {
         f32 average_frametime = get_average_frametime();
@@ -421,8 +419,7 @@ void engine_main_loop() {
         SDL_SetWindowTitle(global_game_window, window_name_title_buffer);
     }
 
-    // memory_arena_clear_top(&scratch_arena);
-    // memory_arena_clear_bottom(&scratch_arena);
+    Global_Engine()->scratch_arena.clear();
 }
 
 int main(int argc, char** argv) {
@@ -430,7 +427,7 @@ int main(int argc, char** argv) {
     SetProcessDPIAware();
 #endif
     initialize();
-    while (global_game_running) {
+    while (Global_Engine()->running) {
         engine_main_loop();
     }
     deinitialize();

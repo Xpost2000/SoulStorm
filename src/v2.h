@@ -9,6 +9,7 @@ union V2 {
     };
     f32 xy[2];
 
+    V2() {}
     V2(f32 x, f32 y);
 
     V2 operator+(const V2& other);

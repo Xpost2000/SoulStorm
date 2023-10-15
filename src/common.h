@@ -268,6 +268,50 @@ local char* format_temp(const char* fmt, ...) {
 #define zero_array(x) zero_memory(x, array_count(x))
 #define zero_struct(x) zero_memory(&x, sizeof(x));
 
+struct rectangle_f32 {
+    f32 x; f32 y; f32 w; f32 h;
+};
+struct rectangle_s32 {
+    s32 x; s32 y; s32 w; s32 h;
+};
+struct rectangle_s16 {
+    s16 x; s16 y; s16 w; s16 h;
+};
+
+#define rectangle_f32(X,Y,W,H) (struct rectangle_f32){.x=X,.y=Y,.w=W,.h=H}
+#define rectangle_s32(X,Y,W,H) (struct rectangle_s32){.x=X,.y=Y,.w=W,.h=H}
+#define rectangle_s16(X,Y,W,H) (struct rectangle_s32){.x=X,.y=Y,.w=W,.h=H}
+
+#define RECTANGLE_F32_NULL rectangle_f32(0,0,0,0)
+#define RECTANGLE_S32_NULL rectangle_s32(0,0,0,0)
+#define RECTANGLE_S16_NULL rectangle_s16(0,0,0,0)
+
+static inline rectangle_f32 rectangle_f32_centered(rectangle_f32 center_region, f32 width, f32 height) {
+    return rectangle_f32(
+        center_region.x + (center_region.w/2) - (width/2),
+        center_region.y + (center_region.h/2) - (height/2),
+        width, height
+    );
+}
+
+static inline rectangle_f32 rectangle_f32_scale(rectangle_f32 a, f32 k) {
+    a.x *= k;
+    a.y *= k;
+    a.w *= k;
+    a.h *= k;
+    return a;
+}
+
+static inline bool rectangle_f32_intersect(rectangle_f32 a, rectangle_f32 b) {
+    if (a.x < b.x + b.w && a.x + a.w > b.x &&
+        a.y < b.y + b.h && a.y + a.h > b.y) {
+        return true;
+    }
+
+    return false;
+}
+
 /* TODO: add file utilities like read_entire_file and stuff */
+#include "prng.h"
 
 #endif

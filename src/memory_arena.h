@@ -61,7 +61,6 @@ struct Memory_Arena {
     void clear();
 
     void* push_unaligned(u64 amount);
-
     // NOTE: sub arenas are never deallocated
     Memory_Arena sub_arena(u64 amount);
 };

@@ -2,6 +2,8 @@
 #include "thread_pool.h"
 #include "memory_arena.h"
 
+#include "engine.h"
+
 local volatile s32      global_thread_count                             = 0;
 local SDL_Thread*       global_thread_pool[MAX_POSSIBLE_THREADS]        = {};
 local Memory_Arena      global_thread_pool_arenas[MAX_POSSIBLE_THREADS] = {};
@@ -33,7 +35,7 @@ namespace Thread_Pool {
            on exit crashes, since I suspect sometimes the thread jobs never get
            the chance to synchronize since the game stops running and will stop syncing.
         */
-        while (!done && global_game_running) {
+        while (!done && Global_Engine()->running) {
             done = true;
 
             for (s32 index = 0; index < MAX_JOBS; ++index) {
@@ -58,7 +60,7 @@ namespace Thread_Pool {
 
         for (;;) {
             if (!SDL_SemWait(global_job_queue.notification)) {
-                if (!global_game_running) {
+                if (!Global_Engine()->running) {
                     break;
                 }
 
@@ -66,8 +68,8 @@ namespace Thread_Pool {
                 /* let's hunt */
                 SDL_LockMutex(global_job_queue.mutex);
                 {
-                    while (!working_job && global_game_running) {
-                        for (s32 index = 0; index < MAX_JOBS && global_game_running; ++index) {
+                    while (!working_job && Global_Engine()->running) {
+                        for (s32 index = 0; index < MAX_JOBS && Global_Engine()->running; ++index) {
                             struct thread_job* current_job = &global_job_queue.jobs[index];
 
                             if (current_job->status == THREAD_JOB_STATUS_READY) {
