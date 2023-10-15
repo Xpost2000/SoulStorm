@@ -1,5 +1,6 @@
 #ifndef COMMON_H
 #define COMMON_H
+#define NO_FLAGS (0)
 
 #include <x86intrin.h>
 
@@ -311,7 +312,30 @@ static inline bool rectangle_f32_intersect(rectangle_f32 a, rectangle_f32 b) {
     return false;
 }
 
-/* TODO: add file utilities like read_entire_file and stuff */
-#include "prng.h"
+static inline void memory_set8(void* memory, size_t amount, u8 value) {
+    u8* memory_u8 = (u8*)memory;
+    for (u64 index = 0; index < amount; ++index) {
+        memory_u8[index] = value;
+    }
+}
+static inline void memory_set16(void* memory, size_t amount, u16 value) {
+    u16* memory_u16 = (u16*)memory;
+    for (u64 index = 0; index < amount/2; ++index) {
+        memory_u16[index] = value;
+    }
+}
+static inline void memory_set32(void* memory, size_t amount, u32 value) {
+    u32* memory_u32 = (u32*)memory;
+    for (u64 index = 0; index < amount/4; ++index) {
+        memory_u32[index] = value;
+    }
+}
+static inline void memory_set64(void* memory, size_t amount, u64 value) {
+    u64* memory_u64 = (u64*)memory;
+    for (u64 index = 0; index < amount/8; ++index) {
+        memory_u64[index] = value;
+    }
+}
 
+/* TODO: add file utilities like read_entire_file and stuff */
 #endif

@@ -11,6 +11,8 @@
 #define GRAPHICS_H
 
 #include "common.h"
+#include "prng.h"
+
 #include "string.h"
 #include "v2.h"
 /*
