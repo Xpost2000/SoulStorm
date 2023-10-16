@@ -1,6 +1,7 @@
 // NOTE: these should be exclusively render commands in the future. I just don't do it quite yet
 // but it would help for rendering in OpenGL, and I could add game specific render commands later...
 #include "game.h"
+#include "fixed_array.h"
 
 static string menu_font_variation_string_names[] = {
     string_literal("res/fonts/gnsh-bitmapfont-colour1.png"),
