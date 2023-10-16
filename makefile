@@ -4,7 +4,7 @@ CLIBS=-lmingw32 -L./dependencies/x86-64/lib/ -L./dependencies/x86-64/bin/ -I./de
 ITCHPROJECT=xpost2000/untitled-project
 
 HEADER_FILES= src/audio.h src/memory_arena.h src/v2.h src/input.h src/string.h src/thread_pool.h src/engine.h src/graphics.h
-SOURCE_FILES= src/main.cpp src/audio.cpp src/memory_arena.cpp src/v2.cpp src/input.cpp src/string.cpp src/thread_pool.cpp src/engine.cpp src/graphics.cpp src/prng.cpp
+SOURCE_FILES= src/main.cpp src/audio.cpp src/memory_arena.cpp src/v2.cpp src/input.cpp src/string.cpp src/thread_pool.cpp src/engine.cpp src/graphics.cpp src/prng.cpp src/game.cpp
 
 game-debug.exe: $(SOURCE_FILES) $(HEADER_FILES)
 	$(CC) -o $@  $(SOURCE_FILES) $(CFLAGS) $(CLIBS) -m64 -ggdb3

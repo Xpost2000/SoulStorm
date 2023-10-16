@@ -24,6 +24,8 @@
 #include "v2.h"
 #include "thread_pool.h"
 #include "engine.h"
+#include "graphics.h"
+#include "game.h"
 
 const char* _build_flags =
 #ifdef USE_SIMD_OPTIMIZATIONS
@@ -64,6 +66,7 @@ local SDL_Window*         global_game_window           = nullptr;
 local SDL_Renderer*       global_game_sdl_renderer          = nullptr;
 local SDL_Texture*        global_game_texture_surface  = nullptr; // for blitting images on
 local SDL_GameController* global_controller_devices[4] = {};
+local Game                game                         = {};
 static SDL_Haptic*        global_haptic_devices[4]     = {};
 
 local bool SCREEN_IS_FULLSCREEN = false;
