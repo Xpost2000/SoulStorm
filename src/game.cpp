@@ -35,8 +35,6 @@ enum menu_font_variation {
 // this is where the actual member variables of the game go
 // the class is just a small wrapper for this stuff
 struct Game_State {
-    f32 test_timer = 0.0f;
-    int color = 0;
 };
 
 
@@ -76,8 +74,8 @@ void Game::deinit() {
 
 void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     software_framebuffer_clear_scissor(framebuffer);
-    software_framebuffer_clear_buffer(framebuffer, color32u8(0, 0, 0, 255));
-    software_framebuffer_draw_quad(framebuffer, rectangle_f32(100, 100, 100, 100), color32u8(255, 0, 0, 255), BLEND_MODE_ALPHA);
+    software_framebuffer_clear_buffer(framebuffer, color32u8(255, 255, 255, 255));
+    software_framebuffer_draw_quad(framebuffer, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
 
-    software_framebuffer_draw_text(framebuffer, resources->get_font(MENU_FONT_COLOR_BLOODRED), 1.0f, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+    software_framebuffer_draw_text(framebuffer, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
 }
