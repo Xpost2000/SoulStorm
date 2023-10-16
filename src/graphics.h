@@ -49,7 +49,10 @@ struct software_framebuffer;
 struct image_buffer {
     u32 width;
     u32 height;
-    u8* pixels;
+    union {
+        u8* pixels;
+        u32* pixels_u32;
+    };
 };
 
 union color32u8 {
@@ -74,22 +77,11 @@ typedef color32f32 (*shader_fn)(software_framebuffer* framebuffer, color32f32 so
 #define color32u8(R,G,B,A)  (union color32u8){.r  = (u8)(R),.g=(u8)(G),.b=(u8)(B),.a=(u8)(A)}
 #define color32f32(R,G,B,A) (union color32f32){.r = (f32)(R),.g=(f32)(G),.b=(f32)(B),.a=(f32)(A)}
 #define color32s32(R,G,B,A) (union color32s32){.r = (s32)(R),.g=(s32)(G),.b=(s32)(B),.a=(s32)(A)}
-color32f32 color32s32_to_color32f32(color32u8 source) {
-    return color32f32(source.r / 255.0f, source.g / 255.0f, source.b / 255.0f, source.a / 255.0f);
-}
-color32f32 color32u8_to_color32f32(color32u8 source) {
-    return color32f32(source.r / 255.0f, source.g / 255.0f, source.b / 255.0f, source.a / 255.0f);
-}
-color32s32 color32u8_to_color32s32(color32u8 source) {
-    return color32s32(source.r, source.g, source.b, source.a);
-}
-
-color32s32 color32f32_to_color32s32(color32f32 source) {
-    return color32s32(source.r * 255, source.g * 255, source.b * 255, source.a * 255);
-}
-color32u8 color32f32_to_color32u8(color32f32 source) {
-    return color32u8(source.r * 255, source.g * 255, source.b * 255, source.a * 255);
-}
+color32f32 color32s32_to_color32f32(color32u8 source);
+color32f32 color32u8_to_color32f32(color32u8 source);
+color32s32 color32u8_to_color32s32(color32u8 source);
+color32s32 color32f32_to_color32s32(color32f32 source);
+color32u8 color32f32_to_color32u8(color32f32 source);
 
 #define color32u8_WHITE  color32u8(255,255,255,255)
 #define color32u8_BLACK  color32u8(0,0,0,255)
@@ -236,91 +228,16 @@ struct camera {
     f32 trauma;
 };
 
-void camera_set_trauma(struct camera* camera, f32 trauma) {
-    camera->trauma = trauma;
+void camera_set_trauma(struct camera* camera, f32 trauma);
+void camera_traumatize(struct camera* camera, f32 trauma);
 
-    if (camera->trauma >= MAX_CAMERA_TRAUMA) {
-        camera->trauma = MAX_CAMERA_TRAUMA;
-    }
-}
-void camera_traumatize(struct camera* camera, f32 trauma) {
-    camera->trauma += trauma;
+void camera_set_point_to_interpolate(struct camera* camera, V2 point);
+V2 camera_transform(struct camera* camera, V2 point, s32 screen_width, s32 screen_height);
+struct rectangle_f32 camera_transform_rectangle(struct camera* camera, struct rectangle_f32 rectangle, s32 screen_width, s32 screen_height); 
+V2 camera_project(struct camera* camera, V2 point, s32 screen_width, s32 screen_height);
 
-    if (camera->trauma >= MAX_CAMERA_TRAUMA) {
-        camera->trauma = MAX_CAMERA_TRAUMA;
-    }
-}
-
-void camera_set_point_to_interpolate(struct camera* camera, V2 point) {
-    camera->interpolation_t[0] = 0;
-    camera->interpolation_t[1] = 0;
-    camera->try_interpolation[0] = true;
-    camera->try_interpolation[1] = true;
-    camera->start_interpolation_values[0] = camera->xy.x;
-    camera->start_interpolation_values[1] = camera->xy.y;
-
-    camera->tracking_xy = point;
-}
-
-V2 camera_transform(struct camera* camera, V2 point, s32 screen_width, s32 screen_height) {
-    point.x *= camera->zoom;
-    point.y *= camera->zoom;
-
-    if (camera->centered) {
-        point.x += screen_width/2;
-        point.y += screen_height/2;
-    }
-
-    point.x -= camera->xy.x;
-    point.y -= camera->xy.y;
-
-    return point;
-}
-struct rectangle_f32 camera_transform_rectangle(struct camera* camera, struct rectangle_f32 rectangle, s32 screen_width, s32 screen_height) {
-    V2 rectangle_position = V2(rectangle.x, rectangle.y);
-    rectangle_position       = camera_transform(camera, rectangle_position, screen_width, screen_height);
-    rectangle.x              = rectangle_position.x;
-    rectangle.y              = rectangle_position.y;
-    rectangle.w             *= camera->zoom;
-    rectangle.h             *= camera->zoom;
-
-    return rectangle;
-}
-
-V2 camera_project(struct camera* camera, V2 point, s32 screen_width, s32 screen_height) {
-    point.x += camera->xy.x;
-    point.y += camera->xy.y;
-
-    if (camera->centered) {
-        point.x -= (screen_width / 2);
-        point.y -= (screen_height / 2);
-    }
-
-    point.x /= camera->zoom;
-    point.y /= camera->zoom;
-    return point;
-}
-
-static inline V2 camera_displacement_from_trauma(struct camera* camera) {
-    struct random_state* rng           = camera->rng;
-    f32                  trauma_factor = camera->trauma;
-
-    f32 random_x = random_ranged_integer(rng, -MAX_TRAUMA_DISPLACEMENT_X * trauma_factor * TRAUMA_FACTOR_WEIGHT_X, MAX_TRAUMA_DISPLACEMENT_X * trauma_factor * TRAUMA_FACTOR_WEIGHT_X);
-    f32 random_y = random_ranged_integer(rng, -MAX_TRAUMA_DISPLACEMENT_Y * trauma_factor * TRAUMA_FACTOR_WEIGHT_Y, MAX_TRAUMA_DISPLACEMENT_Y * trauma_factor * TRAUMA_FACTOR_WEIGHT_Y);
-
-    return V2(random_x, random_y);
-}
-
-static inline struct rectangle_f32 camera_project_rectangle(struct camera* camera, struct rectangle_f32 rectangle, s32 screen_width, s32 screen_height) {
-    V2 rectangle_position = V2(rectangle.x, rectangle.y);
-    rectangle_position       = camera_project(camera, rectangle_position, screen_width, screen_height);
-    rectangle.x              = rectangle_position.x;
-    rectangle.y              = rectangle_position.y;
-    rectangle.w             /= camera->zoom;
-    rectangle.h             /= camera->zoom;
-
-    return rectangle;
-}
+V2 camera_displacement_from_trauma(struct camera* camera);
+struct rectangle_f32 camera_project_rectangle(struct camera* camera, struct rectangle_f32 rectangle, s32 screen_width, s32 screen_height);
 
 #define camera(XY, ZOOM) (struct camera) { .xy=XY, .zoom=ZOOM }
 #define camera_centered(XY, ZOOM) (struct camera) { .xy=XY, .centered=true, .zoom=ZOOM }

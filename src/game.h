@@ -16,6 +16,10 @@
  * NOTE: this is not the game state.
  */
 
+// forward decl some opaque types
+struct Game_State;
+struct Game_Resources;
+
 class Game {
 public:
     Game();
@@ -25,6 +29,9 @@ public:
     void deinit();
     void update_and_render(software_framebuffer* framebuffer, f32 dt);
 private: 
+    Memory_Arena*   arena;
+    Game_State*     state;
+    Game_Resources* resources;
     /* game resources here */
 };
 

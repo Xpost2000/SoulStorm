@@ -9,6 +9,9 @@ union V2 {
     };
     f32 xy[2];
 
+    // NOTE:
+    // I dislike how basic constructors like this discount it from being a POD.
+    // I'll change this and hope it doesn't break anything in a bit.
     V2() {}
     V2(f32 x, f32 y);
 

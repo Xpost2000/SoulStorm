@@ -1,5 +1,6 @@
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
+
 #include "common.h"
 
 typedef s32 (*job_queue_function)(void*);
@@ -16,12 +17,6 @@ struct thread_job {
     u8                 status;
     void*              data;
     job_queue_function job;
-};
-
-struct thread_job_queue {
-    struct thread_job jobs[MAX_JOBS];
-    SDL_sem*          notification;
-    SDL_mutex*        mutex;
 };
 
 namespace Thread_Pool {

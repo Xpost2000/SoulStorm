@@ -1,4 +1,9 @@
+#define USE_SIMD_OPTIMIZATIONS
+#define MULTITHREADED_EXPERIMENTAL
+
 #include "graphics.h"
+#include "thread_pool.h"
+#include "engine.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
@@ -1222,7 +1227,7 @@ void software_framebuffer_render_commands(struct software_framebuffer* framebuff
     s32 TILE_W = framebuffer->width / JOB_W;
     s32 TILE_H = framebuffer->height / JOB_H;
 
-    struct render_commands_job_details* job_details = memory_arena_push(&scratch_arena, sizeof(*job_details) * (JOB_W*JOB_H));
+    struct render_commands_job_details* job_details = (render_commands_job_details*)Global_Engine()->scratch_arena.push_unaligned(sizeof(*job_details) * (JOB_W*JOB_H));
 
     for (s32 y = 0; y < JOB_H; ++y) {
         for (s32 x = 0; x < JOB_W; ++x) {
@@ -1234,11 +1239,11 @@ void software_framebuffer_render_commands(struct software_framebuffer* framebuff
             current_details->commands    = commands;
             current_details->clip_rect   = clip_rect;
             
-            thread_pool_add_job(thread_software_framebuffer_render_commands_tiles, current_details);
+            Thread_Pool::add_job(thread_software_framebuffer_render_commands_tiles, current_details);
         }
     }
 
-    thread_pool_synchronize_tasks();
+    Thread_Pool::synchronize_tasks();
 #endif
     commands->should_clear_buffer = 0;
     commands->command_count       = 0;
@@ -1300,18 +1305,17 @@ void software_framebuffer_kernel_convolution_ex(Memory_Arena* arena, struct soft
     s32 REMAINDER_W = (framebuffer->width) % JOBS_W;
     s32 REMAINDER_H = (framebuffer->height) % JOBS_H;
 
-    struct postprocess_job_shared shared_buffer =  (struct postprocess_job_shared) {
-        .kernel                     = kernel,
-        .kernel_width               = kernel_width,
-        .kernel_height              = kernel_height,
-        .unaltered_framebuffer_copy = &unaltered_buffer,
-        .framebuffer                = framebuffer,
-        .blend_t                    = blend_t,
-        .divisor                    = divisor,
-        .passes                     = passes,
-    };
+    struct postprocess_job_shared shared_buffer;
+    shared_buffer.kernel                     = kernel;
+    shared_buffer.kernel_width               = kernel_width;
+    shared_buffer.kernel_height              = kernel_height;
+    shared_buffer.unaltered_framebuffer_copy = &unaltered_buffer;
+    shared_buffer.framebuffer                = framebuffer;
+    shared_buffer.blend_t                    = blend_t;
+    shared_buffer.divisor                    = divisor;
+    shared_buffer.passes                     = passes;
 
-    struct postprocess_job_details* job_buffers = memory_arena_push(arena, sizeof(*job_buffers) * (JOBS_W*JOBS_H));
+    struct postprocess_job_details* job_buffers = (postprocess_job_details*)arena->push_unaligned(sizeof(*job_buffers) * (JOBS_W*JOBS_H));
 
 #if 0
     _debugprintf("%d, %d (%d r, %d r)", framebuffer->width, framebuffer->height, REMAINDER_W, REMAINDER_H);
@@ -1334,11 +1338,11 @@ void software_framebuffer_kernel_convolution_ex(Memory_Arena* arena, struct soft
                 current_buffer->clip_rect                  = clip_rect;
             }
 
-            thread_pool_add_job(thread_software_framebuffer_kernel_convolution, current_buffer);
+            Thread_Pool::add_job(thread_software_framebuffer_kernel_convolution, current_buffer);
         }
     }
 
-    thread_pool_synchronize_tasks();
+    Thread_Pool::synchronize_tasks();
 #endif
 }
 /* does not thread itself. */
@@ -1513,13 +1517,12 @@ void software_framebuffer_run_shader(struct software_framebuffer* framebuffer, s
     s32 REMAINDER_W = (framebuffer->width) % JOBS_W;
     s32 REMAINDER_H = (framebuffer->height) % JOBS_H;
 
-    struct run_shader_job_details_shared shared_buffer =  (struct run_shader_job_details_shared) {
-        .framebuffer = framebuffer,
-        .context     = context,
-        .shader      = shader
-    };
+    struct run_shader_job_details_shared shared_buffer;
+    shared_buffer.framebuffer = framebuffer;
+    shared_buffer.context     = context;
+    shared_buffer.shader      = shader;
 
-    struct run_shader_job_details* job_buffers = memory_arena_push(&scratch_arena, sizeof(*job_buffers) * (JOBS_W*JOBS_H));
+    struct run_shader_job_details* job_buffers = (run_shader_job_details*)Global_Engine()->scratch_arena.push_unaligned(sizeof(*job_buffers) * (JOBS_W*JOBS_H));
 
     for (s32 y = 0; y < JOBS_H; ++y) {
         for (s32 x = 0; x < JOBS_W; ++x) {
@@ -1539,12 +1542,117 @@ void software_framebuffer_run_shader(struct software_framebuffer* framebuffer, s
                 current_buffer->src_rect                  = clip_rect;
             }
 
-            thread_pool_add_job(thread_software_framebuffer_run_shader, current_buffer);
+            Thread_Pool::add_job(thread_software_framebuffer_run_shader, current_buffer);
         }
     }
 
-    thread_pool_synchronize_tasks();
+    Thread_Pool::synchronize_tasks();
 #endif
 }
 
 #undef _BlendPixel_Scalar
+
+// color helpers
+color32f32 color32s32_to_color32f32(color32u8 source) {
+    return color32f32(source.r / 255.0f, source.g / 255.0f, source.b / 255.0f, source.a / 255.0f);
+}
+color32f32 color32u8_to_color32f32(color32u8 source) {
+    return color32f32(source.r / 255.0f, source.g / 255.0f, source.b / 255.0f, source.a / 255.0f);
+}
+color32s32 color32u8_to_color32s32(color32u8 source) {
+    return color32s32(source.r, source.g, source.b, source.a);
+}
+
+color32s32 color32f32_to_color32s32(color32f32 source) {
+    return color32s32(source.r * 255, source.g * 255, source.b * 255, source.a * 255);
+}
+color32u8 color32f32_to_color32u8(color32f32 source) {
+    return color32u8(source.r * 255, source.g * 255, source.b * 255, source.a * 255);
+}
+
+// camera related procedures
+void camera_set_trauma(struct camera* camera, f32 trauma) {
+    camera->trauma = trauma;
+
+    if (camera->trauma >= MAX_CAMERA_TRAUMA) {
+        camera->trauma = MAX_CAMERA_TRAUMA;
+    }
+}
+void camera_traumatize(struct camera* camera, f32 trauma) {
+    camera->trauma += trauma;
+
+    if (camera->trauma >= MAX_CAMERA_TRAUMA) {
+        camera->trauma = MAX_CAMERA_TRAUMA;
+    }
+}
+
+void camera_set_point_to_interpolate(struct camera* camera, V2 point) {
+    camera->interpolation_t[0] = 0;
+    camera->interpolation_t[1] = 0;
+    camera->try_interpolation[0] = true;
+    camera->try_interpolation[1] = true;
+    camera->start_interpolation_values[0] = camera->xy.x;
+    camera->start_interpolation_values[1] = camera->xy.y;
+
+    camera->tracking_xy = point;
+}
+
+V2 camera_transform(struct camera* camera, V2 point, s32 screen_width, s32 screen_height) {
+    point.x *= camera->zoom;
+    point.y *= camera->zoom;
+
+    if (camera->centered) {
+        point.x += screen_width/2;
+        point.y += screen_height/2;
+    }
+
+    point.x -= camera->xy.x;
+    point.y -= camera->xy.y;
+
+    return point;
+}
+struct rectangle_f32 camera_transform_rectangle(struct camera* camera, struct rectangle_f32 rectangle, s32 screen_width, s32 screen_height) {
+    V2 rectangle_position = V2(rectangle.x, rectangle.y);
+    rectangle_position       = camera_transform(camera, rectangle_position, screen_width, screen_height);
+    rectangle.x              = rectangle_position.x;
+    rectangle.y              = rectangle_position.y;
+    rectangle.w             *= camera->zoom;
+    rectangle.h             *= camera->zoom;
+
+    return rectangle;
+}
+
+V2 camera_project(struct camera* camera, V2 point, s32 screen_width, s32 screen_height) {
+    point.x += camera->xy.x;
+    point.y += camera->xy.y;
+
+    if (camera->centered) {
+        point.x -= (screen_width / 2);
+        point.y -= (screen_height / 2);
+    }
+
+    point.x /= camera->zoom;
+    point.y /= camera->zoom;
+    return point;
+}
+
+V2 camera_displacement_from_trauma(struct camera* camera) {
+    struct random_state* rng           = camera->rng;
+    f32                  trauma_factor = camera->trauma;
+
+    f32 random_x = random_ranged_integer(rng, -MAX_TRAUMA_DISPLACEMENT_X * trauma_factor * TRAUMA_FACTOR_WEIGHT_X, MAX_TRAUMA_DISPLACEMENT_X * trauma_factor * TRAUMA_FACTOR_WEIGHT_X);
+    f32 random_y = random_ranged_integer(rng, -MAX_TRAUMA_DISPLACEMENT_Y * trauma_factor * TRAUMA_FACTOR_WEIGHT_Y, MAX_TRAUMA_DISPLACEMENT_Y * trauma_factor * TRAUMA_FACTOR_WEIGHT_Y);
+
+    return V2(random_x, random_y);
+}
+
+struct rectangle_f32 camera_project_rectangle(struct camera* camera, struct rectangle_f32 rectangle, s32 screen_width, s32 screen_height) {
+    V2 rectangle_position = V2(rectangle.x, rectangle.y);
+    rectangle_position       = camera_project(camera, rectangle_position, screen_width, screen_height);
+    rectangle.x              = rectangle_position.x;
+    rectangle.y              = rectangle_position.y;
+    rectangle.w             /= camera->zoom;
+    rectangle.h             /= camera->zoom;
+
+    return rectangle;
+}

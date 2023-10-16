@@ -4,6 +4,12 @@
 
 #include "engine.h"
 
+struct thread_job_queue {
+    struct thread_job jobs[MAX_JOBS];
+    SDL_sem*          notification;
+    SDL_mutex*        mutex;
+};
+
 local volatile s32      global_thread_count                             = 0;
 local SDL_Thread*       global_thread_pool[MAX_POSSIBLE_THREADS]        = {};
 local Memory_Arena      global_thread_pool_arenas[MAX_POSSIBLE_THREADS] = {};
