@@ -337,5 +337,9 @@ static inline void memory_set64(void* memory, size_t amount, u64 value) {
     }
 }
 
+static inline void memory_copy(void* source, void* destination, u64 amount) {
+    memcpy(destination, source, amount);
+}
+
 /* TODO: add file utilities like read_entire_file and stuff */
 #endif

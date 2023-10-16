@@ -1,4 +1,4 @@
-#define USE_SIMD_OPTIMIZATIONS
+// #define USE_SIMD_OPTIMIZATIONS
 #define MULTITHREADED_EXPERIMENTAL
 
 #include "graphics.h"
@@ -1090,7 +1090,7 @@ void software_framebuffer_draw_text_bounds_centered(struct software_framebuffer*
 
 void software_framebuffer_copy_into(struct software_framebuffer* target, struct software_framebuffer* source) {
     if (target->width == source->width && target->height == source->height) {
-        memcpy(source->pixels, target->pixels, target->width * target->height * sizeof(u32));
+        memory_copy(source->pixels, target->pixels, target->width * target->height * sizeof(u32));
     } else {
         software_framebuffer_draw_image_ex(target, (struct image_buffer*)source, RECTANGLE_F32_NULL, RECTANGLE_F32_NULL, color32f32(1,1,1,1), NO_FLAGS, 0);
     }

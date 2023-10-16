@@ -249,7 +249,8 @@ void swap_framebuffers_onto_screen(void) {
         void* locked_pixel_region;
         s32   _pitch; unused(_pitch);
         SDL_LockTexture(global_game_texture_surface, 0, &locked_pixel_region, &_pitch);
-        memcpy(global_default_framebuffer.pixels, locked_pixel_region, global_default_framebuffer.width * global_default_framebuffer.height * sizeof(u32));
+
+        memory_copy(global_default_framebuffer.pixels, locked_pixel_region, global_default_framebuffer.width * global_default_framebuffer.height * sizeof(u32));
         SDL_UnlockTexture(global_game_texture_surface);
     }
 
@@ -396,6 +397,7 @@ void initialize() {
     set_window_transparency(0);
 #endif
     SDL_ShowWindow(global_game_window);
+
     game.init();
     initialize_framebuffer();
 }
@@ -444,7 +446,6 @@ void engine_main_loop() {
             }
         } else {
             // lightmask_buffer_clear(&global_lightmask_buffer);
-            // game.update_and_render(framebuffer, last_elapsed_delta_time);
             game.update_and_render(&global_default_framebuffer, Global_Engine()->last_elapsed_delta_time);
         }
     }

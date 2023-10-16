@@ -155,7 +155,7 @@ namespace Input {
                 controller->last_triggers    = controller->triggers;
                 controller->last_left_stick  = controller->last_left_stick;
                 controller->last_right_stick = controller->last_right_stick;
-                memcpy(controller->last_buttons, controller->buttons, sizeof(controller->buttons));
+                memory_copy(controller->last_buttons, controller->buttons, sizeof(controller->buttons));
             }
         }
 
@@ -171,7 +171,7 @@ namespace Input {
     void start_text_edit(char* target, size_t length) {
         if (!global_input.current_state.editing_text) {
             zero_array(global_input.current_state.text);
-            if (target) memcpy(global_input.current_state.text, target, length);
+            if (target) memory_copy(global_input.current_state.text, target, length);
             global_input.current_state.text_edit_cursor = length;
             global_input.current_state.editing_text = true;
         }
@@ -179,7 +179,7 @@ namespace Input {
 
     void end_text_edit(char* target_buffer, size_t target_buffer_size) {
         if (target_buffer && target_buffer_size) {
-            memcpy(target_buffer, global_input.current_state.text, target_buffer_size);
+            memory_copy(target_buffer, global_input.current_state.text, target_buffer_size);
             target_buffer[target_buffer_size-1] = 0;
         }
 
