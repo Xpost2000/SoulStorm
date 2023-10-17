@@ -1,6 +1,49 @@
 #include "entity.h"
 #include "input.h"
 
+#include"game_state.h"
+
+// Timer
+Timer::Timer(f32 hit) :
+    running(false), t(0.0f), hit_t(hit), max_t(hit) {
+    
+}
+
+void Timer::start() {
+    if (t >= hit_t) {
+        // nothing
+    } else {
+        running = true;
+    }
+}
+
+void Timer::update(f32 dt) {
+    if (running) {
+        t += dt;
+    }
+}
+
+void Timer::stop() {
+    running = false; 
+}
+
+void Timer::reset() {
+    running = false;
+    t = max_t;
+}
+
+bool Timer::triggered() {
+    if (running)  {
+        if (t >= hit_t) {
+            t = 0.0f;
+            running = false;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 // Entity Base
 void Entity::draw(software_framebuffer* framebuffer) {
     auto r = get_rect();
@@ -8,8 +51,9 @@ void Entity::draw(software_framebuffer* framebuffer) {
     software_framebuffer_draw_quad(framebuffer, rectangle_f32(r.x, r.y, r.w, r.h), color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
 }
 
-void Entity::update(f32 dt) {
-    position += velocity * dt;
+void Entity::update(Game_State* const state, f32 dt) {
+    position      += velocity * dt;
+    t_since_spawn += dt;
 }
 
 rectangle_f32 Entity::get_rect() {
@@ -22,7 +66,7 @@ rectangle_f32 Entity::get_rect() {
 }
 
 // PlayerActor
-void Player::update(f32 dt) {
+void Player::update(Game_State* const state, f32 dt) {
     // unfortunately the action mapper system doesn't exist
     // here like it did in the last project, so I'll have to use key inputs
     // and gamepad power.
@@ -47,11 +91,15 @@ void Player::update(f32 dt) {
     velocity.x = axes[0] * UNIT_SPEED;
     velocity.y = axes[1] * UNIT_SPEED;
 
-    Entity::update(dt);
+    Entity::update(state, dt);
 }
 
 // BulletEntity
-void Bullet::update(f32 dt) {
+void Bullet::update(Game_State* const state, f32 dt) {
     velocity = V2(0, 0);
-    Entity::update(dt);
+    if (velocity_function) {
+        velocity_function(this, state, dt);
+    }
+
+    Entity::update(state, dt);
 }

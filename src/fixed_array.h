@@ -30,6 +30,14 @@ struct Fixed_Array {
 
     void init_reserve(Memory_Arena* arena, size_t capacity) {
         data = (T*)arena->push_unaligned(capacity * sizeof(*data));
+
+        // placement new eh?
+        {
+            for (size_t i = 0; i < capacity; ++i) {
+                new (data + i) T();
+            }
+        }
+
         size = 0;
         this->capacity = capacity;
     }

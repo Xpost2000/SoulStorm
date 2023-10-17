@@ -5,6 +5,8 @@ Memory_Arena::Memory_Arena(cstring name, u64 size) {
     this->capacity = size;
     this->used = this->used_top = 0;
     this->memory = malloc(size);
+
+    zero_memory(this->memory, size);
 }
 
 Memory_Arena::Memory_Arena() {
@@ -46,6 +48,8 @@ void* Memory_Arena::push_unaligned(u64 amount) {
         }
 
         flags |= MEMORY_ARENA_TOUCHED_BOTTOM;
+
+        zero_memory(base_pointer, amount);
         return base_pointer;
     } else {
         void* end_of_memory = (void*)((u8*)memory + capacity);
@@ -58,6 +62,7 @@ void* Memory_Arena::push_unaligned(u64 amount) {
 
         flags |= MEMORY_ARENA_TOUCHED_TOP;
 
+        zero_memory(base_pointer, amount);
         return base_pointer;
     }
 
