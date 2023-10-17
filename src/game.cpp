@@ -58,7 +58,7 @@ Game::~Game() {
 void Game::init() {
     this->arena     = &Global_Engine()->main_arena;
     this->resources = (Game_Resources*)arena->push_unaligned(sizeof(*this->resources));
-    this->state     = (Game_State*)arena->push_unaligned(sizeof(*this->state));
+    this->state = (Game_State*)arena->push_unaligned(sizeof(*this->state)); (new (this->state) Game_State);
 
     resources->graphics_assets   = graphics_assets_create(arena, 16, 256);
     for (unsigned index = 0; index < array_count(menu_font_variation_string_names); ++index) {
