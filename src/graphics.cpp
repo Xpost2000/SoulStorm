@@ -224,11 +224,11 @@ image_id graphics_assets_load_image(struct graphics_assets* assets, string path)
         string filepath = assets->image_file_strings[index];
 
         if (string_equal(path, filepath)) {
-            return (image_id){.index = index+1};
+            return image_id{.index = index+1};
         }
     }
 
-    image_id new_id = (image_id) { .index = assets->image_count + 1 };
+    image_id new_id = image_id { .index = (s32)assets->image_count + 1 };
     _debugprintf("img loaded: %.*s", path.length, path.data);
 
     struct image_buffer* new_image           = &assets->images[assets->image_count];
@@ -240,7 +240,7 @@ image_id graphics_assets_load_image(struct graphics_assets* assets, string path)
 }
 
 font_id graphics_assets_load_bitmap_font(struct graphics_assets* assets, string path, s32 tile_width, s32 tile_height, s32 atlas_rows, s32 atlas_columns) {
-    font_id new_id = (font_id) { .index = assets->font_count + 1 };
+    font_id new_id = font_id { .index = (s32)assets->font_count + 1 };
 
     struct font_cache* new_font   = &assets->fonts[assets->font_count++];
     *new_font                     = font_cache_load_bitmap_font(path, tile_width, tile_height, atlas_rows, atlas_columns);
@@ -1231,7 +1231,7 @@ void software_framebuffer_render_commands(struct software_framebuffer* framebuff
 
     for (s32 y = 0; y < JOB_H; ++y) {
         for (s32 x = 0; x < JOB_W; ++x) {
-            struct rectangle_f32 clip_rect = (struct rectangle_f32) { x * TILE_W, y * TILE_H, TILE_W, TILE_H };
+            struct rectangle_f32 clip_rect = rectangle_f32(x * TILE_W, y * TILE_H, TILE_W, TILE_H);
 
             struct render_commands_job_details* current_details = &job_details[y*JOB_W+x];
 
@@ -1322,7 +1322,7 @@ void software_framebuffer_kernel_convolution_ex(Memory_Arena* arena, struct soft
 #endif
     for (s32 y = 0; y < JOBS_H; ++y) {
         for (s32 x = 0; x < JOBS_W; ++x) {
-            struct rectangle_f32            clip_rect      = (struct rectangle_f32){x * CLIP_W, y * CLIP_H, CLIP_W, CLIP_H};
+            struct rectangle_f32            clip_rect      = rectangle_f32((f32)x * CLIP_W, (f32)y * CLIP_H, (f32)CLIP_W, (f32)CLIP_H);
             struct postprocess_job_details* current_buffer = &job_buffers[y*JOBS_W+x];
 
             if (x == JOBS_W-1) {
@@ -1526,7 +1526,7 @@ void software_framebuffer_run_shader(struct software_framebuffer* framebuffer, s
 
     for (s32 y = 0; y < JOBS_H; ++y) {
         for (s32 x = 0; x < JOBS_W; ++x) {
-            struct rectangle_f32            clip_rect      = (struct rectangle_f32){x * CLIP_W, y * CLIP_H, CLIP_W, CLIP_H};
+            struct rectangle_f32            clip_rect = rectangle_f32(x * CLIP_W, y * CLIP_H, CLIP_W, CLIP_H);
             struct run_shader_job_details*  current_buffer = &job_buffers[y*JOBS_W+x];
 
             if (x == JOBS_W-1) {

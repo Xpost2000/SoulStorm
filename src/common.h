@@ -2,7 +2,8 @@
 #define COMMON_H
 #define NO_FLAGS (0)
 
-#include <x86intrin.h>
+#include <immintrin.h> 
+//#include <x86intrin.h>
 
 // NOTE: I know there's a lot of redundantly compiled
 // things because I static inline a lot of small functions.
@@ -25,6 +26,7 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+#define M_PI (3.141592653589793238462643383279502884197)
 
 #define assertion(x) assert(x)
 #define unimplemented(x) assertion(false && x);
@@ -49,14 +51,17 @@
 #define Terabyte(x)                 (uint64_t)(x * 1024LL * 1024LL * 1024LL * 1024LL)
 
 #ifndef RELEASE
-#define _debugprintf(fmt, args...)   fprintf(stderr, "[%s:%d:%s()]: " fmt "\n", __FILE__, __LINE__, __func__, ##args)
 #define _debugprintfhead()   fprintf(stderr, "[%s:%d:%s()]: " ,__FILE__, __LINE__, __func__)
-#define _debugprintf1(fmt, args...)  fprintf(stderr,  fmt, ##args)
+#define _debugprintf1(...)  do { _debugprintfhead(); fprintf(stderr, __VA_ARGS__); } while(0)
+#define _debugprintf(...)   do { _debugprintf1(__VA_ARGS__); fprintf(stderr, "\n"); } while (0) 
 #define DEBUG_CALL(fn) fn; _debugprintf("calling %s in [%s:%d:%s()]", #fn, __FILE__, __LINE__, __func__)
 #else
-#define _debugprintf(fmt, args...)  
-#define _debugprintfhead(fmt, args...)
-#define _debugprintf1(fmt, args...)
+// #define _debugprintf(fmt, ...)  
+// #define _debugprintfhead(fmt, ...)
+// #define _debugprintf1(fmt, ...)
+#define _debugprintf(...)  
+#define _debugprintfhead()
+#define _debugprintf1(...)
 #define DEBUG_CALL(_) _;
 #endif
 
@@ -94,11 +99,16 @@ typedef int8_t  s8;
         a ^= b;                                 \
     } while (0)
 
+// NOTE: not sure what header I included for this to be a compilation error on MSVC
+
+#undef min
+#undef max
 template <typename T>
 T min(T a, T b) {
     if (a < b) return a;
     return b;
 }
+
 template <typename T>
 T max(T a, T b) {
     if (a < b) return b;
@@ -279,9 +289,9 @@ struct rectangle_s16 {
     s16 x; s16 y; s16 w; s16 h;
 };
 
-#define rectangle_f32(X,Y,W,H) (struct rectangle_f32){.x=X,.y=Y,.w=W,.h=H}
-#define rectangle_s32(X,Y,W,H) (struct rectangle_s32){.x=X,.y=Y,.w=W,.h=H}
-#define rectangle_s16(X,Y,W,H) (struct rectangle_s32){.x=X,.y=Y,.w=W,.h=H}
+#define rectangle_f32(X,Y,W,H) rectangle_f32 {(f32)X,(f32)Y,(f32)W,(f32)H}
+#define rectangle_s32(X,Y,W,H) rectangle_s32 {(s32)X,(s32)Y,(s32)W,(s32)H}
+#define rectangle_s16(X,Y,W,H) rectangle_s16 {(s16)X,(s16)Y,(s16)W,(s16)H}
 
 #define RECTANGLE_F32_NULL rectangle_f32(0,0,0,0)
 #define RECTANGLE_S32_NULL rectangle_s32(0,0,0,0)

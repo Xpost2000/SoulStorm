@@ -91,14 +91,14 @@ char character_uppercase(char c) {
 }
 
 string string_from_cstring(cstring str) {
-    return (string) {
+    return string {
         .length = (s32)cstring_length(str),
         .data   = str,
     };
 }
 
 string string_from_cstring_length_counted(cstring str, u64 length) {
-    return (string) {
+    return string {
         .length = (s32)length,
         .data   = str
     };
@@ -172,7 +172,7 @@ string string_slice(string a, s32 start, s32 end) {
         end = start + a.length;   
     }
 
-    return (string) {
+    return string {
         .length = end - start,
         .data   = a.data + start
     };

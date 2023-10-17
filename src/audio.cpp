@@ -1,7 +1,7 @@
 #include "common.h"
 #include "audio.h"
 
-#include <SDL2/SDL_mixer.h>
+#include <SDL_mixer.h>
 
 namespace Audio {
     local Mix_Chunk* loaded_samples[MAX_LOADED_SAMPLES]       = {};
@@ -10,7 +10,6 @@ namespace Audio {
     local u32        loaded_stream_hashes[MAX_LOADED_SAMPLES] = {};
     local s32        loaded_sample_count                      = 0;
     local s32        loaded_stream_count                      = 0;
-
 
     void initialize(void) {
         _debugprintf("Audio hi");

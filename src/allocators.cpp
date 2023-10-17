@@ -18,7 +18,7 @@ Allocator_Deallocate_Function(heap_allocator_deallocate) {
 }
 
 IAllocator heap_allocator(void) {
-    return (IAllocator) {
+    return IAllocator {
         .userdata = nullptr,
         .alloc    = heap_allocator_allocate,
         .free     = heap_allocator_deallocate,
@@ -33,7 +33,7 @@ Allocator_Allocate_Function(memory_arena_allocator_allocate) {
 
 /* memory arenas aren't expected for realloc purposes sorry! */
 IAllocator memory_arena_allocator(Memory_Arena* allocator) {
-    return (IAllocator) {
+    return IAllocator {
         .userdata = allocator,
         .alloc    = memory_arena_allocator_allocate,
         .free     = stub_allocator_deallocate,

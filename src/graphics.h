@@ -74,9 +74,9 @@ union color32s32 {
 
 typedef color32f32 (*shader_fn)(software_framebuffer* framebuffer, color32f32 source_pixel, V2 pixel_position, void* context);
 
-#define color32u8(R,G,B,A)  (union color32u8){.r  = (u8)(R),.g=(u8)(G),.b=(u8)(B),.a=(u8)(A)}
-#define color32f32(R,G,B,A) (union color32f32){.r = (f32)(R),.g=(f32)(G),.b=(f32)(B),.a=(f32)(A)}
-#define color32s32(R,G,B,A) (union color32s32){.r = (s32)(R),.g=(s32)(G),.b=(s32)(B),.a=(s32)(A)}
+#define color32u8(R,G,B,A)  color32u8{(u8)(R),(u8)(G),(u8)(B),(u8)(A)}
+#define color32f32(R,G,B,A) color32f32{(f32)(R),(f32)(G),(f32)(B),(f32)(A)}
+#define color32s32(R,G,B,A) color32s32{(s32)(R),(s32)(G),(s32)(B),(s32)(A)}
 color32f32 color32s32_to_color32f32(color32u8 source);
 color32f32 color32u8_to_color32f32(color32u8 source);
 color32s32 color32u8_to_color32s32(color32u8 source);

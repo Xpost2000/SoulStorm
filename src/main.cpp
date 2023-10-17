@@ -14,7 +14,7 @@
 #include <Windows.h>
 #endif
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include "common.h"
 #include "audio.h"

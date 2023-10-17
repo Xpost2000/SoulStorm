@@ -147,10 +147,6 @@ void spawn_bullet_linear(Game_State* state, V2 position, V2 additional = V2(0,0)
     state->bullets.push(bullet);
 }
 
-/*
- * 
- */
-
 void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     software_framebuffer_clear_scissor(framebuffer);
     software_framebuffer_clear_buffer(framebuffer, color32u8(255, 255, 255, 255));

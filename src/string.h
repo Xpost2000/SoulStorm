@@ -7,8 +7,8 @@ struct string{
     s32   length;
     char* data;
 };
-#define string_literal(x) (string){ .length = sizeof(x)-1, .data = x }
-#define string_null       (string){}
+#define string_literal(x) string { sizeof(x)-1, (char*)x }
+#define string_null       string { 0, (char*) 0 }
 
 bool is_whitespace(char c);
 bool is_alphabetic(char c);
