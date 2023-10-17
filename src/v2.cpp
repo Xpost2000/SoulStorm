@@ -73,7 +73,9 @@ float V2::magnitude_sq() {
 }
 
 V2 V2::normalized() {
-    return *this / magnitude();
+    auto mag = magnitude();
+    if (mag == 0.0f) return *this;
+    return *this / mag;
 }
 
 // free functions

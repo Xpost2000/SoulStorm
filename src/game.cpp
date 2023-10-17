@@ -1,6 +1,9 @@
 // NOTE: these should be exclusively render commands in the future. I just don't do it quite yet
 // but it would help for rendering in OpenGL, and I could add game specific render commands later...
+
+// NOTE: game units are in 640x480 pixels now.
 #include "game.h"
+#include "entity.h"
 #include "fixed_array.h"
 
 static string menu_font_variation_string_names[] = {
@@ -36,6 +39,12 @@ enum menu_font_variation {
 // this is where the actual member variables of the game go
 // the class is just a small wrapper for this stuff
 struct Game_State {
+    Fixed_Array<Bullet> bullets;
+    // should be in a separate list of it's own...
+    Player              player;
+
+    // should also have some form of entity iterator
+    // or something later.
 };
 
 
@@ -67,6 +76,10 @@ void Game::init() {
         string current = menu_font_variation_string_names[index];
         resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
     }
+
+    state->player.position = V2(320 - 30, 240 - 30);
+    state->player.scale    = V2(60, 60);
+    state->bullets         = Fixed_Array<Bullet>(arena, 10000);
 }
 
 void Game::deinit() {
@@ -79,4 +92,14 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     software_framebuffer_draw_quad(framebuffer, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
 
     software_framebuffer_draw_text(framebuffer, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+
+    state->player.update(dt);
+
+    for (int i = 0; i < (int)state->bullets.size; ++i) {
+        auto& b = state->bullets[i];
+        b.update(dt);
+        b.draw(framebuffer);
+    }
+
+    state->player.draw(framebuffer);
 }

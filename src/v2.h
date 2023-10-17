@@ -30,6 +30,13 @@ union V2 {
     V2& operator*=(const float& other);
     V2& operator/=(const float& other);
 
+    f32& operator[](int index) {
+        switch (index) {
+            case 0: return x;
+            case 1: return y;
+        }
+    }
+
     float magnitude();
     float magnitude_sq();
 

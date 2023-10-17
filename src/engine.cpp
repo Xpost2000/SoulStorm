@@ -11,6 +11,7 @@ Engine* Global_Engine() {
         global_engine_object.main_arena              = Memory_Arena((char*)"Main Arena", Megabyte(16));
         global_engine_object.scratch_arena           = Memory_Arena((char*)"Scratch Arena", Megabyte(16));
         global_engine_object.running                 = true;
+        global_engine_object.global_timescale        = 1.0f;
         initialized = true;
     }
 
