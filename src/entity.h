@@ -29,6 +29,8 @@
 
 // I also don't want to implement another lisp interpreter...
 struct Game_State; // forward decl. Entities will need to be able to look at game_state
+struct Game_Resources;
+
 struct Timer {
     Timer(f32 hit);
 
@@ -41,7 +43,8 @@ struct Timer {
     void reset();
 
     // NOTE: has side effect.
-    bool triggered();
+    bool  triggered();
+    float percentage();
 
     bool running = false;
     f32 t, hit_t;
@@ -51,14 +54,13 @@ struct Timer {
 struct Entity {
     // primarily for collision purposes
     // a visual representation can be drawn separately
-    V2 position;
-    V2 scale; 
-    V2 velocity;
-
-    float t_since_spawn = 0.0f;
+    V2    position      = V2(0, 0);
+    V2    scale         = V2(0, 0); 
+    V2    velocity      = V2(0, 0);
+    f32   t_since_spawn = 0.0f;
 
     // I normally don't like using these... I still don't!
-    virtual void draw(software_framebuffer* framebuffer);
+    virtual void draw(software_framebuffer* framebuffer, Game_Resources* resources);
     // NOTE: I only want read only states
     // wholesale updates like collisions will be checked in the main
     // game loop in game.cpp
@@ -66,6 +68,45 @@ struct Entity {
     
     // entities will be centered on themselves
     rectangle_f32 get_rect();
+};
+
+/* Hazard types */
+//
+// While technically "entities" per say, they're not
+// really meant to be big objects like regular entities,
+// so I'm keeping these completely separate.
+// NOTE: will need to spawn a particle system when it dies
+// 
+struct Explosion_Hazard {
+    Explosion_Hazard(V2 position, f32 radius, f32 amount_of_time_for_warning, f32 time_until_explosion);
+    Explosion_Hazard();
+
+    V2  position;
+    f32 radius;
+
+    Timer warning_flash_timer;
+    Timer explosion_timer;
+    s32 flash_warning_times;
+
+    void update(Game_State* const state, f32 dt);
+    void draw(software_framebuffer* framebuffer, Game_Resources* resources);
+};
+
+enum Laser_Hazard_Direction {
+    LASER_HAZARD_DIRECTION_HORIZONTAL,
+    LASER_HAZARD_DIRECTION_VERTICAL,
+};
+struct Laser_Hazard {
+    Laser_Hazard(float position, int direction, float amount_of_time_for_warning, float how_long_to_live);
+    Laser_Hazard();
+
+    float position  = 0.0f;
+    int   direction = LASER_HAZARD_DIRECTION_HORIZONTAL;
+    Timer warning_flash_timer;
+    Timer lifetime;
+
+    void update(Game_State* const state, f32 dt);
+    void draw(software_framebuffer* framebuffer, Game_Resources* resources);
 };
 
 struct Player : public Entity {

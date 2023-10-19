@@ -1,8 +1,41 @@
+/*
+ * structure definitions for resource holder and main game state.
+ */
 #ifndef GAME_STATE_H
 #define GAME_STATE_H
 
 #include "entity.h"
 #include "fixed_array.h"
+
+static string menu_font_variation_string_names[] = {
+    string_literal("res/fonts/gnsh-bitmapfont-colour1.png"),
+    string_literal("res/fonts/gnsh-bitmapfont-colour2.png"),
+    string_literal("res/fonts/gnsh-bitmapfont-colour3.png"),
+    string_literal("res/fonts/gnsh-bitmapfont-colour4.png"),
+    string_literal("res/fonts/gnsh-bitmapfont-colour5.png"),
+    string_literal("res/fonts/gnsh-bitmapfont-colour6.png"),
+    string_literal("res/fonts/gnsh-bitmapfont-colour7.png"),
+    string_literal("res/fonts/gnsh-bitmapfont-colour8.png"),
+    string_literal("res/fonts/gnsh-bitmapfont-colour9.png"),
+    string_literal("res/fonts/gnsh-bitmapfont-colour10.png"),
+};
+/* using GNSH fonts, which are public domain, but credits to open game art, this font looks cool */
+enum menu_font_variation {
+    MENU_FONT_COLOR_GOLD,
+
+    MENU_FONT_COLOR_ORANGE,
+    MENU_FONT_COLOR_LIME,
+    MENU_FONT_COLOR_SKYBLUE,
+    MENU_FONT_COLOR_PURPLE,
+    MENU_FONT_COLOR_BLUE,
+    MENU_FONT_COLOR_STEEL,
+    MENU_FONT_COLOR_WHITE,
+    MENU_FONT_COLOR_YELLOW,
+    MENU_FONT_COLOR_BLOODRED,
+
+    /* I want room to have more fonts though, although GNSH fonts are very very nice. */
+    MENU_FONT_COUNT,
+};
 
 // this is where the actual member variables of the game go
 // the class is just a small wrapper for this stuff
@@ -15,6 +48,16 @@ struct Game_State {
     // or something later.
 };
 
-// No methods, just a bunch of free functions
+struct Game_Resources {
+    graphics_assets graphics_assets;
+    font_id         menu_fonts[MENU_FONT_COUNT];
+
+    inline font_cache* get_font(s32 variation) {
+        struct font_cache* font = graphics_assets_get_font_by_id(&graphics_assets, menu_fonts[variation]);
+        return font;
+    }
+};
+
+// No methods, just a bunch of free functions if I have any here.
 
 #endif

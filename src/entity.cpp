@@ -44,8 +44,12 @@ bool Timer::triggered() {
     return false;
 }
 
+float Timer::percentage() {
+    return (t / hit_t);
+}
+
 // Entity Base
-void Entity::draw(software_framebuffer* framebuffer) {
+void Entity::draw(software_framebuffer* framebuffer, Game_Resources* resources) {
     auto r = get_rect();
     // black rectangles for default
     software_framebuffer_draw_quad(framebuffer, rectangle_f32(r.x, r.y, r.w, r.h), color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);

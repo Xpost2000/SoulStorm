@@ -73,6 +73,11 @@ struct Fixed_Array {
         size -= 1;
     }
 
+    // erase alternative
+    void pop_and_swap(int at) {
+        data[at] = data[--size];
+    }
+
     void push(T& x) {
         data[size++] = x;
     }
