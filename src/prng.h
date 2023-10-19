@@ -12,15 +12,16 @@ struct random_state {
     s32 modulus;
 };
 
-#define random_state_ext(CONSTANT, MULTIPLIER, SEED, MODULUS) (struct random_state) { \
-          .constant   = CONSTANT,                             \
-          .multiplier = MULTIPLIER,                           \
-          .seed       = SEED,                                 \
-          .state      = SEED,                                 \
-          .modulus    = MODULUS,                              \
-    }
+#define random_state_ext(CONSTANT, MULTIPLIER, SEED, MODULUS) \
+    random_state {                                            \
+        CONSTANT,                                             \
+            MULTIPLIER,                                       \
+            SEED,                                             \
+            SEED,                                             \
+            MODULUS,                                          \
+            }
 
-#define random_state_ex(constant, multiplier) random_state_ext(constant, multiplier, time(NULL), (RANDOM_MAX))
+#define random_state_ex(constant, multiplier) random_state_ext(constant, multiplier, (s32)time(NULL), (RANDOM_MAX))
 #define random_state() random_state_ex(12345, 1123515245)
 
 s32 random_state_next(random_state* state);

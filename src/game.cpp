@@ -34,6 +34,9 @@ void Game::init() {
     state->bullets           = Fixed_Array<Bullet>(arena, 10000);
     state->explosion_hazards = Fixed_Array<Explosion_Hazard>(arena, 256);
     state->laser_hazards     = Fixed_Array<Laser_Hazard>(arena, 128);
+    state->prng              = random_state();
+    state->main_camera       = camera(V2(0, 0), 1.0);
+    state->main_camera.rng   = &state->prng;
 }
 
 void Game::deinit() {
@@ -118,7 +121,9 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
         state->play_area.height = framebuffer->height;
 
         // state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_WRAPPING);
-        state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_DEADLY);
+        state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_BLOCKING);
+        state->play_area.edge_behavior_top    = PLAY_AREA_EDGE_WRAPPING;
+        state->play_area.edge_behavior_bottom = PLAY_AREA_EDGE_WRAPPING;
     }
 
 
@@ -245,6 +250,7 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
 
     software_framebuffer_draw_quad(framebuffer, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
     software_framebuffer_draw_text(framebuffer, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+    software_framebuffer_draw_text(framebuffer, resources->get_font(MENU_FONT_COLOR_WHITE), 2, V2(100, 150), string_literal("hahahahhaah"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
 
     handle_all_explosions(dt);
     handle_all_lasers(dt);
@@ -262,6 +268,8 @@ void Game::handle_all_lasers(f32 dt) {
         auto& h = state->laser_hazards[i];
 
         if (h.ready()) {
+            // played sound + camera hit
+            // camera_traumatize(&state->camera, 0.25f);
             auto laser_rect  = h.get_rect(&state->play_area);
             auto player_rect = state->player.get_rect();
 
@@ -285,6 +293,7 @@ void Game::handle_all_explosions(f32 dt) {
 
         if (h.exploded) {
             _debugprintf("biggest boom ever.");
+            // camera_traumatize(&state->camera, 0.25f);
             // check explosion against all entities
             // by all entities, I just mean the player right now.
             {

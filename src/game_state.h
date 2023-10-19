@@ -6,6 +6,8 @@
 
 #include "entity.h"
 #include "fixed_array.h"
+#include "prng.h"
+#include "camera.h"
 
 static string menu_font_variation_string_names[] = {
     string_literal("res/fonts/gnsh-bitmapfont-colour1.png"),
@@ -81,6 +83,13 @@ struct Game_State {
     // NOTE: the game runs in a "logical" resolution of (w)x480?
     // so I'll pick a play area that's generally okay for the base configuration...
     Play_Area play_area;
+
+    // The camera is technically "static",
+    // or really static. This is really only here so I can get working
+    // screen shake behavior that looks cool.
+    // I'll fake the illusion of movement through the background primarily
+    random_state prng;
+    camera       main_camera;
 };
 
 struct Game_Resources {
