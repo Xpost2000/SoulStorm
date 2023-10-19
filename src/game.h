@@ -31,6 +31,7 @@ public:
 private: 
     void handle_all_explosions(f32 dt);
     void handle_all_lasers(f32 dt);
+    void handle_all_dead_entities(f32 dt);
 
     Memory_Arena*   arena;
     Game_State*     state;

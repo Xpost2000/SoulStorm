@@ -68,52 +68,68 @@ bool Entity::touching_bottom_border(const Play_Area& play_area) {
     return (position.y+scale.y/2 >play_area.height);
 }
 
-void Entity::clamp_to_left_border(const Play_Area& play_area) {
+bool Entity::clamp_to_left_border(const Play_Area& play_area) {
     if (touching_left_border(play_area)) {
         position.x = scale.x/2;
+        return true;
     }
+    return false;
 }
 
-void Entity::clamp_to_right_border(const Play_Area& play_area) {
+bool Entity::clamp_to_right_border(const Play_Area& play_area) {
     if (touching_right_border(play_area)) {
         position.x = play_area.width - scale.x/2;
+        return true;
     }
+    return false;
 }
 
-void Entity::clamp_to_top_border(const Play_Area& play_area) {
+bool Entity::clamp_to_top_border(const Play_Area& play_area) {
     if (touching_top_border(play_area)) {
         position.y = scale.y/2;
+        return true;
     }
+    return false;
 }
 
-void Entity::clamp_to_bottom_border(const Play_Area& play_area) {
+bool Entity::clamp_to_bottom_border(const Play_Area& play_area) {
     if (touching_bottom_border(play_area)) {
         position.y = play_area.height - scale.y/2;
+        return true;
     }
+    return false;
 }
 
-void Entity::wrap_from_left_border(const Play_Area& play_area) {
+bool Entity::wrap_from_left_border(const Play_Area& play_area) {
     if (touching_left_border(play_area)) {
         position.x = play_area.width - scale.x/2;
+        return true;
     }
+    return false;
 }
 
-void Entity::wrap_from_right_border(const Play_Area& play_area) {
+bool Entity::wrap_from_right_border(const Play_Area& play_area) {
     if (touching_right_border(play_area)) {
         position.x = scale.x/2;
+        return true;
     }
+    return false;
 }
 
-void Entity::wrap_from_top_border(const Play_Area& play_area) {
+bool Entity::wrap_from_top_border(const Play_Area& play_area) {
     if (touching_top_border(play_area)) {
         position.y = play_area.height - scale.y/2;
+        return true;
     }
+    return false;
 }
 
-void Entity::wrap_from_bottom_border(const Play_Area& play_area) {
+bool Entity::wrap_from_bottom_border(const Play_Area& play_area) {
     if (touching_bottom_border(play_area)) {
         position.y = scale.y/2;
+        return true;
     }
+    return false;
 }
 
 void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
@@ -126,10 +142,11 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
     switch (play_area.edge_behaviors[0]) {
         case PLAY_AREA_EDGE_DEADLY:
         case PLAY_AREA_EDGE_BLOCKING: {
-            clamp_to_top_border(play_area);
-            if (play_area.edge_behaviors[0] == PLAY_AREA_EDGE_DEADLY) {
-                // extra killing code.
-            }
+            if (clamp_to_top_border(play_area))
+                if (play_area.edge_behaviors[0] == PLAY_AREA_EDGE_DEADLY) {
+                    // extra killing code.
+                    die = true;
+                }
         } break;
         case PLAY_AREA_EDGE_WRAPPING: {
             wrap_from_top_border(play_area);
@@ -139,10 +156,11 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
     switch (play_area.edge_behaviors[1]) {
         case PLAY_AREA_EDGE_DEADLY:
         case PLAY_AREA_EDGE_BLOCKING: {
-            clamp_to_bottom_border(play_area);
-            if (play_area.edge_behaviors[1] == PLAY_AREA_EDGE_DEADLY) {
-                // extra killing code.
-            }
+            if (clamp_to_bottom_border(play_area))
+                if (play_area.edge_behaviors[1] == PLAY_AREA_EDGE_DEADLY) {
+                    // extra killing code.
+                    die = true;
+                }
         } break;
         case PLAY_AREA_EDGE_WRAPPING: {
             wrap_from_bottom_border(play_area);
@@ -152,10 +170,11 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
     switch (play_area.edge_behaviors[2]) {
         case PLAY_AREA_EDGE_DEADLY:
         case PLAY_AREA_EDGE_BLOCKING: {
-            clamp_to_left_border(play_area);
-            if (play_area.edge_behaviors[2] == PLAY_AREA_EDGE_DEADLY) {
-                // extra killing code.
-            }
+            if (clamp_to_left_border(play_area))
+                if (play_area.edge_behaviors[2] == PLAY_AREA_EDGE_DEADLY) {
+                    // extra killing code.
+                    die = true;
+                }
         } break;
         case PLAY_AREA_EDGE_WRAPPING: {
             wrap_from_left_border(play_area);
@@ -165,10 +184,11 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
     switch (play_area.edge_behaviors[3]) {
         case PLAY_AREA_EDGE_DEADLY:
         case PLAY_AREA_EDGE_BLOCKING: {
-            clamp_to_right_border(play_area);
-            if (play_area.edge_behaviors[3] == PLAY_AREA_EDGE_DEADLY) {
-                // extra killing code.
-            }
+            if (clamp_to_right_border(play_area))
+                if (play_area.edge_behaviors[3] == PLAY_AREA_EDGE_DEADLY) {
+                    // extra killing code.
+                    die = true;
+                }
         } break;
         case PLAY_AREA_EDGE_WRAPPING: {
             wrap_from_right_border(play_area);

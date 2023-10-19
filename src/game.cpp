@@ -117,7 +117,8 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
         state->play_area.x = framebuffer->width / 2 - state->play_area.width / 2;
         state->play_area.height = framebuffer->height;
 
-        state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_WRAPPING);
+        // state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_WRAPPING);
+        state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_DEADLY);
     }
 
 
@@ -247,6 +248,13 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
 
     handle_all_explosions(dt);
     handle_all_lasers(dt);
+    handle_all_dead_entities(dt);
+}
+
+void Game::handle_all_dead_entities(f32 dt) {
+    if (state->player.die) {
+        Global_Engine()->die();
+    }
 }
 
 void Game::handle_all_lasers(f32 dt) {
@@ -255,6 +263,17 @@ void Game::handle_all_lasers(f32 dt) {
 
         if (h.die) {
             _debugprintf("bye bye laser");
+
+            {
+                auto laser_rect  = h.get_rect(&state->play_area);
+                auto player_rect = state->player.get_rect();
+
+                if (rectangle_f32_intersect(player_rect, laser_rect)) {
+                    _debugprintf("Hi, I died.");
+                    state->player.die = true;
+                }
+            }
+
             state->laser_hazards.pop_and_swap(i);
         }
     }
@@ -266,6 +285,17 @@ void Game::handle_all_explosions(f32 dt) {
 
         if (h.exploded) {
             _debugprintf("biggest boom ever.");
+            // check explosion against all entities
+            // by all entities, I just mean the player right now.
+            {
+                auto explosion_circle = circle_f32(h.position.x, h.position.y, h.radius);
+                auto player_circle    = circle_f32(state->player.position.x, state->player.position.y, state->player.scale.x);
+
+                if (circle_f32_intersect(explosion_circle, player_circle)) {
+                    _debugprintf("Hi, I died.");
+                    state->player.die = true;
+                }
+            }
             state->explosion_hazards.pop_and_swap(i);
         }
     }

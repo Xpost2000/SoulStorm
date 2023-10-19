@@ -17,3 +17,7 @@ Engine* Global_Engine() {
 
     return &global_engine_object;
 }
+
+void Engine::die() {
+    running = false;
+}

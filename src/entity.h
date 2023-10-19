@@ -65,6 +65,9 @@ struct Entity {
     V2    velocity      = V2(0, 0);
     f32   t_since_spawn = 0.0f;
 
+    // TODO: hp
+    bool  die           = false; // force dead flag
+
     // I normally don't like using these... I still don't!
     virtual void draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources);
     // NOTE: I only want read only states
@@ -87,15 +90,15 @@ struct Entity {
     bool touching_top_border(const Play_Area& play_area);
     bool touching_bottom_border(const Play_Area& play_area);
 
-    void clamp_to_left_border(const Play_Area& play_area);
-    void clamp_to_right_border(const Play_Area& play_area);
-    void clamp_to_top_border(const Play_Area& play_area);
-    void clamp_to_bottom_border(const Play_Area& play_area);
+    bool clamp_to_left_border(const Play_Area& play_area);
+    bool clamp_to_right_border(const Play_Area& play_area);
+    bool clamp_to_top_border(const Play_Area& play_area);
+    bool clamp_to_bottom_border(const Play_Area& play_area);
 
-    void wrap_from_left_border(const Play_Area& play_area);
-    void wrap_from_right_border(const Play_Area& play_area);
-    void wrap_from_top_border(const Play_Area& play_area);
-    void wrap_from_bottom_border(const Play_Area& play_area);
+    bool wrap_from_left_border(const Play_Area& play_area);
+    bool wrap_from_right_border(const Play_Area& play_area);
+    bool wrap_from_top_border(const Play_Area& play_area);
+    bool wrap_from_bottom_border(const Play_Area& play_area);
 
     void handle_play_area_edge_behavior(const Play_Area& play_area);
 };

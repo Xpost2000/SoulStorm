@@ -23,6 +23,8 @@ struct Engine {
     Memory_Arena scratch_arena;
 
     bool running;
+
+    void die();
 };
 
 Engine* Global_Engine();

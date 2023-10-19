@@ -26,7 +26,15 @@ bool rectangle_f32_intersect(rectangle_f32 a, rectangle_f32 b) {
     return false;
 }
 
-bool circle_f32_intersect(circle_f32 a, circle_f32 b);
+bool circle_f32_intersect(circle_f32 a, circle_f32 b) {
+    V2 a_pos = V2(a.x, a.y);
+    V2 b_pos = V2(b.x, b.y);
+
+    V2 delta = b_pos - a_pos;
+    f32 r_delta = b.r - a.r;
+
+    return V2_dot(delta, delta) <= r_delta*r_delta;
+}
 
 void _debug_print_bitstring(u8* bytes, unsigned length) {
     unsigned bits = length * 8;
