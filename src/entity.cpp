@@ -49,15 +49,94 @@ float Timer::percentage() {
 }
 
 // Entity Base
-void Entity::draw(software_framebuffer* framebuffer, Game_Resources* resources) {
+bool Entity::touching_left_border(const Play_Area& play_area) {
+    return (position.x < 0);
+}
+
+bool Entity::touching_right_border(const Play_Area& play_area) {
+    return (position.x > play_area.width);
+}
+
+bool Entity::touching_top_border(const Play_Area& play_area) {
+    return (position.y < 0);
+}
+
+bool Entity::touching_bottom_border(const Play_Area& play_area) {
+    return (position.y + scale.y >play_area.height);
+}
+
+void Entity::clamp_to_left_border(const Play_Area& play_area) {
+    if (touching_left_border(play_area)) {
+        position.x = 0;
+    }
+}
+
+void Entity::clamp_to_right_border(const Play_Area& play_area) {
+    if (touching_right_border(play_area)) {
+        position.x = play_area.width - scale.x;
+    }
+}
+
+void Entity::clamp_to_top_border(const Play_Area& play_area) {
+    if (touching_top_border(play_area)) {
+        position.y = 0;
+    }
+}
+
+void Entity::clamp_to_bottom_border(const Play_Area& play_area) {
+    if (touching_top_border(play_area)) {
+        position.y = play_area.height - scale.y;
+    }
+}
+
+void Entity::wrap_from_left_border(const Play_Area& play_area) {
+    if (touching_left_border(play_area)) {
+        position.x = play_area.width - scale.x;
+    }
+}
+
+void Entity::wrap_from_right_border(const Play_Area& play_area) {
+    if (touching_right_border(play_area)) {
+        position.x = 0;
+    }
+}
+
+void Entity::wrap_from_top_border(const Play_Area& play_area) {
+    if (touching_top_border(play_area)) {
+        position.y = play_area.height - scale.y;
+    }
+}
+
+void Entity::wrap_from_bottom_border(const Play_Area& play_area) {
+    if (touching_top_border(play_area)) {
+        position.y = 0;
+    }
+}
+
+
+void Entity::draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources) {
+    const auto& play_area       = state->play_area;
+    int         play_area_width = play_area.width;
+    int         play_area_x     = play_area.x;
+
     auto r = get_rect();
+
     // black rectangles for default
-    software_framebuffer_draw_quad(framebuffer, rectangle_f32(r.x, r.y, r.w, r.h), color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
+    software_framebuffer_draw_quad(
+        framebuffer,
+        rectangle_f32(r.x + play_area_x, r.y, r.w, r.h),
+        color32u8(0, 0, 0, 255),
+        BLEND_MODE_ALPHA);
 }
 
 void Entity::update(Game_State* const state, f32 dt) {
+    const auto& play_area = state->play_area;
+
     position      += velocity * dt;
     t_since_spawn += dt;
+
+    // NOTE: until I have more time to implement sub behaviors on the play area
+    // for now the default behavior is clamping
 }
 
 rectangle_f32 Entity::get_rect() {
@@ -71,6 +150,7 @@ rectangle_f32 Entity::get_rect() {
 
 // PlayerActor
 void Player::update(Game_State* const state, f32 dt) {
+    const auto& play_area = state->play_area;
     // unfortunately the action mapper system doesn't exist
     // here like it did in the last project, so I'll have to use key inputs
     // and gamepad power.
@@ -96,6 +176,11 @@ void Player::update(Game_State* const state, f32 dt) {
     velocity.y = axes[1] * UNIT_SPEED;
 
     Entity::update(state, dt);
+
+    clamp_to_left_border(play_area);
+    clamp_to_right_border(play_area);
+    clamp_to_top_border(play_area);
+    clamp_to_bottom_border(play_area);
 }
 
 // BulletEntity

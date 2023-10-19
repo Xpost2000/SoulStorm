@@ -75,8 +75,8 @@ local bool LAST_SCREEN_IS_FULLSCREEN = false;
 
 local u32 SCREEN_WIDTH                    = 0;
 local u32 SCREEN_HEIGHT                   = 0;
-local u32 REAL_SCREEN_WIDTH               = 1024;
-local u32 REAL_SCREEN_HEIGHT              = 768;
+local u32 REAL_SCREEN_WIDTH               = 1280;
+local u32 REAL_SCREEN_HEIGHT              = 720;
 const u32 ENGINE_BASE_VERTICAL_RESOLUTION = 480; // scaling up to 480p resolution
 
 local V2 get_scaled_screen_resolution(V2 base_resolution) {

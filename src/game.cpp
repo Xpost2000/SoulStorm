@@ -26,7 +26,7 @@ void Game::init() {
         resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
     }
 
-    state->player.position = V2(320 - 7.5, 240 - 7.5);
+    state->player.position = V2(state->play_area.width / 2, 300);
     state->player.scale    = V2(15, 15);
     state->bullets         = Fixed_Array<Bullet>(arena, 10000);
 }
@@ -108,6 +108,12 @@ void spawn_bullet_linear(Game_State* state, V2 position, V2 additional = V2(0,0)
 }
 
 void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
+    {
+        state->play_area.x = framebuffer->width / 2 - state->play_area.width / 2;
+        state->play_area.height = framebuffer->height;
+    }
+
+
     software_framebuffer_clear_scissor(framebuffer);
     software_framebuffer_clear_buffer(framebuffer, color32u8(255, 255, 255, 255));
     software_framebuffer_draw_quad(framebuffer, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
@@ -177,8 +183,41 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     for (int i = 0; i < (int)state->bullets.size; ++i) {
         auto& b = state->bullets[i];
         b.update(state, dt);
-        b.draw(framebuffer, resources);
+        b.draw(state, framebuffer, resources);
     }
 
-    state->player.draw(framebuffer, resources);
+    state->player.draw(state, framebuffer, resources);
+
+    // draw play area borders / Game UI
+    // I'd like to have the UI fade in / animate all fancy like when I can
+    {
+        auto border_color = color32u8(128, 128, 128, 255);
+ 
+        int play_area_width = state->play_area.width;
+        int play_area_x     = state->play_area.x;
+
+        // left border
+        software_framebuffer_draw_quad(framebuffer,
+                                       rectangle_f32(0,
+                                                     0,
+                                                     play_area_x,
+                                                     framebuffer->height),
+                                       border_color, BLEND_MODE_ALPHA);
+        // right border
+        software_framebuffer_draw_quad(framebuffer,
+                                       rectangle_f32(play_area_x + play_area_width,
+                                                     0,
+                                                     framebuffer->width - play_area_width,
+                                                     framebuffer->height),
+                                       border_color, BLEND_MODE_ALPHA);
+    }
+}
+
+// Play_Area
+bool Play_Area::is_inside_absolute(rectangle_f32 rect) {
+    return (rectangle_f32_intersect(rect, rectangle_f32(x, 0, width, height)));
+}
+
+bool Play_Area::is_inside_logical(rectangle_f32 rect) {
+    return (rectangle_f32_intersect(rect, rectangle_f32(0, 0, width, height)));
 }

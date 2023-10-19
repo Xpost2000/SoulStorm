@@ -37,8 +37,22 @@ enum menu_font_variation {
     MENU_FONT_COUNT,
 };
 
+#define PLAY_AREA_WIDTH_PX (250)
+
 // this is where the actual member variables of the game go
 // the class is just a small wrapper for this stuff
+struct Play_Area {
+    int x      = 0;
+    int width  = PLAY_AREA_WIDTH_PX;
+    int height = 480;
+
+    // this is for the "game objects"
+    bool is_inside_logical(rectangle_f32 rect);
+
+    // this is for your mouse cursor or a "real" thing
+    bool is_inside_absolute(rectangle_f32 rect);
+};
+
 struct Game_State {
     Fixed_Array<Bullet> bullets;
     // should be in a separate list of it's own...
@@ -46,6 +60,10 @@ struct Game_State {
 
     // should also have some form of entity iterator
     // or something later.
+
+    // NOTE: the game runs in a "logical" resolution of (w)x480?
+    // so I'll pick a play area that's generally okay for the base configuration...
+    Play_Area play_area;
 };
 
 struct Game_Resources {

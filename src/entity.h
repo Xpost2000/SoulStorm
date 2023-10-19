@@ -29,6 +29,7 @@
 
 // I also don't want to implement another lisp interpreter...
 struct Game_State; // forward decl. Entities will need to be able to look at game_state
+struct Play_Area;
 struct Game_Resources;
 
 struct Timer {
@@ -60,14 +61,36 @@ struct Entity {
     f32   t_since_spawn = 0.0f;
 
     // I normally don't like using these... I still don't!
-    virtual void draw(software_framebuffer* framebuffer, Game_Resources* resources);
+    virtual void draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources);
     // NOTE: I only want read only states
     // wholesale updates like collisions will be checked in the main
     // game loop in game.cpp
     virtual void update(Game_State* const state, f32 dt);
-    
+
     // entities will be centered on themselves
     rectangle_f32 get_rect();
+
+
+    /*
+      These are helpers that are used to allow for the play area border to
+      do certain things.
+     */
+
+    // If I need some more specific behaviors...
+    bool touching_left_border(const Play_Area& play_area);
+    bool touching_right_border(const Play_Area& play_area);
+    bool touching_top_border(const Play_Area& play_area);
+    bool touching_bottom_border(const Play_Area& play_area);
+
+    void clamp_to_left_border(const Play_Area& play_area);
+    void clamp_to_right_border(const Play_Area& play_area);
+    void clamp_to_top_border(const Play_Area& play_area);
+    void clamp_to_bottom_border(const Play_Area& play_area);
+
+    void wrap_from_left_border(const Play_Area& play_area);
+    void wrap_from_right_border(const Play_Area& play_area);
+    void wrap_from_top_border(const Play_Area& play_area);
+    void wrap_from_bottom_border(const Play_Area& play_area);
 };
 
 /* Hazard types */
@@ -89,7 +112,7 @@ struct Explosion_Hazard {
     s32 flash_warning_times;
 
     void update(Game_State* const state, f32 dt);
-    void draw(software_framebuffer* framebuffer, Game_Resources* resources);
+    void draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources);
 };
 
 enum Laser_Hazard_Direction {
@@ -106,7 +129,7 @@ struct Laser_Hazard {
     Timer lifetime;
 
     void update(Game_State* const state, f32 dt);
-    void draw(software_framebuffer* framebuffer, Game_Resources* resources);
+    void draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources);
 };
 
 struct Player : public Entity {
@@ -118,14 +141,12 @@ struct Player : public Entity {
     void update(Game_State* const state, f32 dt);
 };
 
-// NOTE: for now I'm testing out bullet patterns with
-//       lambda closures because I don't have time to implement
-//       lua support tonight and I wanna eat dinner soon lol.
 struct Bullet : public Entity {
     /* float lifetime; // if it's -1 the bullets will die on their own later... */
     /* bool dead; */
     void update(Game_State* const state, f32 dt);
 
+    // want this to be handled via lua
     std::function<void(Bullet*, Game_State* const, f32)> velocity_function;
 };
 
