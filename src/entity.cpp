@@ -50,69 +50,128 @@ float Timer::percentage() {
 
 // Entity Base
 bool Entity::touching_left_border(const Play_Area& play_area) {
-    return (position.x < 0);
+    return (position.x-scale.x/2 < 0);
 }
 
 bool Entity::touching_right_border(const Play_Area& play_area) {
-    return (position.x > play_area.width);
+    return (position.x+scale.x/2 > play_area.width);
 }
 
 bool Entity::touching_top_border(const Play_Area& play_area) {
-    return (position.y < 0);
+    return (position.y-scale.y/2 < 0);
 }
 
 bool Entity::touching_bottom_border(const Play_Area& play_area) {
-    return (position.y + scale.y >play_area.height);
+    return (position.y+scale.y/2 >play_area.height);
 }
 
 void Entity::clamp_to_left_border(const Play_Area& play_area) {
     if (touching_left_border(play_area)) {
-        position.x = 0;
+        position.x = scale.x/2;
     }
 }
 
 void Entity::clamp_to_right_border(const Play_Area& play_area) {
     if (touching_right_border(play_area)) {
-        position.x = play_area.width - scale.x;
+        position.x = play_area.width - scale.x/2;
     }
 }
 
 void Entity::clamp_to_top_border(const Play_Area& play_area) {
     if (touching_top_border(play_area)) {
-        position.y = 0;
+        position.y = scale.y/2;
     }
 }
 
 void Entity::clamp_to_bottom_border(const Play_Area& play_area) {
-    if (touching_top_border(play_area)) {
-        position.y = play_area.height - scale.y;
+    if (touching_bottom_border(play_area)) {
+        position.y = play_area.height - scale.y/2;
     }
 }
 
 void Entity::wrap_from_left_border(const Play_Area& play_area) {
     if (touching_left_border(play_area)) {
-        position.x = play_area.width - scale.x;
+        position.x = play_area.width - scale.x/2;
     }
 }
 
 void Entity::wrap_from_right_border(const Play_Area& play_area) {
     if (touching_right_border(play_area)) {
-        position.x = 0;
+        position.x = scale.x/2;
     }
 }
 
 void Entity::wrap_from_top_border(const Play_Area& play_area) {
     if (touching_top_border(play_area)) {
-        position.y = play_area.height - scale.y;
+        position.y = play_area.height - scale.y/2;
     }
 }
 
 void Entity::wrap_from_bottom_border(const Play_Area& play_area) {
-    if (touching_top_border(play_area)) {
-        position.y = 0;
+    if (touching_bottom_border(play_area)) {
+        position.y = scale.y/2;
     }
 }
 
+void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
+    // TODO: killing, since there is no concept of HP yet.
+    // NOTE: these behaviors are mostly for the players... Enemies will just act
+    // as if it was "wrapping" behavior by default.
+
+    // refactor this to maybe be a little less unwieldy, but it's not too big of a deal
+    // since this will not change much afterwards anyways...
+    switch (play_area.edge_behaviors[0]) {
+        case PLAY_AREA_EDGE_DEADLY:
+        case PLAY_AREA_EDGE_BLOCKING: {
+            clamp_to_top_border(play_area);
+            if (play_area.edge_behaviors[0] == PLAY_AREA_EDGE_DEADLY) {
+                // extra killing code.
+            }
+        } break;
+        case PLAY_AREA_EDGE_WRAPPING: {
+            wrap_from_top_border(play_area);
+        } break;
+    }
+
+    switch (play_area.edge_behaviors[1]) {
+        case PLAY_AREA_EDGE_DEADLY:
+        case PLAY_AREA_EDGE_BLOCKING: {
+            clamp_to_bottom_border(play_area);
+            if (play_area.edge_behaviors[1] == PLAY_AREA_EDGE_DEADLY) {
+                // extra killing code.
+            }
+        } break;
+        case PLAY_AREA_EDGE_WRAPPING: {
+            wrap_from_bottom_border(play_area);
+        } break;
+    }
+
+    switch (play_area.edge_behaviors[2]) {
+        case PLAY_AREA_EDGE_DEADLY:
+        case PLAY_AREA_EDGE_BLOCKING: {
+            clamp_to_left_border(play_area);
+            if (play_area.edge_behaviors[2] == PLAY_AREA_EDGE_DEADLY) {
+                // extra killing code.
+            }
+        } break;
+        case PLAY_AREA_EDGE_WRAPPING: {
+            wrap_from_left_border(play_area);
+        } break;
+    }
+
+    switch (play_area.edge_behaviors[3]) {
+        case PLAY_AREA_EDGE_DEADLY:
+        case PLAY_AREA_EDGE_BLOCKING: {
+            clamp_to_right_border(play_area);
+            if (play_area.edge_behaviors[3] == PLAY_AREA_EDGE_DEADLY) {
+                // extra killing code.
+            }
+        } break;
+        case PLAY_AREA_EDGE_WRAPPING: {
+            wrap_from_right_border(play_area);
+        } break;
+    }
+}
 
 void Entity::draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources) {
     const auto& play_area       = state->play_area;
@@ -126,6 +185,13 @@ void Entity::draw(Game_State* const state, software_framebuffer* framebuffer, Ga
         framebuffer,
         rectangle_f32(r.x + play_area_x, r.y, r.w, r.h),
         color32u8(0, 0, 0, 255),
+        BLEND_MODE_ALPHA);
+
+    // center point
+    software_framebuffer_draw_quad(
+        framebuffer,
+        rectangle_f32(position.x + play_area_x-1, position.y-1, 2, 2),
+        color32u8(255, 0, 0, 255),
         BLEND_MODE_ALPHA);
 }
 
@@ -177,10 +243,7 @@ void Player::update(Game_State* const state, f32 dt) {
 
     Entity::update(state, dt);
 
-    clamp_to_left_border(play_area);
-    clamp_to_right_border(play_area);
-    clamp_to_top_border(play_area);
-    clamp_to_bottom_border(play_area);
+    handle_play_area_edge_behavior(play_area);
 }
 
 // BulletEntity

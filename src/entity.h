@@ -91,6 +91,8 @@ struct Entity {
     void wrap_from_right_border(const Play_Area& play_area);
     void wrap_from_top_border(const Play_Area& play_area);
     void wrap_from_bottom_border(const Play_Area& play_area);
+
+    void handle_play_area_edge_behavior(const Play_Area& play_area);
 };
 
 /* Hazard types */

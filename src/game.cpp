@@ -111,14 +111,13 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     {
         state->play_area.x = framebuffer->width / 2 - state->play_area.width / 2;
         state->play_area.height = framebuffer->height;
+
+        state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_WRAPPING);
     }
 
 
     software_framebuffer_clear_scissor(framebuffer);
     software_framebuffer_clear_buffer(framebuffer, color32u8(255, 255, 255, 255));
-    software_framebuffer_draw_quad(framebuffer, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
-
-    software_framebuffer_draw_text(framebuffer, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
 
     state->player.update(state, dt);
 
@@ -211,6 +210,9 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
                                                      framebuffer->height),
                                        border_color, BLEND_MODE_ALPHA);
     }
+
+    software_framebuffer_draw_quad(framebuffer, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
+    software_framebuffer_draw_text(framebuffer, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
 }
 
 // Play_Area
@@ -220,4 +222,10 @@ bool Play_Area::is_inside_absolute(rectangle_f32 rect) {
 
 bool Play_Area::is_inside_logical(rectangle_f32 rect) {
     return (rectangle_f32_intersect(rect, rectangle_f32(0, 0, width, height)));
+}
+
+void Play_Area::set_all_edge_behaviors_to(u8 value) {
+    for (int i = 0; i < 4; ++i) {
+        edge_behaviors[i] = value;
+    }
 }

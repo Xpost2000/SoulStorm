@@ -41,10 +41,25 @@ enum menu_font_variation {
 
 // this is where the actual member variables of the game go
 // the class is just a small wrapper for this stuff
+enum Play_Area_Edge_Behavior {
+    PLAY_AREA_EDGE_BLOCKING = 0,
+    PLAY_AREA_EDGE_DEADLY,
+    PLAY_AREA_EDGE_WRAPPING,
+    PLAY_AREA_EDGE_BEHAVIOR_COUNT,
+};
 struct Play_Area {
     int x      = 0;
     int width  = PLAY_AREA_WIDTH_PX;
     int height = 480;
+
+    union {
+        struct {
+            u8 edge_behavior_top, edge_behavior_bottom, edge_behavior_left, edge_behavior_right;
+        };
+        u8 edge_behaviors[4];
+    };
+
+    void set_all_edge_behaviors_to(u8 value);
 
     // this is for the "game objects"
     bool is_inside_logical(rectangle_f32 rect);
