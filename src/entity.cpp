@@ -30,8 +30,9 @@ void Timer::stop() {
 }
 
 void Timer::reset() {
+    _debugprintf("Timer reset.");
     running = false;
-    t = max_t;
+    t = 0;
 }
 
 bool Timer::triggered() {
@@ -262,11 +263,12 @@ void Bullet::update(Game_State* const state, f32 dt) {
 Explosion_Hazard::Explosion_Hazard(V2 position, f32 radius, f32 amount_of_time_for_warning, f32 time_until_explosion)
     : position(position),
       radius(radius),
-      show_flash_timer(Timer(0.055)),
+      show_flash_timer(Timer(0.125)),
       warning_flash_timer(amount_of_time_for_warning),
       explosion_timer(time_until_explosion),
       flash_warning_times(0),
-      presenting_flash(false)
+      presenting_flash(false),
+      exploded(false)
 {
 
 }
@@ -282,7 +284,6 @@ void Explosion_Hazard::update(Game_State* const state, f32 dt) {
                 presenting_flash = true;
             }
         } else {
-            warning_flash_timer.reset();
             show_flash_timer.start();
 
             if (show_flash_timer.triggered()) {
@@ -290,6 +291,10 @@ void Explosion_Hazard::update(Game_State* const state, f32 dt) {
 
                 presenting_flash     = false;
                 flash_warning_times += 1;
+
+                warning_flash_timer.reset();
+                show_flash_timer.reset();
+
             }
         }
     } else {
@@ -301,30 +306,32 @@ void Explosion_Hazard::update(Game_State* const state, f32 dt) {
             exploded = true;
         }
     }
+
+    warning_flash_timer.update(dt);
+    show_flash_timer.update(dt);
+    explosion_timer.update(dt);
 }
 
 void Explosion_Hazard::draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources) {
     const auto& play_area = state->play_area;
-    bool show_explosion_warning = flash_warning_times > 5;
-
-    software_framebuffer_draw_text(framebuffer,
-                                   resources->get_font(MENU_FONT_COLOR_GOLD),
-                                   2, position + V2(play_area.x, 0),
-                                   string_literal("(explosion)"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+    bool show_explosion_warning = flash_warning_times >= 5;
 
     if (show_explosion_warning) {
         software_framebuffer_draw_image_ex(framebuffer,
                                            graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
-                                           rectangle_f32(position.x - radius/2 + play_area.x, position.y - radius/2, radius/2, radius/2),
+                                           rectangle_f32(position.x - radius/2 + play_area.x, position.y - radius/2, radius, radius),
                                            RECTANGLE_F32_NULL,
-                                           color32f32(1, 1, 1, 1),
+                                           color32f32(0, 0, 0, 1),
                                            0,
                                            BLEND_MODE_ALPHA);
+
+        f32 explosion_percentage = explosion_timer.percentage();
+        f32 adjusted_radius      = radius * explosion_percentage;
         software_framebuffer_draw_image_ex(framebuffer,
                                            graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
-                                           rectangle_f32(position.x - radius/2 + play_area.x, position.y - radius/2, radius/2, radius/2),
+                                           rectangle_f32(position.x - adjusted_radius/2 + play_area.x, position.y - adjusted_radius/2, adjusted_radius, adjusted_radius),
                                            RECTANGLE_F32_NULL,
-                                           color32f32(1, 0, 0, explosion_timer.percentage()),
+                                           color32f32(1, 0, 0, explosion_percentage),
                                            0,
                                            BLEND_MODE_ALPHA);
     } else {

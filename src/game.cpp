@@ -183,8 +183,7 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     }
 
     if (Input::is_key_pressed(KEY_X)) {
-        Explosion_Hazard h = Explosion_Hazard(state->player.position, 25, 0.5f, 0.5f);
-        _debugprintf("Please explode");
+        Explosion_Hazard h = Explosion_Hazard(state->player.position, 200, 0.5f, 1.0f);
         state->explosion_hazards.push(h);
     }
 
@@ -228,6 +227,19 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
 
     software_framebuffer_draw_quad(framebuffer, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
     software_framebuffer_draw_text(framebuffer, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+
+    handle_all_explosions(dt);
+}
+
+void Game::handle_all_explosions(f32 dt) {
+    for (int i = 0; i < state->explosion_hazards.size; ++i) {
+        auto& h = state->explosion_hazards[i];
+
+        if (h.exploded) {
+            _debugprintf("biggest boom ever.");
+            state->explosion_hazards.pop_and_swap(i);
+        }
+    }
 }
 
 // Play_Area
