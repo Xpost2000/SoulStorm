@@ -4,6 +4,8 @@
 #include"game_state.h"
 
 // Timer
+
+Timer::Timer() {}
 Timer::Timer(f32 hit) :
     running(false), t(0.0f), hit_t(hit), max_t(hit) {
     
@@ -254,4 +256,70 @@ void Bullet::update(Game_State* const state, f32 dt) {
     }
 
     Entity::update(state, dt);
+}
+
+// Explosion Hazard
+Explosion_Hazard::Explosion_Hazard(V2 position, f32 radius, f32 amount_of_time_for_warning, f32 time_until_explosion)
+    : position(position),
+      radius(radius),
+      show_flash_timer(Timer(0.055)),
+      warning_flash_timer(amount_of_time_for_warning),
+      explosion_timer(time_until_explosion),
+      flash_warning_times(0),
+      presenting_flash(false)
+{
+
+}
+
+Explosion_Hazard::Explosion_Hazard() {}
+
+void Explosion_Hazard::update(Game_State* const state, f32 dt) {
+    if (flash_warning_times < 5) {
+        if (!presenting_flash) {
+            warning_flash_timer.start();
+
+            if (warning_flash_timer.triggered()) {
+                presenting_flash = true;
+            }
+        } else {
+            warning_flash_timer.reset();
+            show_flash_timer.start();
+
+            if (show_flash_timer.triggered()) {
+                // also play a sound.
+
+                presenting_flash     = false;
+                flash_warning_times += 1;
+            }
+        }
+    } else {
+        // ready to explode
+        explosion_timer.start();
+
+        if (explosion_timer.triggered()) {
+            // a big bang!
+            exploded = true;
+        }
+    }
+}
+
+void Explosion_Hazard::draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources) {
+    bool show_explosion_warning = flash_warning_times > 5;
+
+    if (show_explosion_warning) {
+        software_framebuffer_draw_image_ex(framebuffer,
+                                           graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
+                                           rectangle_f32(position.x - radius/2, position.y - radius/2, radius/2, radius/2),
+                                           RECTANGLE_F32_NULL,
+                                           color32f32(1, 1, 1, 1),
+                                           0,
+                                           BLEND_MODE_ALPHA);
+    } else {
+        if (presenting_flash) {
+            software_framebuffer_draw_text(framebuffer,
+                                           resources->get_font(MENU_FONT_COLOR_GOLD),
+                                           2, position,
+                                           string_literal("!!"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+        }
+    }
 }

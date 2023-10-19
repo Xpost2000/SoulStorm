@@ -33,6 +33,7 @@ struct Play_Area;
 struct Game_Resources;
 
 struct Timer {
+    Timer();
     Timer(f32 hit);
 
     // While I could have a global timer service
@@ -101,7 +102,13 @@ struct Entity {
 // really meant to be big objects like regular entities,
 // so I'm keeping these completely separate.
 // NOTE: will need to spawn a particle system when it dies
-// 
+
+// These are still designed to be relatively "parallel" friendly
+// so I'll spawn the hazards these things are supposed to be spawning inside of
+// the game loop, instead of as part of the method.
+// It simplifies the logic in my opinion by just keeping these in the main game code.
+
+// NOTE: position is centered.
 struct Explosion_Hazard {
     Explosion_Hazard(V2 position, f32 radius, f32 amount_of_time_for_warning, f32 time_until_explosion);
     Explosion_Hazard();
@@ -110,8 +117,13 @@ struct Explosion_Hazard {
     f32 radius;
 
     Timer warning_flash_timer;
+    Timer show_flash_timer;
+
     Timer explosion_timer;
     s32 flash_warning_times;
+
+    bool presenting_flash;
+    bool exploded;
 
     void update(Game_State* const state, f32 dt);
     void draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources);
@@ -127,7 +139,10 @@ struct Laser_Hazard {
 
     float position  = 0.0f;
     int   direction = LASER_HAZARD_DIRECTION_HORIZONTAL;
+
     Timer warning_flash_timer;
+    Timer show_flash_timer;
+
     Timer lifetime;
 
     void update(Game_State* const state, f32 dt);

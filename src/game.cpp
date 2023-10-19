@@ -26,6 +26,8 @@ void Game::init() {
         resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
     }
 
+    resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
+
     state->player.position = V2(state->play_area.width / 2, 300);
     state->player.scale    = V2(15, 15);
     state->bullets         = Fixed_Array<Bullet>(arena, 10000);

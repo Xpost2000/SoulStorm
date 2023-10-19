@@ -84,6 +84,7 @@ struct Game_State {
 struct Game_Resources {
     graphics_assets graphics_assets;
     font_id         menu_fonts[MENU_FONT_COUNT];
+    image_id        circle;
 
     inline font_cache* get_font(s32 variation) {
         struct font_cache* font = graphics_assets_get_font_by_id(&graphics_assets, menu_fonts[variation]);
