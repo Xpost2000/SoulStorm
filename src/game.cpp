@@ -191,7 +191,7 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     }
 
     if (Input::is_key_pressed(KEY_X)) {
-        Explosion_Hazard h = Explosion_Hazard(state->player.position, 200, 0.5f, 1.0f);
+        Explosion_Hazard h = Explosion_Hazard(state->player.position, 125, 0.5f, 1.0f);
         state->explosion_hazards.push(h);
     }
     if (Input::is_key_pressed(KEY_C)) {
@@ -258,6 +258,14 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
 }
 
 void Game::handle_all_dead_entities(f32 dt) {
+    for (int i = 0; i < state->bullets.size; ++i) {
+        auto& b = state->bullets[i];
+
+        if (b.die) {
+            state->bullets.pop_and_swap(i);
+        }
+    }
+
     if (state->player.die) {
         Global_Engine()->die();
     }

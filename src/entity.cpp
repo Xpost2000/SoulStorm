@@ -53,24 +53,25 @@ float Timer::percentage() {
 
 // Entity Base
 bool Entity::touching_left_border(const Play_Area& play_area) {
-    return (position.x-scale.x/2 < 0);
+    return (position.x < 0);
 }
 
 bool Entity::touching_right_border(const Play_Area& play_area) {
-    return (position.x+scale.x/2 > play_area.width);
+    return (position.x > play_area.width);
 }
 
 bool Entity::touching_top_border(const Play_Area& play_area) {
-    return (position.y-scale.y/2 < 0);
+    return (position.y < 0);
 }
 
 bool Entity::touching_bottom_border(const Play_Area& play_area) {
-    return (position.y+scale.y/2 >play_area.height);
+    return (position.y >play_area.height);
 }
 
 bool Entity::clamp_to_left_border(const Play_Area& play_area) {
     if (touching_left_border(play_area)) {
-        position.x = scale.x/2;
+        velocity.x = 0;
+        position.x = 0;
         return true;
     }
     return false;
@@ -78,7 +79,8 @@ bool Entity::clamp_to_left_border(const Play_Area& play_area) {
 
 bool Entity::clamp_to_right_border(const Play_Area& play_area) {
     if (touching_right_border(play_area)) {
-        position.x = play_area.width - scale.x/2;
+        velocity.x = 0;
+        position.x = play_area.width;
         return true;
     }
     return false;
@@ -86,7 +88,8 @@ bool Entity::clamp_to_right_border(const Play_Area& play_area) {
 
 bool Entity::clamp_to_top_border(const Play_Area& play_area) {
     if (touching_top_border(play_area)) {
-        position.y = scale.y/2;
+        velocity.y = 0;
+        position.y = 0;
         return true;
     }
     return false;
@@ -94,7 +97,8 @@ bool Entity::clamp_to_top_border(const Play_Area& play_area) {
 
 bool Entity::clamp_to_bottom_border(const Play_Area& play_area) {
     if (touching_bottom_border(play_area)) {
-        position.y = play_area.height - scale.y/2;
+        velocity.y = 0;
+        position.y = play_area.height;
         return true;
     }
     return false;
@@ -102,7 +106,7 @@ bool Entity::clamp_to_bottom_border(const Play_Area& play_area) {
 
 bool Entity::wrap_from_left_border(const Play_Area& play_area) {
     if (touching_left_border(play_area)) {
-        position.x = play_area.width - scale.x/2;
+        position.x = play_area.width;
         return true;
     }
     return false;
@@ -110,7 +114,7 @@ bool Entity::wrap_from_left_border(const Play_Area& play_area) {
 
 bool Entity::wrap_from_right_border(const Play_Area& play_area) {
     if (touching_right_border(play_area)) {
-        position.x = scale.x/2;
+        position.x = 0;
         return true;
     }
     return false;
@@ -118,7 +122,7 @@ bool Entity::wrap_from_right_border(const Play_Area& play_area) {
 
 bool Entity::wrap_from_top_border(const Play_Area& play_area) {
     if (touching_top_border(play_area)) {
-        position.y = play_area.height - scale.y/2;
+        position.y = play_area.height;
         return true;
     }
     return false;
@@ -126,7 +130,7 @@ bool Entity::wrap_from_top_border(const Play_Area& play_area) {
 
 bool Entity::wrap_from_bottom_border(const Play_Area& play_area) {
     if (touching_bottom_border(play_area)) {
-        position.y = scale.y/2;
+        position.y = 0;
         return true;
     }
     return false;
@@ -239,10 +243,10 @@ void Entity::update(Game_State* const state, f32 dt) {
 
 rectangle_f32 Entity::get_rect() {
     return rectangle_f32(
-        position.x - scale.x/2,
-        position.y - scale.y/2,
-        scale.x,
-        scale.y
+        position.x - scale.x,
+        position.y - scale.y,
+        scale.x*2,
+        scale.y*2
     );
 }
 
@@ -280,12 +284,20 @@ void Player::update(Game_State* const state, f32 dt) {
 
 // BulletEntity
 void Bullet::update(Game_State* const state, f32 dt) {
+    const auto& play_area = state->play_area;
+
     velocity = V2(0, 0);
     if (velocity_function) {
         velocity_function(this, state, dt);
     }
 
     Entity::update(state, dt);
+
+    // NOTE: needs flags to determine whether it obeys play area restrictions.
+    wrap_from_right_border(play_area);
+    wrap_from_top_border(play_area);
+    wrap_from_bottom_border(play_area);
+    wrap_from_left_border(play_area);
 }
 
 // Hazard Warning
@@ -417,13 +429,13 @@ Laser_Hazard::Laser_Hazard() {
 }
 
 rectangle_f32 Laser_Hazard::get_rect(const Play_Area* area) {
-    f32 adjusted_position = position - radius/2;
+    f32 adjusted_position = position - radius;
     switch (direction) {
         case LASER_HAZARD_DIRECTION_HORIZONTAL: {
-            return rectangle_f32(0, adjusted_position, area->width, radius);
+            return rectangle_f32(0, adjusted_position, area->width, radius*2);
         } break;
         case LASER_HAZARD_DIRECTION_VERTICAL: {
-            return rectangle_f32(adjusted_position, 0, radius, area->height);
+            return rectangle_f32(adjusted_position, 0, radius*2, area->height);
         } break;
     }
 

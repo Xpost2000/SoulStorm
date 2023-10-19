@@ -191,7 +191,7 @@ struct Player : public Entity {
 
 struct Bullet : public Entity {
     /* float lifetime; // if it's -1 the bullets will die on their own later... */
-    /* bool dead; */
+    // bool dead;
     void update(Game_State* const state, f32 dt);
 
     // want this to be handled via lua
