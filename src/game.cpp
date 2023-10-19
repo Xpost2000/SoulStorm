@@ -28,9 +28,10 @@ void Game::init() {
 
     resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
 
-    state->player.position = V2(state->play_area.width / 2, 300);
-    state->player.scale    = V2(15, 15);
-    state->bullets         = Fixed_Array<Bullet>(arena, 10000);
+    state->player.position   = V2(state->play_area.width / 2, 300);
+    state->player.scale      = V2(15, 15);
+    state->bullets           = Fixed_Array<Bullet>(arena, 10000);
+    state->explosion_hazards = Fixed_Array<Explosion_Hazard>(arena, 256);
 }
 
 void Game::deinit() {
@@ -181,10 +182,22 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
         }
     }
 
+    if (Input::is_key_pressed(KEY_X)) {
+        Explosion_Hazard h = Explosion_Hazard(state->player.position, 25, 0.5f, 0.5f);
+        _debugprintf("Please explode");
+        state->explosion_hazards.push(h);
+    }
+
     for (int i = 0; i < (int)state->bullets.size; ++i) {
         auto& b = state->bullets[i];
         b.update(state, dt);
         b.draw(state, framebuffer, resources);
+    }
+
+    for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
+        auto& h = state->explosion_hazards[i];
+        h.update(state, dt);
+        h.draw(state, framebuffer, resources);
     }
 
     state->player.draw(state, framebuffer, resources);

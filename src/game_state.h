@@ -70,6 +70,7 @@ struct Play_Area {
 
 struct Game_State {
     Fixed_Array<Bullet> bullets;
+    Fixed_Array<Explosion_Hazard> explosion_hazards;
     // should be in a separate list of it's own...
     Player              player;
 

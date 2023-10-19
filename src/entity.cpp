@@ -304,21 +304,34 @@ void Explosion_Hazard::update(Game_State* const state, f32 dt) {
 }
 
 void Explosion_Hazard::draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources) {
+    const auto& play_area = state->play_area;
     bool show_explosion_warning = flash_warning_times > 5;
+
+    software_framebuffer_draw_text(framebuffer,
+                                   resources->get_font(MENU_FONT_COLOR_GOLD),
+                                   2, position + V2(play_area.x, 0),
+                                   string_literal("(explosion)"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
 
     if (show_explosion_warning) {
         software_framebuffer_draw_image_ex(framebuffer,
                                            graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
-                                           rectangle_f32(position.x - radius/2, position.y - radius/2, radius/2, radius/2),
+                                           rectangle_f32(position.x - radius/2 + play_area.x, position.y - radius/2, radius/2, radius/2),
                                            RECTANGLE_F32_NULL,
                                            color32f32(1, 1, 1, 1),
+                                           0,
+                                           BLEND_MODE_ALPHA);
+        software_framebuffer_draw_image_ex(framebuffer,
+                                           graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
+                                           rectangle_f32(position.x - radius/2 + play_area.x, position.y - radius/2, radius/2, radius/2),
+                                           RECTANGLE_F32_NULL,
+                                           color32f32(1, 0, 0, explosion_timer.percentage()),
                                            0,
                                            BLEND_MODE_ALPHA);
     } else {
         if (presenting_flash) {
             software_framebuffer_draw_text(framebuffer,
                                            resources->get_font(MENU_FONT_COLOR_GOLD),
-                                           2, position,
+                                           2, position + V2(play_area.x, 0),
                                            string_literal("!!"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
         }
     }
