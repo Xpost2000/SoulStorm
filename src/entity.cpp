@@ -210,6 +210,15 @@ void Entity::draw(Game_State* const state, software_framebuffer* framebuffer, Ga
         color32u8(0, 0, 0, 255),
         BLEND_MODE_ALPHA);
 
+    software_framebuffer_draw_image_ex(framebuffer,
+                                       graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
+                                       rectangle_f32(position.x - scale.x  + play_area.x, position.y - scale.x, scale.x*2, scale.x*2),
+                                       RECTANGLE_F32_NULL,
+                                       color32f32(1.0, 0, 1.0, 0.5f),
+                                       0,
+                                       BLEND_MODE_ALPHA);
+
+
     // center point
     software_framebuffer_draw_quad(
         framebuffer,
@@ -279,23 +288,21 @@ void Bullet::update(Game_State* const state, f32 dt) {
     Entity::update(state, dt);
 }
 
-// Explosion Hazard
-Explosion_Hazard::Explosion_Hazard() {}
-
-Explosion_Hazard::Explosion_Hazard(V2 position, f32 radius, f32 amount_of_time_for_warning, f32 time_until_explosion)
-    : position(position),
-      radius(radius),
-      show_flash_timer(Timer(DEFAULT_SHOW_FLASH_WARNING_TIMER)),
-      warning_flash_timer(amount_of_time_for_warning),
-      explosion_timer(time_until_explosion),
+// Hazard Warning
+Hazard_Warning::Hazard_Warning(f32 amount_of_time_for_warning)
+    : warning_flash_timer(amount_of_time_for_warning),
+      show_flash_timer(DEFAULT_SHOW_FLASH_WARNING_TIMER),
       flash_warning_times(0),
-      presenting_flash(false),
-      exploded(false)
+      presenting_flash(false)
 {
-
+    
 }
 
-void Explosion_Hazard::update(Game_State* const state, f32 dt) {
+Hazard_Warning::Hazard_Warning() {
+    
+}
+
+void Hazard_Warning::update(f32 dt) {
     if (flash_warning_times < DEFAULT_SHOW_FLASH_WARNING_TIMES) {
         if (!presenting_flash) {
             warning_flash_timer.start();
@@ -317,29 +324,59 @@ void Explosion_Hazard::update(Game_State* const state, f32 dt) {
 
             }
         }
-    } else {
-        // ready to explode
+    }
+
+    warning_flash_timer.update(dt);
+    show_flash_timer.update(dt);
+}
+
+bool Hazard_Warning::finished_presenting() {
+    return flash_warning_times >= DEFAULT_SHOW_FLASH_WARNING_TIMES;
+}
+
+// Explosion Hazard
+Explosion_Hazard::Explosion_Hazard() {}
+
+Explosion_Hazard::Explosion_Hazard(V2 position, f32 radius, f32 amount_of_time_for_warning, f32 time_until_explosion)
+    : position(position),
+      radius(radius),
+      warning(amount_of_time_for_warning),
+      explosion_timer(time_until_explosion),
+      exploded(false)
+{
+
+}
+
+void Explosion_Hazard::update(Game_State* const state, f32 dt) {
+    if (warning.finished_presenting()) {
         explosion_timer.start();
 
         if (explosion_timer.triggered()) {
             // a big bang!
             exploded = true;
         }
+    } else {
+        on_presenting_flash_events = false;
+        if (warning.presenting_flash) {
+            // played sound
+            if (!on_presenting_flash_events) {
+                on_presenting_flash_events = true;
+            }
+        }
     }
 
-    warning_flash_timer.update(dt);
-    show_flash_timer.update(dt);
+    warning.update(dt);
     explosion_timer.update(dt);
 }
 
 void Explosion_Hazard::draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources) {
     const auto& play_area = state->play_area;
-    bool show_explosion_warning = flash_warning_times >= DEFAULT_SHOW_FLASH_WARNING_TIMES;
+    bool show_explosion_warning = warning.finished_presenting();
 
     if (show_explosion_warning) {
         software_framebuffer_draw_image_ex(framebuffer,
                                            graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
-                                           rectangle_f32(position.x - radius/2 + play_area.x, position.y - radius/2, radius, radius),
+                                           rectangle_f32(position.x - radius + play_area.x, position.y - radius, radius*2, radius*2),
                                            RECTANGLE_F32_NULL,
                                            color32f32(0, 0, 0, 1),
                                            0,
@@ -349,13 +386,13 @@ void Explosion_Hazard::draw(Game_State* const state, software_framebuffer* frame
         f32 adjusted_radius      = radius * explosion_percentage;
         software_framebuffer_draw_image_ex(framebuffer,
                                            graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
-                                           rectangle_f32(position.x - adjusted_radius/2 + play_area.x, position.y - adjusted_radius/2, adjusted_radius, adjusted_radius),
+                                           rectangle_f32(position.x - adjusted_radius + play_area.x, position.y - adjusted_radius, adjusted_radius*2, adjusted_radius*2),
                                            RECTANGLE_F32_NULL,
                                            color32f32(1, 0, 0, explosion_percentage),
                                            0,
                                            BLEND_MODE_ALPHA);
     } else {
-        if (presenting_flash) {
+        if (warning.presenting_flash) {
             software_framebuffer_draw_text(framebuffer,
                                            resources->get_font(MENU_FONT_COLOR_GOLD),
                                            2, position + V2(play_area.x, 0),
@@ -368,10 +405,8 @@ void Explosion_Hazard::draw(Game_State* const state, software_framebuffer* frame
 Laser_Hazard::Laser_Hazard(float position, float radius, int direction, float amount_of_time_for_warning, float how_long_to_live)
     : position(position),
       direction(direction),
-      warning_flash_timer(Timer(amount_of_time_for_warning)),
-      show_flash_timer(Timer(DEFAULT_SHOW_FLASH_WARNING_TIMER)),
+      warning(amount_of_time_for_warning),
       lifetime(how_long_to_live),
-      flash_warning_times(0),
       radius(radius)
 {
     
@@ -397,29 +432,11 @@ rectangle_f32 Laser_Hazard::get_rect(const Play_Area* area) {
 }
 
 bool Laser_Hazard::ready() {
-    return (flash_warning_times > DEFAULT_SHOW_FLASH_WARNING_TIMES);
+    return warning.finished_presenting();
 }
 
 void Laser_Hazard::update(Game_State* const state, f32 dt) {
-    if (!ready()) {
-        if (!presenting_flash) {
-            warning_flash_timer.start();
-
-            if (warning_flash_timer.triggered()) {
-                presenting_flash = true;
-                warning_flash_timer.reset();
-            }
-        } else {
-            show_flash_timer.start();
-
-            if (show_flash_timer.triggered()) {
-                presenting_flash = false;
-                show_flash_timer.reset();
-                flash_warning_times += 1;
-                _debugprintf("%d", flash_warning_times);
-            }
-        }
-    } else {
+    if (warning.finished_presenting()) {
         lifetime.start();
         // default update
         position += velocity * dt;
@@ -433,10 +450,16 @@ void Laser_Hazard::update(Game_State* const state, f32 dt) {
                 die = true;
             }
         }
+    } else {
+        on_presenting_flash_events = false;
+        if (warning.presenting_flash) {
+            if (!on_presenting_flash_events) {
+                on_presenting_flash_events = true;
+            }
+        }
     }
 
-    warning_flash_timer.update(dt);
-    show_flash_timer.update(dt);
+    warning.update(dt);
 }
 
 void Laser_Hazard::draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources) {
@@ -446,7 +469,7 @@ void Laser_Hazard::draw(Game_State* const state, software_framebuffer* framebuff
     rectangle.x += play_area.x;
 
     if (!ready()) {
-        if (presenting_flash) {
+        if (warning.presenting_flash) {
             software_framebuffer_draw_quad(
                 framebuffer,
                 rectangle,

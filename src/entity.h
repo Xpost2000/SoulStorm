@@ -3,7 +3,7 @@
 
 // should vary by "difficulty"
 #define DEFAULT_SHOW_FLASH_WARNING_TIMER (0.125)
-#define DEFAULT_SHOW_FLASH_WARNING_TIMES (4)
+#define DEFAULT_SHOW_FLASH_WARNING_TIMES (5)
 
 #include "graphics.h"
 #include "common.h"
@@ -103,6 +103,19 @@ struct Entity {
     void handle_play_area_edge_behavior(const Play_Area& play_area);
 };
 
+struct Hazard_Warning {
+    Hazard_Warning(f32 amount_of_time_for_warning);
+    Hazard_Warning();
+
+    Timer warning_flash_timer;
+    Timer show_flash_timer;
+    s32   flash_warning_times;
+    bool  presenting_flash;
+
+    void update(f32 dt);
+    bool finished_presenting();
+};
+
 /* Hazard types */
 //
 // While technically "entities" per say, they're not
@@ -123,10 +136,8 @@ struct Explosion_Hazard {
     V2  position;
     f32 radius;
 
-    Timer warning_flash_timer;
-    Timer show_flash_timer;
-    s32   flash_warning_times;
-    bool  presenting_flash;
+    Hazard_Warning warning;
+    bool on_presenting_flash_events;
 
     Timer explosion_timer;
 
@@ -155,10 +166,8 @@ struct Laser_Hazard {
     float velocity  = 0.0f;
     int   direction = LASER_HAZARD_DIRECTION_HORIZONTAL;
 
-    Timer warning_flash_timer;
-    Timer show_flash_timer;
-    int   flash_warning_times;
-    bool  presenting_flash;
+    Hazard_Warning warning;
+    bool on_presenting_flash_events;
 
     Timer lifetime;
     bool  die = false; // force kill flag
