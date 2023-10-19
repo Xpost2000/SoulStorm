@@ -261,18 +261,18 @@ void Game::handle_all_lasers(f32 dt) {
     for (int i = 0; i < state->laser_hazards.size; ++i) {
         auto& h = state->laser_hazards[i];
 
+        if (h.ready()) {
+            auto laser_rect  = h.get_rect(&state->play_area);
+            auto player_rect = state->player.get_rect();
+
+            if (rectangle_f32_intersect(player_rect, laser_rect)) {
+                _debugprintf("Hi, I died.");
+                state->player.die = true;
+            }
+        }
+
         if (h.die) {
             _debugprintf("bye bye laser");
-
-            {
-                auto laser_rect  = h.get_rect(&state->play_area);
-                auto player_rect = state->player.get_rect();
-
-                if (rectangle_f32_intersect(player_rect, laser_rect)) {
-                    _debugprintf("Hi, I died.");
-                    state->player.die = true;
-                }
-            }
 
             state->laser_hazards.pop_and_swap(i);
         }

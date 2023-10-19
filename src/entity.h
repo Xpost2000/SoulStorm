@@ -165,6 +165,7 @@ struct Laser_Hazard {
 
     void update(Game_State* const state, f32 dt);
     void draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources);
+    bool ready();
 
     // since it relies on the size of the play area
     rectangle_f32 get_rect(const Play_Area* area);

@@ -396,8 +396,12 @@ rectangle_f32 Laser_Hazard::get_rect(const Play_Area* area) {
     return RECTANGLE_F32_NULL;
 }
 
+bool Laser_Hazard::ready() {
+    return (flash_warning_times > DEFAULT_SHOW_FLASH_WARNING_TIMES);
+}
+
 void Laser_Hazard::update(Game_State* const state, f32 dt) {
-    if (flash_warning_times < DEFAULT_SHOW_FLASH_WARNING_TIMES) {
+    if (!ready()) {
         if (!presenting_flash) {
             warning_flash_timer.start();
 
@@ -441,7 +445,7 @@ void Laser_Hazard::draw(Game_State* const state, software_framebuffer* framebuff
 
     rectangle.x += play_area.x;
 
-    if (flash_warning_times < DEFAULT_SHOW_FLASH_WARNING_TIMES) {
+    if (!ready()) {
         if (presenting_flash) {
             software_framebuffer_draw_quad(
                 framebuffer,
