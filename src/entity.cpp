@@ -52,26 +52,38 @@ float Timer::percentage() {
 }
 
 // Entity Base
-bool Entity::touching_left_border(const Play_Area& play_area) {
-    return (position.x < 0);
+bool Entity::touching_left_border(const Play_Area& play_area, bool as_point) {
+    if (as_point)
+        return (position.x < 0);
+    else
+        return (position.x - scale.x < 0);
 }
 
-bool Entity::touching_right_border(const Play_Area& play_area) {
-    return (position.x > play_area.width);
+bool Entity::touching_right_border(const Play_Area& play_area, bool as_point) {
+    if (as_point)
+        return (position.x > play_area.width);
+    else
+        return (position.x + scale.x > play_area.width);
 }
 
-bool Entity::touching_top_border(const Play_Area& play_area) {
-    return (position.y < 0);
+bool Entity::touching_top_border(const Play_Area& play_area, bool as_point) {
+    if (as_point)
+        return (position.y < 0);
+    else
+        return (position.y - scale.y < 0);
 }
 
-bool Entity::touching_bottom_border(const Play_Area& play_area) {
-    return (position.y >play_area.height);
+bool Entity::touching_bottom_border(const Play_Area& play_area, bool as_point) {
+    if (as_point)
+        return (position.y > play_area.height);
+    else
+        return (position.y + scale.y > play_area.height);
 }
 
 bool Entity::clamp_to_left_border(const Play_Area& play_area) {
     if (touching_left_border(play_area)) {
         velocity.x = 0;
-        position.x = 0;
+        position.x = scale.x;
         return true;
     }
     return false;
@@ -80,7 +92,7 @@ bool Entity::clamp_to_left_border(const Play_Area& play_area) {
 bool Entity::clamp_to_right_border(const Play_Area& play_area) {
     if (touching_right_border(play_area)) {
         velocity.x = 0;
-        position.x = play_area.width;
+        position.x = play_area.width - scale.x;
         return true;
     }
     return false;
@@ -89,7 +101,7 @@ bool Entity::clamp_to_right_border(const Play_Area& play_area) {
 bool Entity::clamp_to_top_border(const Play_Area& play_area) {
     if (touching_top_border(play_area)) {
         velocity.y = 0;
-        position.y = 0;
+        position.y = scale.y;
         return true;
     }
     return false;
@@ -98,14 +110,14 @@ bool Entity::clamp_to_top_border(const Play_Area& play_area) {
 bool Entity::clamp_to_bottom_border(const Play_Area& play_area) {
     if (touching_bottom_border(play_area)) {
         velocity.y = 0;
-        position.y = play_area.height;
+        position.y = play_area.height - scale.y;
         return true;
     }
     return false;
 }
 
 bool Entity::wrap_from_left_border(const Play_Area& play_area) {
-    if (touching_left_border(play_area)) {
+    if (touching_left_border(play_area, true)) {
         position.x = play_area.width;
         return true;
     }
@@ -113,7 +125,7 @@ bool Entity::wrap_from_left_border(const Play_Area& play_area) {
 }
 
 bool Entity::wrap_from_right_border(const Play_Area& play_area) {
-    if (touching_right_border(play_area)) {
+    if (touching_right_border(play_area, true)) {
         position.x = 0;
         return true;
     }
@@ -121,7 +133,7 @@ bool Entity::wrap_from_right_border(const Play_Area& play_area) {
 }
 
 bool Entity::wrap_from_top_border(const Play_Area& play_area) {
-    if (touching_top_border(play_area)) {
+    if (touching_top_border(play_area, true)) {
         position.y = play_area.height;
         return true;
     }
@@ -129,7 +141,7 @@ bool Entity::wrap_from_top_border(const Play_Area& play_area) {
 }
 
 bool Entity::wrap_from_bottom_border(const Play_Area& play_area) {
-    if (touching_bottom_border(play_area)) {
+    if (touching_bottom_border(play_area, true)) {
         position.y = 0;
         return true;
     }

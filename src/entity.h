@@ -85,10 +85,10 @@ struct Entity {
      */
 
     // If I need some more specific behaviors...
-    bool touching_left_border(const Play_Area& play_area);
-    bool touching_right_border(const Play_Area& play_area);
-    bool touching_top_border(const Play_Area& play_area);
-    bool touching_bottom_border(const Play_Area& play_area);
+    bool touching_left_border(const Play_Area& play_area, bool as_point=false);
+    bool touching_right_border(const Play_Area& play_area, bool as_point=false);
+    bool touching_top_border(const Play_Area& play_area, bool as_point=false);
+    bool touching_bottom_border(const Play_Area& play_area, bool as_point=false);
 
     bool clamp_to_left_border(const Play_Area& play_area);
     bool clamp_to_right_border(const Play_Area& play_area);
