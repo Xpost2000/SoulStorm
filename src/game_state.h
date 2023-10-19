@@ -37,7 +37,7 @@ enum menu_font_variation {
     MENU_FONT_COUNT,
 };
 
-#define PLAY_AREA_WIDTH_PX (250)
+#define PLAY_AREA_WIDTH_PX (350)
 
 // this is where the actual member variables of the game go
 // the class is just a small wrapper for this stuff
@@ -69,7 +69,8 @@ struct Play_Area {
 };
 
 struct Game_State {
-    Fixed_Array<Bullet> bullets;
+    Fixed_Array<Bullet>           bullets;
+    Fixed_Array<Laser_Hazard>     laser_hazards;
     Fixed_Array<Explosion_Hazard> explosion_hazards;
     // should be in a separate list of it's own...
     Player              player;

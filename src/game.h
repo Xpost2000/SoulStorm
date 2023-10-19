@@ -30,6 +30,7 @@ public:
     void update_and_render(software_framebuffer* framebuffer, f32 dt);
 private: 
     void handle_all_explosions(f32 dt);
+    void handle_all_lasers(f32 dt);
 
     Memory_Arena*   arena;
     Game_State*     state;

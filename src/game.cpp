@@ -30,8 +30,10 @@ void Game::init() {
 
     state->player.position   = V2(state->play_area.width / 2, 300);
     state->player.scale      = V2(15, 15);
+
     state->bullets           = Fixed_Array<Bullet>(arena, 10000);
     state->explosion_hazards = Fixed_Array<Explosion_Hazard>(arena, 256);
+    state->laser_hazards     = Fixed_Array<Laser_Hazard>(arena, 128);
 }
 
 void Game::deinit() {
@@ -186,6 +188,15 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
         Explosion_Hazard h = Explosion_Hazard(state->player.position, 200, 0.5f, 1.0f);
         state->explosion_hazards.push(h);
     }
+    if (Input::is_key_pressed(KEY_C)) {
+        Laser_Hazard h = Laser_Hazard(state->player.position.y, 30.0f, LASER_HAZARD_DIRECTION_HORIZONTAL, 1.0f, 15.0f);
+        state->laser_hazards.push(h);
+    }
+
+    if (Input::is_key_pressed(KEY_V)) {
+        Laser_Hazard h = Laser_Hazard(state->player.position.x, 30.0f, LASER_HAZARD_DIRECTION_VERTICAL, 1.0f, 15.0f);
+        state->laser_hazards.push(h);
+    }
 
     for (int i = 0; i < (int)state->bullets.size; ++i) {
         auto& b = state->bullets[i];
@@ -195,6 +206,12 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
 
     for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
         auto& h = state->explosion_hazards[i];
+        h.update(state, dt);
+        h.draw(state, framebuffer, resources);
+    }
+
+    for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
+        auto& h = state->laser_hazards[i];
         h.update(state, dt);
         h.draw(state, framebuffer, resources);
     }
@@ -229,6 +246,18 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     software_framebuffer_draw_text(framebuffer, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
 
     handle_all_explosions(dt);
+    handle_all_lasers(dt);
+}
+
+void Game::handle_all_lasers(f32 dt) {
+    for (int i = 0; i < state->laser_hazards.size; ++i) {
+        auto& h = state->laser_hazards[i];
+
+        if (h.die) {
+            _debugprintf("bye bye laser");
+            state->laser_hazards.pop_and_swap(i);
+        }
+    }
 }
 
 void Game::handle_all_explosions(f32 dt) {

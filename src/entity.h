@@ -1,6 +1,10 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
+// should vary by "difficulty"
+#define DEFAULT_SHOW_FLASH_WARNING_TIMER (0.125)
+#define DEFAULT_SHOW_FLASH_WARNING_TIMES (4)
+
 #include "graphics.h"
 #include "common.h"
 #include "v2.h"
@@ -118,11 +122,11 @@ struct Explosion_Hazard {
 
     Timer warning_flash_timer;
     Timer show_flash_timer;
+    s32   flash_warning_times;
+    bool  presenting_flash;
 
     Timer explosion_timer;
-    s32 flash_warning_times;
 
-    bool presenting_flash;
     bool exploded;
 
     void update(Game_State* const state, f32 dt);
@@ -133,20 +137,34 @@ enum Laser_Hazard_Direction {
     LASER_HAZARD_DIRECTION_HORIZONTAL,
     LASER_HAZARD_DIRECTION_VERTICAL,
 };
+
 struct Laser_Hazard {
-    Laser_Hazard(float position, int direction, float amount_of_time_for_warning, float how_long_to_live);
+    Laser_Hazard(float position, float radius, int direction, float amount_of_time_for_warning, float how_long_to_live);
     Laser_Hazard();
 
+    float radius    = 0.0f;
     float position  = 0.0f;
+    // NOTE: it's probably really hard to design for this
+    // since lasers are really "area boundary" controllers
+    // and moving them is really complicated...
+    // but it might be okay since there's not many lasers so I can probably
+    // just use a lua script for these
+    float velocity  = 0.0f;
     int   direction = LASER_HAZARD_DIRECTION_HORIZONTAL;
 
     Timer warning_flash_timer;
     Timer show_flash_timer;
+    int   flash_warning_times;
+    bool  presenting_flash;
 
     Timer lifetime;
+    bool  die = false; // force kill flag
 
     void update(Game_State* const state, f32 dt);
     void draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources);
+
+    // since it relies on the size of the play area
+    rectangle_f32 get_rect(const Play_Area* area);
 };
 
 struct Player : public Entity {
