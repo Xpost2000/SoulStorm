@@ -289,6 +289,12 @@ struct rectangle_s16 {
     s16 x; s16 y; s16 w; s16 h;
 };
 
+struct circle_f32 {
+    f32 x; f32 y; f32 r;
+};
+
+#define circle_f32(X,Y,R) circle_f32 {(f32)X, (f32)Y, (f32) R}
+
 #define rectangle_f32(X,Y,W,H) rectangle_f32 {(f32)X,(f32)Y,(f32)W,(f32)H}
 #define rectangle_s32(X,Y,W,H) rectangle_s32 {(s32)X,(s32)Y,(s32)W,(s32)H}
 #define rectangle_s16(X,Y,W,H) rectangle_s16 {(s16)X,(s16)Y,(s16)W,(s16)H}
@@ -297,30 +303,12 @@ struct rectangle_s16 {
 #define RECTANGLE_S32_NULL rectangle_s32(0,0,0,0)
 #define RECTANGLE_S16_NULL rectangle_s16(0,0,0,0)
 
-static inline rectangle_f32 rectangle_f32_centered(rectangle_f32 center_region, f32 width, f32 height) {
-    return rectangle_f32(
-        center_region.x + (center_region.w/2) - (width/2),
-        center_region.y + (center_region.h/2) - (height/2),
-        width, height
-    );
-}
+rectangle_f32 rectangle_f32_centered(rectangle_f32 center_region, f32 width, f32 height);
+rectangle_f32 rectangle_f32_scale(rectangle_f32 a, f32 k);
 
-static inline rectangle_f32 rectangle_f32_scale(rectangle_f32 a, f32 k) {
-    a.x *= k;
-    a.y *= k;
-    a.w *= k;
-    a.h *= k;
-    return a;
-}
+bool rectangle_f32_intersect(rectangle_f32 a, rectangle_f32 b);
 
-static inline bool rectangle_f32_intersect(rectangle_f32 a, rectangle_f32 b) {
-    if (a.x < b.x + b.w && a.x + a.w > b.x &&
-        a.y < b.y + b.h && a.y + a.h > b.y) {
-        return true;
-    }
-
-    return false;
-}
+bool circle_f32_intersect(circle_f32 a, circle_f32 b);
 
 static inline void memory_set8(void* memory, size_t amount, u8 value) {
     u8* memory_u8 = (u8*)memory;
@@ -449,20 +437,7 @@ inline local void inplace_byteswap_f64(f64 *input) {
     *input = copy;
 }
 
-local void _debug_print_bitstring(u8* bytes, unsigned length) {
-    unsigned bits = length * 8;
-    _debugprintfhead();
-    /* reverse print, higher addresses come first, lower addresses come last. To give obvious endian representation */
-    for (s32 bit_index = bits-1; bit_index >= 0; --bit_index) {
-        unsigned real_index   = (bit_index / 8);
-        u8       current_byte = bytes[real_index];
-        _debugprintf1("%d", (current_byte & BIT(bit_index % 8)) > 0);
-        if (((bit_index) % 8) == 0) {
-            _debugprintf1(" ");   
-        }
-    }
-    _debugprintf1("\n");
-}
+void _debug_print_bitstring(u8* bytes, unsigned length);
 
 /* TODO: add file utilities like read_entire_file and stuff */
 #endif
