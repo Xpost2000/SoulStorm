@@ -439,5 +439,24 @@ inline local void inplace_byteswap_f64(f64 *input) {
 
 void _debug_print_bitstring(u8* bytes, unsigned length);
 
+// helper slice type
+template <typename T>
+struct Slice {
+    T* const data;
+    s32      length;
+
+    T& operator[](int index) {
+        assertion(index >= 0 && index < length && "Invalid slice index length!");
+    }
+};
+
+template<typename T>
+Slice<T> make_slice(T* data, s32 length) {
+    Slice<T> result;
+    result.data   = data;
+    result.length = length;
+    return result;
+}
+
 /* TODO: add file utilities like read_entire_file and stuff */
 #endif
