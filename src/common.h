@@ -442,7 +442,7 @@ void _debug_print_bitstring(u8* bytes, unsigned length);
 // helper slice type
 template <typename T>
 struct Slice {
-    T* const data;
+    T*       data;
     s32      length;
 
     T& operator[](int index) {
@@ -452,7 +452,7 @@ struct Slice {
 
 template<typename T>
 Slice<T> make_slice(T* data, s32 length) {
-    Slice<T> result;
+    Slice<T> result = {};
     result.data   = data;
     result.length = length;
     return result;
