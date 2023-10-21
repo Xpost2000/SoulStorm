@@ -1657,3 +1657,91 @@ struct rectangle_f32 camera_project_rectangle(struct camera* camera, struct rect
 
     return rectangle;
 }
+
+void camera_update(struct camera* camera, f32 dt) {
+    {
+        if (camera->trauma > 0) {
+            camera->trauma -= dt;
+        } else {
+            camera->trauma = 0;
+        }
+    }
+
+    {
+        const f32 lerp_x_speed = 3;
+        const f32 lerp_y_speed = 3;
+
+        const f32 lerp_component_speeds[3] = {
+            2.45, 2.8, 1.5
+        };
+
+        for (unsigned component_index = 0; component_index < 3; ++component_index) {
+            if (camera->try_interpolation[component_index]) {
+                if (camera->interpolation_t[component_index] < 1.0) {
+                    camera_set_component(camera, component_index, lerp_f32(camera->start_interpolation_values[component_index],
+                                                                           camera_get_tracking_component(camera, component_index),
+                                                                           camera->interpolation_t[component_index]));
+                    camera->interpolation_t[component_index] += dt * lerp_component_speeds[component_index];
+                } else {
+                    camera->try_interpolation[component_index] = false;
+                }
+            }
+        }
+    }
+}
+
+local f32* camera_resolve_component_ptr(struct camera* camera, s32 index) {
+    f32* component_pointer = nullptr;
+
+    switch (index) {
+        case 0: {
+            component_pointer = &camera->xy.x;
+        } break;
+        case 1: {
+            component_pointer = &camera->xy.y;
+        } break;
+        case 2: {
+            component_pointer = &camera->zoom;
+        } break;
+    }
+
+    return component_pointer;
+}
+
+local f32* camera_resolve_tracking_component_ptr(struct camera* camera, s32 index) {
+    f32* component_pointer = nullptr;
+
+    switch (index) {
+        case 0: {
+            component_pointer = &camera->tracking_xy.x;
+        } break;
+        case 1: {
+            component_pointer = &camera->tracking_xy.y;
+        } break;
+        case 2: {
+            component_pointer = &camera->tracking_zoom;
+        } break;
+    }
+
+    return component_pointer;
+}
+
+void camera_set_component(struct camera* camera, s32 index, f32 value) {
+    f32* component_pointer = camera_resolve_component_ptr(camera, index);
+    *component_pointer = value;
+}
+
+void camera_set_tracking_component(struct camera* camera, s32 index, f32 value) {
+    f32* component_pointer = camera_resolve_tracking_component_ptr(camera, index);
+    *component_pointer = value;
+}
+
+f32 camera_get_component(struct camera* camera, s32 index) {
+    f32* component_pointer = camera_resolve_component_ptr(camera, index);
+    return *component_pointer;
+}
+
+f32  camera_get_tracking_component(struct camera* camera, s32 index) {
+    f32* component_pointer = camera_resolve_tracking_component_ptr(camera, index);
+    return *component_pointer;
+}

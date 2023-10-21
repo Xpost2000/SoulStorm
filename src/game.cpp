@@ -124,6 +124,8 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
         state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_BLOCKING);
         state->play_area.edge_behavior_top    = PLAY_AREA_EDGE_WRAPPING;
         state->play_area.edge_behavior_bottom = PLAY_AREA_EDGE_WRAPPING;
+
+        state->main_camera.xy.x = -state->play_area.x;
     }
 
 
@@ -131,10 +133,6 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     software_framebuffer_clear_buffer(framebuffer, color32u8(255, 255, 255, 255));
 
     state->player.update(state, dt);
-
-    // for all of our entities and stuff.
-    // will have a separate one for the UI.
-    auto commands = render_commands(&Global_Engine()->scratch_arena, 16384, state->main_camera);
 
     if (Input::is_key_pressed(KEY_T)) {
         int amount = 10;
@@ -208,25 +206,31 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
         state->laser_hazards.push(h);
     }
 
+
+    // for all of our entities and stuff.
+    // will have a separate one for the UI.
+    auto game_render_commands = render_commands(&Global_Engine()->scratch_arena, 12000, state->main_camera);
+    auto ui_render_commands   = render_commands(&Global_Engine()->scratch_arena, 8192, camera(V2(0, 0), 1));
+
     for (int i = 0; i < (int)state->bullets.size; ++i) {
         auto& b = state->bullets[i];
         b.update(state, dt);
-        b.draw(state, &commands, resources);
+        b.draw(state, &game_render_commands, resources);
     }
 
     for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
         auto& h = state->explosion_hazards[i];
         h.update(state, dt);
-        h.draw(state, &commands, resources);
+        h.draw(state, &game_render_commands, resources);
     }
 
     for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
         auto& h = state->laser_hazards[i];
         h.update(state, dt);
-        h.draw(state, &commands, resources);
+        h.draw(state, &game_render_commands, resources);
     }
 
-    state->player.draw(state, &commands, resources);
+    state->player.draw(state, &game_render_commands, resources);
 
     // draw play area borders / Game UI
     // I'd like to have the UI fade in / animate all fancy like when I can
@@ -237,14 +241,14 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
         int play_area_x     = state->play_area.x;
 
         // left border
-        render_commands_push_quad(&commands,
+        render_commands_push_quad(&ui_render_commands,
                                   rectangle_f32(0,
                                                 0,
                                                 play_area_x,
                                                 framebuffer->height),
                                   border_color, BLEND_MODE_ALPHA);
         // right border
-        render_commands_push_quad(&commands,
+        render_commands_push_quad(&ui_render_commands,
                                   rectangle_f32(play_area_x + play_area_width,
                                                 0,
                                                 framebuffer->width - play_area_width,
@@ -254,15 +258,17 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
 
 
     // void render_commands_push_text(struct render_commands* commands, struct font_cache* font, f32 scale, V2 xy, string cstring, union color32f32 rgba, u8 blend_mode);
-    render_commands_push_quad(&commands, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
-    render_commands_push_text(&commands, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
-    render_commands_push_text(&commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2, V2(100, 150), string_literal("hahahahhaah"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+    render_commands_push_quad(&ui_render_commands, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
+    render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+    render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2, V2(100, 150), string_literal("hahahahhaah"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
 
-    software_framebuffer_render_commands(framebuffer, &commands);
+    software_framebuffer_render_commands(framebuffer, &game_render_commands);
+    software_framebuffer_render_commands(framebuffer, &ui_render_commands);
 
     handle_all_explosions(dt);
     handle_all_lasers(dt);
     handle_all_dead_entities(dt);
+    camera_update(&state->main_camera, dt);
 }
 
 void Game::handle_all_dead_entities(f32 dt) {
@@ -285,7 +291,11 @@ void Game::handle_all_lasers(f32 dt) {
 
         if (h.ready()) {
             // played sound + camera hit
-            // camera_traumatize(&state->camera, 0.25f);
+            if (!h.already_emitted) {
+                h.already_emitted = true;
+                camera_traumatize(&state->main_camera, 0.25f);
+            }
+
             auto laser_rect  = h.get_rect(&state->play_area);
             auto player_rect = state->player.get_rect();
 
@@ -309,7 +319,7 @@ void Game::handle_all_explosions(f32 dt) {
 
         if (h.exploded) {
             _debugprintf("biggest boom ever.");
-            // camera_traumatize(&state->camera, 0.25f);
+            camera_traumatize(&state->main_camera, 0.25f);
             // check explosion against all entities
             // by all entities, I just mean the player right now.
             {

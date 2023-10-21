@@ -171,6 +171,7 @@ struct Laser_Hazard {
 
     Timer lifetime;
     bool  die = false; // force kill flag
+    bool  already_emitted = false;
 
     void update(Game_State* const state, f32 dt);
     void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);

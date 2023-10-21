@@ -46,6 +46,18 @@ struct camera {
 
 void camera_set_trauma(struct camera* camera, f32 trauma);
 void camera_traumatize(struct camera* camera, f32 trauma);
+void camera_update(struct camera* camera, f32 dt);
+
+/*
+ * This is only here because C++ broke all my designated initializers, which
+ * are really nice.
+ *
+ * Some of the changes make these things not PODs (or retroactive things because V2 has a constructor...)
+ */
+void camera_set_component(struct camera* camera, s32 index, f32 value);
+void camera_set_tracking_component(struct camera* camera, s32 index, f32 value);
+f32 camera_get_component(struct camera* camera, s32 index);
+f32  camera_get_tracking_component(struct camera* camera, s32 index);
 
 void camera_set_point_to_interpolate(struct camera* camera, V2 point);
 V2 camera_transform(struct camera* camera, V2 point, s32 screen_width, s32 screen_height);
