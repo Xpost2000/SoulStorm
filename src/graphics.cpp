@@ -122,7 +122,7 @@ f32 font_cache_text_width(struct font_cache* font_cache, string text, f32 scale)
 }
 
 struct render_commands render_commands(Memory_Arena* arena, s32 capacity, struct camera camera) {
-    struct render_commands result;
+    struct render_commands result = {};
     result.should_clear_buffer = 0;
     result.clear_buffer_color.r = 0;
     result.clear_buffer_color.g = 0;
@@ -130,6 +130,7 @@ struct render_commands render_commands(Memory_Arena* arena, s32 capacity, struct
     result.clear_buffer_color.a = 0;
     result.camera = camera;
     result.command_capacity = capacity;
+    result.command_count = 0;
     result.commands         = (render_command*)arena->push_unaligned(capacity * sizeof(*result.commands));
     return result;
 }

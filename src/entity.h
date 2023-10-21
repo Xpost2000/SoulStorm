@@ -69,7 +69,7 @@ struct Entity {
     bool  die           = false; // force dead flag
 
     // I normally don't like using these... I still don't!
-    virtual void draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources);
+    virtual void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
     // NOTE: I only want read only states
     // wholesale updates like collisions will be checked in the main
     // game loop in game.cpp
@@ -144,7 +144,7 @@ struct Explosion_Hazard {
     bool exploded;
 
     void update(Game_State* const state, f32 dt);
-    void draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources);
+    void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
 };
 
 enum Laser_Hazard_Direction {
@@ -173,7 +173,7 @@ struct Laser_Hazard {
     bool  die = false; // force kill flag
 
     void update(Game_State* const state, f32 dt);
-    void draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources);
+    void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
     bool ready();
 
     // since it relies on the size of the play area

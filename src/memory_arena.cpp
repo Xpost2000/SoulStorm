@@ -49,7 +49,6 @@ void* Memory_Arena::push_unaligned(u64 amount) {
 
         flags |= MEMORY_ARENA_TOUCHED_BOTTOM;
 
-        zero_memory(base_pointer, amount);
         return base_pointer;
     } else {
         void* end_of_memory = (void*)((u8*)memory + capacity);
@@ -62,7 +61,6 @@ void* Memory_Arena::push_unaligned(u64 amount) {
 
         flags |= MEMORY_ARENA_TOUCHED_TOP;
 
-        zero_memory(base_pointer, amount);
         return base_pointer;
     }
 

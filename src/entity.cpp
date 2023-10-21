@@ -212,7 +212,7 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
     }
 }
 
-void Entity::draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources) {
+void Entity::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
     const auto& play_area       = state->play_area;
     int         play_area_width = play_area.width;
     int         play_area_x     = play_area.x;
@@ -220,24 +220,24 @@ void Entity::draw(Game_State* const state, software_framebuffer* framebuffer, Ga
     auto r = get_rect();
 
     // black rectangles for default
-    software_framebuffer_draw_quad(
-        framebuffer,
+    render_commands_push_quad(
+        render_commands,
         rectangle_f32(r.x + play_area_x, r.y, r.w, r.h),
         color32u8(0, 0, 0, 255),
         BLEND_MODE_ALPHA);
 
-    software_framebuffer_draw_image_ex(framebuffer,
-                                       graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
-                                       rectangle_f32(position.x - scale.x  + play_area.x, position.y - scale.x, scale.x*2, scale.x*2),
-                                       RECTANGLE_F32_NULL,
-                                       color32f32(1.0, 0, 1.0, 0.5f),
-                                       0,
-                                       BLEND_MODE_ALPHA);
+    render_commands_push_image(render_commands,
+                               graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
+                               rectangle_f32(position.x - scale.x  + play_area.x, position.y - scale.x, scale.x*2, scale.x*2),
+                               RECTANGLE_F32_NULL,
+                               color32f32(1.0, 0, 1.0, 0.5f),
+                               0,
+                               BLEND_MODE_ALPHA);
 
 
     // center point
-    software_framebuffer_draw_quad(
-        framebuffer,
+    render_commands_push_quad(
+        render_commands,
         rectangle_f32(position.x + play_area_x-1, position.y-1, 2, 2),
         color32u8(255, 0, 0, 255),
         BLEND_MODE_ALPHA);
@@ -393,34 +393,34 @@ void Explosion_Hazard::update(Game_State* const state, f32 dt) {
     explosion_timer.update(dt);
 }
 
-void Explosion_Hazard::draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources) {
+void Explosion_Hazard::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
     const auto& play_area = state->play_area;
     bool show_explosion_warning = warning.finished_presenting();
 
     if (show_explosion_warning) {
-        software_framebuffer_draw_image_ex(framebuffer,
-                                           graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
-                                           rectangle_f32(position.x - radius + play_area.x, position.y - radius, radius*2, radius*2),
-                                           RECTANGLE_F32_NULL,
-                                           color32f32(0, 0, 0, 1),
-                                           0,
-                                           BLEND_MODE_ALPHA);
+        render_commands_push_image(render_commands,
+                                   graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
+                                   rectangle_f32(position.x - radius + play_area.x, position.y - radius, radius*2, radius*2),
+                                   RECTANGLE_F32_NULL,
+                                   color32f32(0, 0, 0, 1),
+                                   0,
+                                   BLEND_MODE_ALPHA);
 
         f32 explosion_percentage = explosion_timer.percentage();
         f32 adjusted_radius      = radius * explosion_percentage;
-        software_framebuffer_draw_image_ex(framebuffer,
-                                           graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
-                                           rectangle_f32(position.x - adjusted_radius + play_area.x, position.y - adjusted_radius, adjusted_radius*2, adjusted_radius*2),
-                                           RECTANGLE_F32_NULL,
-                                           color32f32(1, 0, 0, explosion_percentage),
-                                           0,
-                                           BLEND_MODE_ALPHA);
+        render_commands_push_image(render_commands,
+                                   graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
+                                   rectangle_f32(position.x - adjusted_radius + play_area.x, position.y - adjusted_radius, adjusted_radius*2, adjusted_radius*2),
+                                   RECTANGLE_F32_NULL,
+                                   color32f32(1, 0, 0, explosion_percentage),
+                                   0,
+                                   BLEND_MODE_ALPHA);
     } else {
         if (warning.presenting_flash) {
-            software_framebuffer_draw_text(framebuffer,
-                                           resources->get_font(MENU_FONT_COLOR_GOLD),
-                                           2, position + V2(play_area.x, 0),
-                                           string_literal("!!"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+            render_commands_push_text(render_commands,
+                                      resources->get_font(MENU_FONT_COLOR_GOLD),
+                                      2, position + V2(play_area.x, 0),
+                                      string_literal("!!"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
         }
     }
 }
@@ -486,7 +486,7 @@ void Laser_Hazard::update(Game_State* const state, f32 dt) {
     warning.update(dt);
 }
 
-void Laser_Hazard::draw(Game_State* const state, software_framebuffer* framebuffer, Game_Resources* resources) {
+void Laser_Hazard::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
     const auto& play_area = state->play_area;
     auto        rectangle = get_rect(&play_area);
 
@@ -494,19 +494,19 @@ void Laser_Hazard::draw(Game_State* const state, software_framebuffer* framebuff
 
     if (!ready()) {
         if (warning.presenting_flash) {
-            software_framebuffer_draw_quad(
-                framebuffer,
+            render_commands_push_quad(
+                render_commands,
                 rectangle,
                 color32u8(0, 0, 0, 64),
                 BLEND_MODE_ALPHA);
-            software_framebuffer_draw_text(framebuffer,
-                                           resources->get_font(MENU_FONT_COLOR_GOLD),
-                                           2, V2(rectangle.x + rectangle.w/2, rectangle.y + rectangle.h/2),
-                                           string_literal("!!!"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+            render_commands_push_text(render_commands,
+                                      resources->get_font(MENU_FONT_COLOR_GOLD),
+                                      2, V2(rectangle.x + rectangle.w/2, rectangle.y + rectangle.h/2),
+                                      string_literal("!!!"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
         } else {
         
         }
     } else {
-        software_framebuffer_draw_quad(framebuffer, rectangle, color32u8(255, 0, 0, 255), BLEND_MODE_ALPHA);
+        render_commands_push_quad(render_commands, rectangle, color32u8(255, 0, 0, 255), BLEND_MODE_ALPHA);
     }
 }

@@ -132,6 +132,10 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
 
     state->player.update(state, dt);
 
+    // for all of our entities and stuff.
+    // will have a separate one for the UI.
+    auto commands = render_commands(arena, 16384, state->main_camera);
+
     if (Input::is_key_pressed(KEY_T)) {
         int amount = 10;
         int r = 50;
@@ -207,22 +211,22 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     for (int i = 0; i < (int)state->bullets.size; ++i) {
         auto& b = state->bullets[i];
         b.update(state, dt);
-        b.draw(state, framebuffer, resources);
+        b.draw(state, &commands, resources);
     }
 
     for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
         auto& h = state->explosion_hazards[i];
         h.update(state, dt);
-        h.draw(state, framebuffer, resources);
+        h.draw(state, &commands, resources);
     }
 
     for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
         auto& h = state->laser_hazards[i];
         h.update(state, dt);
-        h.draw(state, framebuffer, resources);
+        h.draw(state, &commands, resources);
     }
 
-    state->player.draw(state, framebuffer, resources);
+    state->player.draw(state, &commands, resources);
 
     // draw play area borders / Game UI
     // I'd like to have the UI fade in / animate all fancy like when I can
@@ -233,24 +237,28 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
         int play_area_x     = state->play_area.x;
 
         // left border
-        software_framebuffer_draw_quad(framebuffer,
-                                       rectangle_f32(0,
-                                                     0,
-                                                     play_area_x,
-                                                     framebuffer->height),
-                                       border_color, BLEND_MODE_ALPHA);
+        render_commands_push_quad(&commands,
+                                  rectangle_f32(0,
+                                                0,
+                                                play_area_x,
+                                                framebuffer->height),
+                                  border_color, BLEND_MODE_ALPHA);
         // right border
-        software_framebuffer_draw_quad(framebuffer,
-                                       rectangle_f32(play_area_x + play_area_width,
-                                                     0,
-                                                     framebuffer->width - play_area_width,
-                                                     framebuffer->height),
-                                       border_color, BLEND_MODE_ALPHA);
+        render_commands_push_quad(&commands,
+                                  rectangle_f32(play_area_x + play_area_width,
+                                                0,
+                                                framebuffer->width - play_area_width,
+                                                framebuffer->height),
+                                  border_color, BLEND_MODE_ALPHA);
     }
 
-    software_framebuffer_draw_quad(framebuffer, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
-    software_framebuffer_draw_text(framebuffer, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
-    software_framebuffer_draw_text(framebuffer, resources->get_font(MENU_FONT_COLOR_WHITE), 2, V2(100, 150), string_literal("hahahahhaah"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+
+    // void render_commands_push_text(struct render_commands* commands, struct font_cache* font, f32 scale, V2 xy, string cstring, union color32f32 rgba, u8 blend_mode);
+    render_commands_push_quad(&commands, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
+    render_commands_push_text(&commands, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+    render_commands_push_text(&commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2, V2(100, 150), string_literal("hahahahhaah"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+
+    software_framebuffer_render_commands(framebuffer, &commands);
 
     handle_all_explosions(dt);
     handle_all_lasers(dt);
