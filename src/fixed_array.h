@@ -81,9 +81,19 @@ struct Fixed_Array {
     void push(T& x) {
         data[size++] = x;
     }
+    
+    T* alloc() {
+        return &data[size++];
+    }
 
     void pop() {
         size--;
+    }
+
+    // NOTE: I'm not zeroing out the memory to allow
+    // for some specific behaviors that you might want to do.
+    void clear() {
+        size = 0;
     }
 
     T*     data;

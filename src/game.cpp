@@ -3,6 +3,7 @@
 
 // NOTE: game units are in 640x480 pixels now.
 #include "game.h"
+#include "fade_transition.h"
 #include "entity.h"
 #include "fixed_array.h"
 #include "game_state.h"
@@ -265,6 +266,8 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     render_commands_push_quad(&ui_render_commands, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
     render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
     render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2, V2(100, 150), string_literal("hahahahhaah"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+
+    Transitions::update_and_render(&ui_render_commands, dt);
 
     software_framebuffer_render_commands(framebuffer, &game_render_commands);
     software_framebuffer_render_commands(framebuffer, &ui_render_commands);

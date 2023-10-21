@@ -222,6 +222,8 @@ struct input_state {
     bool editing_text;
     s32  text_edit_cursor;
     char text[1024];
+    // For a bigger engine, it might be important to have a layer consumption system
+    // but since this game is small I can afford to just directly handle UI input state consumption
 };
 
 namespace Input {
