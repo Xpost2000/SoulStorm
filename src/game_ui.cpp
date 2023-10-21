@@ -18,6 +18,7 @@ struct Widget {
 };
 
 struct UI_State {
+    font_cache* selected_font;
     font_cache* default_font;
     font_cache* active_font;
 
@@ -75,6 +76,10 @@ namespace GameUI {
         return result;
     }
 
+    void set_font_selected(font_cache* font) {
+        global_ui_state.selected_font = font;
+    }
+
     void set_font_active(font_cache* font) {
         global_ui_state.active_font = font;
     }
@@ -96,17 +101,23 @@ namespace GameUI {
         auto widget         = push_label(where, text, scale, modulation);
         auto font           = global_ui_state.default_font;
         auto text_width     = font_cache_text_width(font, widget->text, widget->scale);
-        auto text_height    = font_cache_text_height(font);
+        auto text_height    = font_cache_text_height(font) * widget->scale;
         auto button_rect    = rectangle_f32(widget->where.x, widget->where.y, text_width, text_height);
 
         V2   mouse_position = Input::mouse_location();
         bool clicked        = false;
 
         if (rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5))) {
-            font    = global_ui_state.active_font;
+            font = global_ui_state.active_font;
+            if (Input::mouse_left()) {
+                font = global_ui_state.selected_font;
+            }
             clicked = Input::pressed_mouse_left();
         }
 
+#ifndef RELEASE
+        render_commands_push_quad(global_ui_state.commands, button_rect, color32u8(255, 0, 0, 64), BLEND_MODE_ALPHA);
+#endif
         render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
         return clicked;
     }

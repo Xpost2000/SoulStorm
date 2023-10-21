@@ -24,6 +24,7 @@
       - A few more widgets (mostly enough to facilitate the settings menu)
 */
 namespace GameUI {
+    void set_font_selected(font_cache* font);
     void set_font_active(font_cache* font);
     void set_font(font_cache* font);
 

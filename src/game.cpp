@@ -8,6 +8,8 @@
 #include "fixed_array.h"
 #include "game_state.h"
 
+#include "game_ui.h"
+
 Game::Game() {
     
 }
@@ -31,6 +33,7 @@ void Game::init() {
 
     state->player.position   = V2(state->play_area.width / 2, 300);
     state->player.scale      = V2(15, 15);
+    state->paused            = false;
 
     state->bullets           = Fixed_Array<Bullet>(arena, 10000);
     state->explosion_hazards = Fixed_Array<Explosion_Hazard>(arena, 256);
@@ -38,6 +41,8 @@ void Game::init() {
     state->prng              = random_state();
     state->main_camera       = camera(V2(0, 0), 1.0);
     state->main_camera.rng   = &state->prng;
+
+    GameUI::initialize(arena);
 }
 
 void Game::deinit() {
@@ -116,6 +121,42 @@ void spawn_bullet_linear(Game_State* state, V2 position, V2 additional = V2(0,0)
     state->bullets.push(bullet);
 }
 
+void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt) {
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+
+    GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+    GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+    GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+
+    GameUI::begin_frame(commands);
+    {
+        f32 y = 100;
+        GameUI::label(V2(50, y), string_literal("PAUSED"), color32f32(1, 1, 1, 1), 4);
+        y += 45;
+        if (GameUI::button(V2(100, y), string_literal("Resume"), color32f32(1, 1, 1, 1), 2)) {
+            state->paused = false;
+        }
+        y += 30;
+        if (GameUI::button(V2(100, y), string_literal("Return To Menu"), color32f32(1, 1, 1, 1), 2)) {
+            _debugprintf("return to main menu.");
+        }
+        y += 30;
+        if (GameUI::button(V2(100, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2)) {
+            _debugprintf("Open the options menu I guess");
+        }
+        y += 30;
+        if (GameUI::button(V2(100, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2)) {
+            _debugprintf("Open the credits screen I guess");
+        }
+        y += 30;
+        if (GameUI::button(V2(100, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2)) {
+            Global_Engine()->die();
+        }
+    }
+    GameUI::end_frame();
+    GameUI::update(dt);
+}
+
 void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     {
         state->play_area.x = framebuffer->width / 2 - state->play_area.width / 2;
@@ -133,7 +174,9 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     software_framebuffer_clear_scissor(framebuffer);
     software_framebuffer_clear_buffer(framebuffer, color32u8(255, 255, 255, 255));
 
-    state->player.update(state, dt);
+    if (Input::is_key_pressed(KEY_ESCAPE)) {
+        state->paused ^= 1;
+    }
 
     if (Input::is_key_pressed(KEY_T)) {
         int amount = 10;
@@ -217,26 +260,6 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
         game_render_commands.screen_height = ui_render_commands.screen_height = framebuffer->height;
     }
 
-    for (int i = 0; i < (int)state->bullets.size; ++i) {
-        auto& b = state->bullets[i];
-        b.update(state, dt);
-        b.draw(state, &game_render_commands, resources);
-    }
-
-    for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
-        auto& h = state->explosion_hazards[i];
-        h.update(state, dt);
-        h.draw(state, &game_render_commands, resources);
-    }
-
-    for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
-        auto& h = state->laser_hazards[i];
-        h.update(state, dt);
-        h.draw(state, &game_render_commands, resources);
-    }
-
-    state->player.draw(state, &game_render_commands, resources);
-
     // draw play area borders / Game UI
     // I'd like to have the UI fade in / animate all fancy like when I can
     {
@@ -267,7 +290,47 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
     render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2, V2(100, 150), string_literal("hahahahhaah"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
 
-    Transitions::update_and_render(&ui_render_commands, dt);
+    if (!state->paused) {
+        for (int i = 0; i < (int)state->bullets.size; ++i) {
+            auto& b = state->bullets[i];
+            b.update(state, dt);
+        }
+
+        for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
+            auto& h = state->explosion_hazards[i];
+            h.update(state, dt);
+        }
+
+        for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
+            auto& h = state->laser_hazards[i];
+            h.update(state, dt);
+        }
+        state->player.update(state, dt);
+    } else {
+        update_and_render_pause_menu(&ui_render_commands, dt);
+    }
+
+    // main game rendering
+    {
+        for (int i = 0; i < (int)state->bullets.size; ++i) {
+            auto& b = state->bullets[i];
+            b.draw(state, &game_render_commands, resources);
+        }
+
+        for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
+            auto& h = state->explosion_hazards[i];
+            h.draw(state, &game_render_commands, resources);
+        }
+
+        for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
+            auto& h = state->laser_hazards[i];
+            h.draw(state, &game_render_commands, resources);
+        }
+
+        state->player.draw(state, &game_render_commands, resources);
+
+        Transitions::update_and_render(&ui_render_commands, dt);
+    }
 
     software_framebuffer_render_commands(framebuffer, &game_render_commands);
     software_framebuffer_render_commands(framebuffer, &ui_render_commands);

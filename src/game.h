@@ -27,8 +27,13 @@ public:
 
     void init();
     void deinit();
+
+    // NOTE: I should probably avoid having an explicit reference to
+    //       a software framebuffer. Honestly there's little to no reason why this should
+    //       be here...
     void update_and_render(software_framebuffer* framebuffer, f32 dt);
 private: 
+    void update_and_render_pause_menu(struct render_commands* commands, f32 dt);
     void handle_all_explosions(f32 dt);
     void handle_all_lasers(f32 dt);
     void handle_all_dead_entities(f32 dt);

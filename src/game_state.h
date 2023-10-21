@@ -90,6 +90,8 @@ struct Game_State {
     // I'll fake the illusion of movement through the background primarily
     random_state prng;
     camera       main_camera;
+
+    bool paused;
 };
 
 struct Game_Resources {

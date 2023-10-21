@@ -286,10 +286,10 @@ void handle_sdl_events(void) {
     {
         SDL_Event current_event;
 
-        // f32 resolution_scale_x = (f32)REAL_SCREEN_WIDTH / SCREEN_WIDTH;
-        // f32 resolution_scale_y = (f32)REAL_SCREEN_HEIGHT / SCREEN_HEIGHT;
-        f32 resolution_scale_x = 1;
-        f32 resolution_scale_y = 1;
+        f32 resolution_scale_x = (f32)REAL_SCREEN_WIDTH / SCREEN_WIDTH;
+        f32 resolution_scale_y = (f32)REAL_SCREEN_HEIGHT / SCREEN_HEIGHT;
+        // f32 resolution_scale_x = 1;
+        // f32 resolution_scale_y = 1;
 
         while (SDL_PollEvent(&current_event)) {
             switch (current_event.type) {
