@@ -211,6 +211,10 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     // will have a separate one for the UI.
     auto game_render_commands = render_commands(&Global_Engine()->scratch_arena, 12000, state->main_camera);
     auto ui_render_commands   = render_commands(&Global_Engine()->scratch_arena, 8192, camera(V2(0, 0), 1));
+    {
+        game_render_commands.screen_width  = ui_render_commands.screen_width = framebuffer->width;
+        game_render_commands.screen_height = ui_render_commands.screen_height = framebuffer->height;
+    }
 
     for (int i = 0; i < (int)state->bullets.size; ++i) {
         auto& b = state->bullets[i];

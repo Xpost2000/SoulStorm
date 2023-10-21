@@ -32,6 +32,12 @@ enum transition_fader_type {
     TRANSITION_FADER_TYPE_COUNT,
 };
 
+/* NOTE:
+   the void pointer is just here just in case I decide to reinstate the data as part of the transition,
+   state.
+
+   In practice it's probably going to be a nullptr for the remainder of the project.
+*/
 using on_delay_finish_callback = std::function<void(void*)>;
 using on_finish_callback       = std::function<void(void*)>;
 using on_start_callback        = std::function<void(void*)>;

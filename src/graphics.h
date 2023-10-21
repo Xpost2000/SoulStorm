@@ -264,6 +264,12 @@ struct render_commands {
     struct render_command* commands;
     s32                    command_count;
     s32                    command_capacity;
+
+    //                     This is not ideal,
+    //                     but it is simplest to cache
+    //                     the screen dimensions here.
+    s32                    screen_width;
+    s32                    screen_height;
 };
 
 struct render_commands render_commands(Memory_Arena* arena, s32 capacity, struct camera camera);
