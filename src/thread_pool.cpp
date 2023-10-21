@@ -141,6 +141,7 @@ namespace Thread_Pool {
         for (s32 thread_index = 0; thread_index < global_thread_count; ++thread_index) {
             _debugprintf("waiting on thread");
             SDL_WaitThread(global_thread_pool[thread_index], NULL);
+            _debugprintf("thread should be dead");
         }
 
         for (s32 thread_index = 0; thread_index < global_thread_count; ++thread_index) {

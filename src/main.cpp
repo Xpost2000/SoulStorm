@@ -274,6 +274,7 @@ local void set_fullscreen(bool v) {
         }
     }
 }
+
 local void toggle_fullscreen(void) {
     if (SCREEN_IS_FULLSCREEN) {
         set_fullscreen(false);
@@ -404,10 +405,16 @@ void initialize() {
 
 void deinitialize() {
     game.deinit();
+    Thread_Pool::synchronize_and_finish();
     Global_Engine()->main_arena.finish();
     Global_Engine()->scratch_arena.finish();
-    Thread_Pool::synchronize_and_finish();
     close_all_controllers();
+
+    software_framebuffer_finish(&global_default_framebuffer);
+    SDL_DestroyTexture(global_game_texture_surface);
+    SDL_DestroyRenderer(global_game_sdl_renderer);
+    SDL_DestroyWindow(global_game_window);
+
     Audio::deinitialize();
     SDL_Quit();
 }
