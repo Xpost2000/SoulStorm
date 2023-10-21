@@ -254,7 +254,10 @@ struct render_command {
 };
 
 struct render_commands {
-    render_commands() {}
+    render_commands() {
+        clear_buffer_color = color32u8_BLACK;
+        should_clear_buffer = command_count = command_capacity = 0;
+    }
     struct camera          camera;
     u8                     should_clear_buffer;
     union color32u8        clear_buffer_color;

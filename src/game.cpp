@@ -134,7 +134,7 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
 
     // for all of our entities and stuff.
     // will have a separate one for the UI.
-    auto commands = render_commands(arena, 16384, state->main_camera);
+    auto commands = render_commands(&Global_Engine()->scratch_arena, 16384, state->main_camera);
 
     if (Input::is_key_pressed(KEY_T)) {
         int amount = 10;
