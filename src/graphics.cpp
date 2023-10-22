@@ -147,22 +147,34 @@ void render_commands_set_shader(struct render_commands* commands, shader_fn shad
     last_command->shader_ctx = context;
 }
 
-void render_commands_push_quad(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode) {
+void render_commands_push_quad_ext(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, V2 rotation_origin, s32 angle, u8 blend_mode) {
     struct render_command* command = render_commands_new_command(commands, RENDER_COMMAND_DRAW_QUAD);
-    command->destination   = destination;
-    command->flags         = 0;
-    command->modulation_u8 = rgba;
-    command->blend_mode    = blend_mode;
+    command->destination           = destination;
+    command->flags                 = 0;
+    command->modulation_u8         = rgba;
+    command->blend_mode            = blend_mode;
+    command->rotation_center       = rotation_origin;
+    command->angle_degrees         = angle;
+}
+
+void render_commands_push_quad(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode) {
+    render_commands_push_quad_ext(commands, destination, rgba, V2(0, 0), 0, blend_mode);
+}
+
+void render_commands_push_image_ext(struct render_commands* commands, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 source, union color32f32 rgba, V2 rotation_origin, s32 angle, u32 flags, u8 blend_mode) {
+    struct render_command* command = render_commands_new_command(commands, RENDER_COMMAND_DRAW_IMAGE);
+    command->destination           = destination;
+    command->image                 = image;
+    command->source                = source;
+    command->flags                 = flags;
+    command->modulation_u8         = color32f32_to_color32u8(rgba);
+    command->blend_mode            = blend_mode;
+    command->rotation_center       = rotation_origin;
+    command->angle_degrees         = angle;
 }
 
 void render_commands_push_image(struct render_commands* commands, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 source, union color32f32 rgba, u32 flags, u8 blend_mode){
-    struct render_command* command = render_commands_new_command(commands, RENDER_COMMAND_DRAW_IMAGE);
-    command->destination   = destination;
-    command->image         = image;
-    command->source        = source;
-    command->flags         = flags;
-    command->modulation_u8 = color32f32_to_color32u8(rgba);
-    command->blend_mode    = blend_mode;
+    render_commands_push_image_ext(commands, image, destination, source, rgba, V2(0, 0), 0, flags, blend_mode);
 }
 
 void render_commands_push_line(struct render_commands* commands, V2 start, V2 end, union color32u8 rgba, u8 blend_mode) {
@@ -187,10 +199,6 @@ void render_commands_push_text(struct render_commands* commands, struct font_cac
 
 void render_commands_clear(struct render_commands* commands) {
     commands->command_count = 0;
-}
-
-void sort_render_commands(struct render_commands* commands) {
-    /* NOTE: Not needed? I seem to know the explicit order of everything I'm drawing... */
 }
 
 struct graphics_assets graphics_assets_create(Memory_Arena* arena, u32 font_limit, u32 image_limit) {
@@ -616,22 +624,59 @@ void software_framebuffer_draw_quad_clipped(struct software_framebuffer* framebu
 }
 #else
 void software_framebuffer_draw_quad_clipped(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode, struct rectangle_f32 clip_rect) {
-    s32 start_x = clamp<s32>((s32)destination.x, clip_rect.x, clip_rect.x+clip_rect.w);
-    s32 start_y = clamp<s32>((s32)destination.y, clip_rect.y, clip_rect.y+clip_rect.h);
-    s32 end_x   = clamp<s32>((s32)(destination.x + destination.w), clip_rect.x, clip_rect.x+clip_rect.w);
-    s32 end_y   = clamp<s32>((s32)(destination.y + destination.h), clip_rect.y, clip_rect.y+clip_rect.h);
+    software_framebuffer_draw_quad_ext_clipped(framebuffer, destination, rgba, blend_mode, clip_rect, V2(0, 0), 0);
+}
+#endif
+void software_framebuffer_draw_quad_ext_clipped(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle) {
+    s32 start_x           = clamp<s32>((s32)destination.x, clip_rect.x, clip_rect.x+clip_rect.w);
+    s32 start_y           = clamp<s32>((s32)destination.y, clip_rect.y, clip_rect.y+clip_rect.h);
+    s32 end_x             = clamp<s32>((s32)(destination.x + destination.w), clip_rect.x, clip_rect.x+clip_rect.w);
+    s32 end_y             = clamp<s32>((s32)(destination.y + destination.h), clip_rect.y, clip_rect.y+clip_rect.h);
+
+    s32 unclamped_start_x = (s32)(destination.x);
+    s32 unclamped_start_y = (s32)(destination.y);
+    s32 unclamped_end_x   = (s32)(destination.x + destination.w);
+    s32 unclamped_end_y   = (s32)(destination.y + destination.h);
 
     u32* framebuffer_pixels_as_32 = (u32*)framebuffer->pixels;
     unused(framebuffer_pixels_as_32);
 
+    f32 c = cosf(degree_to_radians(angle));
+    f32 s = sinf(degree_to_radians(angle));
+
+    s32 origin_off_x = (s32)(destination.w * origin.x);
+    s32 origin_off_y = (s32)(destination.h * origin.y);
+
     for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
         for (s32 x_cursor = start_x; x_cursor < end_x; ++x_cursor) {
-            if (_framebuffer_scissor_cull(framebuffer, x_cursor, y_cursor)) continue;
-            _BlendPixel_Scalar(framebuffer, x_cursor, y_cursor, rgba, blend_mode);
+
+            if (angle == 0) {
+                if (_framebuffer_scissor_cull(framebuffer, x_cursor, y_cursor)) continue;
+                _BlendPixel_Scalar(framebuffer, x_cursor, y_cursor, rgba, blend_mode);
+            } else {
+                s32 adjx  = x_cursor - (unclamped_start_x + origin_off_x);
+                s32 adjy  = y_cursor - (unclamped_start_y + origin_off_y);
+                f32 dx    = floor(c * adjx - s * adjy);
+                f32 dy    = floor(s * adjx + c * adjy);
+                dx       += (unclamped_start_x + origin_off_x);
+                dy       += (unclamped_start_y + origin_off_y);
+
+                static const V2 subsamples[] = {
+                    V2(0, 0), V2(0.5, 0), V2(0.5, 0.5), V2(0, 0.5), V2(-0.5, 0.0), V2(0.0, -0.5), V2(-0.5, -0.5)
+                };
+
+                for (auto& sample : subsamples) {
+                    f32 sample_approx_x = dx + sample.x;
+                    f32 sample_approx_y = dy + sample.y;
+
+                    if (_framebuffer_scissor_cull(framebuffer, sample_approx_x, sample_approx_y)) continue;
+                    _BlendPixel_Scalar(framebuffer, (s32)(sample_approx_x), (s32)(sample_approx_y), rgba, blend_mode);
+                }
+            }
         }
     }
 }
-#endif
+
 void software_framebuffer_draw_quad(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode) {
     software_framebuffer_draw_quad_clipped(framebuffer, destination, rgba, blend_mode, rectangle_f32(0, 0, framebuffer->width, framebuffer->height));
 }
@@ -640,8 +685,12 @@ void software_framebuffer_draw_image_ex(struct software_framebuffer* framebuffer
     software_framebuffer_draw_image_ex_clipped(framebuffer, image, destination, src, modulation, flags, blend_mode, rectangle_f32(0,0,framebuffer->width,framebuffer->height), 0, 0);
 }
 
-#ifndef USE_SIMD_OPTIMIZATIONS
 void software_framebuffer_draw_image_ex_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, shader_fn shader, void* shader_ctx) {
+    software_framebuffer_draw_image_ext_clipped(framebuffer, image, destination, src, modulation, flags, blend_mode, clip_rect, V2(0, 0), 0, shader, shader_ctx);
+}
+
+#ifndef USE_SIMD_OPTIMIZATIONS
+void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, shader_fn shader, void* shader_ctx) {
     if ((destination.x == 0) && (destination.y == 0) && (destination.w == 0) && (destination.h == 0)) {
         destination.w = framebuffer->width;
         destination.h = framebuffer->height;
@@ -664,8 +713,13 @@ void software_framebuffer_draw_image_ex_clipped(struct software_framebuffer* fra
     s32 end_x   = clamp<s32>((s32)(destination.x + destination.w), clip_rect.x, clip_rect.x+clip_rect.w);
     s32 end_y   = clamp<s32>((s32)(destination.y + destination.h), clip_rect.y, clip_rect.y+clip_rect.h);
 
+    s32 unclamped_start_x = (s32)(destination.x);
+    s32 unclamped_start_y = (s32)(destination.y);
     s32 unclamped_end_x = (s32)(destination.x + destination.w);
     s32 unclamped_end_y = (s32)(destination.y + destination.h);
+
+    s32 origin_off_x = (s32)(destination.w * origin.x);
+    s32 origin_off_y = (s32)(destination.h * origin.y);
 
     u32* framebuffer_pixels_as_32 = (u32*)framebuffer->pixels;
     unused(framebuffer_pixels_as_32);
@@ -673,9 +727,12 @@ void software_framebuffer_draw_image_ex_clipped(struct software_framebuffer* fra
     s32 stride       = framebuffer->width;
     s32 image_stride = image->width;
 
+
+    f32 c = cosf(degree_to_radians(angle));
+    f32 s = sinf(degree_to_radians(angle));
+    
     for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
         for (s32 x_cursor = start_x; x_cursor < end_x; ++x_cursor) {
-            if (_framebuffer_scissor_cull(framebuffer, x_cursor, y_cursor)) continue;
             s32 image_sample_x = (s32)((src.x + src.w) - ((unclamped_end_x - x_cursor) * scale_ratio_w));
             s32 image_sample_y = (s32)((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h));
 
@@ -706,12 +763,38 @@ void software_framebuffer_draw_image_ex_clipped(struct software_framebuffer* fra
             sampled_pixel.b *= modulation.b;
             sampled_pixel.a *= modulation.a;
 
-            _BlendPixel_Scalar(framebuffer, x_cursor, y_cursor, sampled_pixel, blend_mode);
+            if (angle == 0) {
+                if (_framebuffer_scissor_cull(framebuffer, x_cursor, y_cursor)) continue;
+                _BlendPixel_Scalar(framebuffer, x_cursor, y_cursor, sampled_pixel, blend_mode);
+            } else {
+                s32 adjx  = x_cursor - (unclamped_start_x + origin_off_x);
+                s32 adjy  = y_cursor - (unclamped_start_y + origin_off_y);
+                f32 dx    = floor(c * adjx - s * adjy);
+                f32 dy    = floor(s * adjx + c * adjy);
+                dx       += (unclamped_start_x + origin_off_x);
+                dy       += (unclamped_start_y + origin_off_y);
+
+                /*
+                  for rotation need more sampling
+                */
+                static const V2 subsamples[] = {
+                    V2(0, 0), V2(0.5, 0), V2(0.5, 0.5), V2(0, 0.5), V2(-0.5, 0.0), V2(0.0, -0.5), V2(-0.5, -0.5)
+                };
+
+                for (auto& sample : subsamples) {
+                    f32 sample_approx_x = dx + sample.x;
+                    f32 sample_approx_y = dy + sample.y;
+                    if (_framebuffer_scissor_cull(framebuffer, sample_approx_x, sample_approx_y)) continue;
+                    _BlendPixel_Scalar(framebuffer, (s32)(sample_approx_x), (s32)(sample_approx_y), sampled_pixel, blend_mode);
+                }
+            }
+
         }
     }
 }
 #else
-void software_framebuffer_draw_image_ex_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, shader_fn shader, void* shader_ctx) {
+// NOTE: has no rotation right now.
+void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, shader_fn shader, void* shader_ctx) {
     if ((destination.x == 0) && (destination.y == 0) && (destination.w == 0) && (destination.h == 0)) {
         destination.w = clip_rect.w;
         destination.h = clip_rect.h;
@@ -1114,16 +1197,18 @@ void software_framebuffer_render_commands_tiled(struct software_framebuffer* fra
 
         switch (command->type) {
             case RENDER_COMMAND_DRAW_QUAD: {
-                software_framebuffer_draw_quad_clipped(
+                software_framebuffer_draw_quad_ext_clipped(
                     framebuffer,
                     command->destination,
                     command->modulation_u8,
                     command->blend_mode,
-                    clip_rect
+                    clip_rect,
+                    command->rotation_center,
+                    command->angle_degrees
                 );
             } break;
             case RENDER_COMMAND_DRAW_IMAGE: {
-                software_framebuffer_draw_image_ex_clipped(
+                software_framebuffer_draw_image_ext_clipped(
                     framebuffer,
                     command->image,
                     command->destination,
@@ -1132,11 +1217,14 @@ void software_framebuffer_render_commands_tiled(struct software_framebuffer* fra
                     command->flags,
                     command->blend_mode,
                     clip_rect,
+                    command->rotation_center,
+                    command->angle_degrees,
                     command->shader,
                     command->shader_ctx
                 );
             } break;
             case RENDER_COMMAND_DRAW_TEXT: {
+                // NOTE: has no rotation variation.
                 software_framebuffer_draw_text_clipped(
                     framebuffer,
                     command->font,
@@ -1210,8 +1298,6 @@ void software_framebuffer_render_commands(struct software_framebuffer* framebuff
         software_framebuffer_clear_buffer(framebuffer, commands->clear_buffer_color);
     }
 
-    sort_render_commands(commands);
-
     /* move all things into clip space */
     V2 displacement      = camera_displacement_from_trauma(&commands->camera);
 
@@ -1223,8 +1309,8 @@ void software_framebuffer_render_commands(struct software_framebuffer* framebuff
 #ifndef MULTITHREADED_EXPERIMENTAL
     software_framebuffer_render_commands_tiled(framebuffer, commands, rectangle_f32(0,0,framebuffer->width,framebuffer->height));
 #else
-    s32 JOB_W  = 2;
-    s32 JOB_H  = 2;
+    s32 JOB_W  = 4;
+    s32 JOB_H  = 4;
     s32 TILE_W = framebuffer->width / JOB_W;
     s32 TILE_H = framebuffer->height / JOB_H;
 

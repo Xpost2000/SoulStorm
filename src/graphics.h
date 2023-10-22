@@ -196,6 +196,7 @@ struct software_framebuffer : public image_buffer {
     s32 scissor_h;
 };
 
+// NOTE: CPU shaders and GPU shaders are too different to share the same API, so I'll have to think carefully about how the API boundary is expressed...
 struct software_framebuffer software_framebuffer_create(u32 width, u32 height);
 struct software_framebuffer software_framebuffer_create_from_arena(Memory_Arena* arena, u32 width, u32 height);
 void                        software_framebuffer_finish(struct software_framebuffer* framebuffer);
@@ -204,8 +205,12 @@ void                        software_framebuffer_clear_scissor(struct software_f
 void                        software_framebuffer_set_scissor(struct software_framebuffer* framebuffer, s32 x, s32 y, s32 w, s32 h);
 void                        software_framebuffer_clear_buffer(struct software_framebuffer* framebuffer, union color32u8 rgba);
 void                        software_framebuffer_draw_quad(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode);
+void                        software_framebuffer_draw_quad_clipped(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode, struct rectangle_f32 clip_rect);
+void                        software_framebuffer_draw_quad_ext_clipped(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle);
 void                        software_framebuffer_draw_image_ex(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode);
 void                        software_framebuffer_draw_image_ex_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, shader_fn shader, void* shader_ctx);
+// NOTE: origin is supposed to be ([0.0,  1.0], [0.0, 1.0])
+void                        software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, shader_fn shader, void* shader_ctx);
 void                        software_framebuffer_draw_glyph(struct software_framebuffer* framebuffer, struct font_cache* font, f32 scale, V2 xy, char glyph, union color32f32 modulation, u8 blend_mode);
 void                        software_framebuffer_draw_line(struct software_framebuffer* framebuffer, V2 start, V2 end, union color32u8 rgba, u8 blend_mode);
 void                        software_framebuffer_draw_text(struct software_framebuffer* framebuffer, struct font_cache* font, f32 scale, V2 xy, string text, union color32f32 modulation, u8 blend_mode);
@@ -241,9 +246,12 @@ struct render_command {
         V2 xy;
     };
 
+    V2 rotation_center;
     V2 end;
 
     f32 scale;
+
+    s32 angle_degrees;
     u32 flags;
     union {
         union color32u8  modulation_u8;
@@ -275,9 +283,13 @@ struct render_commands {
 struct render_commands render_commands(Memory_Arena* arena, s32 capacity, struct camera camera);
 
 void render_commands_push_quad(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode);
+void render_commands_push_quad_ext(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, V2 rotation_origin, s32 angle, u8 blend_mode);
 void render_commands_push_image(struct render_commands* commands, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 source, union color32f32 rgba, u32 flags, u8 blend_mode);
+void render_commands_push_image_ext(struct render_commands* commands, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 source, union color32f32 rgba, V2 rotation_origin, s32 angle, u32 flags, u8 blend_mode);
 void render_commands_push_line(struct render_commands* commands, V2 start, V2 end, union color32u8 rgba, u8 blend_mode);
 void render_commands_push_text(struct render_commands* commands, struct font_cache* font, f32 scale, V2 xy, string cstring, union color32f32 rgba, u8 blend_mode);
+// TODO: rotated text. This is more of a novelty that I don't think I need yet so I won't do it quite yet
+// void render_commands_push_text_ext(struct render_commands* commands, struct font_cache* font, f32 scale, V2 xy, V2 rotation_origin, s32 angle, string cstring, union color32f32 rgba, u8 blend_mode);
 
 void render_commands_set_shader(struct render_commands* commands, shader_fn shader, void* context);
 void render_commands_clear(struct render_commands* commands);
