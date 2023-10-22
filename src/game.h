@@ -8,7 +8,7 @@
 #include "v2.h"
 #include "thread_pool.h"
 #include "engine.h"
-#include "graphics.h"
+#include "software_renderer.h"
 
 /*
  * The game code. Finally some fresh code :)

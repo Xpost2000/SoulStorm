@@ -1,7 +1,7 @@
 // #define USE_SIMD_OPTIMIZATIONS
 #define MULTITHREADED_EXPERIMENTAL
 
-#include "graphics.h"
+#include "software_renderer.h"
 #include "thread_pool.h"
 #include "engine.h"
 

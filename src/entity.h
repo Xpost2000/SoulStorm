@@ -5,9 +5,7 @@
 #define DEFAULT_SHOW_FLASH_WARNING_TIMER (0.125)
 #define DEFAULT_SHOW_FLASH_WARNING_TIMES (5)
 
-#include "graphics.h"
-#include "common.h"
-#include "v2.h"
+#include "render_commands.h"
 
 #include <functional>
 /*

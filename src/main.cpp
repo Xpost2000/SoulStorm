@@ -24,8 +24,9 @@
 #include "v2.h"
 #include "thread_pool.h"
 #include "engine.h"
-#include "graphics.h"
 #include "game.h"
+
+#include "software_renderer.h"
 
 const char* _build_flags =
 #ifdef USE_SIMD_OPTIMIZATIONS

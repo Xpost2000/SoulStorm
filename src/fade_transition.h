@@ -3,7 +3,7 @@
 
 #include <functional>
 #include "common.h"
-#include "graphics.h"
+#include "graphics_common.h"
 
 /*
   This is mostly ported from legends, and replacing some things such as the callback data with

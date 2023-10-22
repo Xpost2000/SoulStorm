@@ -216,10 +216,11 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
     auto r = get_rect();
 
     // black rectangles for default
-    render_commands_push_quad(
+    render_commands_push_quad_ext(
         render_commands,
         rectangle_f32(r.x, r.y, r.w, r.h),
         color32u8(0, 0, 0, 255),
+        V2(0.5, 0.5), 45,
         BLEND_MODE_ALPHA);
 
     render_commands_push_image(render_commands,

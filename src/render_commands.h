@@ -2,25 +2,12 @@
 #define RENDER_COMMANDS_H
 
 #include "prng.h"
-#include "camera.h"
 
 #include "memory_arena.h"
-#include "string.h"
-
-#include "v2.h"
-#include "common.h"
-
+#include "graphics_common.h"
 #include "color.h"
 
-/*
-    This is safer for defining game specific shader effects,
-    and is probably how I'm intending to utilize the render command system.
-
-    There will be some game-specific rendering commands.
-*/
-enum Shader_Effect_Type {
-    SHADER_EFFECT_TYPE_NONE, // or the identity shader as confirmation...
-};
+#include "shader_effect_types.h"
 
 enum render_command_type{
     RENDER_COMMAND_DRAW_QUAD,
@@ -30,6 +17,15 @@ enum render_command_type{
     // NOTE: this may or may not be dirty in a hardware implementation
     RENDER_COMMAND_POSTPROCESS_APPLY_SHADER,
 };
+
+static string render_command_type_strings[] = {
+    string_literal("RENDER_COMMAND_DRAW_QUAD"),
+    string_literal("RENDER_COMMAND_DRAW_IMAGE"),
+    string_literal("RENDER_COMMAND_DRAW_TEXT"),
+    string_literal("RENDER_COMMAND_DRAW_LINE"),
+    string_literal("RENDER_COMMAND_DRAW_APPLY_SHADER"),
+};
+
 #define ALWAYS_ON_TOP (INFINITY)
 struct render_command {
     /* easier to mix using a floating point value. */

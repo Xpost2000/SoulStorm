@@ -2,7 +2,7 @@
 #define GAME_UI_H
 
 #include "common.h"
-#include "graphics.h"
+#include "render_commands.h"
 #include "memory_arena.h"
 
 /*

@@ -1,4 +1,4 @@
-#include "graphics.h" // TODO: rename to software_renderer.h
+#include "software_renderer.h"
 #include "thread_pool.h"
 
 /* TODO: The main benefit of render commands, is that we should be able to parallelize them.
@@ -15,8 +15,17 @@ struct render_commands_job_details {
 
 // NOTE: these will be slower since there is basically not much I can pass into the engine...
 shader_fn software_framebuffer_get_shader_function_for(s32 shader_id) {
+    shader_fn result = nullptr;
+    switch (shader_id) {
+        case SHADER_EFFECT_TYPE_NONE: { } break;
+        default: {
+            auto name_of_type = render_command_type_strings[shader_id];
+            _debugprintf("No shader implementation for (%.*s)", name_of_type.length, name_of_type.data);
+        } break;
+    }
+
     // no shader for now.
-    return nullptr;
+    return result;
 }
 
 void software_framebuffer_render_commands_tiled(struct software_framebuffer* framebuffer, struct render_commands* commands, struct rectangle_f32 clip_rect) {
@@ -75,6 +84,10 @@ void software_framebuffer_render_commands_tiled(struct software_framebuffer* fra
                     command->blend_mode,
                     clip_rect
                 );
+            } break;
+            default: {
+                auto name_of_type = render_command_type_strings[command->type];
+                _debugprintf("unimplemented render command category (%.*s)", name_of_type.length, name_of_type.data);
             } break;
         }
     }
