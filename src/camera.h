@@ -3,6 +3,7 @@
 #define CAMERA_H
 
 #include "common.h"
+#include "v2.h"
 
 #define MAX_CAMERA_TRAUMA (16)
 
