@@ -16,7 +16,7 @@ struct MainMenu_Player {
     V2 position;
     V2 scale;
     V2 velocity;
-    void draw(MainMenu_Data* const state, struct render_commands* commands);
+    void draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources);
     void update(MainMenu_Data* const state, f32 dt);
     rectangle_f32 get_rect();
 };

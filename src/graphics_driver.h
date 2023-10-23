@@ -15,6 +15,11 @@
 #include "graphics_assets.h"
 
 struct SDL_Window;
+
+// NOTE: due to the interesting behavior requirements of the game,
+//       hardware drivers are likely going to be rendering at a lower
+//       resolution then they actually have to, so I might change something
+//       to circumvent this...
 class Graphics_Driver {
 public:
     // TODO: for hardware drivers I would need to register
