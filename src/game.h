@@ -26,7 +26,8 @@ public:
     ~Game();
 
     void init(Graphics_Driver* driver);
-    void init_resources(Graphics_Driver* driver);
+    void init_graphics_resources(Graphics_Driver* driver);
+    void init_audio_resources();
     void deinit();
 
     // NOTE: I should probably avoid having an explicit reference to
@@ -42,7 +43,7 @@ private:
     Memory_Arena*   arena;
     Game_State*     state;
     Game_Resources* resources;
-    /* game resources here */
+    bool initialized = false;
 };
 
 #endif

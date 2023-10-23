@@ -29,6 +29,13 @@
 #include "graphics_driver.h"
 #include "graphics_driver_software.h"
 
+enum graphics_device_type {
+    GRAPHICS_DEVICE_SOFTWARE,
+    GRAPHICS_DEVICE_OPENGL,
+    // GRAPHICS_DEVICE_D3D11,
+};
+local void set_graphics_device(s32 id);
+
 Software_Renderer_Graphics_Driver global_software_renderer_driver;
 Graphics_Driver* global_graphics_driver = nullptr;
 
@@ -371,9 +378,9 @@ void initialize() {
 #endif
     SDL_ShowWindow(global_game_window);
 
-    // global_graphics_driver->initialize(global_game_window, );
-    // global_game_sdl_renderer    = SDL_CreateRenderer(global_game_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    set_graphics_device(GRAPHICS_DEVICE_SOFTWARE);
     initialize_framebuffer();
+
     game.init(global_graphics_driver);
 }
 
@@ -445,8 +452,26 @@ void engine_main_loop() {
     Global_Engine()->scratch_arena.clear();
 }
 
+local void set_graphics_device(s32 id) {
+    if (global_graphics_driver) {
+        // clean the previous device resources
+        global_graphics_driver->finish();
+    }
+
+    switch (id) {
+        case GRAPHICS_DEVICE_SOFTWARE: {
+            global_graphics_driver = &global_software_renderer_driver;
+        } break;
+        case GRAPHICS_DEVICE_OPENGL: {
+            unimplemented("not here yet.");
+        } break;
+    }
+
+    // reinitialize game assets (reuploading stuff basically)
+    game.init_graphics_resources(global_graphics_driver);
+}
+
 int main(int argc, char** argv) {
-    global_graphics_driver = &global_software_renderer_driver;
 #ifdef _WIN32
     SetProcessDPIAware();
 #endif

@@ -18,7 +18,12 @@ Game::~Game() {
     
 }
 
-void Game::init_resources(Graphics_Driver* driver) {
+
+void Game::init_graphics_resources(Graphics_Driver* driver) {
+    if (!initialized) {
+        return;
+    }
+
     for (unsigned index = 0; index < array_count(menu_font_variation_string_names); ++index) {
         string current = menu_font_variation_string_names[index];
         resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
@@ -29,13 +34,20 @@ void Game::init_resources(Graphics_Driver* driver) {
     driver->upload_texture(&resources->graphics_assets, resources->circle);
 }
 
+void Game::init_audio_resources() {
+    if (!initialized) {
+        return;
+    }
+}
+
 void Game::init(Graphics_Driver* driver) {
     this->arena     = &Global_Engine()->main_arena;
     this->resources = (Game_Resources*)arena->push_unaligned(sizeof(*this->resources));
     this->state = (Game_State*)arena->push_unaligned(sizeof(*this->state)); (new (this->state) Game_State);
 
     resources->graphics_assets   = graphics_assets_create(arena, 16, 256);
-    init_resources(driver);
+    init_graphics_resources(driver);
+    init_audio_resources();
 
     state->player.position   = V2(state->play_area.width / 2, 300);
     state->player.scale      = V2(15, 15);
@@ -48,6 +60,7 @@ void Game::init(Graphics_Driver* driver) {
     state->main_camera       = camera(V2(0, 0), 1.0);
     state->main_camera.rng   = &state->prng;
 
+    initialized = true;
     GameUI::initialize(arena);
 }
 
