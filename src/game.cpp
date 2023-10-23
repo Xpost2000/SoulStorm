@@ -20,13 +20,14 @@
 // You know, now that I look at this further. This sounds a lot like Dante's Inferno...
 
 // I kinda wanna draw a cute icon for each of the levels.
+// TODO: need to lock stages with their prerequisities
 local Stage stage_list[] = {
     // Stage 1
     // easy and slow themed.
     {
         string_literal("Limbo"),
         string_literal("The Endless Nothing"),
-        0,
+        1,
         {
             {
                 string_literal("Gates of Eternity"),
@@ -40,7 +41,7 @@ local Stage stage_list[] = {
             },
             {
                 string_literal("Reaper's Gate"),
-                string_literal(""),
+                string_literal("Judgement awaits."),
                 1,
             },
         }
@@ -51,7 +52,7 @@ local Stage stage_list[] = {
     {
         string_literal("Fiery Gates"),
         string_literal("Lost Paradise"),
-        0,
+        1,
         {
             {
                 string_literal("River Styx"),
@@ -60,7 +61,7 @@ local Stage stage_list[] = {
             },
             {
                 string_literal("Fiery Sojourn"),
-                string_literal(""),
+                string_literal("Only embers will remain."),
                 0,
             },
             {
@@ -76,7 +77,7 @@ local Stage stage_list[] = {
     {
         string_literal("Inferno"),
         string_literal("A place for the sinful."),
-        0,
+        1,
         {
             {
                 string_literal("Greed"),
@@ -103,21 +104,21 @@ local Stage stage_list[] = {
     {
         string_literal("Insanity"),
         string_literal("Battling away for eternity."),
-        0,
+        1,
         {
             {
                 string_literal("Pride"),
-                string_literal(""),
+                string_literal("Where it begins."),
                 1
             },
             {
                 string_literal("Hubris"),
-                string_literal(""),
+                string_literal("Where it grows."),
                 1,
             },
             {
                 string_literal("Arrogance"),
-                string_literal(""),
+                string_literal("Where it ends."),
                 1,
             },
         }
@@ -333,6 +334,22 @@ void spawn_bullet_linear(Game_State* state, V2 position, V2 additional = V2(0,0)
     state->gameplay_data.bullets.push(bullet);
 }
 
+// check against "save data"
+// which we don't have yet.
+bool Game::can_access_stage(s32 id) {
+    auto state = &this->state->mainmenu_data;
+    auto& stage_portal = state->portals[id];
+
+    bool any_unmet = false;
+    for (int i = 0; i < array_count(stage_portal.prerequisites) && !any_unmet; ++i) {
+        if (stage_portal.prerequisites[i] != -1) {
+            _debugprintf("No save data system to check against. Yet!");
+            any_unmet = true;
+        }
+    }
+
+    return !any_unmet;
+}
 
 void Game::update_and_render_options_menu(struct render_commands* commands, f32 dt) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
@@ -348,19 +365,19 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
         GameUI::label(V2(100, y), string_literal("OPTIONS"), color32f32(1, 1, 1, 1), 4);
         y += 45;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
-        if (GameUI::button(V2(100, y), string_literal("Resolution?"), color32f32(1, 1, 1, 1), 2)) {
+        if (GameUI::button(V2(100, y), string_literal("Resolution?"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
         }
         y += 30;
-        if (GameUI::button(V2(100, y), string_literal("Fullscreen?"), color32f32(1, 1, 1, 1), 2)) {
+        if (GameUI::button(V2(100, y), string_literal("Fullscreen?"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
         }
         y += 30;
-        if (GameUI::button(V2(100, y), string_literal("Music Volume?"), color32f32(1, 1, 1, 1), 2)) {
+        if (GameUI::button(V2(100, y), string_literal("Music Volume?"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
         }
         y += 30;
-        if (GameUI::button(V2(100, y), string_literal("Sound Volume?"), color32f32(1, 1, 1, 1), 2)) {
+        if (GameUI::button(V2(100, y), string_literal("Sound Volume?"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
         }
         y += 30;
-        if (GameUI::button(V2(100, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2)) {
+        if (GameUI::button(V2(100, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             state->ui_state = UI_STATE_PAUSED;
         }
         y += 30;
@@ -381,19 +398,19 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
         GameUI::label(V2(50, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         y += 45;
-        if (GameUI::button(V2(100, y), string_literal("Resume"), color32f32(1, 1, 1, 1), 2)) {
+        if (GameUI::button(V2(100, y), string_literal("Resume"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             state->ui_state = UI_STATE_INACTIVE;
         }
         y += 30;
 
         if (state->screen_mode != GAME_SCREEN_MAIN_MENU) {
-            if (GameUI::button(V2(100, y), string_literal("Return To Menu"), color32f32(1, 1, 1, 1), 2)) {
+            if (GameUI::button(V2(100, y), string_literal("Return To Menu"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
                 _debugprintf("return to main menu.");
             }
             y += 30;
         }
 
-        if (GameUI::button(V2(100, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2)) {
+        if (GameUI::button(V2(100, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             _debugprintf("Open the options menu I guess");
             // I'd personally like to animate these, but it requires some more dirty code if
             // I'm doing it from scratch like this.
@@ -402,13 +419,13 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
         y += 30;
 
         if (state->screen_mode != GAME_SCREEN_CREDITS) {
-            if (GameUI::button(V2(100, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2)) {
+            if (GameUI::button(V2(100, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
                 _debugprintf("Open the credits screen I guess");
             }
             y += 30;
         }
 
-        if (GameUI::button(V2(100, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2)) {
+        if (GameUI::button(V2(100, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             Global_Engine()->die();
         }
     }
@@ -424,13 +441,65 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
 
     GameUI::begin_frame(commands);
     {
-        f32 y = 100;
+        s32   stage_id = state->mainmenu_data.stage_id_level_select;
+        auto& stage    = stage_list[stage_id];
+        f32   y        = 50;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
         GameUI::label(V2(50, y), string_literal("STAGE SELECT"), color32f32(1, 1, 1, 1), 4);
-        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         y += 45;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+        GameUI::label(V2(70, y), stage.name, color32f32(1, 1, 1, 1), 4);
+        y += 45;
+        GameUI::label(V2(70, y), stage.subtitle, color32f32(1, 1, 1, 1), 2);
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        y += 55;
 
-        if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2)) {
+        // the level selection UI main parts
+        {
+            s32   enter_level        = -1;
+            s32   display_level_icon = -1;
+
+            auto met_all_prerequisites = can_access_stage(stage_id);
+
+            for (int i = 0; i < MAX_LEVELS_PER_STAGE; ++i) {
+                auto& level = stage.levels[i];
+                string name = {};
+
+                bool is_unlocked = met_all_prerequisites && i < stage.unlocked_levels;
+                if (is_unlocked) {
+                    name = level.name;
+                } else {
+                    name = string_literal("???");
+                }
+
+                auto s = format_temp("%d - %d: %.*s", stage_id, (i+1), name.length, name.data);
+                s32 button_status = (GameUI::button(V2(100, y), string_from_cstring(s), color32f32(1, 1, 1, 1), 2, is_unlocked));
+                y += 30;
+
+                if (button_status == WIDGET_ACTION_ACTIVATE) {
+                    enter_level = i;
+                } else if (button_status == WIDGET_ACTION_HOT) {
+                    display_level_icon = i;
+                }
+            }
+
+            if (display_level_icon != -1) {
+                // I don't have icon images yet, so the best I have is just printing text.
+                auto& level = stage.levels[display_level_icon];
+                color32f32 color = color32f32(1, 1, 1, 1);
+                if (level.boss_stage) color = color32f32(1, 0, 0, 1);
+                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2), level.subtitle, color, 2);
+            }
+
+            if (enter_level != -1) {
+                _debugprintf("I would load stage-level : (%d - %d)'s script and get ready to play!", stage_id, enter_level);
+                state->ui_state    = UI_STATE_INACTIVE;
+                state->screen_mode = GAME_SCREEN_INGAME;
+                _debugprintf("off to the game you go!");
+            }
+        }
+
+        if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             state->ui_state = UI_STATE_INACTIVE;
         }
         y += 30;

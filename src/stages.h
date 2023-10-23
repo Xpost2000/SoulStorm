@@ -1,6 +1,8 @@
 #ifndef STAGES_H
 #define STAGES_H
 
+#define MAX_LEVELS_PER_STAGE (4)
+
 struct Level {
     string name;
     string subtitle;
@@ -15,7 +17,7 @@ struct Stage {
     string subtitle;
     s32    unlocked_levels;
     // all levels are expected to be filled.
-    Level  levels[4];
+    Level  levels[MAX_LEVELS_PER_STAGE];
 };
 
 #endif

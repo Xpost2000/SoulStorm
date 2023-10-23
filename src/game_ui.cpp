@@ -89,15 +89,15 @@ namespace GameUI {
     }
 
     void label(V2 where, string text, color32f32 modulation, f32 scale) {
-        assertion(global_ui_state.in_frame && "Neeed to call begin_frame first.");
+        assertion(global_ui_state.in_frame && "Need to call begin_frame first.");
         auto widget = push_label(where, text, scale, modulation);
         auto font = global_ui_state.default_font;
 
         render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
     }
 
-    bool button(V2 where, string text, color32f32 modulation, f32 scale) {
-        assertion(global_ui_state.in_frame && "Neeed to call begin_frame first.");
+    s32 button(V2 where, string text, color32f32 modulation, f32 scale, bool active) {
+        assertion(global_ui_state.in_frame && "Need to call begin_frame first.");
         auto widget         = push_label(where, text, scale, modulation);
         auto font           = global_ui_state.default_font;
         auto text_width     = font_cache_text_width(font, widget->text, widget->scale);
@@ -107,19 +107,28 @@ namespace GameUI {
         V2   mouse_position = Input::mouse_location();
         bool clicked        = false;
 
-        if (rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5))) {
+        s32 status = WIDGET_ACTION_NONE;
+        if (active && rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5))) {
             font = global_ui_state.active_font;
             if (Input::mouse_left()) {
                 font = global_ui_state.selected_font;
             }
-            clicked = Input::pressed_mouse_left();
+            
+            if (Input::pressed_mouse_left()) {
+                status = WIDGET_ACTION_ACTIVATE;
+            } else {
+                status = WIDGET_ACTION_HOT;
+            }
         }
 
 #ifndef RELEASE
         render_commands_push_quad(global_ui_state.commands, button_rect, color32u8(255, 0, 0, 64), BLEND_MODE_ALPHA);
 #endif
+        if (!active) widget->modulation.a = 0.5;
+        else         widget->modulation.a = 1.0;
         render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
-        return clicked;
+
+        return status;
     }
 
     void initialize(Memory_Arena* arena) {

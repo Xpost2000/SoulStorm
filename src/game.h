@@ -50,6 +50,8 @@ private:
     void handle_all_lasers(f32 dt);
     void handle_all_dead_entities(f32 dt);
 
+    bool can_access_stage(s32 id);
+
     Memory_Arena*   arena;
     Game_State*     state;
     Game_Resources* resources;

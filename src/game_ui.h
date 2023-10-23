@@ -23,13 +23,22 @@
       - Transition behavior (this will be hard coded, but it's for polish)
       - A few more widgets (mostly enough to facilitate the settings menu)
 */
+enum Widget_Action {
+    WIDGET_ACTION_NONE     = 0,
+    WIDGET_ACTION_ACTIVATE = 1,
+    // like a mouse over
+    WIDGET_ACTION_HOT      = 2,
+};
 namespace GameUI {
     void set_font_selected(font_cache* font);
     void set_font_active(font_cache* font);
     void set_font(font_cache* font);
 
     void label(V2 where, string text, color32f32 modulation, f32 scale);
-    bool button(V2 where, string text, color32f32 modulation, f32 scale);
+
+    // need to enhance this beyond boolean only
+    // need to know if I'm "focused"
+    s32 button(V2 where, string text, color32f32 modulation, f32 scale, bool active=true);
 
     void initialize(Memory_Arena* arena);
     void begin_frame(struct render_commands* commands);
