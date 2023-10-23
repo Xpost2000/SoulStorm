@@ -190,6 +190,55 @@ void Game::init(Graphics_Driver* driver) {
         state->portals = Fixed_Array<MainMenu_Stage_Portal>(arena, 4);
         {
             // initialize all portals here for the main menu
+            // portals should be spaced differently based on what's unlocked
+            // but I'll just place them manually
+            {
+                auto& portal = state->portals[0]; 
+                portal.stage_id = 0;
+                portal.scale = V2(15, 15);
+                portal.position = V2(100, 100);
+                for (int i = 0; i < array_count(portal.prerequisites); ++i) {
+                    portal.prerequisites[i] = -1;
+                }
+            }
+
+            {
+                auto& portal = state->portals[1]; 
+                portal.stage_id = 1;
+                portal.scale = V2(15, 15);
+                portal.position = V2(350, 100);
+                for (int i = 0; i < array_count(portal.prerequisites); ++i) {
+                    portal.prerequisites[i] = -1;
+                }
+                portal.prerequisites[0] = 0;
+            }
+
+            {
+                auto& portal = state->portals[2]; 
+                portal.stage_id = 2;
+                portal.scale = V2(15, 15);
+                portal.position = V2(550, 100);
+                for (int i = 0; i < array_count(portal.prerequisites); ++i) {
+                    portal.prerequisites[i] = -1;
+                }
+                portal.prerequisites[0] = 0;
+                portal.prerequisites[1] = 1;
+            }
+
+            {
+                auto& portal = state->portals[3]; 
+                portal.stage_id = 3;
+                portal.scale = V2(15, 15);
+                portal.position = V2(350, 400);
+                for (int i = 0; i < array_count(portal.prerequisites); ++i) {
+                    portal.prerequisites[i] = -1;
+                }
+                portal.prerequisites[0] = 0;
+                portal.prerequisites[1] = 1;
+                portal.prerequisites[2] = 2;
+            }
+
+            state->portals.size = 4;
         }
     }
 
@@ -285,29 +334,38 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
 
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
-    GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
 
     GameUI::begin_frame(commands);
     {
         f32 y = 100;
-        GameUI::label(V2(50, y), string_literal("PAUSED"), color32f32(1, 1, 1, 1), 4);
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(50, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         y += 45;
         if (GameUI::button(V2(100, y), string_literal("Resume"), color32f32(1, 1, 1, 1), 2)) {
             state->paused = false;
         }
-        y += 30;
-        if (GameUI::button(V2(100, y), string_literal("Return To Menu"), color32f32(1, 1, 1, 1), 2)) {
-            _debugprintf("return to main menu.");
+
+        if (state->screen_mode != GAME_SCREEN_MAIN_MENU) {
+            y += 30;
+            if (GameUI::button(V2(100, y), string_literal("Return To Menu"), color32f32(1, 1, 1, 1), 2)) {
+                _debugprintf("return to main menu.");
+            }
         }
+
         y += 30;
         if (GameUI::button(V2(100, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2)) {
             _debugprintf("Open the options menu I guess");
         }
         y += 30;
-        if (GameUI::button(V2(100, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2)) {
-            _debugprintf("Open the credits screen I guess");
+
+        if (state->screen_mode != GAME_SCREEN_CREDITS) {
+            if (GameUI::button(V2(100, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2)) {
+                _debugprintf("Open the credits screen I guess");
+            }
+            y += 30;
         }
-        y += 30;
+
         if (GameUI::button(V2(100, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2)) {
             Global_Engine()->die();
         }
@@ -319,97 +377,6 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
 void Game::update_and_render_game_opening(Graphics_Driver* driver, f32 dt) {
     state->screen_mode = GAME_SCREEN_INGAME;
 }
-
-
-// main menu code
-
-// NOTE: this main menu entity code is pretty similar to the
-//       main entity code, but I just don't wanna have the baggage of all the gameplay
-//       specific stuff.
-rectangle_f32 MainMenu_Player::get_rect() {
-    return rectangle_f32(
-        position.x - scale.x,
-        position.y - scale.y,
-        scale.x*2,
-        scale.y*2
-    );
-}
-
-void MainMenu_Player::draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources) {
-    auto r = get_rect();
-
-    // black rectangles for default
-    render_commands_push_quad_ext(
-        commands,
-        rectangle_f32(r.x, r.y, r.w, r.h),
-        color32u8(0, 0, 0, 255),
-        V2(0, 0), 0,
-        BLEND_MODE_ALPHA);
-
-    render_commands_push_image(commands,
-                               graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
-                               rectangle_f32(position.x - scale.x, position.y - scale.x, scale.x*2, scale.x*2),
-                               RECTANGLE_F32_NULL,
-                               color32f32(1.0, 0, 1.0, 0.5f),
-                               0,
-                               BLEND_MODE_ALPHA);
-}
-
-void MainMenu_Player::update(MainMenu_Data* const state, f32 dt) {
-    auto gamepad = Input::get_gamepad(0);
-
-    V2 axes = V2(
-        1 * (Input::is_key_down(KEY_D) || Input::is_key_down(KEY_RIGHT)) + (-1) * (Input::is_key_down(KEY_A) || Input::is_key_down(KEY_LEFT)),
-        1 * (Input::is_key_down(KEY_S) || Input::is_key_down(KEY_DOWN)) + (-1) * (Input::is_key_down(KEY_W) || Input::is_key_down(KEY_UP))
-    );
-
-    axes = axes.normalized();
-
-    if (fabs(axes[0]) < fabs(gamepad->left_stick.axes[0])) {
-        axes[0] = gamepad->left_stick.axes[0];
-    }
-    if (fabs(axes[1]) < fabs(gamepad->left_stick.axes[1])) {
-        axes[1] = gamepad->left_stick.axes[1];
-    }
-
-    const float UNIT_SPEED = 350;
-
-    velocity.x = axes[0] * UNIT_SPEED;
-    velocity.y = axes[1] * UNIT_SPEED;
-
-    position += velocity * dt;
-}
-
-void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
-    auto& main_menu_state = state->mainmenu_data;
-
-    auto game_render_commands = render_commands(&Global_Engine()->scratch_arena, 12000, main_menu_state.main_camera);
-    auto ui_render_commands   = render_commands(&Global_Engine()->scratch_arena, 8192, camera(V2(0, 0), 1));
-
-    main_menu_state.player.update(&main_menu_state, dt);
-
-    // Wrap player to edges
-    {
-        V2   resolution = driver->resolution();
-
-        if ((main_menu_state.player.position.x) < 0)                 main_menu_state.player.position.x = resolution.x;
-        if ((main_menu_state.player.position.x) > (s32)resolution.x) main_menu_state.player.position.x = 0;
-        if ((main_menu_state.player.position.y) < 0)                 main_menu_state.player.position.y = resolution.y;
-        if ((main_menu_state.player.position.y) > (s32)resolution.y) main_menu_state.player.position.y = 0;
-    }
-
-    main_menu_state.player.draw(&main_menu_state, &game_render_commands, resources);
-
-    Transitions::update_and_render(&ui_render_commands, dt);
-
-    driver->clear_color_buffer(color32u8(32, 45, 80, 255));
-    driver->consume_render_commands(&game_render_commands);
-    driver->consume_render_commands(&ui_render_commands);
-
-    camera_update(&main_menu_state.main_camera, dt);
-}
-
-// end main menu code
 
 void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     auto state = &this->state->gameplay_data;
@@ -697,3 +664,5 @@ void Play_Area::set_all_edge_behaviors_to(u8 value) {
         edge_behaviors[i] = value;
     }
 }
+
+#include "main_menu_mode.cpp"
