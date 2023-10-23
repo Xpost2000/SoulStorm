@@ -10,7 +10,7 @@
  */
 #include "common.h"
 #include "memory_arena.h"
-
+#include "graphics_driver.h"
 struct Engine {
     f32 global_elapsed_time;
     f32 last_elapsed_delta_time;
@@ -23,6 +23,7 @@ struct Engine {
     Memory_Arena scratch_arena;
 
     bool running;
+    Graphics_Driver* driver;
 
     void die();
 };

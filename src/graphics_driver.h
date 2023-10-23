@@ -20,6 +20,13 @@ struct SDL_Window;
 //       hardware drivers are likely going to be rendering at a lower
 //       resolution then they actually have to, so I might change something
 //       to circumvent this...
+struct Resolution_Mode {
+    // I don't really care about different display modes outside of resolution
+    // to be honest, I'm not sure if 16bit or 24bit color depth matters much in 2023 anymore...
+    int width;
+    int height;
+};
+
 class Graphics_Driver {
 public:
     // TODO: for hardware drivers I would need to register
@@ -58,6 +65,20 @@ public:
      */
     virtual void upload_texture(struct graphics_assets* assets, image_id image) = 0;
     virtual void upload_font(struct graphics_assets* assets, font_id font)      = 0;
+
+    Slice<Resolution_Mode> get_display_modes();
+    //                     if it is an enumerable display mode.
+    s32                    find_index_of_resolution(s32 w, s32 h);
+protected:
+    SDL_Window* game_window = nullptr;
+private:
+    bool already_have_resolution(s32 w, s32 h);
+    /*
+     * I would like to know how I would even get close to half this number in the next decade.
+     * I just don't want to dynamically allocate anything really.
+     */
+    Resolution_Mode display_modes[128];
+    int display_mode_count = 0;
 };
 
 #endif

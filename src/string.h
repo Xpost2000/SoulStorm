@@ -37,8 +37,9 @@ u64  cstring_length(const char* cstring);
 void cstring_copy(cstring source, cstring destination, u64 destination_length);
 u64  copy_string_into_cstring(string source, char* destination, u64 destination_length);
 
-string string_concatenate(struct memory_arena* arena, string a, string b);
-string string_clone(struct memory_arena* arena, string a);
+string string_concatenate(Memory_Arena* arena, string a, string b);
+string string_clone(Memory_Arena* arena, string a);
+string longest_string_in_list(string* strings, s32 length);
 
 struct string_array {
     s32 count;

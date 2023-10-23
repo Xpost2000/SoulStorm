@@ -27,7 +27,6 @@ public:
     void upload_font(struct graphics_assets* assets, font_id font);
 
 private:
-    SDL_Window*          game_window          = nullptr;
     SDL_Renderer*        game_sdl_renderer    = nullptr;
     SDL_Texture*         game_texture_surface = nullptr;
     software_framebuffer default_framebuffer  = {};

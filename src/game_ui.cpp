@@ -3,9 +3,12 @@
 #include "game_ui.h"
 #include "fixed_array.h"
 
+#define RELEASE
+
 enum Widget_Type {
     WIDGET_TYPE_UNKNOWN,
     WIDGET_TYPE_TEXT,
+    WIDGET_TYPE_OPTION_SELECTOR,
     WIDGET_TYPE_BUTTON,
 };
 
@@ -15,6 +18,9 @@ struct Widget {
     color32f32 modulation;
     string     text;
     f32        scale;
+
+    // for option_selector
+    s32 current_selected_index;
 };
 
 struct UI_State {
@@ -76,6 +82,24 @@ namespace GameUI {
         return result;
     }
 
+    local Widget* push_option_selector(V2 where, string text, f32 scale, color32f32 modulation, s32* value) {
+        auto result   = global_ui_state.widgets.alloc();
+
+        // specific initialization behavior if this was a different
+        // widget last frame.
+        if (result->type != WIDGET_TYPE_OPTION_SELECTOR) {
+            result->type                   = WIDGET_TYPE_OPTION_SELECTOR;
+            assertion(value && "we need a valid option value");
+            result->current_selected_index = *value;
+        }
+        result->where      = where;
+        result->modulation = modulation;
+        result->text       = text;
+        result->scale      = scale;
+
+        return result;
+    }
+
     void set_font_selected(font_cache* font) {
         global_ui_state.selected_font = font;
     }
@@ -88,17 +112,19 @@ namespace GameUI {
         global_ui_state.default_font = font;
     }
 
-    void label(V2 where, string text, color32f32 modulation, f32 scale) {
+    void label(V2 where, string text, color32f32 modulation, f32 scale, bool active) {
         assertion(global_ui_state.in_frame && "Need to call begin_frame first.");
         auto widget = push_label(where, text, scale, modulation);
         auto font = global_ui_state.default_font;
 
+        if (!active) widget->modulation.a = 0.5;
+        else         widget->modulation.a = 1.0;
         render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
     }
 
     s32 button(V2 where, string text, color32f32 modulation, f32 scale, bool active) {
         assertion(global_ui_state.in_frame && "Need to call begin_frame first.");
-        auto widget         = push_label(where, text, scale, modulation);
+        auto widget         = push_button(where, text, scale, modulation);
         auto font           = global_ui_state.default_font;
         auto text_width     = font_cache_text_width(font, widget->text, widget->scale);
         auto text_height    = font_cache_text_height(font) * widget->scale;
@@ -131,11 +157,42 @@ namespace GameUI {
         return status;
     }
 
+    void option_selector(V2 where, string text, color32f32 modulation, f32 scale, string* options, s32 options_count, s32* out_selected, bool active) {
+        assertion(global_ui_state.in_frame && "Need to call begin_frame first.");
+        auto widget = push_option_selector(where, text, scale, modulation, out_selected);
+        auto font   = global_ui_state.default_font;
+
+        label(where, text, modulation, scale, active);
+        where.x += font_cache_text_width(font, widget->text, widget->scale);
+        label(where, options[widget->current_selected_index], modulation, scale, active);
+        where.x += font_cache_text_width(font, longest_string_in_list(options, options_count), widget->scale) * 1.25;
+
+        // no wrapping behavior
+        if (button(where, string_literal("[+]"), modulation, scale, active) == WIDGET_ACTION_ACTIVATE) {
+            widget->current_selected_index += 1;
+            if (widget->current_selected_index >= options_count) {
+                widget->current_selected_index = options_count - 1;
+            }
+        }
+        where.x += font_cache_text_width(font, string_literal("[+]"), widget->scale);
+        if (button(where, string_literal("[-]"), modulation, scale, active) == WIDGET_ACTION_ACTIVATE) {
+            widget->current_selected_index -= 1;
+            if (widget->current_selected_index < 0) {
+                widget->current_selected_index = 0;
+            }
+        }
+        where.x += font_cache_text_width(font, string_literal("[-]"), widget->scale);
+
+        // thankfully this is just a label and some buttons.
+        *out_selected = widget->current_selected_index;
+    }
+
     void initialize(Memory_Arena* arena) {
         global_ui_state.widgets = Fixed_Array<Widget>(arena, 256);
     }
 
     void begin_frame(struct render_commands* commands) {
+        global_ui_state.widgets.clear();
         global_ui_state.in_frame = true;
         global_ui_state.commands = commands;
     }

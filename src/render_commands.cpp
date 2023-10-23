@@ -15,6 +15,7 @@ struct render_commands render_commands(Memory_Arena* arena, s32 capacity, struct
 }
 
 struct render_command* render_commands_new_command(struct render_commands* commands, s16 type) {
+    assert(commands->command_count < commands->command_capacity && "Overrun command buffer?");
     struct render_command* command = &commands->commands[commands->command_count++];
     command->type = type;
     return command;

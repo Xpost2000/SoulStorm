@@ -447,6 +447,7 @@ struct Slice {
 
     T& operator[](int index) {
         assertion(index >= 0 && index < length && "Invalid slice index length!");
+        return data[index];
     }
 };
 

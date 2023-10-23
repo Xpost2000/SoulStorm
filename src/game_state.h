@@ -71,15 +71,51 @@ struct Play_Area {
 };
 
 enum Game_Screen_Modes {
+    /*
+     * A text exposition cutscene + my branding I guess
+     */
     GAME_SCREEN_OPENING   = 0,
-    GAME_SCREEN_MAIN_MENU = 1,
-    GAME_SCREEN_INGAME    = 2,
-    GAME_SCREEN_CREDITS   = 3,
-    GAME_SCREEN_COUNT     = 4
+
+    /*
+     * This solely exists for presentation
+     * purposes, but you never see the title
+     * outside of booting the game.
+     */
+    GAME_SCREEN_TITLE_SCREEN = 1,
+    GAME_SCREEN_MAIN_MENU = 2,
+    GAME_SCREEN_INGAME    = 3,
+
+    /*
+     * Not going to be prentenious like Legends, it'll just be a simple
+     * flat text screen.
+     *
+     * Honestly, if I wanted to play with it more I could add some interactivity.
+     */
+    GAME_SCREEN_CREDITS   = 4,
+    GAME_SCREEN_COUNT     = 5
 };
 
 #include "stages.h"
+#include "title_screen_mode.h"
 #include "main_menu_mode.h"
+
+// I do like using state machines for this kind of thing
+// at least when you have to write code for animation.
+enum Gameplay_Stage_Introduction_Sequence_Stage {
+    GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN,
+    GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_TYPE_IN_NAME,
+    GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_TYPE_IN_SUBTITLE,
+    GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_OUT_EVERYTHING,
+};
+#define GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_TYPE_SPEED (0.05f)
+struct Gameplay_Stage_Introduction_Sequence {
+    s32 stage       = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN;
+    f32 stage_timer = 0.0f;
+
+    f32 type_timer      = 0.0f;
+    s32 name_length     = 0;
+    s32 subtitle_length = 0;
+};
 
 struct Gameplay_Data {
     Fixed_Array<Bullet>           bullets;
@@ -101,6 +137,8 @@ struct Gameplay_Data {
     // I'll fake the illusion of movement through the background primarily
     random_state prng;
     camera       main_camera;
+
+    Gameplay_Stage_Introduction_Sequence intro;
 };
 
 enum UI_State_Mode {
@@ -112,10 +150,11 @@ enum UI_State_Mode {
 };
 
 struct Game_State {
-    s32 screen_mode = GAME_SCREEN_MAIN_MENU;
-    Gameplay_Data gameplay_data;
-    MainMenu_Data mainmenu_data;
-    s32  ui_state;
+    s32              screen_mode = GAME_SCREEN_TITLE_SCREEN;
+    Gameplay_Data    gameplay_data;
+    MainMenu_Data    mainmenu_data;
+    TitleScreen_Data titlescreen_data;
+    s32              ui_state;
 };
 
 struct Game_Resources {

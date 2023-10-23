@@ -306,6 +306,17 @@ bool string_is_substring(string a, string substring) {
     return false;
 }
 
+string longest_string_in_list(string* strings, s32 length) {
+    string best = strings[0];
+
+    for (s32 index = 1; index < length; ++index) {
+        auto& s = strings[index];
+        if (s.length > best.length) best = s;
+    }
+
+    return best;
+}
+
 string memory_arena_push_string(Memory_Arena* arena, string to_copy) {
     string result = {};
     result.length = to_copy.length;

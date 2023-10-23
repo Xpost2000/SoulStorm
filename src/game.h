@@ -45,6 +45,7 @@ private:
     void update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt);
     void update_and_render_game_ingame(Graphics_Driver* driver, f32 dt);
     void update_and_render_game_credits(Graphics_Driver* driver, f32 dt);
+    void update_and_render_game_title_screen(Graphics_Driver* driver, f32 dt);
 
     void handle_all_explosions(f32 dt);
     void handle_all_lasers(f32 dt);

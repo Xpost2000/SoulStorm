@@ -356,8 +356,12 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
+    // unsaved_config_options
+    s32 resolution_option_to_pick = 0;
+
     GameUI::begin_frame(commands);
     {
+
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
         GameUI::label(V2(50, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
@@ -365,9 +369,21 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
         GameUI::label(V2(100, y), string_literal("OPTIONS"), color32f32(1, 1, 1, 1), 4);
         y += 45;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
-        if (GameUI::button(V2(100, y), string_literal("Resolution?"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+        {
+            auto display_modes = Global_Engine()->driver->get_display_modes();
+
+            Fixed_Array<string> options_list = Fixed_Array<string>(&Global_Engine()->scratch_arena, display_modes.length);
+            for (s32 index = 0; index < display_modes.length; ++index) {
+                auto&  dm = display_modes[index];
+                string s = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("%d x %d", dm.width, dm.height)));
+                options_list.push(s);
+            }
+
+            GameUI::option_selector(V2(100, y), string_literal("Resolution: "), color32f32(1, 1, 1, 1), 2, options_list.data, options_list.size, &resolution_option_to_pick);
+            y += 30;
         }
-        y += 30;
+        // if (GameUI::button(V2(100, y), string_literal("Resolution?"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+        // }
         if (GameUI::button(V2(100, y), string_literal("Fullscreen?"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
         }
         y += 30;
@@ -406,6 +422,8 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
         if (state->screen_mode != GAME_SCREEN_MAIN_MENU) {
             if (GameUI::button(V2(100, y), string_literal("Return To Menu"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
                 _debugprintf("return to main menu.");
+                state->ui_state    = UI_STATE_INACTIVE;
+                state->screen_mode = GAME_SCREEN_MAIN_MENU;
             }
             y += 30;
         }
@@ -473,7 +491,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                 }
 
                 auto s = format_temp("%d - %d: %.*s", stage_id, (i+1), name.length, name.data);
-                s32 button_status = (GameUI::button(V2(100, y), string_from_cstring(s), color32f32(1, 1, 1, 1), 2, is_unlocked));
+                s32 button_status = (GameUI::button(V2(100, y), string_from_cstring(s), color32f32(1, 1, 1, 1), 2, is_unlocked && !Transitions::fading()));
                 y += 30;
 
                 if (button_status == WIDGET_ACTION_ACTIVATE) {
@@ -492,14 +510,39 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
             }
 
             if (enter_level != -1) {
-                _debugprintf("I would load stage-level : (%d - %d)'s script and get ready to play!", stage_id, enter_level);
-                state->ui_state    = UI_STATE_INACTIVE;
-                state->screen_mode = GAME_SCREEN_INGAME;
-                _debugprintf("off to the game you go!");
+                Transitions::do_shuteye_in(
+                    color32f32(0, 0, 0, 1),
+                    0.15f,
+                    0.3f
+                );
+
+                /*
+                 * this looks a little funny. Too promise-like.
+                 */
+                Transitions::register_on_finish(
+                    [&](void*) mutable {
+                        _debugprintf("I would load stage-level : (%d - %d)'s script and get ready to play!", stage_id, enter_level);
+                        state->ui_state    = UI_STATE_INACTIVE;
+                        state->screen_mode = GAME_SCREEN_INGAME;
+                        _debugprintf("off to the game you go!");
+
+                        Transitions::do_shuteye_out(
+                            color32f32(0, 0, 0, 1),
+                            0.15f,
+                            0.3f
+                        );
+
+                        Transitions::register_on_finish(
+                            [&](void*) mutable {
+                                _debugprintf("Set up stage introduction cutscene");
+                            }
+                        );
+                    }
+                );
             }
         }
 
-        if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+        if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             state->ui_state = UI_STATE_INACTIVE;
         }
         y += 30;
@@ -529,7 +572,7 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
 }
 
 void Game::update_and_render_game_opening(Graphics_Driver* driver, f32 dt) {
-    state->screen_mode = GAME_SCREEN_INGAME;
+    unimplemented("No opening yet.");
 }
 
 void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
@@ -720,11 +763,14 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 }
 
 void Game::update_and_render_game_credits(Graphics_Driver* driver, f32 dt) {
-    
+    unimplemented("No credits screen yet");
 }
 
 void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     switch (state->screen_mode) {
+        case GAME_SCREEN_TITLE_SCREEN: {
+            update_and_render_game_title_screen(driver, dt);
+        } break;
         case GAME_SCREEN_OPENING: {
             update_and_render_game_opening(driver, dt);
         } break;
@@ -823,4 +869,5 @@ void Play_Area::set_all_edge_behaviors_to(u8 value) {
     }
 }
 
+#include "title_screen_mode.cpp"
 #include "main_menu_mode.cpp"

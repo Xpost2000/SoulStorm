@@ -3,6 +3,7 @@
 #include <SDL.h>
 
 void Software_Renderer_Graphics_Driver::initialize(SDL_Window* window, int width, int height) {
+    game_window = window;
     if (game_sdl_renderer == nullptr) {
         _debugprintf("Hi, this is Jerry's software renderer driver. I am existing!");
         game_sdl_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
