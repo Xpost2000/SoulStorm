@@ -61,6 +61,7 @@ f32 camera_get_component(struct camera* camera, s32 index);
 f32  camera_get_tracking_component(struct camera* camera, s32 index);
 
 void camera_set_point_to_interpolate(struct camera* camera, V2 point);
+void camera_set_point_to_interpolate(struct camera* camera, V2 point, f32 zoom);
 V2 camera_transform(struct camera* camera, V2 point, s32 screen_width, s32 screen_height);
 V2 camera_displacement_from_trauma(struct camera* camera);
 rectangle_f32 camera_project_rectangle(struct camera* camera, rectangle_f32 rectangle, s32 screen_width, s32 screen_height);

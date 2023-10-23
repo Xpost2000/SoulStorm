@@ -87,7 +87,7 @@ void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
         axes[1] = gamepad->left_stick.axes[1];
     }
 
-    const float UNIT_SPEED = 350;
+    const float UNIT_SPEED = 200;
 
     velocity.x = axes[0] * UNIT_SPEED;
     velocity.y = axes[1] * UNIT_SPEED;
@@ -108,10 +108,15 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
 
 
     if (Input::is_key_pressed(KEY_ESCAPE)) {
-        if (this->state->ui_state != UI_STATE_PAUSED) {
-            this->state->ui_state = UI_STATE_PAUSED;
+        if (this->state->ui_state == UI_STATE_STAGE_SELECT) {
+            
         } else {
-            this->state->ui_state = UI_STATE_INACTIVE;
+            if (this->state->ui_state != UI_STATE_PAUSED) {
+                this->state->ui_state = UI_STATE_PAUSED;
+            }
+            else {
+                this->state->ui_state = UI_STATE_INACTIVE;
+            }
         }
     }
 
@@ -129,6 +134,47 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
         if ((main_menu_state.player.position.x) > (s32)resolution.x) main_menu_state.player.position.x = 0;
         if ((main_menu_state.player.position.y) < 0)                 main_menu_state.player.position.y = resolution.y;
         if ((main_menu_state.player.position.y) > (s32)resolution.y) main_menu_state.player.position.y = 0;
+    }
+
+    // do a fancy camera zoom in effect
+    {
+        MainMenu_Stage_Portal* focus_portal = nullptr;
+        auto circle_player = circle_f32(main_menu_state.player.position.x, main_menu_state.player.position.y, main_menu_state.player.scale.x);
+        for (int i = 0; i < main_menu_state.portals.size; ++i) {
+            auto& p = main_menu_state.portals[i];
+            auto circle_portal = circle_f32(p.position.x, p.position.y, p.scale.x * 3.5f);
+
+            if (circle_f32_intersect(circle_portal, circle_player)) {
+                focus_portal = &p;
+                break;
+            }
+            p.triggered_level_selection = false;
+        } 
+
+        if (focus_portal) {
+            if (!focus_portal->triggered_level_selection) {
+                focus_portal->triggered_level_selection = true;
+
+                main_menu_state.stage_id_level_select = focus_portal->stage_id;
+                state->ui_state                       = UI_STATE_STAGE_SELECT;
+
+                auto position = focus_portal->position;
+                position *= 1.5f;
+
+                camera_set_point_to_interpolate(&main_menu_state.main_camera, position, 1.5f);
+            }
+        } else {
+            if (main_menu_state.last_focus_portal != nullptr) {
+                V2 resolution = driver->resolution();
+                camera_set_point_to_interpolate(
+                    &main_menu_state.main_camera,
+                    V2(resolution.x/2, resolution.y/2),
+                    1.0
+                );
+            }
+        }
+
+        main_menu_state.last_focus_portal = focus_portal;
     }
 
     for (int i = 0; i < main_menu_state.portals.size; ++i) {

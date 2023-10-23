@@ -33,9 +33,6 @@ bool circle_f32_intersect(circle_f32 a, circle_f32 b) {
     V2 delta = b_pos - a_pos;
     f32 r_delta = b.r + a.r;
 
-    _debugprintf("A <%3.3f, %3.3f> (%3.3f)", a_pos.x, a_pos.y, a.r);
-    _debugprintf("B <%3.3f, %3.3f> (%3.3f)", b_pos.x, b_pos.y, b.r);
-
     return V2_dot(delta, delta) <= r_delta*r_delta;
 }
 

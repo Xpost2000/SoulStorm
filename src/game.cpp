@@ -182,10 +182,14 @@ void Game::init(Graphics_Driver* driver) {
         auto state = &this->state->mainmenu_data;
         auto resolution = driver->resolution();
 
-        state->player.position = V2(resolution.x / 2, resolution.y / 2);
-        state->player.scale    = V2(15, 15);
-        state->player.velocity = V2(0, 0);
-        state->main_camera     = camera(V2(0, 0), 1.0);
+        
+        state->player.position      = V2(resolution.x / 2, resolution.y / 2);
+        state->player.scale         = V2(15, 15);
+        state->player.velocity      = V2(0, 0);
+        // I need to utilize a camera effect which relies on centering
+        // for polish reasons.
+        state->main_camera          = camera(V2(resolution.x/2, resolution.y/2), 1.0);
+        state->main_camera.centered = true;
 
         state->portals = Fixed_Array<MainMenu_Stage_Portal>(arena, 4);
         {
@@ -196,7 +200,7 @@ void Game::init(Graphics_Driver* driver) {
                 auto& portal = state->portals[0]; 
                 portal.stage_id = 0;
                 portal.scale = V2(15, 15);
-                portal.position = V2(100, 100);
+                portal.position = V2(100-30, 100);
                 for (int i = 0; i < array_count(portal.prerequisites); ++i) {
                     portal.prerequisites[i] = -1;
                 }
@@ -206,7 +210,7 @@ void Game::init(Graphics_Driver* driver) {
                 auto& portal = state->portals[1]; 
                 portal.stage_id = 1;
                 portal.scale = V2(15, 15);
-                portal.position = V2(350, 100);
+                portal.position = V2(350-30, 100);
                 for (int i = 0; i < array_count(portal.prerequisites); ++i) {
                     portal.prerequisites[i] = -1;
                 }
@@ -217,7 +221,7 @@ void Game::init(Graphics_Driver* driver) {
                 auto& portal = state->portals[2]; 
                 portal.stage_id = 2;
                 portal.scale = V2(15, 15);
-                portal.position = V2(550, 100);
+                portal.position = V2(550-30, 100);
                 for (int i = 0; i < array_count(portal.prerequisites); ++i) {
                     portal.prerequisites[i] = -1;
                 }
@@ -229,7 +233,7 @@ void Game::init(Graphics_Driver* driver) {
                 auto& portal = state->portals[3]; 
                 portal.stage_id = 3;
                 portal.scale = V2(15, 15);
-                portal.position = V2(350, 400);
+                portal.position = V2(350-30, 400);
                 for (int i = 0; i < array_count(portal.prerequisites); ++i) {
                     portal.prerequisites[i] = -1;
                 }
@@ -412,6 +416,29 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
     GameUI::update(dt);
 }
 
+void Game::update_and_render_stage_select_menu(struct render_commands* commands, f32 dt) {
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+
+    GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+    GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+
+    GameUI::begin_frame(commands);
+    {
+        f32 y = 100;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(50, y), string_literal("STAGE SELECT"), color32f32(1, 1, 1, 1), 4);
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        y += 45;
+
+        if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2)) {
+            state->ui_state = UI_STATE_INACTIVE;
+        }
+        y += 30;
+    }
+    GameUI::end_frame();
+    GameUI::update(dt);
+}
+
 void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt) {
     switch (state->ui_state) {
         case UI_STATE_INACTIVE: {
@@ -422,6 +449,9 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
         } break;
         case UI_STATE_OPTIONS: {
             update_and_render_options_menu(commands, dt); 
+        } break;
+        case UI_STATE_STAGE_SELECT: {
+            update_and_render_stage_select_menu(commands, dt); 
         } break;
         default: {
             unimplemented("Unknown ui state type");

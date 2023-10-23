@@ -16,6 +16,21 @@ void camera_traumatize(struct camera* camera, f32 trauma) {
     }
 }
 
+
+void camera_set_point_to_interpolate(struct camera* camera, V2 point, f32 zoom) {
+    camera->interpolation_t[0] = 0;
+    camera->interpolation_t[1] = 0;
+    camera->interpolation_t[2] = 0;
+    camera->try_interpolation[0] = true;
+    camera->try_interpolation[1] = true;
+    camera->try_interpolation[2] = true;
+    camera->start_interpolation_values[0] = camera->xy.x;
+    camera->start_interpolation_values[1] = camera->xy.y;
+    camera->start_interpolation_values[2] = camera->zoom;
+
+    camera->tracking_xy = point;
+    camera->tracking_zoom = zoom;
+}
 void camera_set_point_to_interpolate(struct camera* camera, V2 point) {
     camera->interpolation_t[0] = 0;
     camera->interpolation_t[1] = 0;
@@ -97,19 +112,16 @@ void camera_update(struct camera* camera, f32 dt) {
     }
 
     {
-        const f32 lerp_x_speed = 3;
-        const f32 lerp_y_speed = 3;
-
         const f32 lerp_component_speeds[3] = {
-            2.45, 2.8, 1.5
+            1.25, 1.25, 1.25,
         };
 
         for (unsigned component_index = 0; component_index < 3; ++component_index) {
             if (camera->try_interpolation[component_index]) {
                 if (camera->interpolation_t[component_index] < 1.0) {
-                    camera_set_component(camera, component_index, lerp_f32(camera->start_interpolation_values[component_index],
-                                                                           camera_get_tracking_component(camera, component_index),
-                                                                           camera->interpolation_t[component_index]));
+                    camera_set_component(camera, component_index, quadratic_ease_in_f32(camera->start_interpolation_values[component_index],
+                                                                                        camera_get_tracking_component(camera, component_index),
+                                                                                        camera->interpolation_t[component_index]));
                     camera->interpolation_t[component_index] += dt * lerp_component_speeds[component_index];
                 } else {
                     camera->try_interpolation[component_index] = false;
