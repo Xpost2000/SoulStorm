@@ -108,13 +108,17 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
 
 
     if (Input::is_key_pressed(KEY_ESCAPE)) {
-        state->paused ^= 1;
+        if (this->state->ui_state != UI_STATE_PAUSED) {
+            this->state->ui_state = UI_STATE_PAUSED;
+        } else {
+            this->state->ui_state = UI_STATE_INACTIVE;
+        }
     }
 
-    if (!state->paused) {
+    if (state->ui_state == UI_STATE_INACTIVE) {
         main_menu_state.player.update(&main_menu_state, dt);
     } else {
-        update_and_render_pause_menu(&ui_render_commands, dt);
+        handle_ui_update_and_render(&ui_render_commands, dt);
     }
 
     // Wrap player to edges

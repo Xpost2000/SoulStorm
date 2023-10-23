@@ -102,11 +102,19 @@ struct Gameplay_Data {
     random_state prng;
     camera       main_camera;
 };
+
+enum UI_State_Mode {
+    UI_STATE_INACTIVE,
+    UI_STATE_PAUSED,
+    UI_STATE_OPTIONS,
+    UI_STATE_COUNT,
+};
+
 struct Game_State {
     s32 screen_mode = GAME_SCREEN_MAIN_MENU;
     Gameplay_Data gameplay_data;
     MainMenu_Data mainmenu_data;
-    bool paused;
+    s32  ui_state;
 };
 
 struct Game_Resources {

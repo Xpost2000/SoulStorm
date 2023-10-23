@@ -161,7 +161,7 @@ void Game::init(Graphics_Driver* driver) {
 
     resources->graphics_assets   = graphics_assets_create(arena, 16, 256);
 
-    state->paused = false;
+    state->ui_state = UI_STATE_INACTIVE;
 
     // gameplay_data initialize
     {
@@ -329,6 +329,41 @@ void spawn_bullet_linear(Game_State* state, V2 position, V2 additional = V2(0,0)
     state->gameplay_data.bullets.push(bullet);
 }
 
+
+void Game::update_and_render_options_menu(struct render_commands* commands, f32 dt) {
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+    GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+    GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+
+    GameUI::begin_frame(commands);
+    {
+        f32 y = 100;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(50, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
+        y += 45;
+        GameUI::label(V2(100, y), string_literal("OPTIONS"), color32f32(1, 1, 1, 1), 4);
+        y += 45;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        if (GameUI::button(V2(100, y), string_literal("Resolution?"), color32f32(1, 1, 1, 1), 2)) {
+        }
+        y += 30;
+        if (GameUI::button(V2(100, y), string_literal("Fullscreen?"), color32f32(1, 1, 1, 1), 2)) {
+        }
+        y += 30;
+        if (GameUI::button(V2(100, y), string_literal("Music Volume?"), color32f32(1, 1, 1, 1), 2)) {
+        }
+        y += 30;
+        if (GameUI::button(V2(100, y), string_literal("Sound Volume?"), color32f32(1, 1, 1, 1), 2)) {
+        }
+        y += 30;
+        if (GameUI::button(V2(100, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2)) {
+            state->ui_state = UI_STATE_PAUSED;
+        }
+        y += 30;
+    }
+    GameUI::end_frame();
+}
+
 void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
 
@@ -343,19 +378,22 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         y += 45;
         if (GameUI::button(V2(100, y), string_literal("Resume"), color32f32(1, 1, 1, 1), 2)) {
-            state->paused = false;
+            state->ui_state = UI_STATE_INACTIVE;
         }
+        y += 30;
 
         if (state->screen_mode != GAME_SCREEN_MAIN_MENU) {
-            y += 30;
             if (GameUI::button(V2(100, y), string_literal("Return To Menu"), color32f32(1, 1, 1, 1), 2)) {
                 _debugprintf("return to main menu.");
             }
+            y += 30;
         }
 
-        y += 30;
         if (GameUI::button(V2(100, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2)) {
             _debugprintf("Open the options menu I guess");
+            // I'd personally like to animate these, but it requires some more dirty code if
+            // I'm doing it from scratch like this.
+            state->ui_state = UI_STATE_OPTIONS;
         }
         y += 30;
 
@@ -372,6 +410,23 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
     }
     GameUI::end_frame();
     GameUI::update(dt);
+}
+
+void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt) {
+    switch (state->ui_state) {
+        case UI_STATE_INACTIVE: {
+            return;
+        } break;
+        case UI_STATE_PAUSED: {
+            update_and_render_pause_menu(commands, dt);
+        } break;
+        case UI_STATE_OPTIONS: {
+            update_and_render_options_menu(commands, dt); 
+        } break;
+        default: {
+            unimplemented("Unknown ui state type");
+        } break;
+    }
 }
 
 void Game::update_and_render_game_opening(Graphics_Driver* driver, f32 dt) {
@@ -394,7 +449,11 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     }
 
     if (Input::is_key_pressed(KEY_ESCAPE)) {
-        this->state->paused ^= 1;
+        if (this->state->ui_state != UI_STATE_PAUSED) {
+            this->state->ui_state = UI_STATE_PAUSED;
+        } else {
+            this->state->ui_state = UI_STATE_INACTIVE;
+        }
     }
 
     if (Input::is_key_pressed(KEY_T)) {
@@ -509,7 +568,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
     render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2, V2(100, 150), string_literal("hahahahhaah"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
 
-    if (!this->state->paused) {
+    if (this->state->ui_state == UI_STATE_INACTIVE) {
         for (int i = 0; i < (int)state->bullets.size; ++i) {
             auto& b = state->bullets[i];
             b.update(this->state, dt);
@@ -526,7 +585,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         }
         state->player.update(this->state, dt);
     } else {
-        update_and_render_pause_menu(&ui_render_commands, dt);
+        handle_ui_update_and_render(&ui_render_commands, dt);
     }
 
     // main game rendering

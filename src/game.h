@@ -35,7 +35,10 @@ public:
     //       be here...
     void update_and_render(Graphics_Driver* driver, f32 dt);
 private: 
+    void handle_ui_update_and_render(struct render_commands* commands, f32 dt);
+
     void update_and_render_pause_menu(struct render_commands* commands, f32 dt);
+    void update_and_render_options_menu(struct render_commands* commands, f32 dt);
 
     void update_and_render_game_opening(Graphics_Driver* driver, f32 dt);
     void update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt);
