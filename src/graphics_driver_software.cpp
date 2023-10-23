@@ -50,9 +50,22 @@ void Software_Renderer_Graphics_Driver::clear_color_buffer(color32u8 color) {
 }
 
 void Software_Renderer_Graphics_Driver::consume_render_commands(struct render_commands* commands) {
+    // refer to software_render_commands_implementation.cpp
     software_framebuffer_render_commands(&default_framebuffer, commands); 
 }
 
 V2 Software_Renderer_Graphics_Driver::resolution() {
     return V2(default_framebuffer.width, default_framebuffer.height);
+}
+
+/*
+ * NOTE: these are stubbed
+ *
+ * Since the graphics_assets already manages assets.
+ *
+ */
+void Software_Renderer_Graphics_Driver::upload_texture(struct graphics_assets* assets, image_id image) {
+}
+
+void Software_Renderer_Graphics_Driver::upload_font(struct graphics_assets* assets, font_id font) {
 }

@@ -18,18 +18,24 @@ Game::~Game() {
     
 }
 
-void Game::init() {
+void Game::init_resources(Graphics_Driver* driver) {
+    for (unsigned index = 0; index < array_count(menu_font_variation_string_names); ++index) {
+        string current = menu_font_variation_string_names[index];
+        resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
+        driver->upload_font(&resources->graphics_assets, resources->menu_fonts[index]);
+    }
+
+    resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
+    driver->upload_texture(&resources->graphics_assets, resources->circle);
+}
+
+void Game::init(Graphics_Driver* driver) {
     this->arena     = &Global_Engine()->main_arena;
     this->resources = (Game_Resources*)arena->push_unaligned(sizeof(*this->resources));
     this->state = (Game_State*)arena->push_unaligned(sizeof(*this->state)); (new (this->state) Game_State);
 
     resources->graphics_assets   = graphics_assets_create(arena, 16, 256);
-    for (unsigned index = 0; index < array_count(menu_font_variation_string_names); ++index) {
-        string current = menu_font_variation_string_names[index];
-        resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
-    }
-
-    resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
+    init_resources(driver);
 
     state->player.position   = V2(state->play_area.width / 2, 300);
     state->player.scale      = V2(15, 15);

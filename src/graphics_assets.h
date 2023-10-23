@@ -19,6 +19,9 @@ struct graphics_assets {
     struct image_buffer* images;
     struct font_cache*   fonts;
     string*              image_file_strings;
+
+    void*                image_device_context_ptrs;
+    void*                font_device_context_ptrs;
 };
 
 struct font_cache   font_cache_load_bitmap_font(string filepath, s32 tile_width, s32 tile_height, s32 atlas_rows, s32 atlas_columns);

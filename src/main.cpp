@@ -374,7 +374,7 @@ void initialize() {
     // global_graphics_driver->initialize(global_game_window, );
     // global_game_sdl_renderer    = SDL_CreateRenderer(global_game_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     initialize_framebuffer();
-    game.init();
+    game.init(global_graphics_driver);
 }
 
 void deinitialize() {

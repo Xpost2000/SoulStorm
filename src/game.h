@@ -25,7 +25,8 @@ public:
     Game();
     ~Game();
 
-    void init();
+    void init(Graphics_Driver* driver);
+    void init_resources(Graphics_Driver* driver);
     void deinit();
 
     // NOTE: I should probably avoid having an explicit reference to

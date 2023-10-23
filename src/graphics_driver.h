@@ -12,6 +12,8 @@
 #include "graphics_common.h"
 #include "render_commands.h"
 
+#include "graphics_assets.h"
+
 struct SDL_Window;
 class Graphics_Driver {
 public:
@@ -44,6 +46,13 @@ public:
     // this is the resolution of the back buffer.
     // the input system will automatically scale coordinates to client mode.
     virtual V2   resolution()                                              = 0;
+
+    /*
+     * Will keep track of a device specific item,
+     * and write into a context ptr.
+     */
+    virtual void upload_texture(struct graphics_assets* assets, image_id image) = 0;
+    virtual void upload_font(struct graphics_assets* assets, font_id font)      = 0;
 };
 
 #endif

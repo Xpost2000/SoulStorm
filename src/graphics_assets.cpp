@@ -132,6 +132,9 @@ struct graphics_assets graphics_assets_create(Memory_Arena* arena, u32 font_limi
     assets.image_file_strings = (string*)arena->push_unaligned(sizeof(*assets.image_file_strings) *image_limit);
     assets.fonts              = (font_cache*)arena->push_unaligned(sizeof(*assets.fonts)  * font_limit);
 
+    assets.image_device_context_ptrs = (void*)arena->push_unaligned(sizeof(void*) * image_limit);
+    assets.font_device_context_ptrs  = (void*)arena->push_unaligned(sizeof(void*) * font_limit);
+
     return assets;
 }
 

@@ -23,6 +23,9 @@ public:
     void consume_render_commands(struct render_commands* commands);
     V2   resolution();
 
+    void upload_texture(struct graphics_assets* assets, image_id image);
+    void upload_font(struct graphics_assets* assets, font_id font);
+
 private:
     SDL_Window*          game_window          = nullptr;
     SDL_Renderer*        game_sdl_renderer    = nullptr;
