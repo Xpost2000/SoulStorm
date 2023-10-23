@@ -9,10 +9,7 @@
  * a render command consumer.
  */
 
-#include "common.h"
-#include "color.h"
-#include "v2.h"
-
+#include "graphics_common.h"
 #include "render_commands.h"
 
 struct SDL_Window;

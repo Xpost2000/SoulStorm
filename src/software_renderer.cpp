@@ -1081,6 +1081,6 @@ void software_framebuffer_run_shader(struct software_framebuffer* framebuffer, s
 #endif
 }
 
-#include "render_commands_driver_implementations.cpp"
+#include "software_render_commands_implementation.cpp"
 
 #undef _BlendPixel_Scalar

@@ -161,10 +161,11 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
     GameUI::update(dt);
 }
 
-void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
+void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
+    V2 resolution = driver->resolution();
     {
-        state->play_area.x = framebuffer->width / 2 - state->play_area.width / 2;
-        state->play_area.height = framebuffer->height;
+        state->play_area.x      = resolution.x / 2 - state->play_area.width / 2;
+        state->play_area.height = resolution.y;
 
         // state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_WRAPPING);
         state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_BLOCKING);
@@ -256,8 +257,8 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
     auto game_render_commands = render_commands(&Global_Engine()->scratch_arena, 12000, state->main_camera);
     auto ui_render_commands   = render_commands(&Global_Engine()->scratch_arena, 8192, camera(V2(0, 0), 1));
     {
-        game_render_commands.screen_width  = ui_render_commands.screen_width = framebuffer->width;
-        game_render_commands.screen_height = ui_render_commands.screen_height = framebuffer->height;
+        game_render_commands.screen_width  = ui_render_commands.screen_width = resolution.x;
+        game_render_commands.screen_height = ui_render_commands.screen_height = resolution.y;
     }
 
     // draw play area borders / Game UI
@@ -273,14 +274,14 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
                                   rectangle_f32(0,
                                                 0,
                                                 play_area_x,
-                                                framebuffer->height),
+                                                resolution.y),
                                   border_color, BLEND_MODE_ALPHA);
         // right border
         render_commands_push_quad(&ui_render_commands,
                                   rectangle_f32(play_area_x + play_area_width,
                                                 0,
-                                                framebuffer->width - play_area_width,
-                                                framebuffer->height),
+                                                resolution.x - play_area_width,
+                                                resolution.y),
                                   border_color, BLEND_MODE_ALPHA);
     }
 
@@ -332,9 +333,9 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
         Transitions::update_and_render(&ui_render_commands, dt);
     }
 
-    software_framebuffer_clear_buffer(framebuffer, color32u8(255, 255, 255, 255));
-    software_framebuffer_render_commands(framebuffer, &game_render_commands);
-    software_framebuffer_render_commands(framebuffer, &ui_render_commands);
+    driver->clear_color_buffer(color32u8(255, 255, 255, 255));
+    driver->consume_render_commands(&game_render_commands);
+    driver->consume_render_commands(&ui_render_commands);
 
     handle_all_explosions(dt);
     handle_all_lasers(dt);

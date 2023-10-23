@@ -26,7 +26,11 @@
 #include "engine.h"
 #include "game.h"
 
-#include "software_renderer.h"
+#include "graphics_driver.h"
+#include "graphics_driver_software.h"
+
+Software_Renderer_Graphics_Driver global_software_renderer_driver;
+Graphics_Driver* global_graphics_driver = nullptr;
 
 const char* _build_flags =
 #ifdef USE_SIMD_OPTIMIZATIONS
@@ -64,11 +68,8 @@ f32 get_average_frametime(void) {
 
 // Globals
 local SDL_Window*          global_game_window           = nullptr;
-local SDL_Renderer*        global_game_sdl_renderer     = nullptr;
-local SDL_Texture*         global_game_texture_surface  = nullptr; // for blitting images on
 local SDL_GameController*  global_controller_devices[4] = {};
 local Game                 game                         = {};
-local software_framebuffer global_default_framebuffer   = {};
 static SDL_Haptic*         global_haptic_devices[4]     = {};
 
 local bool SCREEN_IS_FULLSCREEN = false;
@@ -90,28 +91,14 @@ local V2 get_scaled_screen_resolution(V2 base_resolution) {
 }
 
 local void initialize_framebuffer(void) {
-    software_framebuffer_finish(&global_default_framebuffer);
-    // lightmask_buffer_finish(&global_lightmask_buffer);
-
     V2 framebuffer_resolution = get_scaled_screen_resolution(V2(REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT));
 
-    /* I know these sound like constants. They really aren't... */
+    // /* I know these sound like constants. They really aren't... */
     SCREEN_WIDTH  = framebuffer_resolution.x;
     SCREEN_HEIGHT = ENGINE_BASE_VERTICAL_RESOLUTION;
-
     _debugprintf("framebuffer resolution is: (%d, %d) vs (%d, %d) real resolution", SCREEN_WIDTH, SCREEN_HEIGHT, REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
-    global_default_framebuffer = software_framebuffer_create(framebuffer_resolution.x, framebuffer_resolution.y);
-    // global_copy_framebuffer    = software_framebuffer_create(framebuffer_resolution.x, framebuffer_resolution.y);
-    /* NOTE: this doesn't actually have to be 640x480 currently. */
-    /* the only requirement is that the lightmask should match the size of the game framebuffer (not the UI!) */
-    // global_lightmask_buffer    = lightmask_buffer_create(framebuffer_resolution.x, framebuffer_resolution.y);
 
-    if (global_game_texture_surface) {
-        SDL_DestroyTexture(global_game_texture_surface);
-        global_game_texture_surface = NULL;
-    }
-
-    global_game_texture_surface = SDL_CreateTexture(global_game_sdl_renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, global_default_framebuffer.width, global_default_framebuffer.height);
+    global_graphics_driver->initialize(global_game_window, framebuffer_resolution.x, framebuffer_resolution.y);
 }
 
 local const f32 r16by9Ratio  = 16/9.0f;
@@ -243,20 +230,6 @@ local void update_all_controller_inputs(void) {
             }
         }
     }
-}
-
-void swap_framebuffers_onto_screen(void) {
-    {
-        void* locked_pixel_region;
-        s32   _pitch; unused(_pitch);
-        SDL_LockTexture(global_game_texture_surface, 0, &locked_pixel_region, &_pitch);
-
-        memory_copy(global_default_framebuffer.pixels, locked_pixel_region, global_default_framebuffer.width * global_default_framebuffer.height * sizeof(u32));
-        SDL_UnlockTexture(global_game_texture_surface);
-    }
-
-    SDL_RenderCopy(global_game_sdl_renderer, global_game_texture_surface, 0, 0);
-    SDL_RenderPresent(global_game_sdl_renderer);
 }
 
 local void change_resolution(s32 new_resolution_x, s32 new_resolution_y) {
@@ -391,8 +364,6 @@ void initialize() {
                                           REAL_SCREEN_HEIGHT,
                                           flags);
 
-    global_game_sdl_renderer    = SDL_CreateRenderer(global_game_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-
     Thread_Pool::initialize();
 
 #ifndef NO_FANCY_FADEIN_INTRO
@@ -400,8 +371,10 @@ void initialize() {
 #endif
     SDL_ShowWindow(global_game_window);
 
-    game.init();
+    // global_graphics_driver->initialize(global_game_window, );
+    // global_game_sdl_renderer    = SDL_CreateRenderer(global_game_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     initialize_framebuffer();
+    game.init();
 }
 
 void deinitialize() {
@@ -411,9 +384,7 @@ void deinitialize() {
     Global_Engine()->scratch_arena.finish();
     close_all_controllers();
 
-    software_framebuffer_finish(&global_default_framebuffer);
-    SDL_DestroyTexture(global_game_texture_surface);
-    SDL_DestroyRenderer(global_game_sdl_renderer);
+    global_graphics_driver->finish();
     SDL_DestroyWindow(global_game_window);
 
     Audio::deinitialize();
@@ -454,12 +425,12 @@ void engine_main_loop() {
             }
         } else {
             // lightmask_buffer_clear(&global_lightmask_buffer);
-            game.update_and_render(&global_default_framebuffer, Global_Engine()->last_elapsed_delta_time);
+            game.update_and_render(global_graphics_driver, Global_Engine()->last_elapsed_delta_time);
         }
     }
 
     Input::end_input_frame();
-    swap_framebuffers_onto_screen();
+    global_graphics_driver->swap_and_present();
 
     Global_Engine()->last_elapsed_delta_time = (SDL_GetTicks() - start_frame_time) / 1000.0f;
     Global_Engine()->global_elapsed_time += Global_Engine()->last_elapsed_delta_time;
@@ -475,6 +446,7 @@ void engine_main_loop() {
 }
 
 int main(int argc, char** argv) {
+    global_graphics_driver = &global_software_renderer_driver;
 #ifdef _WIN32
     SetProcessDPIAware();
 #endif

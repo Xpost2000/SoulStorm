@@ -8,7 +8,7 @@
 #include "v2.h"
 #include "thread_pool.h"
 #include "engine.h"
-#include "software_renderer.h"
+#include "graphics_driver.h"
 
 /*
  * The game code. Finally some fresh code :)
@@ -31,7 +31,7 @@ public:
     // NOTE: I should probably avoid having an explicit reference to
     //       a software framebuffer. Honestly there's little to no reason why this should
     //       be here...
-    void update_and_render(software_framebuffer* framebuffer, f32 dt);
+    void update_and_render(Graphics_Driver* driver, f32 dt);
 private: 
     void update_and_render_pause_menu(struct render_commands* commands, f32 dt);
     void handle_all_explosions(f32 dt);

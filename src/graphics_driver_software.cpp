@@ -3,11 +3,15 @@
 #include <SDL.h>
 
 void Software_Renderer_Graphics_Driver::initialize(SDL_Window* window, int width, int height) {
-    game_sdl_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (game_sdl_renderer == nullptr) {
+        _debugprintf("Hi, this is Jerry's software renderer driver. I am existing!");
+        game_sdl_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    }
     initialize_backbuffer(V2(width, height));
 }
 
 void Software_Renderer_Graphics_Driver::initialize_backbuffer(V2 resolution) {
+    _debugprintf("Reconstructing backbuffer.");
     software_framebuffer_finish(&default_framebuffer);
     // lightmask_buffer_finish(&global_lightmask_buffer);
 

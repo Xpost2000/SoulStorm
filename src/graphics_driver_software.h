@@ -3,7 +3,6 @@
 
 #include "software_renderer.h"
 #include "graphics_driver.h"
-
 /*
  * Jerry's handmade software renderer I guess
  * backed through writing into an SDL2 renderer.
