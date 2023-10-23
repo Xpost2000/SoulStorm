@@ -57,6 +57,7 @@ void spawn_bullet_circling_down_homing(Game_State* state, V2 position, f32 facto
     Bullet bullet;
     bullet.position = position;
     bullet.scale    = V2(5,5);
+    bullet.lifetime = Timer(3.0f);
 
     bullet.velocity_function =
         [=](Bullet* self, Game_State* const state, f32 dt) {
@@ -70,6 +71,7 @@ void spawn_bullet_circling_down_homing2(Game_State* state, V2 position, f32 fact
     Bullet bullet;
     bullet.position = position;
     bullet.scale    = V2(5,5);
+    bullet.lifetime = Timer(3.0f);
 
     Timer until_release(2.0f);
     bool triggered = false;
@@ -97,6 +99,7 @@ void spawn_bullet_circling_down(Game_State* state, V2 position, f32 factor, f32 
     Bullet bullet;
     bullet.position = position;
     bullet.scale    = V2(5,5);
+    bullet.lifetime = Timer(3.0f);
 
     bullet.velocity_function =
         [=](Bullet* self, Game_State* const state, f32 dt) {
@@ -117,6 +120,7 @@ void spawn_bullet_linear(Game_State* state, V2 position, V2 additional = V2(0,0)
         [=](Bullet* self, Game_State* const state, f32 dt) {
             self->velocity = additional;
         };
+    bullet.lifetime = Timer(5.0f);
 
     state->bullets.push(bullet);
 }
@@ -169,10 +173,6 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
 
         state->main_camera.xy.x = -state->play_area.x;
     }
-
-
-    software_framebuffer_clear_scissor(framebuffer);
-    software_framebuffer_clear_buffer(framebuffer, color32u8(255, 255, 255, 255));
 
     if (Input::is_key_pressed(KEY_ESCAPE)) {
         state->paused ^= 1;
@@ -332,6 +332,7 @@ void Game::update_and_render(software_framebuffer* framebuffer, f32 dt) {
         Transitions::update_and_render(&ui_render_commands, dt);
     }
 
+    software_framebuffer_clear_buffer(framebuffer, color32u8(255, 255, 255, 255));
     software_framebuffer_render_commands(framebuffer, &game_render_commands);
     software_framebuffer_render_commands(framebuffer, &ui_render_commands);
 

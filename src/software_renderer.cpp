@@ -14,6 +14,8 @@ struct software_framebuffer software_framebuffer_create(u32 width, u32 height) {
     result.height = height;
     result.pixels = pixels;
 
+    software_framebuffer_clear_scissor(&result);
+
     return result;
 }
 
@@ -24,6 +26,8 @@ struct software_framebuffer software_framebuffer_create_from_arena(Memory_Arena*
     result.width = width;
     result.height = height;
     result.pixels = pixels;
+
+    software_framebuffer_clear_scissor(&result);
 
     return result;
 }

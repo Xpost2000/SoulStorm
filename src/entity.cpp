@@ -295,6 +295,19 @@ void Player::update(Game_State* const state, f32 dt) {
 void Bullet::update(Game_State* const state, f32 dt) {
     const auto& play_area = state->play_area;
 
+    if (lifetime.t == -1) {
+        // live until killed by something else
+    } else {
+        lifetime.start();
+        lifetime.update(dt);
+
+        // if I add some special effects like a nice fade out.
+        // would also be cool to add.
+        if (lifetime.triggered()) {
+            die = true;
+        }
+    }
+
     velocity = V2(0, 0);
     if (velocity_function) {
         velocity_function(this, state, dt);

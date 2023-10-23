@@ -189,6 +189,7 @@ struct Player : public Entity {
 };
 
 struct Bullet : public Entity {
+    Timer lifetime;
     /* float lifetime; // if it's -1 the bullets will die on their own later... */
     // bool dead;
     void update(Game_State* const state, f32 dt);

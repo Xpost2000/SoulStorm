@@ -70,7 +70,16 @@ struct Play_Area {
     bool is_inside_absolute(rectangle_f32 rect);
 };
 
+enum Game_Screen_Modes {
+    GAME_SCREEN_OPENING   = 0,
+    GAME_SCREEN_MAIN_MENU = 1,
+    GAME_SCREEN_INGAME    = 2,
+    GAME_SCREEN_CREDITS   = 3,
+    GAME_SCREEN_COUNT     = 4,
+};
+
 struct Game_State {
+    s32 screen_mode;
     Fixed_Array<Bullet>           bullets;
     Fixed_Array<Laser_Hazard>     laser_hazards;
     Fixed_Array<Explosion_Hazard> explosion_hazards;
