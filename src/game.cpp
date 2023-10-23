@@ -49,16 +49,19 @@ void Game::init(Graphics_Driver* driver) {
     init_graphics_resources(driver);
     init_audio_resources();
 
-    state->player.position   = V2(state->play_area.width / 2, 300);
-    state->player.scale      = V2(15, 15);
-    state->paused            = false;
+    state->paused = false;
+    {
+        auto state             = &this->state->gameplay_data;
+        state->player.position = V2(state->play_area.width / 2, 300);
+        state->player.scale    = V2(15, 15);
 
-    state->bullets           = Fixed_Array<Bullet>(arena, 10000);
-    state->explosion_hazards = Fixed_Array<Explosion_Hazard>(arena, 256);
-    state->laser_hazards     = Fixed_Array<Laser_Hazard>(arena, 128);
-    state->prng              = random_state();
-    state->main_camera       = camera(V2(0, 0), 1.0);
-    state->main_camera.rng   = &state->prng;
+        state->bullets           = Fixed_Array<Bullet>(arena, 10000);
+        state->explosion_hazards = Fixed_Array<Explosion_Hazard>(arena, 256);
+        state->laser_hazards     = Fixed_Array<Laser_Hazard>(arena, 128);
+        state->prng              = random_state();
+        state->main_camera       = camera(V2(0, 0), 1.0);
+        state->main_camera.rng   = &state->prng;
+    }
 
     initialized = true;
     GameUI::initialize(arena);
@@ -80,10 +83,10 @@ void spawn_bullet_circling_down_homing(Game_State* state, V2 position, f32 facto
 
     bullet.velocity_function =
         [=](Bullet* self, Game_State* const state, f32 dt) {
-            self->velocity = V2(-sinf(self->t_since_spawn + factor) * factor2, cos(self->t_since_spawn + factor) * factor2) + state->player.velocity;
+            self->velocity = V2(-sinf(self->t_since_spawn + factor) * factor2, cos(self->t_since_spawn + factor) * factor2) + state->gameplay_data.player.velocity;
         };
 
-    state->bullets.push(bullet);
+    state->gameplay_data.bullets.push(bullet);
 }
 
 void spawn_bullet_circling_down_homing2(Game_State* state, V2 position, f32 factor, f32 factor2, V2 additional = V2(0,0)) {
@@ -108,10 +111,10 @@ void spawn_bullet_circling_down_homing2(Game_State* state, V2 position, f32 fact
             if (triggered)
                 self->velocity = additional + (additional.normalized() * 50 * self->t_since_spawn - t_hit);
             else
-                self->velocity = V2(-sinf(self->t_since_spawn + factor) * factor2, cos(self->t_since_spawn + factor) * factor2) + state->player.velocity;
+                self->velocity = V2(-sinf(self->t_since_spawn + factor) * factor2, cos(self->t_since_spawn + factor) * factor2) + state->gameplay_data.player.velocity;
         };
 
-    state->bullets.push(bullet);
+    state->gameplay_data.bullets.push(bullet);
 }
 
 void spawn_bullet_circling_down(Game_State* state, V2 position, f32 factor, f32 factor2, V2 additional = V2(0,0)) {
@@ -128,7 +131,7 @@ void spawn_bullet_circling_down(Game_State* state, V2 position, f32 factor, f32 
                                 cos(t) * factor2) + additional;
         };
 
-    state->bullets.push(bullet);
+    state->gameplay_data.bullets.push(bullet);
 }
 
 void spawn_bullet_linear(Game_State* state, V2 position, V2 additional = V2(0,0)) {
@@ -141,7 +144,7 @@ void spawn_bullet_linear(Game_State* state, V2 position, V2 additional = V2(0,0)
         };
     bullet.lifetime = Timer(5.0f);
 
-    state->bullets.push(bullet);
+    state->gameplay_data.bullets.push(bullet);
 }
 
 void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt) {
@@ -180,7 +183,16 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
     GameUI::update(dt);
 }
 
-void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
+void Game::update_and_render_game_opening(Graphics_Driver* driver, f32 dt) {
+    state->screen_mode = GAME_SCREEN_INGAME;
+}
+
+void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
+    
+}
+
+void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
+    auto state = &this->state->gameplay_data;
     V2 resolution = driver->resolution();
     {
         state->play_area.x      = resolution.x / 2 - state->play_area.width / 2;
@@ -195,7 +207,7 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     }
 
     if (Input::is_key_pressed(KEY_ESCAPE)) {
-        state->paused ^= 1;
+        this->state->paused ^= 1;
     }
 
     if (Input::is_key_pressed(KEY_T)) {
@@ -204,7 +216,7 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         for (int i = 0; i < amount; ++i) {
             f32 t = degree_to_radians(i * (360.0f/amount));
             V2 position = V2(cosf(t) * r, sinf(t) * r) + state->player.position;
-            spawn_bullet_circling_down(state, position, t, r, V2(0, 60));
+            spawn_bullet_circling_down(this->state, position, t, r, V2(0, 60));
         }
     }
     if (Input::is_key_pressed(KEY_U)) {
@@ -213,7 +225,7 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         for (int i = 0; i < amount; ++i) {
             f32 t = degree_to_radians(i * (360.0f/amount));
             V2 position = V2(cosf(t) * r, sinf(t) * r) + state->player.position;
-            spawn_bullet_circling_down_homing(state, position, t, r, V2(0, 0));
+            spawn_bullet_circling_down_homing(this->state, position, t, r, V2(0, 0));
         }
     }
     if (Input::is_key_pressed(KEY_I)) {
@@ -222,7 +234,7 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         for (int i = 0; i < amount; ++i) {
             f32 t = degree_to_radians(i * (360.0f/amount));
             V2 position = V2(cosf(t) * r, sinf(t) * r) + state->player.position;
-            spawn_bullet_circling_down_homing2(state, position, t, r, V2(0, 100));
+            spawn_bullet_circling_down_homing2(this->state, position, t, r, V2(0, 100));
         }
     }
     if (Input::is_key_pressed(KEY_Y)) {
@@ -230,7 +242,7 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         for (int i = 0; i < amount; ++i) {
             V2 position = V2(i * 40, 0) + state->player.position;
             // spawn_bullet_circling_down(state, position, t, 150, V2(0, 60));
-            spawn_bullet_linear(state, position, V2(0, 150));
+            spawn_bullet_linear(this->state, position, V2(0, 150));
         }
     }
     if (Input::is_key_pressed(KEY_P)) {
@@ -252,7 +264,7 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
             }
             if (ner <= 0) continue;
             V2 position = V2(cosf(t) * ner, sinf(t) * ner) + state->player.position;
-            spawn_bullet_circling_down_homing(state, position, t, ner, V2(0, 0));
+            spawn_bullet_circling_down_homing(this->state, position, t, ner, V2(0, 0));
         }
     }
 
@@ -310,22 +322,22 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
     render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2, V2(100, 150), string_literal("hahahahhaah"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
 
-    if (!state->paused) {
+    if (!this->state->paused) {
         for (int i = 0; i < (int)state->bullets.size; ++i) {
             auto& b = state->bullets[i];
-            b.update(state, dt);
+            b.update(this->state, dt);
         }
 
         for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
             auto& h = state->explosion_hazards[i];
-            h.update(state, dt);
+            h.update(this->state, dt);
         }
 
         for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
             auto& h = state->laser_hazards[i];
-            h.update(state, dt);
+            h.update(this->state, dt);
         }
-        state->player.update(state, dt);
+        state->player.update(this->state, dt);
     } else {
         update_and_render_pause_menu(&ui_render_commands, dt);
     }
@@ -334,20 +346,20 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     {
         for (int i = 0; i < (int)state->bullets.size; ++i) {
             auto& b = state->bullets[i];
-            b.draw(state, &game_render_commands, resources);
+            b.draw(this->state, &game_render_commands, resources);
         }
 
         for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
             auto& h = state->explosion_hazards[i];
-            h.draw(state, &game_render_commands, resources);
+            h.draw(this->state, &game_render_commands, resources);
         }
 
         for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
             auto& h = state->laser_hazards[i];
-            h.draw(state, &game_render_commands, resources);
+            h.draw(this->state, &game_render_commands, resources);
         }
 
-        state->player.draw(state, &game_render_commands, resources);
+        state->player.draw(this->state, &game_render_commands, resources);
 
         Transitions::update_and_render(&ui_render_commands, dt);
     }
@@ -362,7 +374,29 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     camera_update(&state->main_camera, dt);
 }
 
+void Game::update_and_render_game_credits(Graphics_Driver* driver, f32 dt) {
+    
+}
+
+void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
+    switch (state->screen_mode) {
+        case GAME_SCREEN_OPENING: {
+            update_and_render_game_opening(driver, dt);
+        } break;
+        case GAME_SCREEN_MAIN_MENU: {
+            update_and_render_game_main_menu(driver, dt);
+        } break;
+        case GAME_SCREEN_INGAME: {
+            update_and_render_game_ingame(driver, dt);
+        } break;
+        case GAME_SCREEN_CREDITS: {
+            update_and_render_game_credits(driver, dt);
+        } break;
+    }
+}
+
 void Game::handle_all_dead_entities(f32 dt) {
+    auto state = &this->state->gameplay_data;
     for (int i = 0; i < state->bullets.size; ++i) {
         auto& b = state->bullets[i];
 
@@ -377,6 +411,7 @@ void Game::handle_all_dead_entities(f32 dt) {
 }
 
 void Game::handle_all_lasers(f32 dt) {
+    auto state = &this->state->gameplay_data;
     for (int i = 0; i < state->laser_hazards.size; ++i) {
         auto& h = state->laser_hazards[i];
 
@@ -405,6 +440,7 @@ void Game::handle_all_lasers(f32 dt) {
 }
 
 void Game::handle_all_explosions(f32 dt) {
+    auto state = &this->state->gameplay_data;
     for (int i = 0; i < state->explosion_hazards.size; ++i) {
         auto& h = state->explosion_hazards[i];
 

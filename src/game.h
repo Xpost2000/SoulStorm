@@ -36,6 +36,12 @@ public:
     void update_and_render(Graphics_Driver* driver, f32 dt);
 private: 
     void update_and_render_pause_menu(struct render_commands* commands, f32 dt);
+
+    void update_and_render_game_opening(Graphics_Driver* driver, f32 dt);
+    void update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt);
+    void update_and_render_game_ingame(Graphics_Driver* driver, f32 dt);
+    void update_and_render_game_credits(Graphics_Driver* driver, f32 dt);
+
     void handle_all_explosions(f32 dt);
     void handle_all_lasers(f32 dt);
     void handle_all_dead_entities(f32 dt);

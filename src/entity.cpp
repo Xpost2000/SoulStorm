@@ -241,7 +241,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
 }
 
 void Entity::update(Game_State* const state, f32 dt) {
-    const auto& play_area = state->play_area;
+    const auto& play_area = state->gameplay_data.play_area;
 
     position      += velocity * dt;
     t_since_spawn += dt;
@@ -261,7 +261,7 @@ rectangle_f32 Entity::get_rect() {
 
 // PlayerActor
 void Player::update(Game_State* const state, f32 dt) {
-    const auto& play_area = state->play_area;
+    const auto& play_area = state->gameplay_data.play_area;
     // unfortunately the action mapper system doesn't exist
     // here like it did in the last project, so I'll have to use key inputs
     // and gamepad power.
@@ -293,7 +293,7 @@ void Player::update(Game_State* const state, f32 dt) {
 
 // BulletEntity
 void Bullet::update(Game_State* const state, f32 dt) {
-    const auto& play_area = state->play_area;
+    const auto& play_area = state->gameplay_data.play_area;
 
     if (lifetime.t == -1) {
         // live until killed by something else
@@ -496,7 +496,7 @@ void Laser_Hazard::update(Game_State* const state, f32 dt) {
 }
 
 void Laser_Hazard::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
-    const auto& play_area = state->play_area;
+    const auto& play_area = state->gameplay_data.play_area;
     auto        rectangle = get_rect(&play_area);
 
     if (!ready()) {

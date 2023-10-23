@@ -75,11 +75,10 @@ enum Game_Screen_Modes {
     GAME_SCREEN_MAIN_MENU = 1,
     GAME_SCREEN_INGAME    = 2,
     GAME_SCREEN_CREDITS   = 3,
-    GAME_SCREEN_COUNT     = 4,
+    GAME_SCREEN_COUNT     = 4
 };
 
-struct Game_State {
-    s32 screen_mode;
+struct Gameplay_Data {
     Fixed_Array<Bullet>           bullets;
     Fixed_Array<Laser_Hazard>     laser_hazards;
     Fixed_Array<Explosion_Hazard> explosion_hazards;
@@ -99,7 +98,10 @@ struct Game_State {
     // I'll fake the illusion of movement through the background primarily
     random_state prng;
     camera       main_camera;
-
+};
+struct Game_State {
+    s32 screen_mode = GAME_SCREEN_OPENING;
+    Gameplay_Data gameplay_data;
     bool paused;
 };
 

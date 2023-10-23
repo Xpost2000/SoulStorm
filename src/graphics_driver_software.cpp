@@ -65,7 +65,9 @@ V2 Software_Renderer_Graphics_Driver::resolution() {
  *
  */
 void Software_Renderer_Graphics_Driver::upload_texture(struct graphics_assets* assets, image_id image) {
+    _debugprintf("Software Renderer upload texture is NOP");
 }
 
 void Software_Renderer_Graphics_Driver::upload_font(struct graphics_assets* assets, font_id font) {
+    _debugprintf("Software Renderer upload font is NOP");
 }
