@@ -10,6 +10,120 @@
 
 #include "game_ui.h"
 
+// TODO: finish main menu implementation
+
+// This will be hard-coded, since this is how my game design idea is.
+
+// TBH, I think some of the names are cool from other mythologies but I seem
+// to have middle-school level writing sometimes :)
+
+// You know, now that I look at this further. This sounds a lot like Dante's Inferno...
+
+// I kinda wanna draw a cute icon for each of the levels.
+local Stage stage_list[] = {
+    // Stage 1
+    // easy and slow themed.
+    {
+        string_literal("Limbo"),
+        string_literal("The Endless Nothing"),
+        0,
+        {
+            {
+                string_literal("Gates of Eternity"),
+                string_literal("The beginnings of escape."),
+                0
+            },
+            {
+                string_literal("Empty Sea"),
+                string_literal("The path of wayward souls."),
+                0,
+            },
+            {
+                string_literal("Reaper's Gate"),
+                string_literal(""),
+                1,
+            },
+        }
+    },
+    
+    // Stage 2
+    // this is "normal"
+    {
+        string_literal("Fiery Gates"),
+        string_literal("Lost Paradise"),
+        0,
+        {
+            {
+                string_literal("River Styx"),
+                string_literal("Washing away with forgetfulness."),
+                0
+            },
+            {
+                string_literal("Fiery Sojourn"),
+                string_literal(""),
+                0,
+            },
+            {
+                string_literal("Cerberus"),
+                string_literal("The Loyal Gatekeeper"),
+                1,
+            },
+        }
+    },
+
+    // Stage 3
+    // this is "hard"
+    {
+        string_literal("Inferno"),
+        string_literal("A place for the sinful."),
+        0,
+        {
+            {
+                string_literal("Greed"),
+                string_literal("For those who want too much."),
+                0
+            },
+            {
+                string_literal("Heresy"),
+                string_literal("For those who don't believe."),
+                0,
+            },
+            {
+                string_literal("Treachery"),
+                string_literal("For those who betray themselves and everyone else."),
+                1,
+            },
+        }
+    },
+
+    // Stage 4: Bonus
+    // This is going to be a bonus stage that honestly I'm not sure if
+    // I can design to be beatable since I'm not a pro LOL.
+    // NOTE: all stages are boss stages.
+    {
+        string_literal("Insanity"),
+        string_literal("Battling away for eternity."),
+        0,
+        {
+            {
+                string_literal("Pride"),
+                string_literal(""),
+                1
+            },
+            {
+                string_literal("Hubris"),
+                string_literal(""),
+                1,
+            },
+            {
+                string_literal("Arrogance"),
+                string_literal(""),
+                1,
+            },
+        }
+    },
+};
+
 Game::Game() {
     
 }
@@ -46,10 +160,10 @@ void Game::init(Graphics_Driver* driver) {
     this->state = (Game_State*)arena->push_unaligned(sizeof(*this->state)); (new (this->state) Game_State);
 
     resources->graphics_assets   = graphics_assets_create(arena, 16, 256);
-    init_graphics_resources(driver);
-    init_audio_resources();
 
     state->paused = false;
+
+    // gameplay_data initialize
     {
         auto state             = &this->state->gameplay_data;
         state->player.position = V2(state->play_area.width / 2, 300);
@@ -63,7 +177,25 @@ void Game::init(Graphics_Driver* driver) {
         state->main_camera.rng   = &state->prng;
     }
 
+    // mainmenu_data initialize
+    {
+        auto state = &this->state->mainmenu_data;
+        auto resolution = driver->resolution();
+
+        state->player.position = V2(resolution.x / 2, resolution.y / 2);
+        state->player.scale    = V2(15, 15);
+        state->player.velocity = V2(0, 0);
+
+        state->portals = Fixed_Array<MainMenu_Stage_Portal>(arena, 4);
+        {
+            // initialize all portals here for the main menu
+        }
+    }
+
     initialized = true;
+    init_graphics_resources(driver);
+    init_audio_resources();
+
     GameUI::initialize(arena);
 }
 

@@ -78,6 +78,9 @@ enum Game_Screen_Modes {
     GAME_SCREEN_COUNT     = 4
 };
 
+#include "stages.h"
+#include "main_menu_mode.h"
+
 struct Gameplay_Data {
     Fixed_Array<Bullet>           bullets;
     Fixed_Array<Laser_Hazard>     laser_hazards;
@@ -100,8 +103,9 @@ struct Gameplay_Data {
     camera       main_camera;
 };
 struct Game_State {
-    s32 screen_mode = GAME_SCREEN_OPENING;
+    s32 screen_mode = GAME_SCREEN_MAIN_MENU;
     Gameplay_Data gameplay_data;
+    MainMenu_Data mainmenu_data;
     bool paused;
 };
 

@@ -471,7 +471,41 @@ local void set_graphics_device(s32 id) {
     game.init_graphics_resources(global_graphics_driver);
 }
 
+extern "C" {
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
+
+int real_fac(int i) {
+    if (i == 0 || i == 1) return 1;
+    return i * real_fac(i - 1);
+}
+
+int factorial_l(lua_State* L) {
+    int i = luaL_checkinteger(L, 1);
+
+    lua_pushinteger(L, real_fac(i));
+
+    return 1;
+}
+
 int main(int argc, char** argv) {
+
+#if 1
+    {
+        // hi. I'm going to play with lua and be a good boy.
+        lua_State* L = luaL_newstate();
+        luaL_openlibs(L);
+        lua_register(L, "fac", factorial_l);
+        luaL_dostring(L, "print(\"hello world\")");
+        luaL_dostring(L, "print(fac(5))");
+        luaL_dostring(L, "for i=1, 10 do print(fac(i)) end");
+        
+        lua_close(L);
+    }
+#endif
+
 #ifdef _WIN32
     SetProcessDPIAware();
 #endif
