@@ -166,11 +166,13 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
         } else {
             if (main_menu_state.last_focus_portal != nullptr) {
                 V2 resolution = driver->resolution();
-                camera_set_point_to_interpolate(
-                    &main_menu_state.main_camera,
-                    V2(resolution.x/2, resolution.y/2),
-                    1.0
-                );
+                if (camera_not_already_interpolating_for(&main_menu_state.main_camera, V2(resolution.x/2, resolution.y/2), 1.0f)) {
+                    camera_set_point_to_interpolate(
+                        &main_menu_state.main_camera,
+                        V2(resolution.x/2, resolution.y/2),
+                        1.0
+                    );
+                }
             }
         }
 

@@ -39,3 +39,7 @@ Slice<Resolution_Mode> Graphics_Driver::get_display_modes() {
 
     return make_slice<Resolution_Mode>((Resolution_Mode*)display_modes, display_mode_count);
 }
+
+void Graphics_Driver::change_resolution(s32 new_resolution_x, s32 new_resolution_y) {
+    SDL_SetWindowSize(game_window, new_resolution_x, new_resolution_y);
+}

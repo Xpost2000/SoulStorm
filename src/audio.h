@@ -7,6 +7,7 @@
 #define MAX_LOADED_STREAMS (512)
 #define ANY_CHANNEL (-1)
 
+// TODO: does not have a way to change volume!
 namespace Audio {
     struct Sound_ID {
         u8  streaming;

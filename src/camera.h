@@ -68,6 +68,8 @@ rectangle_f32 camera_project_rectangle(struct camera* camera, rectangle_f32 rect
 V2 camera_project(struct camera* camera, V2 point, s32 screen_width, s32 screen_height);
 rectangle_f32 camera_transform_rectangle(struct camera* camera, rectangle_f32 rectangle, s32 screen_width, s32 screen_height);
 
+bool camera_not_already_interpolating_for(struct camera* camera, V2 where, f32 zoom);
+
 #define camera(XY, ZOOM) camera { nullptr, XY, ZOOM }
 #define camera_centered(XY, ZOOM) camera { nullptr, XY, ZOOM, true}
 

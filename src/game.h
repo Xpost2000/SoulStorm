@@ -10,6 +10,8 @@
 #include "engine.h"
 #include "graphics_driver.h"
 
+#include "game_preferences.h"
+
 /*
  * The game code. Finally some fresh code :)
  *
@@ -34,6 +36,9 @@ public:
     //       a software framebuffer. Honestly there's little to no reason why this should
     //       be here...
     void update_and_render(Graphics_Driver* driver, f32 dt);
+
+
+    Game_Preferences preferences;
 private: 
     void handle_ui_update_and_render(struct render_commands* commands, f32 dt);
 
@@ -57,6 +62,10 @@ private:
     Game_State*     state;
     Game_Resources* resources;
     bool initialized = false;
+
+    // used for writing into from the settings before I
+    // actually apply them.
+    Game_Preferences temp_preferences;
 };
 
 #endif

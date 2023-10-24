@@ -66,6 +66,8 @@ public:
     virtual void upload_texture(struct graphics_assets* assets, image_id image) = 0;
     virtual void upload_font(struct graphics_assets* assets, font_id font)      = 0;
 
+    // NOTE: will not change the back buffer. You have to do that manually.
+    void change_resolution(s32 new_resolution_x, s32 new_resolution_y);
     Slice<Resolution_Mode> get_display_modes();
     //                     if it is an enumerable display mode.
     s32                    find_index_of_resolution(s32 w, s32 h);

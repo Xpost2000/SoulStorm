@@ -150,7 +150,7 @@ enum UI_State_Mode {
 };
 
 struct Game_State {
-    s32              screen_mode = GAME_SCREEN_TITLE_SCREEN;
+    s32              screen_mode = GAME_SCREEN_MAIN_MENU;
     Gameplay_Data    gameplay_data;
     MainMenu_Data    mainmenu_data;
     TitleScreen_Data titlescreen_data;

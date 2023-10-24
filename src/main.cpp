@@ -84,8 +84,8 @@ local bool LAST_SCREEN_IS_FULLSCREEN = false;
 
 local u32 SCREEN_WIDTH                    = 0;
 local u32 SCREEN_HEIGHT                   = 0;
-local u32 REAL_SCREEN_WIDTH               = 1280;
-local u32 REAL_SCREEN_HEIGHT              = 720;
+local u32 REAL_SCREEN_WIDTH               = 1024;
+local u32 REAL_SCREEN_HEIGHT              = 768;
 const u32 ENGINE_BASE_VERTICAL_RESOLUTION = 480; // scaling up to 480p resolution
 
 local V2 get_scaled_screen_resolution(V2 base_resolution) {
@@ -381,7 +381,51 @@ void initialize() {
     set_graphics_device(GRAPHICS_DEVICE_SOFTWARE);
     initialize_framebuffer();
 
+    // initialize game_preferences structure here.
+    {
+        auto& preferences = game.preferences;
+        preferences.width = REAL_SCREEN_WIDTH;
+        preferences.height = REAL_SCREEN_HEIGHT;
+        global_graphics_driver->get_display_modes(); // update internal list of display modes.
+        preferences.resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences.width, preferences.height);
+        preferences.music_volume = 0.5f;
+        preferences.sound_volume = 0.5f;
+        preferences.fullscreen   = SCREEN_IS_FULLSCREEN;
+    }
+
     game.init(global_graphics_driver);
+}
+
+void update_preferences(Game_Preferences* a, Game_Preferences* b) {
+    *a = *b;
+
+    auto display_mode = global_graphics_driver->get_display_modes()[b->resolution_option_index];
+    a->width          = display_mode.width;
+    a->height         = display_mode.height;
+}
+
+void confirm_preferences(Game_Preferences* preferences) {
+    REAL_SCREEN_WIDTH  = preferences->width;
+    REAL_SCREEN_HEIGHT = preferences->height;
+    set_fullscreen(preferences->fullscreen);
+
+    // rebuild the back buffer or framebuffer again.
+    initialize_framebuffer();
+    global_graphics_driver->change_resolution(REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
+
+    // TODO: audio cannot change volume yet
+    global_graphics_driver->get_display_modes(); // update internal list of display modes.
+    preferences->resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences->width, preferences->height);
+}
+
+bool save_preferences_to_disk(Game_Preferences* preferences, string path) {
+    _debugprintf("Hi, preferences are not written to disk yet.");
+    return false;
+}
+
+bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
+    _debugprintf("Hi, preferences are not loaded from disk yet.");
+    return false;
 }
 
 void deinitialize() {

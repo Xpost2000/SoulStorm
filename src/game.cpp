@@ -160,6 +160,14 @@ void Game::init(Graphics_Driver* driver) {
     this->resources = (Game_Resources*)arena->push_unaligned(sizeof(*this->resources));
     this->state = (Game_State*)arena->push_unaligned(sizeof(*this->state)); (new (this->state) Game_State);
 
+    if (load_preferences_from_disk(&preferences, string_literal("preferences.txt"))) {
+        confirm_preferences(&preferences);
+    } else {
+        // the main code will provide us with a default
+        // preferences struct.
+    }
+    update_preferences(&temp_preferences, &preferences);
+
     resources->graphics_assets   = graphics_assets_create(arena, 16, 256);
 
     state->ui_state = UI_STATE_INACTIVE;
@@ -356,9 +364,6 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
-    // unsaved_config_options
-    s32 resolution_option_to_pick = 0;
-
     GameUI::begin_frame(commands);
     {
 
@@ -379,21 +384,53 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
                 options_list.push(s);
             }
 
-            GameUI::option_selector(V2(100, y), string_literal("Resolution: "), color32f32(1, 1, 1, 1), 2, options_list.data, options_list.size, &resolution_option_to_pick);
+            GameUI::option_selector(V2(100, y), string_literal("Resolution: "), color32f32(1, 1, 1, 1), 2, options_list.data, options_list.size, &temp_preferences.resolution_option_index);
             y += 30;
         }
-        // if (GameUI::button(V2(100, y), string_literal("Resolution?"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-        // }
-        if (GameUI::button(V2(100, y), string_literal("Fullscreen?"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+        if (GameUI::checkbox(V2(100, y), string_literal("Fullscreen "), color32f32(1, 1, 1, 1), 2, &temp_preferences.fullscreen)) {}
+        y += 30;
+        if (GameUI::button(V2(100, y), string_literal("Music Volume: "), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
         }
         y += 30;
-        if (GameUI::button(V2(100, y), string_literal("Music Volume?"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+        if (GameUI::button(V2(100, y), string_literal("Sound Volume: "), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
         }
         y += 30;
-        if (GameUI::button(V2(100, y), string_literal("Sound Volume?"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+        // also NOTE:
+        /*
+         * This is always going to be a weird problem because the game doesn't letter
+         * box, and the world select doesn't have a following camera so it would never autocorrect
+         * itself.
+         *
+         * I don't like letterboxing (except for the ingame section because that's just how the genre works),
+         * so I have to rehack to adjust the camera.
+         *
+         * I'm aware this can break some of the transitions I'm doing.
+         */
+        if (GameUI::button(V2(100, y), string_literal("Apply"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            update_preferences(&preferences, &temp_preferences);
+            confirm_preferences(&preferences);
+
+            // NOTE: readjust the camera.
+            {
+                state->mainmenu_data.main_camera = camera(V2(commands->screen_width/2, commands->screen_height/2), 1.0);
+                state->mainmenu_data.main_camera.centered = true;
+            }
+        }
+        y += 30;
+        if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            state->ui_state = UI_STATE_PAUSED;
+            update_preferences(&preferences, &temp_preferences);
+            confirm_preferences(&preferences);
+
+            // NOTE: readjust the camera.
+            {
+                state->mainmenu_data.main_camera = camera(V2(commands->screen_width/2, commands->screen_height/2), 1.0);
+                state->mainmenu_data.main_camera.centered = true;
+            }
         }
         y += 30;
         if (GameUI::button(V2(100, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            temp_preferences = preferences;
             state->ui_state = UI_STATE_PAUSED;
         }
         y += 30;
@@ -414,21 +451,40 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
         GameUI::label(V2(50, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         y += 45;
-        if (GameUI::button(V2(100, y), string_literal("Resume"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+        if (GameUI::button(V2(100, y), string_literal("Resume"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             state->ui_state = UI_STATE_INACTIVE;
         }
         y += 30;
 
         if (state->screen_mode != GAME_SCREEN_MAIN_MENU) {
-            if (GameUI::button(V2(100, y), string_literal("Return To Menu"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(100, y), string_literal("Return To Menu"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 _debugprintf("return to main menu.");
-                state->ui_state    = UI_STATE_INACTIVE;
-                state->screen_mode = GAME_SCREEN_MAIN_MENU;
+
+                Transitions::do_shuteye_in(
+                    color32f32(0, 0, 0, 1),
+                    0.15f,
+                    0.3f
+                );
+                
+
+                Transitions::register_on_finish(
+                    [&](void*) mutable {
+                        state->ui_state    = UI_STATE_INACTIVE;
+                        state->screen_mode = GAME_SCREEN_MAIN_MENU;
+                        _debugprintf("Hi menu.");
+
+                        Transitions::do_shuteye_out(
+                            color32f32(0, 0, 0, 1),
+                            0.15f,
+                            0.3f
+                        );
+                    }
+                );
             }
             y += 30;
         }
 
-        if (GameUI::button(V2(100, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+        if (GameUI::button(V2(100, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             _debugprintf("Open the options menu I guess");
             // I'd personally like to animate these, but it requires some more dirty code if
             // I'm doing it from scratch like this.
@@ -437,14 +493,25 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
         y += 30;
 
         if (state->screen_mode != GAME_SCREEN_CREDITS) {
-            if (GameUI::button(V2(100, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(100, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 _debugprintf("Open the credits screen I guess");
             }
             y += 30;
         }
 
-        if (GameUI::button(V2(100, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-            Global_Engine()->die();
+        if (GameUI::button(V2(100, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            Transitions::do_color_transition_in(
+                color32f32(0, 0, 0, 1),
+                0.15f,
+                0.3f
+            );
+                
+
+            Transitions::register_on_finish(
+                [&](void*) mutable {
+                    Global_Engine()->die();
+                }
+            );
         }
     }
     GameUI::end_frame();
@@ -544,6 +611,16 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
 
         if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             state->ui_state = UI_STATE_INACTIVE;
+
+            // undo the camera zoom
+
+            if (camera_not_already_interpolating_for(&state->mainmenu_data.main_camera, V2(commands->screen_width/2, commands->screen_height/2), 1.0)) {
+                camera_set_point_to_interpolate(
+                    &state->mainmenu_data.main_camera,
+                    V2(commands->screen_width/2, commands->screen_height/2),
+                    1.0
+                );
+            }
         }
         y += 30;
     }

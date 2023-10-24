@@ -41,6 +41,9 @@ namespace GameUI {
     // need to know if I'm "focused"
     s32 button(V2 where, string text, color32f32 modulation, f32 scale, bool active=true);
 
+    // checkboxes will return the value of their "check"
+    bool checkbox(V2 where, string text, color32f32 modulation, f32 scale, bool* ptr, bool active=true);
+
     void initialize(Memory_Arena* arena);
     void begin_frame(struct render_commands* commands);
     void end_frame();

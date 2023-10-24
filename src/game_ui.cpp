@@ -10,6 +10,7 @@ enum Widget_Type {
     WIDGET_TYPE_TEXT,
     WIDGET_TYPE_OPTION_SELECTOR,
     WIDGET_TYPE_BUTTON,
+    WIDGET_TYPE_CHECKBOX,
 };
 
 struct Widget {
@@ -50,6 +51,13 @@ local UI_State global_ui_state = {};
   NOTE: this is sort of like a stateful IMGUI, which is an oxymoron!
  */
 namespace GameUI {
+    local void common_widget_initialization(Widget* widget, V2 where, string text, f32 scale, color32f32 modulation) {
+        widget->where      = where;
+        widget->modulation = modulation;
+        widget->text       = text;
+        widget->scale      = scale;
+    }
+
     local Widget* push_label(V2 where, string text, f32 scale, color32f32 modulation) {
         auto result   = global_ui_state.widgets.alloc();
 
@@ -58,11 +66,8 @@ namespace GameUI {
         if (result->type != WIDGET_TYPE_TEXT) {
             result->type       = WIDGET_TYPE_TEXT;
         }
-        result->where      = where;
-        result->modulation = modulation;
-        result->text       = text;
-        result->scale      = scale;
 
+        common_widget_initialization(result, where, text, scale, modulation);
         return result;
     }
 
@@ -74,11 +79,21 @@ namespace GameUI {
         if (result->type != WIDGET_TYPE_BUTTON) {
             result->type       = WIDGET_TYPE_BUTTON;
         }
-        result->where      = where;
-        result->modulation = modulation;
-        result->text       = text;
-        result->scale      = scale;
 
+        common_widget_initialization(result, where, text, scale, modulation);
+        return result;
+    }
+
+    local Widget* push_checkbox(V2 where, string text, f32 scale, color32f32 modulation) {
+        auto result   = global_ui_state.widgets.alloc();
+
+        // specific initialization behavior if this was a different
+        // widget last frame.
+        if (result->type != WIDGET_TYPE_CHECKBOX) {
+            result->type = WIDGET_TYPE_CHECKBOX;
+        }
+
+        common_widget_initialization(result, where, text, scale, modulation);
         return result;
     }
 
@@ -92,11 +107,8 @@ namespace GameUI {
             assertion(value && "we need a valid option value");
             result->current_selected_index = *value;
         }
-        result->where      = where;
-        result->modulation = modulation;
-        result->text       = text;
-        result->scale      = scale;
 
+        common_widget_initialization(result, where, text, scale, modulation);
         return result;
     }
 
@@ -156,6 +168,55 @@ namespace GameUI {
 
         return status;
     }
+
+    bool checkbox(V2 where, string text, color32f32 modulation, f32 scale, bool* ptr, bool active) {
+        assertion(global_ui_state.in_frame && "Need to call begin_frame first.");
+        auto widget         = push_button(where, text, scale, modulation);
+        auto font           = global_ui_state.default_font;
+        auto text_width     = font_cache_text_width(font, widget->text, widget->scale);
+        auto text_height    = font_cache_text_height(font) * widget->scale;
+        auto button_rect    = rectangle_f32(widget->where.x + text_width * 1.15f, widget->where.y, text_height, text_height);
+
+        V2   mouse_position = Input::mouse_location();
+        bool clicked        = false;
+
+        if (active && rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5))) {
+            font = global_ui_state.active_font;
+            if (Input::mouse_left()) {
+                font = global_ui_state.selected_font;
+            }
+            
+            if (Input::pressed_mouse_left()) {
+                *ptr ^= 1;
+            } else {
+            }
+        }
+
+        if (!active) widget->modulation.a = 0.5;
+        else         widget->modulation.a = 1.0;
+        render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
+
+        render_commands_push_quad(global_ui_state.commands, button_rect, color32u8(255, 255, 255, widget->modulation.a * 255), BLEND_MODE_ALPHA);
+        {
+            // inner "value".
+            auto inner_rect = button_rect;
+            inner_rect.w *= 0.9;
+            inner_rect.h *= 0.9;
+
+            auto dx = button_rect.w - inner_rect.w;
+            auto dy = button_rect.h - inner_rect.h;
+
+            inner_rect.x += (dx / 2);
+            inner_rect.y += (dy / 2);
+
+
+            color32u8 color = color32u8(255 * !(*ptr), 255 * (*ptr), 0, 255 - 128 * !active);
+            render_commands_push_quad(global_ui_state.commands, inner_rect, color, BLEND_MODE_ALPHA);
+        }
+
+        return *ptr;
+    }
+
 
     void option_selector(V2 where, string text, color32f32 modulation, f32 scale, string* options, s32 options_count, s32* out_selected, bool active) {
         assertion(global_ui_state.in_frame && "Need to call begin_frame first.");
