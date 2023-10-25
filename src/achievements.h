@@ -57,6 +57,8 @@ struct Achievement {
         Bounded<f32> as_float;
     } progress;
 
+    s8 notified_of_unlock = 0;
+
     /*
      * We can never "re-lock" an achievement. Assume that
      * we will only ever make forward progress.
@@ -67,6 +69,10 @@ struct Achievement {
     bool report(f32 i);
     bool report(); // automatically unlock achievement regardless of anything
     bool complete();
+
+    // NOTE: this will report true once.
+    //       use only when completing an achievement for the first time.
+    bool notify_unlock();
 };
 
 /* Personally, I like namespaces over static classes. But that's just me. */

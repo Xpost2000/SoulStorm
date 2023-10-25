@@ -197,6 +197,7 @@ void Game::init(Graphics_Driver* driver) {
     init_graphics_resources(driver);
     init_audio_resources();
 
+    Achievements::init_achievements(arena, make_slice<Achievement>(achievement_list, array_count(achievement_list)));
     GameUI::initialize(arena);
 }
 
@@ -788,13 +789,25 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         state->explosion_hazards.push(h);
     }
     if (Input::is_key_pressed(KEY_C)) {
-        Laser_Hazard h = Laser_Hazard(state->player.position.y, 30.0f, LASER_HAZARD_DIRECTION_HORIZONTAL, 1.0f, 15.0f);
-        state->laser_hazards.push(h);
+        // Laser_Hazard h = Laser_Hazard(state->player.position.y, 30.0f, LASER_HAZARD_DIRECTION_HORIZONTAL, 1.0f, 15.0f);
+        // state->laser_hazards.push(h);
+
+        // NOTE: these could just act as subscribers in the future.
+        //       to death events but it's not too big of a deal for now.
+        Achievements::get(ACHIEVEMENT_ID_KILLER)->report((s32)500);
+        Achievements::get(ACHIEVEMENT_ID_MURDERER)->report((s32)500);
+        Achievements::get(ACHIEVEMENT_ID_SLAYER)->report((s32)500);
     }
 
     if (Input::is_key_pressed(KEY_V)) {
-        Laser_Hazard h = Laser_Hazard(state->player.position.x, 30.0f, LASER_HAZARD_DIRECTION_VERTICAL, 1.0f, 15.0f);
-        state->laser_hazards.push(h);
+        // Laser_Hazard h = Laser_Hazard(state->player.position.x, 30.0f, LASER_HAZARD_DIRECTION_VERTICAL, 1.0f, 15.0f);
+        // state->laser_hazards.push(h);
+        // test unlock all stage achievements
+        Achievements::get(ACHIEVEMENT_ID_TEST_ACHIEVEMENT0)->report();
+        Achievements::get(ACHIEVEMENT_ID_STAGE1)->report();
+        Achievements::get(ACHIEVEMENT_ID_STAGE2)->report();
+        Achievements::get(ACHIEVEMENT_ID_STAGE3)->report();
+        Achievements::get(ACHIEVEMENT_ID_STAGE4)->report();
     }
 
 
@@ -908,6 +921,40 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         case GAME_SCREEN_CREDITS: {
             update_and_render_game_credits(driver, dt);
         } break;
+    }
+
+    // always check for the platinum achievement unlock
+    {
+        auto platinum_achievement = Achievements::get(ACHIEVEMENT_ID_PLATINUM);
+        {
+            // NOTE: the platinum_achievement is the last achievement id
+            bool all_previous_unlocked = true;
+            for (s32 i = 0; i < ACHIEVEMENT_ID_PLATINUM; ++i) {
+                auto achievement = Achievements::get(i);
+                if (!achievement->complete()) {
+                    all_previous_unlocked = false;
+                    break;
+                }
+            }
+
+            if (all_previous_unlocked) {
+                platinum_achievement->report();
+            }
+        }
+    }
+
+    // Polling based achievement updating.
+    // TODO: this will notify the achievement UI when I add it
+    {
+        for (s32 i = 0; i < array_count(achievement_list); ++i) {
+            auto achievement = Achievements::get(i);
+            if (achievement->complete() && achievement->notify_unlock()) {
+                _debugprintf("Hi, you've just unlocked the: %.*s achievement",
+                             achievement->id_name.length,
+                             achievement->id_name.data
+                );
+            }
+        }
     }
 }
 

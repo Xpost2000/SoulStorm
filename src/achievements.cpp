@@ -75,3 +75,12 @@ bool Achievement::report() {
 bool Achievement::complete() {
     return achieved;
 }
+
+bool Achievement::notify_unlock() {
+    if (!notified_of_unlock) {
+        notified_of_unlock = true;
+        return true;
+    }
+
+    return false;
+}

@@ -51,6 +51,8 @@
         string_literal("ACHIEVEMENT_ID_KILLER"),
         string_literal("Killer"),
         string_literal("Eliminated 1500 enemies cumulatively."),
+
+        {{0, 1500}}
 },
 {
         ACHIEVEMENT_ID_MURDERER,
@@ -59,6 +61,8 @@
         string_literal("ACHIEVEMENT_ID_MURDERER"),
         string_literal("Murderer"),
         string_literal("Eliminated 5000 enemies cumulatively."),
+
+        {{0, 5000}}
 },
 {
         ACHIEVEMENT_ID_SLAYER,
@@ -67,6 +71,8 @@
         string_literal("ACHIEVEMENT_ID_SLAYER"),
         string_literal("Slayer"),
         string_literal("Eliminated 10000 enemies cumulatively."),
+
+        {{0, 10000}}
 },
 {
         ACHIEVEMENT_ID_PLATINUM,
