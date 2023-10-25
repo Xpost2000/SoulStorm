@@ -169,6 +169,15 @@ void Entity::kill() {
 }
 
 void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
+    s32 edge_behavior_top    = edge_top_behavior_override;
+    s32 edge_behavior_bottom = edge_bottom_behavior_override;
+    s32 edge_behavior_left   = edge_left_behavior_override;
+    s32 edge_behavior_right  = edge_right_behavior_override;
+
+    if (edge_behavior_top == -1) edge_behavior_top       = play_area.edge_behaviors[0];
+    if (edge_behavior_bottom == -1) edge_behavior_bottom = play_area.edge_behaviors[1];
+    if (edge_behavior_left == -1) edge_behavior_left     = play_area.edge_behaviors[2];
+    if (edge_behavior_right == -1) edge_behavior_right   = play_area.edge_behaviors[3];
     // TODO: killing, since there is no concept of HP yet.
     // NOTE: these behaviors are mostly for the players... Enemies will just act
     // as if it was "wrapping" behavior by default.
@@ -181,12 +190,13 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
             if (clamp_to_top_border(play_area))
                 if (play_area.edge_behaviors[0] == PLAY_AREA_EDGE_DEADLY) {
                     // extra killing code.
-                    die = true;
+                    kill();
                 }
         } break;
         case PLAY_AREA_EDGE_WRAPPING: {
             wrap_from_top_border(play_area);
         } break;
+        case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
     }
 
     switch (play_area.edge_behaviors[1]) {
@@ -195,12 +205,13 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
             if (clamp_to_bottom_border(play_area))
                 if (play_area.edge_behaviors[1] == PLAY_AREA_EDGE_DEADLY) {
                     // extra killing code.
-                    die = true;
+                    kill();
                 }
         } break;
         case PLAY_AREA_EDGE_WRAPPING: {
             wrap_from_bottom_border(play_area);
         } break;
+        case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
     }
 
     switch (play_area.edge_behaviors[2]) {
@@ -209,12 +220,13 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
             if (clamp_to_left_border(play_area))
                 if (play_area.edge_behaviors[2] == PLAY_AREA_EDGE_DEADLY) {
                     // extra killing code.
-                    die = true;
+                    kill();
                 }
         } break;
         case PLAY_AREA_EDGE_WRAPPING: {
             wrap_from_left_border(play_area);
         } break;
+        case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
     }
 
     switch (play_area.edge_behaviors[3]) {
@@ -229,6 +241,7 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
         case PLAY_AREA_EDGE_WRAPPING: {
             wrap_from_right_border(play_area);
         } break;
+        case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
     }
 }
 
@@ -265,6 +278,22 @@ void Entity::update(Game_State* const state, f32 dt) {
 
     position           += velocity * dt;
     t_since_spawn      += dt;
+
+    {
+        auto rect = get_rect();
+        if (!play_area.is_inside_logical(rect)) {
+            cleanup_time.start();
+            cleanup_time.update(dt);
+
+            if (cleanup_time.triggered()) {
+                // mark for deletion / death
+                die = true;
+            }
+        } else {
+            cleanup_time.stop();
+            cleanup_time.reset();
+        }
+    }
 
     if (invincibility_time.running) {
         invincibility_time_flash_period.start();
@@ -350,10 +379,10 @@ void Bullet::update(Game_State* const state, f32 dt) {
     Entity::update(state, dt);
 
     // NOTE: needs flags to determine whether it obeys play area restrictions.
-    wrap_from_right_border(play_area);
-    wrap_from_top_border(play_area);
-    wrap_from_bottom_border(play_area);
-    wrap_from_left_border(play_area);
+    // wrap_from_right_border(play_area);
+    // wrap_from_top_border(play_area);
+    // wrap_from_bottom_border(play_area);
+    // wrap_from_left_border(play_area);
 }
 
 // Hazard Warning

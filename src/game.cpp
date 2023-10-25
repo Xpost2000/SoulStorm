@@ -7,6 +7,7 @@
 #include "entity.h"
 #include "fixed_array.h"
 #include "game_state.h"
+#include "achievements.h"
 
 #include "game_ui.h"
 
@@ -22,107 +23,37 @@
 // I kinda wanna draw a cute icon for each of the levels.
 // TODO: need to lock stages with their prerequisities
 local Stage stage_list[] = {
-    // Stage 1
-    // easy and slow themed.
-    {
-        string_literal("Limbo"),
-        string_literal("The Endless Nothing"),
-        1,
-        {
-            {
-                string_literal("Gates of Eternity"),
-                string_literal("The beginnings of escape."),
-                0
-            },
-            {
-                string_literal("Empty Sea"),
-                string_literal("The path of wayward souls."),
-                0,
-            },
-            {
-                string_literal("Reaper's Gate"),
-                string_literal("Judgement awaits."),
-                1,
-            },
-        }
-    },
-    
-    // Stage 2
-    // this is "normal"
-    {
-        string_literal("Fiery Gates"),
-        string_literal("Lost Paradise"),
-        1,
-        {
-            {
-                string_literal("River Styx"),
-                string_literal("Washing away with forgetfulness."),
-                0
-            },
-            {
-                string_literal("Fiery Sojourn"),
-                string_literal("Only embers will remain."),
-                0,
-            },
-            {
-                string_literal("Cerberus"),
-                string_literal("The Loyal Gatekeeper"),
-                1,
-            },
-        }
-    },
+    #include "stage_list.h"
+};
 
-    // Stage 3
-    // this is "hard"
-    {
-        string_literal("Inferno"),
-        string_literal("A place for the sinful."),
-        1,
-        {
-            {
-                string_literal("Greed"),
-                string_literal("For those who want too much."),
-                0
-            },
-            {
-                string_literal("Heresy"),
-                string_literal("For those who don't believe."),
-                0,
-            },
-            {
-                string_literal("Treachery"),
-                string_literal("For those who betray themselves and everyone else."),
-                1,
-            },
-        }
-    },
+// Should not change in the future.
+enum Achievement_ID_List {
+    ACHIEVEMENT_ID_TEST_ACHIEVEMENT0,
 
-    // Stage 4: Bonus
-    // This is going to be a bonus stage that honestly I'm not sure if
-    // I can design to be beatable since I'm not a pro LOL.
-    // NOTE: all stages are boss stages.
-    {
-        string_literal("Insanity"),
-        string_literal("Battling away for eternity."),
-        1,
-        {
-            {
-                string_literal("Pride"),
-                string_literal("Where it begins."),
-                1
-            },
-            {
-                string_literal("Hubris"),
-                string_literal("Where it grows."),
-                1,
-            },
-            {
-                string_literal("Arrogance"),
-                string_literal("Where it ends."),
-                1,
-            },
-        }
-    },
+    ACHIEVEMENT_ID_STAGE1,
+    // ACHIEVEMENT_ID_STAGE1_FLAWLESS,
+
+    ACHIEVEMENT_ID_STAGE2,
+    // ACHIEVEMENT_ID_STAGE2_FLAWLESS,
+
+    ACHIEVEMENT_ID_STAGE3,
+    // ACHIEVEMENT_ID_STAGE3_FLAWLESS,
+
+    ACHIEVEMENT_ID_STAGE4,
+    // ACHIEVEMENT_ID_STAGE4_FLAWLESS,
+
+    // play as every character type(?)
+    // ACHIEVEMENT_ID_JACK_OF_ALL_TRADES,
+    // ACHIEVEMENT_ID_MERCIFUL,
+    ACHIEVEMENT_ID_KILLER,
+    ACHIEVEMENT_ID_MURDERER,
+    ACHIEVEMENT_ID_SLAYER,
+
+    ACHIEVEMENT_ID_PLATINUM
+};
+
+local Achievement achievement_list[] = {
+    #include "achievement_list.h"
 };
 
 Game::Game() {
@@ -1064,11 +995,11 @@ void Game::handle_all_explosions(f32 dt) {
 }
 
 // Play_Area
-bool Play_Area::is_inside_absolute(rectangle_f32 rect) {
+bool Play_Area::is_inside_absolute(rectangle_f32 rect) const {
     return (rectangle_f32_intersect(rect, rectangle_f32(x, 0, width, height)));
 }
 
-bool Play_Area::is_inside_logical(rectangle_f32 rect) {
+bool Play_Area::is_inside_logical(rectangle_f32 rect) const {
     return (rectangle_f32_intersect(rect, rectangle_f32(0, 0, width, height)));
 }
 

@@ -57,6 +57,7 @@ struct Timer {
 
 #define PLAYER_INVINICIBILITY_TIME (1.35)
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
+#define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.0f)
 struct Entity {
     // primarily for collision purposes
     // a visual representation can be drawn separately
@@ -65,6 +66,7 @@ struct Entity {
     V2    velocity      = V2(0, 0);
     f32   t_since_spawn = 0.0f;
 
+    Timer cleanup_time                    = Timer(ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION);
     Timer invincibility_time_flash_period = Timer(INVINCIBILITY_FLASH_TIME_PERIOD);
     Timer invincibility_time              = Timer(PLAYER_INVINICIBILITY_TIME);
     int   hp            = 1;
@@ -112,6 +114,12 @@ struct Entity {
     //       who should basically die in one hit as per normal bullet hell rules...
     void heal(s32 hp);
     void kill();
+
+    // -1 means we'll follow the stage area
+    s32 edge_top_behavior_override = -1;
+    s32 edge_bottom_behavior_override = -1;
+    s32 edge_left_behavior_override = -1;
+    s32 edge_right_behavior_override = -1;
 };
 
 struct Hazard_Warning {
@@ -202,7 +210,8 @@ struct Player : public Entity {
 };
 
 struct Bullet : public Entity {
-    Timer lifetime;
+    Timer lifetime; // should be adjusted carefully!
+
     /* float lifetime; // if it's -1 the bullets will die on their own later... */
     // bool dead;
     void update(Game_State* const state, f32 dt);

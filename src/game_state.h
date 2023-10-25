@@ -47,6 +47,7 @@ enum Play_Area_Edge_Behavior {
     PLAY_AREA_EDGE_BLOCKING = 0,
     PLAY_AREA_EDGE_DEADLY,
     PLAY_AREA_EDGE_WRAPPING,
+    PLAY_AREA_EDGE_PASSTHROUGH,
     PLAY_AREA_EDGE_BEHAVIOR_COUNT,
 };
 struct Play_Area {
@@ -64,10 +65,10 @@ struct Play_Area {
     void set_all_edge_behaviors_to(u8 value);
 
     // this is for the "game objects"
-    bool is_inside_logical(rectangle_f32 rect);
+    bool is_inside_logical(rectangle_f32 rect) const;
 
     // this is for your mouse cursor or a "real" thing
-    bool is_inside_absolute(rectangle_f32 rect);
+    bool is_inside_absolute(rectangle_f32 rect) const;
 };
 
 enum Game_Screen_Modes {
