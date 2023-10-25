@@ -55,8 +55,8 @@ struct Timer {
     f32 max_t;
 };
 
-#define PLAYER_INVINICIBILITY_TIME (0.1)
-#define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 5)
+#define PLAYER_INVINICIBILITY_TIME (1.35)
+#define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
 struct Entity {
     // primarily for collision purposes
     // a visual representation can be drawn separately

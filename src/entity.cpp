@@ -267,15 +267,14 @@ void Entity::update(Game_State* const state, f32 dt) {
     t_since_spawn      += dt;
 
     if (invincibility_time.running) {
-        _debugprintf("Invincible I guess.");
         invincibility_time_flash_period.start();
         if (invincibility_time_flash_period.triggered()) {
+            _debugprintf("flash");
             flashing ^= true;
             invincibility_time_flash_period.reset();
         }
         invincibility_time.triggered();
     } else {
-        _debugprintf("Not invincible");
         flashing = false;
     }
 
