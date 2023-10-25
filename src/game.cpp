@@ -1084,7 +1084,7 @@ void Game::switch_screen(s32 screen) {
 
     // special case setup code will be here
 
-    switch (screen_mode) {
+    switch (screen) {
         case GAME_SCREEN_INGAME: {
             setup_stage_start();
         } break;
