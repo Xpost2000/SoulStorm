@@ -112,10 +112,9 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
             
         } else {
             if (this->state->ui_state != UI_STATE_PAUSED) {
-                this->state->ui_state = UI_STATE_PAUSED;
-            }
-            else {
-                this->state->ui_state = UI_STATE_INACTIVE;
+                switch_ui(UI_STATE_PAUSED);
+            } else {
+                switch_ui(UI_STATE_INACTIVE);
             }
         }
     }
@@ -156,7 +155,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
                 focus_portal->triggered_level_selection = true;
 
                 main_menu_state.stage_id_level_select = focus_portal->stage_id;
-                state->ui_state                       = UI_STATE_STAGE_SELECT;
+                switch_ui(UI_STATE_STAGE_SELECT);
 
                 auto position = focus_portal->position;
                 position *= 1.5f;

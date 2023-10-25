@@ -97,7 +97,7 @@ void Game::update_and_render_game_credits(Graphics_Driver* driver, f32 dt) {
 
         Transitions::register_on_finish(
             [&](void*) mutable {
-                state->ui_state    = UI_STATE_INACTIVE;
+                switch_ui(state->last_ui_state);
                 switch_screen(state->last_screen_mode);
 
                 Transitions::do_shuteye_out(
@@ -109,6 +109,7 @@ void Game::update_and_render_game_credits(Graphics_Driver* driver, f32 dt) {
         );
     }
     GameUI::end_frame();
+    GameUI::update(dt);
 
     Transitions::update_and_render(&ui_render_commands, dt);
     driver->clear_color_buffer(color32u8(0, 0, 0, 255));

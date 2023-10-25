@@ -45,6 +45,7 @@ private:
     void update_and_render_pause_menu(struct render_commands* commands, f32 dt);
     void update_and_render_options_menu(struct render_commands* commands, f32 dt);
     void update_and_render_stage_select_menu(struct render_commands* commands, f32 dt);
+    void update_and_render_game_death_maybe_retry_menu(struct render_commands* commands, f32 dt);
 
     void update_and_render_game_opening(Graphics_Driver* driver, f32 dt);
     void update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt);
@@ -57,7 +58,10 @@ private:
     void handle_all_dead_entities(f32 dt);
 
     void switch_screen(s32 screen);
+    void switch_ui(s32 ui);
     bool can_access_stage(s32 id);
+
+    void setup_stage_start();
 
     Memory_Arena*   arena;
     Game_State*     state;

@@ -163,8 +163,8 @@ namespace GameUI {
         auto widget = push_label(where, text, scale, modulation);
         auto font = global_ui_state.default_font;
 
-        if (!active) widget->modulation.a = 0.5;
-        else         widget->modulation.a = 1.0;
+        if (!active) widget->modulation.a = 0.5 * modulation.a;
+        else         widget->modulation.a = 1.0 * modulation.a;
         render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
     }
 
@@ -197,8 +197,8 @@ namespace GameUI {
 #ifndef RELEASE
         render_commands_push_quad(global_ui_state.commands, button_rect, color32u8(255, 0, 0, 64), BLEND_MODE_ALPHA);
 #endif
-        if (!active) widget->modulation.a = 0.5;
-        else         widget->modulation.a = 1.0;
+        if (!active) widget->modulation.a = 0.5 * modulation.a;
+        else         widget->modulation.a = 1.0 * modulation.a;
         render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
 
         return status;
@@ -228,8 +228,8 @@ namespace GameUI {
             }
         }
 
-        if (!active) widget->modulation.a = 0.5;
-        else         widget->modulation.a = 1.0;
+        if (!active) widget->modulation.a = 0.5 * modulation.a;
+        else         widget->modulation.a = 1.0 * modulation.a;
         render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
 
         render_commands_push_quad(global_ui_state.commands, button_rect, color32u8(255, 255, 255, widget->modulation.a * 255), BLEND_MODE_ALPHA);
@@ -310,8 +310,8 @@ namespace GameUI {
 
         f32 percentage_of = ((*ptr) - min_value) / (range);
 
-        if (!active) widget->modulation.a = 0.5;
-        else         widget->modulation.a = 1.0;
+        if (!active) widget->modulation.a = 0.5 * modulation.a;
+        else         widget->modulation.a = 1.0 * modulation.a;
         render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
 
         render_commands_push_quad(global_ui_state.commands, bar_rect, color32u8(255, 255, 255, widget->modulation.a * 255), BLEND_MODE_ALPHA);

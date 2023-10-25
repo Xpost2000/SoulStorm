@@ -55,6 +55,8 @@ struct Timer {
     f32 max_t;
 };
 
+#define PLAYER_INVINICIBILITY_TIME (0.1)
+#define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 5)
 struct Entity {
     // primarily for collision purposes
     // a visual representation can be drawn separately
@@ -63,8 +65,11 @@ struct Entity {
     V2    velocity      = V2(0, 0);
     f32   t_since_spawn = 0.0f;
 
-    // TODO: hp
+    Timer invincibility_time_flash_period = Timer(INVINCIBILITY_FLASH_TIME_PERIOD);
+    Timer invincibility_time              = Timer(PLAYER_INVINICIBILITY_TIME);
+    int   hp            = 1;
     bool  die           = false; // force dead flag
+    bool  flashing      = false; // flicker on or off
 
     // I normally don't like using these... I still don't!
     virtual void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
@@ -99,6 +104,14 @@ struct Entity {
     bool wrap_from_bottom_border(const Play_Area& play_area);
 
     void handle_play_area_edge_behavior(const Play_Area& play_area);
+
+    // but that's more of a polish thing
+    // damage could spawn a particle or something
+    void damage(s32 dmg); // NOTE: player should have a bit of invulnerability after respawning.
+    // TODO: need to track hp max, but this is mostly for the player
+    //       who should basically die in one hit as per normal bullet hell rules...
+    void heal(s32 hp);
+    void kill();
 };
 
 struct Hazard_Warning {

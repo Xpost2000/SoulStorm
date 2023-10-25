@@ -45,6 +45,7 @@ using on_start_callback        = std::function<void(void*)>;
 namespace Transitions {
     bool fading();
     bool faded_in();
+    f32  fade_t();
     void stop();
 
     void register_on_delay_finish(on_delay_finish_callback callback);
@@ -67,6 +68,7 @@ namespace Transitions {
     void do_color_transition_out(color32f32 target_color, f32 delay_time, f32 time);
 
     void update_and_render(struct render_commands* commands, f32 dt);
+    void clear_effect();
 }
 
 #endif

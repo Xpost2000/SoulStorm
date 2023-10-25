@@ -197,6 +197,19 @@ namespace Transitions {
     local void update_and_render_curtainclose_fades(struct transition_fader_state* fader_state, struct render_commands* commands, f32 effective_t);
     local void update_and_render_shuteye_fades(struct transition_fader_state* fader_state, struct render_commands* commands, f32 effective_t);
 
+    f32 fade_t() {
+        struct transition_fader_state* transition_state = &global_transition_fader_state;
+        f32 effective_t = clamp<f32>((transition_state->time / transition_state->max_time), 0, 1);
+        return effective_t;
+    }
+
+    void clear_effect() {
+        struct transition_fader_state* transition_state = &global_transition_fader_state;
+
+        transition_state->type = TRANSITION_FADER_TYPE_NONE;
+        transition_state->time = 0;
+    }
+
     // can be touched for other stuff later I guess.
     // I guess you can use inheritance for this but there's no reason imo.
     void update_and_render(struct render_commands* commands, f32 dt) {

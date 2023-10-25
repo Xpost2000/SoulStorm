@@ -30,7 +30,6 @@ void Timer::stop() {
 }
 
 void Timer::reset() {
-    _debugprintf("Timer reset.");
     running = false;
     t = 0;
 }
@@ -148,6 +147,27 @@ bool Entity::wrap_from_bottom_border(const Play_Area& play_area) {
     return false;
 }
 
+void Entity::damage(s32 dmg) {
+    if (invincibility_time.running) {
+        _debugprintf("I am invincible. You cannot hurt me.");
+        return;
+    }
+    _debugprintf("ouchie (%d dmg)", dmg);
+    hp -= dmg;
+    if (hp <= 0) die = true;
+}
+
+void Entity::heal(s32 hp) {
+    _debugprintf("healed (%d hp)", hp);
+    hp += hp;
+    if (hp > 0) die = false;
+}
+
+void Entity::kill() {
+    _debugprintf("trying to die");
+    damage(9999999); // lol
+}
+
 void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
     // TODO: killing, since there is no concept of HP yet.
     // NOTE: these behaviors are mostly for the players... Enemies will just act
@@ -219,7 +239,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
     render_commands_push_quad_ext(
         render_commands,
         rectangle_f32(r.x, r.y, r.w, r.h),
-        color32u8(0, 0, 0, 255),
+        color32u8(0, 0, 255 * flashing, 255),
         V2(0.5, 0.5), 45,
         BLEND_MODE_ALPHA);
 
@@ -243,9 +263,24 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
 void Entity::update(Game_State* const state, f32 dt) {
     const auto& play_area = state->gameplay_data.play_area;
 
-    position      += velocity * dt;
-    t_since_spawn += dt;
+    position           += velocity * dt;
+    t_since_spawn      += dt;
 
+    if (invincibility_time.running) {
+        _debugprintf("Invincible I guess.");
+        invincibility_time_flash_period.start();
+        if (invincibility_time_flash_period.triggered()) {
+            flashing ^= true;
+            invincibility_time_flash_period.reset();
+        }
+        invincibility_time.triggered();
+    } else {
+        _debugprintf("Not invincible");
+        flashing = false;
+    }
+
+    invincibility_time_flash_period.update(dt);
+    invincibility_time.update(dt);
     // NOTE: until I have more time to implement sub behaviors on the play area
     // for now the default behavior is clamping
 }

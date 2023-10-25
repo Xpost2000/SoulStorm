@@ -138,6 +138,7 @@ struct Gameplay_Data {
     random_state prng;
     camera       main_camera;
 
+    bool paused_from_death = false;
     Gameplay_Stage_Introduction_Sequence intro;
 };
 
@@ -146,17 +147,22 @@ enum UI_State_Mode {
     UI_STATE_PAUSED,
     UI_STATE_OPTIONS,
     UI_STATE_STAGE_SELECT,
+    UI_STATE_DEAD_MAYBE_RETRY,
     UI_STATE_COUNT,
 };
 
+#define MAX_BASE_TRIES (1)
 struct Game_State {
     s32 screen_mode      = GAME_SCREEN_MAIN_MENU;
     s32 last_screen_mode = GAME_SCREEN_MAIN_MENU;
+    s32 ui_state         = UI_STATE_INACTIVE;
+    s32 last_ui_state    = UI_STATE_INACTIVE;
 
     Gameplay_Data    gameplay_data;
     MainMenu_Data    mainmenu_data;
     TitleScreen_Data titlescreen_data;
-    s32              ui_state;
+
+    s32 tries = MAX_BASE_TRIES;
 };
 
 struct Game_Resources {

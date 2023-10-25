@@ -155,6 +155,18 @@ void Game::init_audio_resources() {
     }
 }
 
+void Game::setup_stage_start() {
+    auto state             = &this->state->gameplay_data;
+    state->player.position = V2(state->play_area.width / 2, 300);
+    state->player.hp       = 1;
+    state->player.die      = false;
+    state->player.scale    = V2(15, 15);
+
+    state->bullets.clear();
+    state->explosion_hazards.clear();
+    state->laser_hazards.clear();
+}
+
 void Game::init(Graphics_Driver* driver) {
     this->arena     = &Global_Engine()->main_arena;
     this->resources = (Game_Resources*)arena->push_unaligned(sizeof(*this->resources));
@@ -170,13 +182,8 @@ void Game::init(Graphics_Driver* driver) {
 
     resources->graphics_assets   = graphics_assets_create(arena, 16, 256);
 
-    state->ui_state = UI_STATE_INACTIVE;
-
     // gameplay_data initialize
     {
-        auto state             = &this->state->gameplay_data;
-        state->player.position = V2(state->play_area.width / 2, 300);
-        state->player.scale    = V2(15, 15);
 
         state->bullets           = Fixed_Array<Bullet>(arena, 10000);
         state->explosion_hazards = Fixed_Array<Explosion_Hazard>(arena, 256);
@@ -416,7 +423,7 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
         }
         y += 30;
         if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-            state->ui_state = UI_STATE_PAUSED;
+            switch_ui(state->last_ui_state);
             update_preferences(&preferences, &temp_preferences);
             confirm_preferences(&preferences);
             save_preferences_to_disk(&preferences, string_literal("preferences.txt"));
@@ -430,7 +437,7 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
         y += 30;
         if (GameUI::button(V2(100, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             temp_preferences = preferences;
-            state->ui_state = UI_STATE_PAUSED;
+            switch_ui(state->last_ui_state);
         }
         y += 30;
     }
@@ -451,7 +458,7 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         y += 45;
         if (GameUI::button(V2(100, y), string_literal("Resume"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-            state->ui_state = UI_STATE_INACTIVE;
+            switch_ui(UI_STATE_INACTIVE);
         }
         y += 30;
 
@@ -487,7 +494,7 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
             _debugprintf("Open the options menu I guess");
             // I'd personally like to animate these, but it requires some more dirty code if
             // I'm doing it from scratch like this.
-            state->ui_state = UI_STATE_OPTIONS;
+            switch_ui(UI_STATE_OPTIONS);
         }
         y += 30;
 
@@ -505,12 +512,11 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
                 Transitions::register_on_finish(
                     [&](void*) mutable {
                         _debugprintf("I am credits.");
-                        state->ui_state    = UI_STATE_INACTIVE;
+                        switch_ui(UI_STATE_INACTIVE);
                         switch_screen(GAME_SCREEN_CREDITS);
                         _debugprintf("Hi credits.");
 
                         Transitions::do_color_transition_out(
-                        // Transitions::do_shuteye_out(
                             color32f32(0, 0, 0, 1),
                             0.15f,
                             0.3f
@@ -611,8 +617,14 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                 Transitions::register_on_finish(
                     [&](void*) mutable {
                         _debugprintf("I would load stage-level : (%d - %d)'s script and get ready to play!", stage_id, enter_level);
-                        state->ui_state    = UI_STATE_INACTIVE;
+                        switch_ui(UI_STATE_INACTIVE);
                         switch_screen(GAME_SCREEN_INGAME);
+
+                        // setup for gameplay
+                        {
+                            state->tries = MAX_BASE_TRIES;
+                        }
+
                         _debugprintf("off to the game you go!");
 
                         Transitions::do_shuteye_out(
@@ -632,7 +644,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
         }
 
         if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-            state->ui_state = UI_STATE_INACTIVE;
+            switch_ui(UI_STATE_INACTIVE);
 
             // undo the camera zoom
 
@@ -643,6 +655,85 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                     1.0
                 );
             }
+        }
+        y += 30;
+    }
+    GameUI::end_frame();
+    GameUI::update(dt);
+}
+
+void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands* commands, f32 dt) {
+    if (state->gameplay_data.paused_from_death) {
+        render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+    }
+    GameUI::begin_frame(commands);
+    {
+        
+        f32 alpha = 1.0f;
+        if (Transitions::fading()) {
+            alpha = 1 - Transitions::fade_t();
+        }
+
+        // would like to work on polishing/fading in text but again.
+        // in time.
+        f32 y = 100;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(50, y), string_literal("DEAD"), color32f32(1, 1, 1, alpha), 4);
+        y += 45;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        {
+            string text = {};
+            bool out_of_tries = state->tries <= 0;
+
+            if (out_of_tries) {
+                text = string_literal("No more lives");
+            } else {
+                text = string_from_cstring(format_temp("Retry (%d tries)", state->tries));
+            }
+
+            if (GameUI::button(V2(50, y), text, color32f32(1, 1, 1, alpha), 2, !out_of_tries && !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                Transitions::do_color_transition_out(
+                    color32f32(0, 0, 0, 0.5),
+                    0.15f,
+                    0.20f
+                );
+
+                state->gameplay_data.paused_from_death  = false;
+                state->tries                           -= 1;
+
+                state->gameplay_data.player.invincibility_time.start();
+                state->gameplay_data.player.heal(1);
+                // resurrect the player with iframes.
+
+                Transitions::register_on_finish(
+                    [&](void*) mutable {
+                        switch_ui(UI_STATE_INACTIVE);
+                    }
+                );
+            }
+        }
+        y += 30;
+        if (GameUI::button(V2(50, y), string_literal("Give up"), color32f32(1, 1, 1, alpha), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            Transitions::do_shuteye_in(
+                color32f32(0, 0, 0, 1.0),
+                0.15f,
+                0.30f
+            );
+
+            state->gameplay_data.paused_from_death = false;
+
+            // Return back to the main menu.
+            Transitions::register_on_finish(
+                [&](void*) mutable {
+                    Transitions::do_shuteye_out(
+                        color32f32(0, 0, 0, 1.0),
+                        0.15f,
+                        0.30f
+                    );
+                    switch_ui(UI_STATE_INACTIVE);
+                    switch_screen(GAME_SCREEN_MAIN_MENU);
+                }
+            );
         }
         y += 30;
     }
@@ -663,6 +754,9 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
         } break;
         case UI_STATE_STAGE_SELECT: {
             update_and_render_stage_select_menu(commands, dt); 
+        } break;
+        case UI_STATE_DEAD_MAYBE_RETRY: {
+            update_and_render_game_death_maybe_retry_menu(commands, dt);
         } break;
         default: {
             unimplemented("Unknown ui state type");
@@ -691,9 +785,9 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 
     if (Input::is_key_pressed(KEY_ESCAPE)) {
         if (this->state->ui_state != UI_STATE_PAUSED) {
-            this->state->ui_state = UI_STATE_PAUSED;
+            switch_ui(UI_STATE_PAUSED);
         } else {
-            this->state->ui_state = UI_STATE_INACTIVE;
+            switch_ui(UI_STATE_INACTIVE);
         }
     }
 
@@ -754,6 +848,9 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             spawn_bullet_circling_down_homing(this->state, position, t, ner, V2(0, 0));
         }
     }
+    if (Input::is_key_pressed(KEY_I)) {
+        state->player.kill();
+    }
 
     if (Input::is_key_pressed(KEY_X)) {
         Explosion_Hazard h = Explosion_Hazard(state->player.position, 125, 0.5f, 1.0f);
@@ -809,7 +906,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
     render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2, V2(100, 150), string_literal("hahahahhaah"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
 
-    if (this->state->ui_state == UI_STATE_INACTIVE) {
+    if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE) {
         for (int i = 0; i < (int)state->bullets.size; ++i) {
             auto& b = state->bullets[i];
             b.update(this->state, dt);
@@ -824,7 +921,12 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             auto& h = state->laser_hazards[i];
             h.update(this->state, dt);
         }
+
         state->player.update(this->state, dt);
+
+        handle_all_explosions(dt);
+        handle_all_lasers(dt);
+        handle_all_dead_entities(dt);
     } else {
         handle_ui_update_and_render(&ui_render_commands, dt);
     }
@@ -855,9 +957,6 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     driver->consume_render_commands(&game_render_commands);
     driver->consume_render_commands(&ui_render_commands);
 
-    handle_all_explosions(dt);
-    handle_all_lasers(dt);
-    handle_all_dead_entities(dt);
     camera_update(&state->main_camera, dt);
 }
 
@@ -892,7 +991,24 @@ void Game::handle_all_dead_entities(f32 dt) {
     }
 
     if (state->player.die) {
-        Global_Engine()->die();
+        if (state->paused_from_death == false) {
+            state->paused_from_death = true;
+            Transitions::do_color_transition_in(
+                color32f32(0, 0, 0, 0.5),
+                0.10f,
+                0.45f
+            );
+
+            Transitions::register_on_finish(
+                [&](void*) mutable {
+                    Transitions::clear_effect();
+                    switch_ui(UI_STATE_DEAD_MAYBE_RETRY);
+                }
+            );
+            // would like to slowly grayscale or something
+            // but for now we'll fade.
+            // Global_Engine()->die();
+        }
     }
 }
 
@@ -912,8 +1028,7 @@ void Game::handle_all_lasers(f32 dt) {
             auto player_rect = state->player.get_rect();
 
             if (rectangle_f32_intersect(player_rect, laser_rect)) {
-                _debugprintf("Hi, I died.");
-                state->player.die = true;
+                state->player.kill();
             }
         }
 
@@ -940,8 +1055,7 @@ void Game::handle_all_explosions(f32 dt) {
                 auto player_circle    = circle_f32(state->player.position.x, state->player.position.y, state->player.scale.x);
 
                 if (circle_f32_intersect(explosion_circle, player_circle)) {
-                    _debugprintf("Hi, I died.");
-                    state->player.die = true;
+                    state->player.kill();
                 }
             }
             state->explosion_hazards.pop_and_swap(i);
@@ -967,6 +1081,18 @@ void Play_Area::set_all_edge_behaviors_to(u8 value) {
 void Game::switch_screen(s32 screen) {
     state->last_screen_mode = state->screen_mode;
     state->screen_mode      = screen;
+
+    // special case setup code will be here
+
+    switch (screen_mode) {
+        case GAME_SCREEN_INGAME: {
+            setup_stage_start();
+        } break;
+    }
+}
+void Game::switch_ui(s32 ui) {
+    state->last_ui_state = state->ui_state;
+    state->ui_state = ui;
 }
 
 #include "credits_mode.cpp"
