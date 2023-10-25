@@ -184,7 +184,7 @@ void Game::init(Graphics_Driver* driver) {
 
     // gameplay_data initialize
     {
-
+        auto state = &this->state->gameplay_data;
         state->bullets           = Fixed_Array<Bullet>(arena, 10000);
         state->explosion_hazards = Fixed_Array<Explosion_Hazard>(arena, 256);
         state->laser_hazards     = Fixed_Array<Laser_Hazard>(arena, 128);
