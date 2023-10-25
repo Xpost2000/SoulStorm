@@ -56,6 +56,7 @@ private:
     void handle_all_lasers(f32 dt);
     void handle_all_dead_entities(f32 dt);
 
+    void switch_screen(s32 screen);
     bool can_access_stage(s32 id);
 
     Memory_Arena*   arena;

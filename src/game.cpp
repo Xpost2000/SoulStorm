@@ -469,7 +469,7 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
                 Transitions::register_on_finish(
                     [&](void*) mutable {
                         state->ui_state    = UI_STATE_INACTIVE;
-                        state->screen_mode = GAME_SCREEN_MAIN_MENU;
+                        switch_screen(GAME_SCREEN_MAIN_MENU);
                         _debugprintf("Hi menu.");
 
                         Transitions::do_shuteye_out(
@@ -494,6 +494,29 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
         if (state->screen_mode != GAME_SCREEN_CREDITS) {
             if (GameUI::button(V2(100, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 _debugprintf("Open the credits screen I guess");
+
+                Transitions::do_shuteye_in(
+                    color32f32(0, 0, 0, 1),
+                    0.15f,
+                    0.3f
+                );
+                
+
+                Transitions::register_on_finish(
+                    [&](void*) mutable {
+                        _debugprintf("I am credits.");
+                        state->ui_state    = UI_STATE_INACTIVE;
+                        switch_screen(GAME_SCREEN_CREDITS);
+                        _debugprintf("Hi credits.");
+
+                        Transitions::do_color_transition_out(
+                        // Transitions::do_shuteye_out(
+                            color32f32(0, 0, 0, 1),
+                            0.15f,
+                            0.3f
+                        );
+                    }
+                );
             }
             y += 30;
         }
@@ -589,7 +612,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                     [&](void*) mutable {
                         _debugprintf("I would load stage-level : (%d - %d)'s script and get ready to play!", stage_id, enter_level);
                         state->ui_state    = UI_STATE_INACTIVE;
-                        state->screen_mode = GAME_SCREEN_INGAME;
+                        switch_screen(GAME_SCREEN_INGAME);
                         _debugprintf("off to the game you go!");
 
                         Transitions::do_shuteye_out(
@@ -838,10 +861,6 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     camera_update(&state->main_camera, dt);
 }
 
-void Game::update_and_render_game_credits(Graphics_Driver* driver, f32 dt) {
-    unimplemented("No credits screen yet");
-}
-
 void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     switch (state->screen_mode) {
         case GAME_SCREEN_TITLE_SCREEN: {
@@ -945,5 +964,11 @@ void Play_Area::set_all_edge_behaviors_to(u8 value) {
     }
 }
 
+void Game::switch_screen(s32 screen) {
+    state->last_screen_mode = state->screen_mode;
+    state->screen_mode      = screen;
+}
+
+#include "credits_mode.cpp"
 #include "title_screen_mode.cpp"
 #include "main_menu_mode.cpp"
