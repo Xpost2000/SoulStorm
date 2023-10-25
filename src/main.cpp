@@ -413,7 +413,9 @@ void confirm_preferences(Game_Preferences* preferences) {
     initialize_framebuffer();
     global_graphics_driver->change_resolution(REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
 
-    // TODO: audio cannot change volume yet
+    Audio::set_volume_sound(preferences->sound_volume);
+    Audio::set_volume_music(preferences->music_volume);
+
     global_graphics_driver->get_display_modes(); // update internal list of display modes.
     preferences->resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences->width, preferences->height);
 }

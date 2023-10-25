@@ -119,4 +119,12 @@ namespace Audio {
     void stop_music_fadeout(s32 fadeout_ms) {
         Mix_FadeOutMusic(fadeout_ms);
     }
+
+    void set_volume_sound(f32 v) {
+        Mix_Volume(-1, (s32)(v * MIX_MAX_VOLUME));
+    }
+
+    void set_volume_music(f32 v) {
+        Mix_VolumeMusic((s32)(v * MIX_MAX_VOLUME));
+    }
 }

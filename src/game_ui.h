@@ -19,9 +19,9 @@
   Maybe something nice like getting a little bigger on hover on?
 
   Should allow for things like
-      - Disabling behavior (so that way I can do UI transitions)
       - Transition behavior (this will be hard coded, but it's for polish)
-      - A few more widgets (mostly enough to facilitate the settings menu)
+      - A few more widgets (mostly enough to facilitate the settings menu,
+                            since this game deliberately avoids UI)
 */
 enum Widget_Action {
     WIDGET_ACTION_NONE     = 0,
@@ -43,6 +43,7 @@ namespace GameUI {
 
     // checkboxes will return the value of their "check"
     bool checkbox(V2 where, string text, color32f32 modulation, f32 scale, bool* ptr, bool active=true);
+    void f32_slider(V2 where, string text, color32f32 modulation, f32 scale, f32* ptr, f32 min_value, f32 max_value, f32 slider_width_px, bool active=true);
 
     void initialize(Memory_Arena* arena);
     void begin_frame(struct render_commands* commands);
