@@ -419,6 +419,7 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
             state->ui_state = UI_STATE_PAUSED;
             update_preferences(&preferences, &temp_preferences);
             confirm_preferences(&preferences);
+            save_preferences_to_disk(&preferences, string_literal("preferences.txt"));
 
             // NOTE: readjust the camera.
             {

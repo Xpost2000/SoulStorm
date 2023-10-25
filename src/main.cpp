@@ -249,7 +249,8 @@ local void set_fullscreen(bool v) {
 
     if (LAST_SCREEN_IS_FULLSCREEN != SCREEN_IS_FULLSCREEN) {
         if (SCREEN_IS_FULLSCREEN) {
-            SDL_SetWindowFullscreen(global_game_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+            // exclusive fullscreen now.
+            SDL_SetWindowFullscreen(global_game_window, SDL_WINDOW_FULLSCREEN);
         } else {
             SDL_SetWindowFullscreen(global_game_window, 0);
         }
@@ -420,14 +421,40 @@ void confirm_preferences(Game_Preferences* preferences) {
     preferences->resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences->width, preferences->height);
 }
 
+// TODO:
+// for now I'm just going to use scanf/fprintf because I don't think I have
+// to write another word tokenizer just to get a few values.
+// I mean maybe I will later to make it more config like but it doesn't matter right now.
 bool save_preferences_to_disk(Game_Preferences* preferences, string path) {
     _debugprintf("Hi, preferences are not written to disk yet.");
-    return false;
+    FILE* f = fopen(path.data, "wb+");
+    {
+        _debugprintf("Hopefully fprintf doesn't explode.");
+        fprintf(f, "%d\n",    preferences->width);
+        fprintf(f, "%d\n",    preferences->height);
+        fprintf(f, "%3.3f\n", preferences->music_volume);
+        fprintf(f, "%3.3f\n", preferences->sound_volume);
+        fprintf(f, "%d\n",    (s32)preferences->fullscreen);
+    } fclose(f);
+    return true;
 }
 
 bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
     _debugprintf("Hi, preferences are not loaded from disk yet.");
-    return false;
+    FILE* f = fopen(path.data, "rb+");
+
+    if (!f) return false;
+    else {
+        _debugprintf("Hopefully fscanf doesn't explode.");
+        fscanf(f, "%d ", &preferences->width);
+        fscanf(f, "%d ", &preferences->height);
+        fscanf(f, "%f ", &preferences->music_volume);
+        fscanf(f, "%f ", &preferences->sound_volume);
+        fscanf(f, "%d ", (s32*) &preferences->fullscreen);
+        fclose(f);
+    }
+
+    return true;
 }
 
 void deinitialize() {
