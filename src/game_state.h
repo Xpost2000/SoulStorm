@@ -103,15 +103,17 @@ enum Game_Screen_Modes {
 // I do like using state machines for this kind of thing
 // at least when you have to write code for animation.
 enum Gameplay_Stage_Introduction_Sequence_Stage {
+    GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE,
     GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN,
     GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_TYPE_IN_NAME,
     GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_TYPE_IN_SUBTITLE,
+    GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_LINGER,
     GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_OUT_EVERYTHING,
 };
 #define GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_TYPE_SPEED (0.05f)
 struct Gameplay_Stage_Introduction_Sequence {
-    s32 stage       = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN;
-    f32 stage_timer = 0.0f;
+    s32 stage = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN;
+    Timer stage_timer;
 
     f32 type_timer      = 0.0f;
     s32 name_length     = 0;

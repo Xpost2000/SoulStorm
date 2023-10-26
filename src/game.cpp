@@ -96,6 +96,12 @@ void Game::setup_stage_start() {
     state->bullets.clear();
     state->explosion_hazards.clear();
     state->laser_hazards.clear();
+
+    // setup introduction badge
+    {
+        state->intro.stage       = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN;
+        state->intro.stage_timer = Timer(0.25f);
+    }
 }
 
 void Game::init(Graphics_Driver* driver) {
@@ -209,6 +215,20 @@ void Game::deinit() {
  * some testing things
  */
 
+void spawn_bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 magnitude) {
+    Bullet bullet;
+    bullet.position = position;
+    bullet.scale    = V2(5,5);
+    bullet.lifetime = Timer(3.0f);
+
+    bullet.velocity_function =
+        [=](Bullet* self, Game_State* const state, f32 dt) {
+            self->velocity = V2(direction.x * magnitude, direction.y * magnitude) + V2(direction.x * magnitude/2, direction.y * magnitude/2);
+        };
+
+    state->gameplay_data.bullets.push(bullet);
+}
+
 void spawn_bullet_circling_down_homing(Game_State* state, V2 position, f32 factor, f32 factor2, V2 additional = V2(0,0)) {
     Bullet bullet;
     bullet.position = position;
@@ -264,19 +284,6 @@ void spawn_bullet_circling_down(Game_State* state, V2 position, f32 factor, f32 
             self->velocity = V2(-sinf(t) * factor2,
                                 cos(t) * factor2) + additional;
         };
-
-    state->gameplay_data.bullets.push(bullet);
-}
-
-void spawn_bullet_linear(Game_State* state, V2 position, V2 additional = V2(0,0)) {
-    Bullet bullet;
-    bullet.position = position;
-    bullet.scale    = V2(5,5);
-    bullet.velocity_function =
-        [=](Bullet* self, Game_State* const state, f32 dt) {
-            self->velocity = additional;
-        };
-    bullet.lifetime = Timer(5.0f);
 
     state->gameplay_data.bullets.push(bullet);
 }
@@ -700,6 +707,117 @@ void Game::update_and_render_game_opening(Graphics_Driver* driver, f32 dt) {
     unimplemented("No opening yet.");
 }
 
+void Game::ingame_update_introduction_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt) {
+    auto& intro_state = state->gameplay_data.intro;
+    auto& timer       = intro_state.stage_timer;
+
+    timer.start();
+    
+    // NOTE: this is okay because I retain the state of the main menu intentionally.
+    s32   stage_id = state->mainmenu_data.stage_id_level_select;
+    auto& stage    = stage_list[stage_id];
+
+    auto timer_percentage = clamp<f32>(intro_state.stage_timer.percentage(), 0.0f, 1.0f);
+
+    auto title_font    = resources->get_font(MENU_FONT_COLOR_BLOODRED);
+    auto subtitle_font = resources->get_font(MENU_FONT_COLOR_GOLD);
+
+    /*
+     * I understand this code pattern for writing UI tends to duplicate a lot,
+     * but personally I like doing this for animated UI since it's simple and pretty easy to write
+     * yet also allowing me to do somewhat interesting UI things.
+     */
+    switch (intro_state.stage) {
+        case GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN: {
+            render_commands_push_quad(commands, rectangle_f32(0, commands->screen_height/2-32, commands->screen_width, 64), color32u8(0, 0, 0, 128 * timer_percentage), BLEND_MODE_ALPHA);
+            if (timer.triggered()) {
+                timer = Timer(0.35f);
+                timer.reset();
+                intro_state.stage = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_TYPE_IN_NAME;
+            }
+        } break;
+        case GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_TYPE_IN_NAME: {
+            f32 rect_y = commands->screen_height/2-32;
+            render_commands_push_quad(commands, rectangle_f32(0, rect_y, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+            {
+                string title = stage.name;
+                auto   text_width = font_cache_text_width(title_font, title, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
+            }
+            // TODO: not typing in yet.
+            if (timer.triggered()) {
+                timer = Timer(0.25f);
+                timer.reset();
+                intro_state.stage = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_TYPE_IN_SUBTITLE;
+            }
+        } break;
+        case GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_TYPE_IN_SUBTITLE: {
+            f32 rect_y = commands->screen_height/2-32;
+            render_commands_push_quad(commands, rectangle_f32(0, rect_y, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+            {
+                string title = stage.name;
+                auto   text_width = font_cache_text_width(title_font, title, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+            }
+            {
+                string title = stage.subtitle;
+                auto   text_width = font_cache_text_width(title_font, title, 2);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y + 35), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
+            }
+            // TODO: not typing in yet.
+            if (timer.triggered()) {
+                timer = Timer(0.35f);
+                timer.reset();
+                intro_state.stage = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_LINGER;
+            }
+        } break;
+        case GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_LINGER: {
+            f32 rect_y = commands->screen_height/2-32;
+            render_commands_push_quad(commands, rectangle_f32(0, rect_y, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+            {
+                string title = stage.name;
+                auto   text_width = font_cache_text_width(title_font, title, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+            }
+            {
+                string title = stage.subtitle;
+                auto   text_width = font_cache_text_width(title_font, title, 2);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y + 35), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+            }
+
+            if (timer.triggered()) {
+                timer = Timer(0.45f);
+                timer.reset();
+                intro_state.stage = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_OUT_EVERYTHING;
+            }
+        } break;
+        case GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_OUT_EVERYTHING: {
+            f32 rect_y = commands->screen_height/2-32;
+            f32 effective_t = (1 - timer_percentage);
+            render_commands_push_quad(commands, rectangle_f32(0, rect_y, commands->screen_width, 64), color32u8(0, 0, 0, 128 * effective_t), BLEND_MODE_ALPHA);
+            {
+                string title = stage.name;
+                auto   text_width = font_cache_text_width(title_font, title, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, effective_t), BLEND_MODE_ALPHA);
+            }
+            {
+                string title = stage.subtitle;
+                auto   text_width = font_cache_text_width(title_font, title, 2);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y + 35), title, color32f32(1, 1, 1, effective_t), BLEND_MODE_ALPHA);
+            }
+
+            if (timer.triggered())  {
+                // allow gameplay to happen.
+                intro_state.stage = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE;
+            }
+        } break;
+        case GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE: {} break;
+    }
+
+    timer.update(dt);
+}
+
+
 void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     auto state = &this->state->gameplay_data;
     V2 resolution = driver->resolution();
@@ -750,14 +868,6 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             spawn_bullet_circling_down_homing2(this->state, position, t, r, V2(0, 100));
         }
     }
-    if (Input::is_key_pressed(KEY_Y)) {
-        int amount = 5;
-        for (int i = 0; i < amount; ++i) {
-            V2 position = V2(i * 40, 0) + state->player.position;
-            // spawn_bullet_circling_down(state, position, t, 150, V2(0, 60));
-            spawn_bullet_linear(this->state, position, V2(0, 150));
-        }
-    }
     if (Input::is_key_pressed(KEY_P)) {
         int amount = 250;
         int r = 500;
@@ -780,6 +890,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             spawn_bullet_circling_down_homing(this->state, position, t, ner, V2(0, 0));
         }
     }
+
     if (Input::is_key_pressed(KEY_I)) {
         state->player.kill();
     }
@@ -851,6 +962,16 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2, V2(100, 150), string_literal("hahahahhaah"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
 
     if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE) {
+        // NOTE: add stage update
+        //       to start reading the script.
+        if (Input::is_key_down(KEY_SPACE)) {
+            // okay these are normal real bullets
+            if (state->player.attack()) {
+                spawn_bullet_upwards_linear(this->state, state->player.position + V2(-10, 0), V2(0, -1), 1250.0f);
+                spawn_bullet_upwards_linear(this->state, state->player.position + V2(10, 0), V2(0, -1), 1250.0f);
+            }
+        }
+
         for (int i = 0; i < (int)state->bullets.size; ++i) {
             auto& b = state->bullets[i];
             b.update(this->state, dt);
@@ -873,6 +994,12 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         handle_all_dead_entities(dt);
     } else {
         handle_ui_update_and_render(&ui_render_commands, dt);
+    }
+
+    {
+        if (!Transitions::fading()) {
+            ingame_update_introduction_sequence(&ui_render_commands, resources, dt);
+        }
     }
 
     // main game rendering

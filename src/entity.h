@@ -45,6 +45,7 @@ struct Timer {
     void start();
     void stop();
     void reset();
+    void trigger_immediate();
 
     // NOTE: has side effect.
     bool  triggered();
@@ -58,6 +59,7 @@ struct Timer {
 #define PLAYER_INVINICIBILITY_TIME (1.35)
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
 #define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.0f)
+
 struct Entity {
     // primarily for collision purposes
     // a visual representation can be drawn separately
@@ -72,6 +74,12 @@ struct Entity {
     int   hp            = 1;
     bool  die           = false; // force dead flag
     bool  flashing      = false; // flicker on or off
+
+    f32   firing_t      = 0;
+    f32   firing_cooldown = 0.035f;
+    bool  firing        = false;
+
+    bool attack();
 
     // I normally don't like using these... I still don't!
     virtual void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);

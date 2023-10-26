@@ -19,6 +19,11 @@ void Timer::start() {
     }
 }
 
+void Timer::trigger_immediate() {
+    t = hit_t;
+    running = true; // so that way it can be triggered().
+}
+
 void Timer::update(f32 dt) {
     if (running) {
         t += dt;
@@ -273,6 +278,15 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         BLEND_MODE_ALPHA);
 }
 
+bool Entity::attack() {
+    if (!firing) {
+        firing = true;
+        firing_t = 0;
+    }
+
+    return firing_t <= 0.0f;
+}
+
 void Entity::update(Game_State* const state, f32 dt) {
     const auto& play_area = state->gameplay_data.play_area;
 
@@ -305,6 +319,17 @@ void Entity::update(Game_State* const state, f32 dt) {
         invincibility_time.triggered();
     } else {
         flashing = false;
+    }
+
+    // firing timing logic
+    if (firing) {
+        if (firing_t <= 0.0f) {
+            firing_t = firing_cooldown;
+        } else {
+            firing_t -= dt;
+        }
+    } else {
+        firing_t = 0;
     }
 
     invincibility_time_flash_period.update(dt);
@@ -344,7 +369,7 @@ void Player::update(Game_State* const state, f32 dt) {
         axes[1] = gamepad->left_stick.axes[1];
     }
 
-    const float UNIT_SPEED = 350;
+    const float UNIT_SPEED = 550;
 
     velocity.x = axes[0] * UNIT_SPEED;
     velocity.y = axes[1] * UNIT_SPEED;
