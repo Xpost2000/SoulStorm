@@ -39,7 +39,10 @@ struct MainMenu_Data {
     struct camera   main_camera;
     MainMenu_Player player;
 
+    // NOTE: rename later.
     s32 stage_id_level_select = -1;
+    s32 stage_id_level_in_stage_select = -1;
+
     Fixed_Array<MainMenu_Stage_Portal> portals;
 
     // runtime data

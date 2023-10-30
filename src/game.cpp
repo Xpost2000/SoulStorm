@@ -31,15 +31,16 @@ enum Achievement_ID_List {
     ACHIEVEMENT_ID_TEST_ACHIEVEMENT0,
 
     ACHIEVEMENT_ID_STAGE1,
-    // ACHIEVEMENT_ID_STAGE1_FLAWLESS,
 
     ACHIEVEMENT_ID_STAGE2,
-    // ACHIEVEMENT_ID_STAGE2_FLAWLESS,
 
     ACHIEVEMENT_ID_STAGE3,
-    // ACHIEVEMENT_ID_STAGE3_FLAWLESS,
 
     ACHIEVEMENT_ID_STAGE4,
+
+    // ACHIEVEMENT_ID_STAGE1_FLAWLESS,
+    // ACHIEVEMENT_ID_STAGE2_FLAWLESS,
+    // ACHIEVEMENT_ID_STAGE3_FLAWLESS,
     // ACHIEVEMENT_ID_STAGE4_FLAWLESS,
 
     // play as every character type(?)
@@ -55,6 +56,49 @@ enum Achievement_ID_List {
 local Achievement achievement_list[] = {
     #include "achievement_list.h"
 };
+
+
+// NOTE: this is a freestanding function since the stage completion data and
+//       achievement data is global, which I think is definitely acceptable.
+//
+//       I would prefer to allocate these else where if I ever had hot-reloading (so
+//       they could be persistent.)
+//       but this game doesn't really require that.
+
+//       id and level_id are zero indexed.
+local void game_complete_stage_level(s32 id, s32 level_id) {
+    auto& stage = stage_list[id];
+
+    {
+        /*
+          The way the game structure is setup is that I assume levels
+          must be unlocked in linear order, but there can definitely be
+          some clean up as to some of this logic.
+
+          Whether I do this or not is a good question, but it's not too much code to
+          fix up.
+        */
+        if ((level_id+1) > stage.unlocked_levels) {
+            /*
+             * NOTE:
+             *
+             *  This will increment on the last level to unlock a "stage 4" which doesn't
+             *  exist, but will just be used as a marker for allowing the next stage to be unlocked.
+             */
+            _debugprintf("Completed stage (%d-%d) and unlocked the next stage!", id+1, level_id+1);
+            stage.unlocked_levels += 1;
+        } else {
+            _debugprintf("Completed stage (%d-%d) another time!", id+1, level_id+1);
+        }
+    }
+
+    // Check for all stages completed.
+    if (stage.unlocked_levels >= 4) {
+        assertion(ACHIEVEMENT_ID_STAGE1 + id <= ACHIEVEMENT_ID_STAGE4 && "Invalid achievement for stage id.");
+        auto achievement = Achievements::get(ACHIEVEMENT_ID_STAGE1 + id);
+        achievement->report();
+    }
+}
 
 Game::Game() {
     
@@ -87,7 +131,11 @@ void Game::init_audio_resources() {
 }
 
 void Game::setup_stage_start() {
+    state->tries = MAX_BASE_TRIES;
+
     auto state             = &this->state->gameplay_data;
+    state->stage_state = stage_null();
+
     state->player.position = V2(state->play_area.width / 2, 300);
     state->player.hp       = 1;
     state->player.die      = false;
@@ -101,6 +149,12 @@ void Game::setup_stage_start() {
     {
         state->intro.stage       = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN;
         state->intro.stage_timer = Timer(0.25f);
+    }
+
+    // setup end sequence information
+    {
+        state->triggered_stage_completion_cutscene = false;
+        state->complete_stage.stage                = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
     }
 }
 
@@ -288,21 +342,26 @@ void spawn_bullet_circling_down(Game_State* state, V2 position, f32 factor, f32 
     state->gameplay_data.bullets.push(bullet);
 }
 
-// check against "save data"
-// which we don't have yet.
 bool Game::can_access_stage(s32 id) {
     auto state = &this->state->mainmenu_data;
     auto& stage_portal = state->portals[id];
 
-    bool any_unmet = false;
-    for (int i = 0; i < array_count(stage_portal.prerequisites) && !any_unmet; ++i) {
-        if (stage_portal.prerequisites[i] != -1) {
-            _debugprintf("No save data system to check against. Yet!");
-            any_unmet = true;
+    for (int i = 0; i < array_count(stage_portal.prerequisites); ++i) {
+        if (stage_portal.prerequisites[i] == -1) {
+            _debugprintf("Null prerequisite.");
+        } else {
+            s32 prerequisite_index = stage_portal.prerequisites[i];
+            auto& stage = stage_list[prerequisite_index];
+
+            // Refer to 'game_complete_stage_level'
+            if (stage.unlocked_levels <= 3) {
+                _debugprintf("Failed to reach stage (%d)", id);
+                return false;
+            }
         }
     }
 
-    return !any_unmet;
+    return true;
 }
 
 void Game::update_and_render_options_menu(struct render_commands* commands, f32 dt) {
@@ -544,6 +603,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
             }
 
             if (enter_level != -1) {
+                state->mainmenu_data.stage_id_level_in_stage_select = enter_level;
                 Transitions::do_shuteye_in(
                     color32f32(0, 0, 0, 1),
                     0.15f,
@@ -558,14 +618,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                         _debugprintf("I would load stage-level : (%d - %d)'s script and get ready to play!", stage_id, enter_level);
                         switch_ui(UI_STATE_INACTIVE);
                         switch_screen(GAME_SCREEN_INGAME);
-
-                        // setup for gameplay
-                        {
-                            state->tries = MAX_BASE_TRIES;
-                        }
-
                         _debugprintf("off to the game you go!");
-
                         Transitions::do_shuteye_out(
                             color32f32(0, 0, 0, 1),
                             0.15f,
@@ -817,6 +870,125 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
     timer.update(dt);
 }
 
+void Game::ingame_update_complete_stage_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt) {
+    auto& complete_stage_state = state->gameplay_data.complete_stage;
+    auto& timer       = complete_stage_state.stage_timer;
+
+    timer.start();
+    auto title_font    = resources->get_font(MENU_FONT_COLOR_BLOODRED);
+    auto subtitle_font = resources->get_font(MENU_FONT_COLOR_GOLD);
+
+    f32 timer_percentage = timer.percentage();
+
+    switch (complete_stage_state.stage) {
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN: {
+            render_commands_push_quad(commands, rectangle_f32(0, commands->screen_height/2-32, commands->screen_width, 64), color32u8(0, 0, 0, 128 * timer_percentage), BLEND_MODE_ALPHA);
+            if (timer.triggered()) {
+                timer = Timer(0.35f);
+                timer.reset();
+                complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_SHOW_SCORE;
+            }
+        } break;
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_SHOW_SCORE: {
+            f32 rect_y = commands->screen_height/2-32;
+            render_commands_push_quad(commands, rectangle_f32(0, commands->screen_height/2-32, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+            {
+                string title = string_literal("LEVEL COMPLETE");
+                auto   text_width = font_cache_text_width(title_font, title, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
+            }
+            {
+                rect_y += 64;
+                string title = string_literal("*insert score here*");
+                auto   text_width = font_cache_text_width(subtitle_font, title, 2);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
+            }
+
+            if (timer.triggered()) {
+                timer = Timer(0.45f);
+                timer.reset();
+                complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT;
+            }
+        } break;
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT: {
+            f32 rect_y = commands->screen_height/2-32;
+            render_commands_push_quad(commands, rectangle_f32(0, commands->screen_height/2-32, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+            {
+                string title = string_literal("LEVEL COMPLETE");
+                auto   text_width = font_cache_text_width(title_font, title, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+            }
+            {
+                rect_y += 64;
+                string title = string_literal("*insert score here*");
+                auto   text_width = font_cache_text_width(subtitle_font, title, 2);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+            }
+
+            if (timer.triggered()) {
+                timer = Timer(0.35f);
+                timer.reset();
+                complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT;
+            }
+        } break;
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT: {
+            f32 rect_y = commands->screen_height/2-32;
+            render_commands_push_quad(commands, rectangle_f32(0, commands->screen_height/2-32, commands->screen_width, 64), color32u8(0, 0, 0, 128 * (1 - timer_percentage)), BLEND_MODE_ALPHA);
+            {
+                string title = string_literal("LEVEL COMPLETE");
+                auto   text_width = font_cache_text_width(title_font, title, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
+            }
+            {
+                rect_y += 64;
+                string title = string_literal("*insert score here*");
+                auto   text_width = font_cache_text_width(subtitle_font, title, 2);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
+            }
+
+            if (timer.triggered())  {
+                s32 stage_id = state->mainmenu_data.stage_id_level_select;
+                s32 level_id = state->mainmenu_data.stage_id_level_in_stage_select;
+                complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
+
+                /*
+                 * A neat thing to do would just be setup the main menu to preview
+                 *
+                 * the next portal
+                 * (maybe when I have particle effects during the polishing stage,
+                 *  zoom in on it and make it more stronger, maybe with an accompanying message.)
+                 *
+                 *
+                 * I mean trying to write any real sequence code in C++ is never really pretty :/
+                 */
+
+                game_complete_stage_level(stage_id, level_id);
+
+                Transitions::do_color_transition_out(
+                    color32f32(0, 0, 0, 1),
+                    0.15f,
+                    0.3f
+                );
+
+                Transitions::register_on_finish(
+                    [&](void*) mutable {
+                        state->ui_state    = UI_STATE_INACTIVE;
+                        switch_screen(GAME_SCREEN_MAIN_MENU);
+                        _debugprintf("Hi main menu. We can do some more stuff like demonstrate if we unlocked a new stage!");
+
+                        Transitions::do_shuteye_out(
+                            color32f32(0, 0, 0, 1),
+                            0.15f,
+                            0.3f
+                        );
+                    }
+                );
+            }
+        } break;
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE: {} break;
+    }
+}
+
 
 void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     auto state = &this->state->gameplay_data;
@@ -955,13 +1127,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
                                   border_color, BLEND_MODE_ALPHA);
     }
 
-
-    // void render_commands_push_text(struct render_commands* commands, struct font_cache* font, f32 scale, V2 xy, string cstring, union color32f32 rgba, u8 blend_mode);
-    render_commands_push_quad(&ui_render_commands, rectangle_f32(100, 100, 100, 100), color32u8(0, 255, 0, 255), BLEND_MODE_ALPHA);
-    render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_BLOODRED), 2, V2(100, 100), string_literal("I am a brave new world"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
-    render_commands_push_text(&ui_render_commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2, V2(100, 150), string_literal("hahahahhaah"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
-
-    if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE) {
+    if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
         // NOTE: add stage update
         //       to start reading the script.
         if (Input::is_key_down(KEY_SPACE)) {
@@ -996,13 +1162,35 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         handle_ui_update_and_render(&ui_render_commands, dt);
     }
 
+    // Handle transitions or stage specific data
+    // so like cutscene/coroutine required sort of behaviors...
     {
         if (!Transitions::fading()) {
-            ingame_update_introduction_sequence(&ui_render_commands, resources, dt);
+            if (state->intro.stage != GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE) {
+                ingame_update_introduction_sequence(&ui_render_commands, resources, dt);
+            } else {
+                auto& stage_state = state->stage_state;
+                bool can_finish_stage = stage_state.update(&stage_state, dt, state);
+
+                if (!state->triggered_stage_completion_cutscene && can_finish_stage) {
+                    state->triggered_stage_completion_cutscene = true;
+                    {
+                        state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
+                        state->complete_stage.stage_timer = Timer(0.35f);
+                    }
+                }
+
+                ingame_update_complete_stage_sequence(&ui_render_commands, resources, dt);
+            }
         }
     }
 
     // main game rendering
+    { // draw stage specific things if I need to.
+        auto& stage_state = state->stage_state;
+        // NOTE: post processing will need a separate pass, but mostly with specific render commands.
+        stage_state.draw(&stage_state, dt, &game_render_commands, state);
+    }
     {
         for (int i = 0; i < (int)state->bullets.size; ++i) {
             auto& b = state->bullets[i];

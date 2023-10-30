@@ -97,6 +97,8 @@ enum Game_Screen_Modes {
 };
 
 #include "stages.h"
+#include "stage.h"
+
 #include "title_screen_mode.h"
 #include "main_menu_mode.h"
 
@@ -110,7 +112,7 @@ enum Gameplay_Stage_Introduction_Sequence_Stage {
     GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_LINGER,
     GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_OUT_EVERYTHING,
 };
-#define GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_TYPE_SPEED (0.05f)
+#define GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_TYPE_SPEED (0.05f) // I do want to type it in but for now. Later.
 struct Gameplay_Stage_Introduction_Sequence {
     s32 stage = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN;
     Timer stage_timer;
@@ -120,7 +122,27 @@ struct Gameplay_Stage_Introduction_Sequence {
     s32 subtitle_length = 0;
 };
 
+// NOTE:
+// I know this name looks horribly redundant, but my naming style will
+// end up producing funny stuff like this every once in a while.
+enum Gameplay_Stage_Complete_Stage_Sequence_Stage {
+    GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE,
+    GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN,
+    // would like to count up the score visually but for now just to make it quick no.
+    GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_SHOW_SCORE,
+    // Maybe allow going to the next stage immediately? Probably not.
+    GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT,
+    GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT,
+};
+
+struct Gameplay_Stage_Complete_Stage_Sequence {
+    s32 stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
+    Timer stage_timer;
+};
+
 struct Gameplay_Data {
+    Stage_State stage_state;
+
     Fixed_Array<Bullet>           bullets;
     Fixed_Array<Laser_Hazard>     laser_hazards;
     Fixed_Array<Explosion_Hazard> explosion_hazards;
@@ -142,7 +164,10 @@ struct Gameplay_Data {
     camera       main_camera;
 
     bool paused_from_death = false;
-    Gameplay_Stage_Introduction_Sequence intro;
+    bool triggered_stage_completion_cutscene = false;
+
+    Gameplay_Stage_Introduction_Sequence   intro;
+    Gameplay_Stage_Complete_Stage_Sequence complete_stage;
 };
 
 enum UI_State_Mode {
