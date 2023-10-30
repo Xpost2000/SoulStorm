@@ -60,6 +60,7 @@ struct Timer {
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
 #define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.0f)
 
+// NOTE: no real system for a visual sprite quite yet.
 struct Entity {
     // primarily for collision purposes
     // a visual representation can be drawn separately
@@ -90,7 +91,6 @@ struct Entity {
 
     // entities will be centered on themselves
     rectangle_f32 get_rect();
-
 
     /*
       These are helpers that are used to allow for the play area border to
@@ -128,6 +128,20 @@ struct Entity {
     s32 edge_bottom_behavior_override = -1;
     s32 edge_left_behavior_override = -1;
     s32 edge_right_behavior_override = -1;
+};
+
+struct Enemy_Entity : public Entity {
+    Timer outside_boundaries_lifetime_timer;
+    Timer firing_timer;
+    std::function<void(Enemy_Entity*, Game_State* const, f32)> velocity_function;
+    std::function<void(Enemy_Entity*, Game_State*, f32)> on_fire_function;
+
+    void update(Game_State* const state, f32 dt);
+
+    // NOTE: I would like to multithread the bullets and particles and entity movements
+    //       however for specifically entities that fire things, this is not possible
+    //       to multithread.
+    void try_and_fire(Game_State* state, f32 dt);
 };
 
 struct Hazard_Warning {

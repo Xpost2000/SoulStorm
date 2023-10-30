@@ -410,6 +410,46 @@ void Bullet::update(Game_State* const state, f32 dt) {
     // wrap_from_left_border(play_area);
 }
 
+// Enemy_Entity
+
+void Enemy_Entity::update(Game_State* const state, f32 dt) {
+    const auto& play_area = state->gameplay_data.play_area;
+
+    auto rect = get_rect();
+
+    if (!play_area.is_inside_logical(rect)) {
+        outside_boundaries_lifetime_timer.start();
+        outside_boundaries_lifetime_timer.update(dt);
+
+        if (outside_boundaries_lifetime_timer.triggered()) {
+            die = true;
+        }
+    } else {
+        outside_boundaries_lifetime_timer.stop();
+        outside_boundaries_lifetime_timer.reset();
+    }
+
+    firing_timer.start();
+    firing_timer.update(dt);
+
+    velocity = V2(0, 0);
+    if (velocity_function) {
+        velocity_function(this, state, dt);
+    }
+
+    Entity::update(state, dt);
+    handle_play_area_edge_behavior(play_area);
+}
+
+void Enemy_Entity::try_and_fire(Game_State* state, f32 dt) {
+    if (firing_timer.triggered()) {
+        if (on_fire_function) {
+            on_fire_function(this, state, dt);
+        }
+        firing_timer.reset();
+    }
+}
+
 // Hazard Warning
 Hazard_Warning::Hazard_Warning(f32 amount_of_time_for_warning)
     : warning_flash_timer(amount_of_time_for_warning),
