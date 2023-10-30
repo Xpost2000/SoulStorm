@@ -206,6 +206,7 @@ void Game::init(Graphics_Driver* driver) {
         state->bullets           = Fixed_Array<Bullet>(arena, 10000);
         state->explosion_hazards = Fixed_Array<Explosion_Hazard>(arena, 256);
         state->laser_hazards     = Fixed_Array<Laser_Hazard>(arena, 128);
+        state->enemies           = Fixed_Array<Enemy_Entity>(arena, 512);
         state->prng              = random_state();
         state->main_camera       = camera(V2(0, 0), 1.0);
         state->main_camera.rng   = &state->prng;
@@ -774,7 +775,6 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
 
     auto subtitle_font = resources->get_font(MENU_FONT_COLOR_GOLD);
 
-    _debugprintf("Achievement notifications: (%d)", notifications.size);
     for (s32 index = notifications.size-1; index >= 0; index--) {
         auto& notification = notifications[index];
         auto  achievement  = Achievements::get(notification.id);
@@ -1298,10 +1298,23 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             h.update(this->state, dt);
         }
 
+        for (int i = 0; i < (s32)state->enemies.size; ++i) {
+            auto& e = state->enemies[i];
+            e.update(this->state, dt);
+        }
+
+        // firing
+        for (int i = 0; i < (s32)state->enemies.size; ++i) {
+            auto& e = state->enemies[i];
+            e.try_and_fire(this->state, dt);
+        }
+
         state->player.update(this->state, dt);
 
+        handle_all_bullet_collisions(dt);
         handle_all_explosions(dt);
         handle_all_lasers(dt);
+
         handle_all_dead_entities(dt);
     }
     handle_ui_update_and_render(&ui_render_commands, dt);
@@ -1354,10 +1367,6 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         state->player.draw(this->state, &game_render_commands, resources);
 
         Transitions::update_and_render(&ui_render_commands, dt);
-
-        // Achievement notifications are omnipresent.
-        // I want them to render on top of the transitions.
-        update_and_render_achievement_notifications(&ui_render_commands, dt);
     }
 
     driver->clear_color_buffer(color32u8(255, 255, 255, 255));
@@ -1384,6 +1393,15 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         case GAME_SCREEN_CREDITS: {
             update_and_render_game_credits(driver, dt);
         } break;
+    }
+
+
+    // Achievement notifications are omnipresent.
+    // I want them to render on top of the transitions.
+    {
+        auto ui_render_commands   = render_commands(&Global_Engine()->scratch_arena, 512, camera(V2(0, 0), 1));
+        update_and_render_achievement_notifications(&ui_render_commands, dt);
+        driver->consume_render_commands(&ui_render_commands);
     }
 
     // Achievement related updates.
@@ -1429,14 +1447,48 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
 
 void Game::handle_all_dead_entities(f32 dt) {
     auto state = &this->state->gameplay_data;
-    for (int i = 0; i < state->bullets.size; ++i) {
-        auto& b = state->bullets[i];
 
-        if (b.die) {
-            state->bullets.pop_and_swap(i);
-        }
-    }
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            Gameplay_Data* state = (Gameplay_Data*) ctx;
+            for (int i = 0; i < state->laser_hazards.size; ++i) {
+                auto& h = state->laser_hazards[i];
+                if (h.die) {state->laser_hazards.pop_and_swap(i);}
+            }
+            return 0;
+        }, state);
 
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            Gameplay_Data* state = (Gameplay_Data*) ctx;
+            for (int i = 0; i < state->bullets.size; ++i) {
+                auto& b = state->bullets[i];
+                if (b.die) {state->bullets.pop_and_swap(i);}
+            }
+            return 0;
+        }, state);
+
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            Gameplay_Data* state = (Gameplay_Data*) ctx;
+            for (int i = 0; i < state->enemies.size; ++i) {
+                auto& e = state->enemies[i];
+                if (e.die) {state->enemies.pop_and_swap(i);}
+            }
+            return 0;
+        }, state);
+
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            Gameplay_Data* state = (Gameplay_Data*) ctx;
+            for (int i = 0; i < state->explosion_hazards.size; ++i) {
+                auto& h = state->explosion_hazards[i];
+                if (h.exploded) {state->explosion_hazards.pop_and_swap(i);}
+            }
+            return 0;
+        }, state);
+
+    Thread_Pool::synchronize_tasks();
     if (state->player.die) {
         if (state->paused_from_death == false) {
             state->paused_from_death = true;
@@ -1478,12 +1530,6 @@ void Game::handle_all_lasers(f32 dt) {
                 state->player.kill();
             }
         }
-
-        if (h.die) {
-            _debugprintf("bye bye laser");
-
-            state->laser_hazards.pop_and_swap(i);
-        }
     }
 }
 
@@ -1505,9 +1551,13 @@ void Game::handle_all_explosions(f32 dt) {
                     state->player.kill();
                 }
             }
-            state->explosion_hazards.pop_and_swap(i);
         }
     }
+}
+
+void Game::handle_all_bullet_collisions(f32 dt) {
+    auto state = &this->state->gameplay_data;
+    // unimplemented("Not done");
 }
 
 // Play_Area

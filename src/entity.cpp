@@ -287,7 +287,7 @@ bool Entity::attack() {
     return firing_t <= 0.0f;
 }
 
-void Entity::update(Game_State* const state, f32 dt) {
+void Entity::update(Game_State* state, f32 dt) {
     const auto& play_area = state->gameplay_data.play_area;
 
     position           += velocity * dt;
@@ -348,7 +348,7 @@ rectangle_f32 Entity::get_rect() {
 }
 
 // PlayerActor
-void Player::update(Game_State* const state, f32 dt) {
+void Player::update(Game_State* state, f32 dt) {
     const auto& play_area = state->gameplay_data.play_area;
     // unfortunately the action mapper system doesn't exist
     // here like it did in the last project, so I'll have to use key inputs
@@ -380,7 +380,7 @@ void Player::update(Game_State* const state, f32 dt) {
 }
 
 // BulletEntity
-void Bullet::update(Game_State* const state, f32 dt) {
+void Bullet::update(Game_State* state, f32 dt) {
     const auto& play_area = state->gameplay_data.play_area;
 
     if (lifetime.t == -1) {
@@ -412,7 +412,7 @@ void Bullet::update(Game_State* const state, f32 dt) {
 
 // Enemy_Entity
 
-void Enemy_Entity::update(Game_State* const state, f32 dt) {
+void Enemy_Entity::update(Game_State* state, f32 dt) {
     const auto& play_area = state->gameplay_data.play_area;
 
     auto rect = get_rect();
@@ -509,7 +509,7 @@ Explosion_Hazard::Explosion_Hazard(V2 position, f32 radius, f32 amount_of_time_f
 
 }
 
-void Explosion_Hazard::update(Game_State* const state, f32 dt) {
+void Explosion_Hazard::update(Game_State* state, f32 dt) {
     if (warning.finished_presenting()) {
         explosion_timer.start();
 
@@ -596,7 +596,7 @@ bool Laser_Hazard::ready() {
     return warning.finished_presenting();
 }
 
-void Laser_Hazard::update(Game_State* const state, f32 dt) {
+void Laser_Hazard::update(Game_State* state, f32 dt) {
     if (warning.finished_presenting()) {
         lifetime.start();
         // default update
@@ -623,7 +623,7 @@ void Laser_Hazard::update(Game_State* const state, f32 dt) {
     warning.update(dt);
 }
 
-void Laser_Hazard::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
+void Laser_Hazard::draw(Game_State* state, struct render_commands* render_commands, Game_Resources* resources) {
     const auto& play_area = state->gameplay_data.play_area;
     auto        rectangle = get_rect(&play_area);
 

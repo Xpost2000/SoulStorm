@@ -145,6 +145,7 @@ struct Gameplay_Data {
 
     Fixed_Array<Bullet>           bullets;
     Fixed_Array<Laser_Hazard>     laser_hazards;
+    Fixed_Array<Enemy_Entity>     enemies;
     Fixed_Array<Explosion_Hazard> explosion_hazards;
     // should be in a separate list of it's own...
     Player              player;

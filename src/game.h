@@ -80,6 +80,8 @@ private:
     void update_and_render_game_credits(Graphics_Driver* driver, f32 dt);
     void update_and_render_game_title_screen(Graphics_Driver* driver, f32 dt);
 
+    // NOTE: most of these should be easy to parallesize.
+    void handle_all_bullet_collisions(f32 dt);
     void handle_all_explosions(f32 dt);
     void handle_all_lasers(f32 dt);
     void handle_all_dead_entities(f32 dt);

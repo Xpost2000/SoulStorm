@@ -87,7 +87,7 @@ struct Entity {
     // NOTE: I only want read only states
     // wholesale updates like collisions will be checked in the main
     // game loop in game.cpp
-    virtual void update(Game_State* const state, f32 dt);
+    virtual void update(Game_State* state, f32 dt);
 
     // entities will be centered on themselves
     rectangle_f32 get_rect();
@@ -136,11 +136,11 @@ struct Enemy_Entity : public Entity {
     std::function<void(Enemy_Entity*, Game_State* const, f32)> velocity_function;
     std::function<void(Enemy_Entity*, Game_State*, f32)> on_fire_function;
 
-    void update(Game_State* const state, f32 dt);
+    void update(Game_State* state, f32 dt);
 
     // NOTE: I would like to multithread the bullets and particles and entity movements
     //       however for specifically entities that fire things, this is not possible
-    //       to multithread.
+    //       to multithread because Fixed_Array is not thread_safe (and also it would defeat the purpose of threading in this architecture.)
     void try_and_fire(Game_State* state, f32 dt);
 };
 
@@ -184,7 +184,7 @@ struct Explosion_Hazard {
 
     bool exploded;
 
-    void update(Game_State* const state, f32 dt);
+    void update(Game_State* state, f32 dt);
     void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
 };
 
@@ -214,7 +214,7 @@ struct Laser_Hazard {
     bool  die = false; // force kill flag
     bool  already_emitted = false;
 
-    void update(Game_State* const state, f32 dt);
+    void update(Game_State* state, f32 dt);
     void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
     bool ready();
 
@@ -228,15 +228,31 @@ struct Player : public Entity {
 
     // I did have plans for slightly different player types to make it interesting
     // but I'll see about that later.
-    void update(Game_State* const state, f32 dt);
+    void update(Game_State* state, f32 dt);
 };
 
+enum Bullet_Source {
+    // Maybe I just want to shoot random bullets in the environment to kill stuff.
+    // who knows?
+    BULLET_SOURCE_NEUTRAL, 
+
+    BULLET_SOURCE_PLAYER,
+
+    BULLET_SOURCE_ENEMY,
+};
 struct Bullet : public Entity {
     Timer lifetime; // should be adjusted carefully!
 
+    /*
+      NOTE:
+      There's never a reason to explicitly know which exact
+      entity shot the bullet.
+     */
+    s32   source_type;
+
     /* float lifetime; // if it's -1 the bullets will die on their own later... */
     // bool dead;
-    void update(Game_State* const state, f32 dt);
+    void update(Game_State* state, f32 dt);
 
     // want this to be handled via lua
     std::function<void(Bullet*, Game_State* const, f32)> velocity_function;
