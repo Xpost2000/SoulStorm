@@ -50,7 +50,9 @@ enum Achievement_ID_List {
     ACHIEVEMENT_ID_MURDERER,
     ACHIEVEMENT_ID_SLAYER,
 
-    ACHIEVEMENT_ID_PLATINUM
+    ACHIEVEMENT_ID_PLATINUM,
+
+    ACHIEVEMENT_ID_COUNT,
 };
 
 local Achievement achievement_list[] = {
@@ -84,7 +86,7 @@ local int game_complete_stage_level(s32 id, s32 level_id) {
           Whether I do this or not is a good question, but it's not too much code to
           fix up.
         */
-        if ((level_id+1) > stage.unlocked_levels) {
+        if ((level_id+1) >= stage.unlocked_levels) {
             /*
              * NOTE:
              *
@@ -102,7 +104,7 @@ local int game_complete_stage_level(s32 id, s32 level_id) {
     }
 
     // Check for all stages completed.
-    if (stage.unlocked_levels >= MAX_LEVELS_PER_STAGE) {
+    if (stage.unlocked_levels > MAX_LEVELS_PER_STAGE) {
         assertion(ACHIEVEMENT_ID_STAGE1 + id <= ACHIEVEMENT_ID_STAGE4 && "Invalid achievement for stage id.");
         auto achievement = Achievements::get(ACHIEVEMENT_ID_STAGE1 + id);
         achievement->report();
@@ -191,6 +193,11 @@ void Game::init(Graphics_Driver* driver) {
     update_preferences(&temp_preferences, &preferences);
 
     resources->graphics_assets   = graphics_assets_create(arena, 16, 256);
+    // initialize achievement notifier
+    {
+        // NOTE: some how it will be possible to unlock every single achievement at once.
+        achievement_state.notifications = Fixed_Array<Achievement_Notification>(arena, ACHIEVEMENT_ID_COUNT);
+    }
 
     // gameplay_data initialize
     {
@@ -367,7 +374,7 @@ bool Game::can_access_stage(s32 id) {
 
     for (int i = 0; i < array_count(stage_portal.prerequisites); ++i) {
         if (stage_portal.prerequisites[i] == -1) {
-            _debugprintf("Null prerequisite.");
+            // _debugprintf("Null prerequisite.");
         } else {
             s32 prerequisite_index = stage_portal.prerequisites[i];
             auto& stage = stage_list[prerequisite_index];
@@ -752,10 +759,88 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
     GameUI::update(dt);
 }
 
+void Game::update_and_render_achievement_notifications(struct render_commands* commands, f32 dt) {
+    // NOTE: notifications have to be deleted in order
+    //       so I have to loop in reverse to delete them in the same loop.
+    auto& notifications = achievement_state.notifications;
+
+    f32 y_cursor_from_bottom = 0;
+
+
+    auto subtitle_font = resources->get_font(MENU_FONT_COLOR_GOLD);
+
+    _debugprintf("Achievement notifications: (%d)", notifications.size);
+    for (s32 index = notifications.size-1; index >= 0; index--) {
+        auto& notification = notifications[index];
+        auto  achievement  = Achievements::get(notification.id);
+
+        // achievements will be from bottom left.
+        // NOTE: adjust visual box size
+        rectangle_f32 rectangle = rectangle_f32(
+            0, commands->screen_height - (y_cursor_from_bottom + 60), 150, 60);
+
+        // insert description somehow;
+        switch (notification.phase) {
+            case ACHIEVEMENT_NOTIFICATION_PHASE_APPEAR: {
+                const f32 MAX_PHASE_TIME = 0.35f;
+                f32 percentage_t = notification.timer / MAX_PHASE_TIME;
+                f32 rect_y = lerp_f32(commands->screen_height - (y_cursor_from_bottom), commands->screen_height - (y_cursor_from_bottom + 60), percentage_t);
+
+                rectangle.y = rect_y;
+                render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255 * percentage_t), BLEND_MODE_ALPHA);
+                {
+                    string text = achievement->name;
+                    render_commands_push_text(commands, subtitle_font, 4, V2(rectangle.x+10, rectangle.y+10), text, color32f32(1, 1, 1, percentage_t), BLEND_MODE_ALPHA);
+                }
+
+                if (notification.timer >= MAX_PHASE_TIME) {
+                    notification.phase = ACHIEVEMENT_NOTIFICATION_PHASE_LINGER;
+                    notification.timer = 0;
+                }
+                y_cursor_from_bottom += 60;
+            } break;
+            case ACHIEVEMENT_NOTIFICATION_PHASE_LINGER: {
+                const f32 MAX_PHASE_TIME = 0.55f;
+                f32 percentage_t = notification.timer / MAX_PHASE_TIME;
+
+                render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
+                {
+                    string text = achievement->name;
+                    render_commands_push_text(commands, subtitle_font, 4, V2(rectangle.x+10, rectangle.y+10), text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+                }
+
+                if (notification.timer >= MAX_PHASE_TIME) {
+                    notification.phase = ACHIEVEMENT_NOTIFICATION_PHASE_BYE;
+                    notification.timer = 0;
+                }
+                y_cursor_from_bottom += 60;
+            } break;
+            case ACHIEVEMENT_NOTIFICATION_PHASE_BYE: {
+                const f32 MAX_PHASE_TIME = 0.35f;
+                if (notification.timer >= MAX_PHASE_TIME) {
+                    notifications.erase(index);
+                } else {
+                    f32 percentage_t = notification.timer / MAX_PHASE_TIME;
+
+                    render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255 * (1 - percentage_t)), BLEND_MODE_ALPHA);
+                    {
+                        string text = achievement->name;
+                        render_commands_push_text(commands, subtitle_font, 4, V2(rectangle.x+10, rectangle.y+10), text, color32f32(1, 1, 1, 1 - percentage_t), BLEND_MODE_ALPHA);
+                    }
+
+                    y_cursor_from_bottom += 60;
+                }
+            } break;
+        }
+
+        notification.timer += dt;
+    }
+}
+
 void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt) {
     switch (state->ui_state) {
         case UI_STATE_INACTIVE: {
-            return;
+            
         } break;
         case UI_STATE_PAUSED: {
             update_and_render_pause_menu(commands, dt);
@@ -1210,9 +1295,8 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         handle_all_explosions(dt);
         handle_all_lasers(dt);
         handle_all_dead_entities(dt);
-    } else {
-        handle_ui_update_and_render(&ui_render_commands, dt);
     }
+    handle_ui_update_and_render(&ui_render_commands, dt);
 
     // Handle transitions or stage specific data
     // so like cutscene/coroutine required sort of behaviors...
@@ -1262,6 +1346,10 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         state->player.draw(this->state, &game_render_commands, resources);
 
         Transitions::update_and_render(&ui_render_commands, dt);
+
+        // Achievement notifications are omnipresent.
+        // I want them to render on top of the transitions.
+        update_and_render_achievement_notifications(&ui_render_commands, dt);
     }
 
     driver->clear_color_buffer(color32u8(255, 255, 255, 255));
@@ -1290,36 +1378,40 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         } break;
     }
 
-    // always check for the platinum achievement unlock
+    // Achievement related updates.
     {
-        auto platinum_achievement = Achievements::get(ACHIEVEMENT_ID_PLATINUM);
+        // always check for the platinum achievement unlock
         {
-            // NOTE: the platinum_achievement is the last achievement id
-            bool all_previous_unlocked = true;
-            for (s32 i = 0; i < ACHIEVEMENT_ID_PLATINUM; ++i) {
-                auto achievement = Achievements::get(i);
-                if (!achievement->complete()) {
-                    all_previous_unlocked = false;
-                    break;
+            auto platinum_achievement = Achievements::get(ACHIEVEMENT_ID_PLATINUM);
+            {
+                // NOTE: the platinum_achievement is the last achievement id
+                bool all_previous_unlocked = true;
+                for (s32 i = 0; i < ACHIEVEMENT_ID_PLATINUM; ++i) {
+                    auto achievement = Achievements::get(i);
+                    if (!achievement->complete()) {
+                        all_previous_unlocked = false;
+                        break;
+                    }
+                }
+
+                if (all_previous_unlocked) {
+                    platinum_achievement->report();
                 }
             }
-
-            if (all_previous_unlocked) {
-                platinum_achievement->report();
-            }
         }
-    }
 
-    // Polling based achievement updating.
-    // TODO: this will notify the achievement UI when I add it
-    {
-        for (s32 i = 0; i < array_count(achievement_list); ++i) {
-            auto achievement = Achievements::get(i);
-            if (achievement->complete() && achievement->notify_unlock()) {
-                _debugprintf("Hi, you've just unlocked the: %.*s achievement",
-                             achievement->id_name.length,
-                             achievement->id_name.data
-                );
+        // Polling based achievement updating.
+        {
+            for (s32 i = 0; i < array_count(achievement_list); ++i) {
+                auto achievement = Achievements::get(i);
+                if (achievement->complete() && achievement->notify_unlock()) {
+                    _debugprintf("Hi, you've just unlocked the: %.*s achievement",
+                                 achievement->id_name.length,
+                                 achievement->id_name.data
+                    );
+
+                    notify_new_achievement(achievement->id);
+                }
             }
         }
     }
@@ -1438,6 +1530,17 @@ void Game::switch_screen(s32 screen) {
 void Game::switch_ui(s32 ui) {
     state->last_ui_state = state->ui_state;
     state->ui_state = ui;
+}
+
+void Game::notify_new_achievement(s32 id) {
+    Achievement_Notification notification;
+    {
+        notification.phase = ACHIEVEMENT_NOTIFICATION_PHASE_APPEAR;
+        notification.id    = id;
+        notification.timer = 0.0f;
+    }
+    _debugprintf("okay, notify achievement (%d)", id);
+    achievement_state.notifications.push(notification);
 }
 
 #include "credits_mode.cpp"

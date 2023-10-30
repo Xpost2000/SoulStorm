@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include "common.h"
+#include "fixed_array.h"
 #include "audio.h"
 #include "input.h"
 #include "memory_arena.h"
@@ -21,6 +22,22 @@
 // forward decl some opaque types
 struct Game_State;
 struct Game_Resources;
+
+// since this is strictly animation only + the fact it
+// does not affect any actual game state means I can just put this here.
+enum Achievement_Notification_Phase {
+    ACHIEVEMENT_NOTIFICATION_PHASE_APPEAR,
+    ACHIEVEMENT_NOTIFICATION_PHASE_LINGER,
+    ACHIEVEMENT_NOTIFICATION_PHASE_BYE,
+};
+struct Achievement_Notification {
+    s32 phase;
+    s32 id;
+    f32 timer; // NOTE: Timer is in entity.h, but this is a simple thing so I'm not going to use it.
+};
+struct Achievement_Notification_State {
+    Fixed_Array<Achievement_Notification> notifications;   
+};
 
 class Game {
 public:
@@ -50,6 +67,8 @@ private:
     void update_and_render_game_opening(Graphics_Driver* driver, f32 dt);
     void update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt);
 
+    void update_and_render_achievement_notifications(struct render_commands* commands, f32 dt);
+
     void ingame_update_introduction_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);
     void ingame_update_complete_stage_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);
 
@@ -67,6 +86,8 @@ private:
 
     void setup_stage_start();
 
+    void notify_new_achievement(s32 id);
+
     Memory_Arena*   arena;
     Game_State*     state;
     Game_Resources* resources;
@@ -75,6 +96,7 @@ private:
     // used for writing into from the settings before I
     // actually apply them.
     Game_Preferences temp_preferences;
+    Achievement_Notification_State achievement_state;
 };
 
 #endif
