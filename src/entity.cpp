@@ -152,25 +152,29 @@ bool Entity::wrap_from_bottom_border(const Play_Area& play_area) {
     return false;
 }
 
-void Entity::damage(s32 dmg) {
+bool Entity::damage(s32 dmg) {
     if (invincibility_time.running) {
         _debugprintf("I am invincible. You cannot hurt me.");
-        return;
+        return false;
     }
     _debugprintf("ouchie (%d dmg)", dmg);
     hp -= dmg;
     if (hp <= 0) die = true;
+
+    return true;
 }
 
-void Entity::heal(s32 hp) {
+bool Entity::heal(s32 hp) {
     _debugprintf("healed (%d hp)", hp);
     hp += hp;
     if (hp > 0) die = false;
+
+    return true;
 }
 
-void Entity::kill() {
+bool Entity::kill() {
     _debugprintf("trying to die");
-    damage(9999999); // lol
+    return damage(9999999); // lol
 }
 
 void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {

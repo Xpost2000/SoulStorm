@@ -117,11 +117,11 @@ struct Entity {
 
     // but that's more of a polish thing
     // damage could spawn a particle or something
-    void damage(s32 dmg); // NOTE: player should have a bit of invulnerability after respawning.
+    bool damage(s32 dmg); // NOTE: player should have a bit of invulnerability after respawning.
     // TODO: need to track hp max, but this is mostly for the player
     //       who should basically die in one hit as per normal bullet hell rules...
-    void heal(s32 hp);
-    void kill();
+    bool heal(s32 hp);
+    bool kill();
 
     // -1 means we'll follow the stage area
     s32 edge_top_behavior_override = -1;

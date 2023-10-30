@@ -1,6 +1,3 @@
-// NOTE: these should be exclusively render commands in the future. I just don't do it quite yet
-// but it would help for rendering in OpenGL, and I could add game specific render commands later...
-
 // NOTE: game units are in 640x480 pixels now.
 #include "game.h"
 #include "fade_transition.h"
@@ -196,7 +193,6 @@ void Game::init(Graphics_Driver* driver) {
     resources->graphics_assets   = graphics_assets_create(arena, 16, 256);
     // initialize achievement notifier
     {
-        // NOTE: some how it will be possible to unlock every single achievement at once.
         achievement_state.notifications = Fixed_Array<Achievement_Notification>(arena, ACHIEVEMENT_ID_COUNT);
     }
 
@@ -299,11 +295,12 @@ void Game::deinit() {
  * some testing things
  */
 
-void spawn_bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 magnitude) {
+void spawn_bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 magnitude, s32 source = BULLET_SOURCE_NEUTRAL) {
     Bullet bullet;
     bullet.position = position;
     bullet.scale    = V2(5,5);
     bullet.lifetime = Timer(3.0f);
+    bullet.source_type = source;
 
     bullet.velocity_function =
         [=](Bullet* self, Game_State* const state, f32 dt) {
@@ -313,11 +310,12 @@ void spawn_bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f
     state->gameplay_data.bullets.push(bullet);
 }
 
-void spawn_bullet_circling_down_homing(Game_State* state, V2 position, f32 factor, f32 factor2, V2 additional = V2(0,0)) {
+void spawn_bullet_circling_down_homing(Game_State* state, V2 position, f32 factor, f32 factor2, s32 source = BULLET_SOURCE_NEUTRAL, V2 additional = V2(0,0)) {
     Bullet bullet;
     bullet.position = position;
     bullet.scale    = V2(5,5);
     bullet.lifetime = Timer(3.0f);
+    bullet.source_type = source;
 
     bullet.velocity_function =
         [=](Bullet* self, Game_State* const state, f32 dt) {
@@ -327,11 +325,12 @@ void spawn_bullet_circling_down_homing(Game_State* state, V2 position, f32 facto
     state->gameplay_data.bullets.push(bullet);
 }
 
-void spawn_bullet_circling_down_homing2(Game_State* state, V2 position, f32 factor, f32 factor2, V2 additional = V2(0,0)) {
+void spawn_bullet_circling_down_homing2(Game_State* state, V2 position, f32 factor, f32 factor2, s32 source = BULLET_SOURCE_NEUTRAL, V2 additional = V2(0,0)) {
     Bullet bullet;
     bullet.position = position;
     bullet.scale    = V2(5,5);
     bullet.lifetime = Timer(3.0f);
+    bullet.source_type = source;
 
     Timer until_release(2.0f);
     bool triggered = false;
@@ -1157,7 +1156,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             switch_ui(UI_STATE_INACTIVE);
         }
     }
-
+#if 0
     if (Input::is_key_pressed(KEY_T)) {
         int amount = 10;
         int r = 50;
@@ -1185,6 +1184,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             spawn_bullet_circling_down_homing2(this->state, position, t, r, V2(0, 100));
         }
     }
+
     if (Input::is_key_pressed(KEY_P)) {
         int amount = 250;
         int r = 500;
@@ -1207,6 +1207,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             spawn_bullet_circling_down_homing(this->state, position, t, ner, V2(0, 0));
         }
     }
+#endif
 
     if (Input::is_key_pressed(KEY_I)) {
         state->player.kill();
@@ -1278,8 +1279,8 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         if (Input::is_key_down(KEY_SPACE)) {
             // okay these are normal real bullets
             if (state->player.attack()) {
-                spawn_bullet_upwards_linear(this->state, state->player.position + V2(-10, 0), V2(0, -1), 1250.0f);
-                spawn_bullet_upwards_linear(this->state, state->player.position + V2(10, 0), V2(0, -1), 1250.0f);
+                spawn_bullet_upwards_linear(this->state, state->player.position + V2(-10, 0), V2(0, -1), 1250.0f, BULLET_SOURCE_PLAYER);
+                spawn_bullet_upwards_linear(this->state, state->player.position + V2(10, 0), V2(0, -1), 1250.0f, BULLET_SOURCE_PLAYER);
             }
         }
 
@@ -1555,8 +1556,42 @@ void Game::handle_all_explosions(f32 dt) {
     }
 }
 
+// TODO: Spatial partition all the bullets some how. Probably going to use another spatial hash.
 void Game::handle_all_bullet_collisions(f32 dt) {
+    // NOTE: for now entities will die in one hit.
     auto state = &this->state->gameplay_data;
+
+    for (s32 bullet_index = 0; bullet_index < state->bullets.size; ++bullet_index) {
+        auto& b = state->bullets[bullet_index];
+        auto bullet_rect = b.get_rect();
+
+        // NOTE: does not account for invulnerability right now.
+        if (b.source_type == BULLET_SOURCE_NEUTRAL || b.source_type == BULLET_SOURCE_PLAYER) {
+            for (s32 enemy_index = 0; enemy_index < state->enemies.size; ++enemy_index) {
+                auto& e = state->enemies[enemy_index];
+                auto enemy_rect = e.get_rect();
+
+                if (rectangle_f32_intersect(enemy_rect, bullet_rect)) {
+                    if (e.kill()) {
+                        b.die = true;
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (b.source_type == BULLET_SOURCE_NEUTRAL || b.source_type == BULLET_SOURCE_ENEMY) {
+            auto& p = state->player;
+            auto player_rect = p.get_rect();
+
+            if (rectangle_f32_intersect(player_rect, bullet_rect)) {
+                if (p.kill()) {
+                    b.die = true;
+                }
+                break;
+            }
+        }
+    }
     // unimplemented("Not done");
 }
 
