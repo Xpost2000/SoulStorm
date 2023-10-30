@@ -34,6 +34,26 @@ void software_framebuffer_render_commands_tiled(struct software_framebuffer* fra
 
         shader_fn shader_to_select = software_framebuffer_get_shader_function_for(command->shader_id_type);
 
+        {
+            rectangle_f32 rectangle = command->destination;
+
+            if (command->type == RENDER_COMMAND_DRAW_TEXT) {
+                f32 text_width = font_cache_text_width(command->font, command->text, command->scale);
+                f32 text_height = font_cache_text_height(command->font) * command->scale;
+                rectangle.x = command->xy.x;
+                rectangle.y = command->xy.y;
+                rectangle.w = text_width;
+                rectangle.h = text_height;
+            } else if (command->type == RENDER_COMMAND_DRAW_LINE) {
+                // TODO: although I never really draw lines anyway.
+                rectangle = clip_rect;
+            }
+
+            if (!rectangle_f32_intersect(clip_rect, rectangle)) {
+                continue;
+            }
+        }
+
         switch (command->type) {
             case RENDER_COMMAND_DRAW_QUAD: {
                 software_framebuffer_draw_quad_ext_clipped(
