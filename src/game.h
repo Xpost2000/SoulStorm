@@ -11,6 +11,8 @@
 #include "engine.h"
 #include "graphics_driver.h"
 
+#include "serializer.h"
+
 #include "game_preferences.h"
 
 /*
@@ -38,6 +40,8 @@ struct Achievement_Notification {
 struct Achievement_Notification_State {
     Fixed_Array<Achievement_Notification> notifications;   
 };
+
+#include "save_data.h"
 
 class Game {
 public:
@@ -86,6 +90,16 @@ private:
 
     void setup_stage_start();
 
+    // The game will only utilize one save file
+    // and auto save so this makes so much way easier.
+    // the save file format is not very complicated honestly, since it just
+    // needs to basically record what levels you beat, and what score you got.
+    void save_game();
+    void load_game();
+    Save_File construct_save_data();
+    void serialize_game_state(struct binary_serializer* serializer);
+    void update_from_save_data(Save_File* save_data);
+
     void notify_new_achievement(s32 id);
 
     Memory_Arena*   arena;
@@ -97,6 +111,8 @@ private:
     // actually apply them.
     Game_Preferences temp_preferences;
     Achievement_Notification_State achievement_state;
+
+    f32 total_playtime;
 };
 
 #endif

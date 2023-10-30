@@ -7,6 +7,8 @@
 
 /* NOTE copied and pasted exactly from previous project. NOTE: this is still true! Since it's pretty clean! */
 
+// NOTE: I should probably have a way to check the "error" mode.
+
 /* Thankfully when I do the archive related stuff, it's going to be SERIALIZER_MEMORY types... */
 enum binary_serializer_type {
     BINARY_SERIALIZER_FILE,

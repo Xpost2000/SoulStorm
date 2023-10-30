@@ -9,6 +9,7 @@
 #include "game_state.h"
 #include "achievements.h"
 
+#include "file_buffer.h"
 #include "game_ui.h"
 
 // TODO: finish main menu implementation
@@ -285,6 +286,8 @@ void Game::init(Graphics_Driver* driver) {
 
     Achievements::init_achievements(arena, make_slice<Achievement>(achievement_list, array_count(achievement_list)));
     GameUI::initialize(arena);
+
+    load_game();
 }
 
 void Game::deinit() {
@@ -561,6 +564,7 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
 
             Transitions::register_on_finish(
                 [&](void*) mutable {
+                    save_game();
                     Global_Engine()->die();
                 }
             );
@@ -750,6 +754,7 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
                     );
                     switch_ui(UI_STATE_INACTIVE);
                     switch_screen(GAME_SCREEN_MAIN_MENU);
+                    save_game();
                 }
             );
         }
@@ -1118,6 +1123,9 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                         );
                     } break;
                 }
+
+                // Register save game on any level completion.
+                save_game();
             }
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE: {} break;
@@ -1415,6 +1423,8 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
             }
         }
     }
+
+    total_playtime += dt;
 }
 
 void Game::handle_all_dead_entities(f32 dt) {
@@ -1542,6 +1552,137 @@ void Game::notify_new_achievement(s32 id) {
     _debugprintf("okay, notify achievement (%d)", id);
     achievement_state.notifications.push(notification);
 }
+
+// save game information
+local string save_file_name = string_literal("game_save.save");
+
+void Game::save_game() {
+    _debugprintf("Attempting to save game.");
+    if (OS_file_exists(save_file_name)) {
+        _debugprintf("NOTE: overriding old save file.");
+    }
+
+    auto serializer = open_write_file_serializer(save_file_name);
+    serializer.expected_endianess = ENDIANESS_LITTLE;
+    serialize_game_state(&serializer);
+    serializer_finish(&serializer);
+}
+
+void Game::load_game() {
+    if (OS_file_exists(save_file_name)) {
+        _debugprintf("Attempting to load save game.");
+        auto serializer = open_read_file_serializer(save_file_name);
+        serializer.expected_endianess = ENDIANESS_LITTLE;
+        serialize_game_state(&serializer);
+        serializer_finish(&serializer);
+
+        _debugprintf("Hopefully loaded.");
+    } else {
+        _debugprintf("Save file does not exist. Nothing to load.");
+    }
+}
+
+Save_File Game::construct_save_data() {
+    Save_File save_data;
+
+    {
+        save_data.version = SAVE_FILE_VERSION_CURRENT;
+        {
+            for (int stage = 0; stage < 4; ++stage) {
+                for (int level = 0; level < MAX_LEVELS_PER_STAGE; ++level) {
+                    save_data.stage_scores[stage][level] = 0;
+                }
+            }
+        }
+        {
+            for (int stage_index = 0; stage_index < 4; ++stage_index) {
+                auto& stage = stage_list[stage_index];
+                save_data.stage_unlocks[stage_index] = stage.unlocked_levels;
+            }
+        }
+        {
+            save_data.post_game = can_access_stage(3);
+        }
+        {
+            save_data.playtime = total_playtime;
+        }
+    }
+
+    update_from_save_data(&save_data);
+    return save_data;
+}
+
+void Game::update_from_save_data(Save_File* save_data) {
+    // TODO: nothing for scores yet
+
+    for (int stage_index = 0; stage_index < 4; ++stage_index) {
+        auto& stage = stage_list[stage_index];
+        stage.unlocked_levels = save_data->stage_unlocks[stage_index];
+    }
+
+    total_playtime = save_data->playtime;
+}
+
+local void serialize_achievement(struct binary_serializer* serializer, Achievement* achievement) {
+    // NOTE: assume achievements are serialized in order.
+
+    switch (achievement->progress_type) {
+        case ACHIEVEMENT_PROGRESS_TYPE_INT: {
+            serialize_s32(serializer, &achievement->progress.as_int.min);
+            serialize_s32(serializer, &achievement->progress.as_int.max);
+            serialize_s32(serializer, &achievement->progress.as_int.current);
+        } break;
+        case ACHIEVEMENT_PROGRESS_TYPE_FLOAT: {
+            serialize_f32(serializer, &achievement->progress.as_float.min);
+            serialize_f32(serializer, &achievement->progress.as_float.max);
+            serialize_f32(serializer, &achievement->progress.as_float.current);
+        } break;
+    }
+
+    serialize_s8(serializer, &achievement->achieved);
+    serialize_s8(serializer, &achievement->notified_of_unlock);
+}
+
+void Game::serialize_game_state(struct binary_serializer* serializer) {
+    Save_File save_data = construct_save_data();
+
+    // Serialize fields
+    {
+        serialize_s32(serializer, &save_data.version);
+
+        // only one version for now anyways.
+        switch (save_data.version) {
+            default: {
+                for (int stage_index = 0; stage_index < 4; ++stage_index) {
+                    for (int level = 0; level < MAX_LEVELS_PER_STAGE; ++level) {
+                        serialize_s32(serializer, &save_data.stage_scores[stage_index][level]);
+                    }
+                }
+                for (int stage_index = 0; stage_index < 4; ++stage_index) {
+                    serialize_s32(serializer, &save_data.stage_unlocks[stage_index]);
+                }
+                serialize_u8(serializer, &save_data.post_game);
+                serialize_f32(serializer, &save_data.playtime);
+
+                // serialize all achievements
+                // NOTE: slices are writable in my "library of code" so I'm
+                // just going to take advantage of this.
+                {
+                    auto achievements = Achievements::get_all();
+
+                    for (int achievement_index = 0; achievement_index < achievements.length; ++achievement_index) {
+                        auto achievement = &achievements[achievement_index];
+                        serialize_achievement(serializer, achievement);
+                    }
+                }
+            } break;
+        }
+    }
+    
+    update_from_save_data(&save_data);
+    // unimplemented("save mode");
+}
+
 
 #include "credits_mode.cpp"
 #include "title_screen_mode.cpp"

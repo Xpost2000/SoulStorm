@@ -459,5 +459,4 @@ Slice<T> make_slice(T* data, s32 length) {
     return result;
 }
 
-/* TODO: add file utilities like read_entire_file and stuff */
 #endif
