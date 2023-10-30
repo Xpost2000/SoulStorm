@@ -1,11 +1,12 @@
 #include "stage.h"
 
 void stage_null_draw(Stage_State* stage, f32 dt, struct render_commands* commands, Gameplay_Data* gameplay_state) {
-    _debugprintf("Null stage draw");
+    // _debugprintf("Null stage draw");
     return;
 }
 
 bool stage_null_update(Stage_State* stage, f32 dt, Gameplay_Data* gameplay_state) {
+    // _debugprintf("Null stage update");
     return true;
 }
 

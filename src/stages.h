@@ -1,7 +1,7 @@
 #ifndef STAGES_H
 #define STAGES_H
 
-#define MAX_LEVELS_PER_STAGE (4)
+#define MAX_LEVELS_PER_STAGE (3)
 
 struct Level {
     string name;

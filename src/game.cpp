@@ -66,9 +66,15 @@ local Achievement achievement_list[] = {
 //       but this game doesn't really require that.
 
 //       id and level_id are zero indexed.
-local void game_complete_stage_level(s32 id, s32 level_id) {
-    auto& stage = stage_list[id];
+enum Game_Complete_Stage_Type {
+    GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY,
+    GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL,
+    GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE,
+};
 
+local int game_complete_stage_level(s32 id, s32 level_id) {
+    auto& stage  = stage_list[id];
+    s32   result = 0;
     {
         /*
           The way the game structure is setup is that I assume levels
@@ -87,17 +93,24 @@ local void game_complete_stage_level(s32 id, s32 level_id) {
              */
             _debugprintf("Completed stage (%d-%d) and unlocked the next stage!", id+1, level_id+1);
             stage.unlocked_levels += 1;
+
+            result = GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL;
         } else {
             _debugprintf("Completed stage (%d-%d) another time!", id+1, level_id+1);
+            result = GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY; 
         }
     }
 
     // Check for all stages completed.
-    if (stage.unlocked_levels >= 4) {
+    if (stage.unlocked_levels >= MAX_LEVELS_PER_STAGE) {
         assertion(ACHIEVEMENT_ID_STAGE1 + id <= ACHIEVEMENT_ID_STAGE4 && "Invalid achievement for stage id.");
         auto achievement = Achievements::get(ACHIEVEMENT_ID_STAGE1 + id);
         achievement->report();
+
+        result = GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE;
     }
+
+    return result;
 }
 
 Game::Game() {
@@ -134,7 +147,13 @@ void Game::setup_stage_start() {
     state->tries = MAX_BASE_TRIES;
 
     auto state             = &this->state->gameplay_data;
-    state->stage_state = stage_null();
+
+    {
+        s32 stage_id = this->state->mainmenu_data.stage_id_level_select;
+        s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
+        // NOTE: check the ids later.
+        state->stage_state = stage_null();
+    }
 
     state->player.position = V2(state->play_area.width / 2, 300);
     state->player.hp       = 1;
@@ -354,7 +373,7 @@ bool Game::can_access_stage(s32 id) {
             auto& stage = stage_list[prerequisite_index];
 
             // Refer to 'game_complete_stage_level'
-            if (stage.unlocked_levels <= 3) {
+            if (stage.unlocked_levels <= MAX_LEVELS_PER_STAGE) {
                 _debugprintf("Failed to reach stage (%d)", id);
                 return false;
             }
@@ -882,7 +901,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
 
     switch (complete_stage_state.stage) {
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN: {
-            render_commands_push_quad(commands, rectangle_f32(0, commands->screen_height/2-32, commands->screen_width, 64), color32u8(0, 0, 0, 128 * timer_percentage), BLEND_MODE_ALPHA);
+            render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128 * timer_percentage), BLEND_MODE_ALPHA);
             if (timer.triggered()) {
                 timer = Timer(0.35f);
                 timer.reset();
@@ -891,7 +910,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_SHOW_SCORE: {
             f32 rect_y = commands->screen_height/2-32;
-            render_commands_push_quad(commands, rectangle_f32(0, commands->screen_height/2-32, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+            render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
             {
                 string title = string_literal("LEVEL COMPLETE");
                 auto   text_width = font_cache_text_width(title_font, title, 4);
@@ -912,7 +931,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT: {
             f32 rect_y = commands->screen_height/2-32;
-            render_commands_push_quad(commands, rectangle_f32(0, commands->screen_height/2-32, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+            render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
             {
                 string title = string_literal("LEVEL COMPLETE");
                 auto   text_width = font_cache_text_width(title_font, title, 4);
@@ -933,7 +952,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT: {
             f32 rect_y = commands->screen_height/2-32;
-            render_commands_push_quad(commands, rectangle_f32(0, commands->screen_height/2-32, commands->screen_width, 64), color32u8(0, 0, 0, 128 * (1 - timer_percentage)), BLEND_MODE_ALPHA);
+            render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128 * (1 - timer_percentage)), BLEND_MODE_ALPHA);
             {
                 string title = string_literal("LEVEL COMPLETE");
                 auto   text_width = font_cache_text_width(title_font, title, 4);
@@ -962,17 +981,48 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                  * I mean trying to write any real sequence code in C++ is never really pretty :/
                  */
 
-                game_complete_stage_level(stage_id, level_id);
+                s32 completion_type = game_complete_stage_level(stage_id, level_id);
 
-                Transitions::do_color_transition_out(
+                Transitions::do_color_transition_in(
                     color32f32(0, 0, 0, 1),
-                    0.15f,
-                    0.3f
+                    0.25f,
+                    0.5f
                 );
 
-                Transitions::register_on_finish(
-                    [&](void*) mutable {
-                        state->ui_state    = UI_STATE_INACTIVE;
+                switch (completion_type) {
+                    case GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE: {
+                        Transitions::register_on_finish(
+                            [&](void*) mutable {
+                                state->ui_state    = UI_STATE_INACTIVE;
+                                switch_screen(GAME_SCREEN_MAIN_MENU);
+                                _debugprintf("Hi main menu. We can do some more stuff like demonstrate if we unlocked a new stage!");
+
+                                Transitions::do_shuteye_out(
+                                    color32f32(0, 0, 0, 1),
+                                    0.15f,
+                                    0.3f
+                                );
+                            }
+                        );
+                    } break;
+                    case GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL: {
+                        Transitions::register_on_finish(
+                            [&](void*) mutable {
+                                state->ui_state    = UI_STATE_INACTIVE;
+                                _debugprintf("Hi, booting you to the next level.");
+
+                                state->mainmenu_data.stage_id_level_in_stage_select += 1;
+                                setup_stage_start();
+                                Transitions::do_color_transition_out(
+                                    color32f32(0, 0, 0, 1),
+                                    0.15f,
+                                    0.3f
+                                );
+                            }
+                        );
+                    } break;
+                    case GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY: {
+                        state->ui_state    = UI_STATE_STAGE_SELECT;
                         switch_screen(GAME_SCREEN_MAIN_MENU);
                         _debugprintf("Hi main menu. We can do some more stuff like demonstrate if we unlocked a new stage!");
 
@@ -981,12 +1031,14 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                             0.15f,
                             0.3f
                         );
-                    }
-                );
+                    } break;
+                }
             }
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE: {} break;
     }
+
+    timer.update(dt);
 }
 
 
