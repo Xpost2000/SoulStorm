@@ -774,6 +774,11 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
 
     auto subtitle_font = resources->get_font(MENU_FONT_COLOR_GOLD);
 
+    {
+        string text = string_literal("achievement ui test");
+        render_commands_push_text(commands, subtitle_font, 2, V2(0, 0), text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+    }
+
     for (s32 index = notifications.size-1; index >= 0; index--) {
         auto& notification = notifications[index];
         auto  achievement  = Achievements::get(notification.id);
@@ -1396,15 +1401,6 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         } break;
     }
 
-
-    // Achievement notifications are omnipresent.
-    // I want them to render on top of the transitions.
-    {
-        auto ui_render_commands   = render_commands(&Global_Engine()->scratch_arena, 512, camera(V2(0, 0), 1));
-        update_and_render_achievement_notifications(&ui_render_commands, dt);
-        driver->consume_render_commands(&ui_render_commands);
-    }
-
     // Achievement related updates.
     {
         // always check for the platinum achievement unlock
@@ -1441,6 +1437,18 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
                 }
             }
         }
+    }
+
+    // Achievement notifications are omnipresent.
+    // I want them to render on top of the transitions.
+    {
+        auto resolution                  = driver->resolution();
+        auto ui_render_commands          = render_commands(&Global_Engine()->scratch_arena, 512, camera(V2(0, 0), 1));
+        ui_render_commands.screen_width  = resolution.x;
+        ui_render_commands.screen_height = resolution.y;
+
+        update_and_render_achievement_notifications(&ui_render_commands, dt);
+        driver->consume_render_commands(&ui_render_commands);
     }
 
     total_playtime += dt;
@@ -1658,9 +1666,10 @@ void Game::load_game() {
         _debugprintf("Attempting to load save game.");
         auto serializer = open_read_file_serializer(save_file_name);
         serializer.expected_endianess = ENDIANESS_LITTLE;
-        serialize_game_state(&serializer);
+        auto updated_save_data = serialize_game_state(&serializer);
         serializer_finish(&serializer);
 
+        update_from_save_data(&updated_save_data);
         _debugprintf("Hopefully loaded.");
     } else {
         _debugprintf("Save file does not exist. Nothing to load.");
@@ -1693,7 +1702,6 @@ Save_File Game::construct_save_data() {
         }
     }
 
-    update_from_save_data(&save_data);
     return save_data;
 }
 
@@ -1728,7 +1736,7 @@ local void serialize_achievement(struct binary_serializer* serializer, Achieveme
     serialize_s8(serializer, &achievement->notified_of_unlock);
 }
 
-void Game::serialize_game_state(struct binary_serializer* serializer) {
+Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
     Save_File save_data = construct_save_data();
 
     // Serialize fields
@@ -1764,8 +1772,8 @@ void Game::serialize_game_state(struct binary_serializer* serializer) {
         }
     }
     
-    update_from_save_data(&save_data);
     // unimplemented("save mode");
+    return save_data;
 }
 
 

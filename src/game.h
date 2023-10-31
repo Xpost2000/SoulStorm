@@ -99,7 +99,7 @@ private:
     void save_game();
     void load_game();
     Save_File construct_save_data();
-    void serialize_game_state(struct binary_serializer* serializer);
+    Save_File serialize_game_state(struct binary_serializer* serializer);
     void update_from_save_data(Save_File* save_data);
 
     void notify_new_achievement(s32 id);
