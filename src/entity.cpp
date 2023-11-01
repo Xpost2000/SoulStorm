@@ -193,7 +193,7 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
 
     // refactor this to maybe be a little less unwieldy, but it's not too big of a deal
     // since this will not change much afterwards anyways...
-    switch (play_area.edge_behaviors[0]) {
+    switch (edge_behavior_top) {
         case PLAY_AREA_EDGE_DEADLY:
         case PLAY_AREA_EDGE_BLOCKING: {
             if (clamp_to_top_border(play_area))
@@ -208,7 +208,7 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
         case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
     }
 
-    switch (play_area.edge_behaviors[1]) {
+    switch (edge_behavior_bottom) {
         case PLAY_AREA_EDGE_DEADLY:
         case PLAY_AREA_EDGE_BLOCKING: {
             if (clamp_to_bottom_border(play_area))
@@ -223,7 +223,7 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
         case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
     }
 
-    switch (play_area.edge_behaviors[2]) {
+    switch (edge_behavior_left) {
         case PLAY_AREA_EDGE_DEADLY:
         case PLAY_AREA_EDGE_BLOCKING: {
             if (clamp_to_left_border(play_area))
@@ -238,7 +238,7 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
         case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
     }
 
-    switch (play_area.edge_behaviors[3]) {
+    switch (edge_behavior_right) {
         case PLAY_AREA_EDGE_DEADLY:
         case PLAY_AREA_EDGE_BLOCKING: {
             if (clamp_to_right_border(play_area))
