@@ -1239,16 +1239,6 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     }
 
     if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
-        // NOTE: add stage update
-        //       to start reading the script.
-        if (Input::is_key_down(KEY_SPACE)) {
-            // okay these are normal real bullets
-            if (state->player.attack()) {
-                spawn_bullet_upwards_linear(this->state, state->player.position + V2(-10, 0), V2(0, -1), 1250.0f, BULLET_SOURCE_PLAYER);
-                spawn_bullet_upwards_linear(this->state, state->player.position + V2(10, 0), V2(0, -1), 1250.0f, BULLET_SOURCE_PLAYER);
-            }
-        }
-
         for (int i = 0; i < (int)state->bullets.size; ++i) {
             auto& b = state->bullets[i];
             b.update(this->state, dt);

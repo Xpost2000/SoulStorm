@@ -47,6 +47,7 @@ struct Timer {
 #define PLAYER_INVINICIBILITY_TIME (1.35)
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
 #define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.0f)
+#define DEFAULT_FIRING_COOLDOWN (0.035)
 
 // NOTE: no real system for a visual sprite quite yet.
 struct Entity {
@@ -65,7 +66,7 @@ struct Entity {
     bool  flashing      = false; // flicker on or off
 
     f32   firing_t      = 0;
-    f32   firing_cooldown = 0.035f;
+    f32   firing_cooldown = DEFAULT_FIRING_COOLDOWN;
     bool  firing        = false;
 
     bool attack();
@@ -209,6 +210,9 @@ struct Laser_Hazard {
     rectangle_f32 get_rect(const Play_Area* area);
 };
 
+// NOTE: for slightly different player types, I might need to rework some player behaviors...
+//       This was not totally planned for, but I might just keep only one player type so I can actually
+//       meet my arbitrary deadline.
 struct Player : public Entity {
     // I think I just want the instant death system, which is a bit painful but
     // okay! Just have a bunch of lives.
@@ -216,6 +220,9 @@ struct Player : public Entity {
     // I did have plans for slightly different player types to make it interesting
     // but I'll see about that later.
     void update(Game_State* state, f32 dt);
+
+    // a focused character will be slower and shoot 'harder' and faster.
+    bool under_focus = false;
 };
 
 enum Bullet_Source {

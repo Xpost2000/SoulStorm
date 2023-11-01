@@ -357,7 +357,11 @@ void Player::update(Game_State* state, f32 dt) {
     // unfortunately the action mapper system doesn't exist
     // here like it did in the last project, so I'll have to use key inputs
     // and gamepad power.
-    auto gamepad = Input::get_gamepad(0);
+    auto gamepad  = Input::get_gamepad(0);
+    bool firing   = Input::is_key_down(KEY_SPACE) || gamepad->buttons[BUTTON_A];
+    bool focusing = Input::is_key_down(KEY_SHIFT) || gamepad->buttons[BUTTON_X];
+
+    under_focus = focusing;
 
     V2 axes = V2(
         1 * (Input::is_key_down(KEY_D) || Input::is_key_down(KEY_RIGHT)) + (-1) * (Input::is_key_down(KEY_A) || Input::is_key_down(KEY_LEFT)),
@@ -373,7 +377,7 @@ void Player::update(Game_State* state, f32 dt) {
         axes[1] = gamepad->left_stick.axes[1];
     }
 
-    const float UNIT_SPEED = 550;
+    float UNIT_SPEED = (under_focus) ? 225 : 550;
 
     velocity.x = axes[0] * UNIT_SPEED;
     velocity.y = axes[1] * UNIT_SPEED;
@@ -381,6 +385,21 @@ void Player::update(Game_State* state, f32 dt) {
     Entity::update(state, dt);
 
     handle_play_area_edge_behavior(play_area);
+
+    firing_cooldown = (under_focus) ? (DEFAULT_FIRING_COOLDOWN/2) : DEFAULT_FIRING_COOLDOWN;
+
+    if (firing) {
+        // okay these are normal real bullets
+        if (attack()) {
+            if (under_focus) {
+                spawn_bullet_upwards_linear(state, position + V2(-10, 0), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
+                spawn_bullet_upwards_linear(state, position + V2(10, 0), V2(0, -1), 1250.0f, BULLET_SOURCE_PLAYER);
+            } else {
+                spawn_bullet_upwards_linear(state, position + V2(-10, 0), V2(0, -1), 1250.0f, BULLET_SOURCE_PLAYER);
+                spawn_bullet_upwards_linear(state, position + V2(10, 0), V2(0, -1), 1250.0f, BULLET_SOURCE_PLAYER);
+            }
+        }
+    }
 }
 
 // BulletEntity
