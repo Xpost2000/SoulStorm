@@ -1,5 +1,8 @@
 #include "input.h"
 
+// NOTE: if I'm exposing this to a config, especially a lua one where arbitrary parsing
+//       can happen, I need to make these actually error out sometimes!
+
 namespace Input {
     struct {
         struct input_state current_state;
@@ -121,6 +124,76 @@ namespace Input {
         return false;
     }
 
+    f32 controller_left_axis(struct game_controller* controller, u8 axis_id) {
+        if (!controller) return 0.0f;
+
+        switch (axis_id) {
+            case GAMEPAD_AXIS_X: return controller->left_stick.axes[0];
+            case GAMEPAD_AXIS_Y: return controller->left_stick.axes[1];
+            case GAMEPAD_AXIS_POSITIVE_X: {
+                if (controller->left_stick.axes[0] > 0)
+                    return controller->left_stick.axes[0];
+                else
+                    return 0.0f;
+            } break;
+            case GAMEPAD_AXIS_NEGATIVE_X: {
+                if (controller->left_stick.axes[0] < 0)
+                    return controller->left_stick.axes[0];
+                else
+                    return 0.0f;
+            } break;
+            case GAMEPAD_AXIS_POSITIVE_Y: {
+                if (controller->left_stick.axes[1] > 0)
+                    return controller->left_stick.axes[1];
+                else
+                    return 0.0f;
+            } break;
+            case GAMEPAD_AXIS_NEGATIVE_Y: {
+                if (controller->left_stick.axes[1] < 0)
+                    return controller->left_stick.axes[1];
+                else
+                    return 0.0f;
+            } break;
+        }
+
+        return 0.0f;
+    }
+
+    f32 controller_right_axis(struct game_controller* controller, u8 axis_id) {
+        if (!controller) return 0.0f;
+
+        switch (axis_id) {
+            case GAMEPAD_AXIS_X: return controller->right_stick.axes[0];
+            case GAMEPAD_AXIS_Y: return controller->right_stick.axes[1];
+            case GAMEPAD_AXIS_POSITIVE_X: {
+                if (controller->right_stick.axes[0] > 0)
+                    return controller->right_stick.axes[0];
+                else
+                    return 0.0f;
+            } break;
+            case GAMEPAD_AXIS_NEGATIVE_X: {
+                if (controller->right_stick.axes[0] < 0)
+                    return controller->right_stick.axes[0];
+                else
+                    return 0.0f;
+            } break;
+            case GAMEPAD_AXIS_POSITIVE_Y: {
+                if (controller->right_stick.axes[1] > 0)
+                    return controller->right_stick.axes[1];
+                else
+                    return 0.0f;
+            } break;
+            case GAMEPAD_AXIS_NEGATIVE_Y: {
+                if (controller->right_stick.axes[1] < 0)
+                    return controller->right_stick.axes[1];
+                else
+                    return 0.0f;
+            } break;
+        }
+
+        return 0.0f;
+    }
+
     bool controller_button_pressed(struct game_controller* controller, u8 button_id) {
         if (controller) {
             bool last    = controller->last_buttons[button_id];
@@ -131,6 +204,32 @@ namespace Input {
             } else if (current == true && last == false) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    bool controller_left_axis_flicked(struct game_controller* controller, u8 axis_id) {
+        if (controller) {
+            auto last    = controller->last_left_stick;
+            auto current = controller->left_stick;
+
+            f32 difference = current.axes[axis_id] - last.axes[axis_id];
+
+            return difference >= CONTROLLER_AXIS_FLICK_TOLERANCE;
+        }
+
+        return false;
+    }
+
+    bool controller_right_axis_flicked(struct game_controller* controller, u8 axis_id) {
+        if (controller) {
+            auto last    = controller->last_right_stick;
+            auto current = controller->right_stick;
+
+            f32 difference = current.axes[axis_id] - last.axes[axis_id];
+
+            return difference >= CONTROLLER_AXIS_FLICK_TOLERANCE;
         }
 
         return false;
@@ -153,9 +252,9 @@ namespace Input {
 
             {
                 controller->last_triggers    = controller->triggers;
-                controller->last_left_stick  = controller->last_left_stick;
-                controller->last_right_stick = controller->last_right_stick;
-                memory_copy(controller->last_buttons, controller->buttons, sizeof(controller->buttons));
+                controller->last_left_stick  = controller->left_stick;
+                controller->last_right_stick = controller->right_stick;
+                memory_copy(controller->buttons, controller->last_buttons, sizeof(controller->buttons));
             }
         }
 

@@ -18,7 +18,10 @@ enum mouse_button {
 };
 
 enum gamepad_axis {
-    GAMEPAD_AXIS_POSITIVE_X=1,
+    GAMEPAD_AXIS_X,
+    GAMEPAD_AXIS_Y,
+
+    GAMEPAD_AXIS_POSITIVE_X,
     GAMEPAD_AXIS_NEGATIVE_X,
     GAMEPAD_AXIS_POSITIVE_Y,
     GAMEPAD_AXIS_NEGATIVE_Y,
@@ -187,12 +190,14 @@ static const char* keyboard_key_strings(int key) {
 enum {
     CONTROLLER_JOYSTICK_LEFT,
     CONTROLLER_JOYSTICK_RIGHT,
+    CONTROLLER_JOYSTICK_UNKNOWN,
 };
 
 struct game_controller_triggers {
     f32 left;
     f32 right;
 };
+#define CONTROLLER_AXIS_FLICK_TOLERANCE (0.15)
 struct game_controller_joystick {
     f32 axes[2];
 };
@@ -230,17 +235,18 @@ namespace Input {
     game_controller* get_game_controller(int idx);
 
     const char* controller_button_to_string(s32 buttonid);
-    // TODO:
-    /* s32    string_to_controller_button(const char* buttonstring); */
     void   controller_rumble(struct game_controller* controller, f32 x_magnitude, f32 y_magnitude, u32 ms);
     bool   controller_button_down(struct game_controller* controller, u8 button_id);
     bool   controller_button_down_with_repeat(struct game_controller* controller, u8 button_id);
     bool   controller_button_pressed(struct game_controller* controller, u8 button_id);
+    f32    controller_left_axis(struct game_controller* controller, u8 axis_id);
+    f32    controller_right_axis(struct game_controller* controller, u8 axis_id);
+
+    // TODO: neither of these are accurate or allow the "full axis range" I put in the above enums.
+    bool   controller_left_axis_flicked(struct game_controller* controller, u8 axis_id);
+    bool   controller_right_axis_flicked(struct game_controller* controller, u8 axis_id);
 
     const char* keycode_to_string(s32 keyid);
-    // TODO: need to figure out how to get this to work because
-    // it's switch case cause C++ doesn't support arbitrary initializers
-    /* s32    string_to_keyid(const char* string); */
     struct game_controller* get_gamepad(s32 index);
 
     float angle_formed_by_joystick(struct game_controller* controller, s32 which);
