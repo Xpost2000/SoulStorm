@@ -433,9 +433,6 @@ void Enemy_Entity::update(Game_State* state, f32 dt) {
         outside_boundaries_lifetime_timer.reset();
     }
 
-    firing_timer.start();
-    firing_timer.update(dt);
-
     velocity = V2(0, 0);
     if (velocity_function) {
         velocity_function(this, state, dt);
@@ -446,11 +443,10 @@ void Enemy_Entity::update(Game_State* state, f32 dt) {
 }
 
 void Enemy_Entity::try_and_fire(Game_State* state, f32 dt) {
-    if (firing_timer.triggered()) {
+    if (attack()) {
         if (on_fire_function) {
             on_fire_function(this, state, dt);
         }
-        firing_timer.reset();
     }
 }
 

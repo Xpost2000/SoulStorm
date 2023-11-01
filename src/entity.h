@@ -119,8 +119,7 @@ struct Entity {
 };
 
 struct Enemy_Entity : public Entity {
-    Timer outside_boundaries_lifetime_timer;
-    Timer firing_timer;
+    Timer outside_boundaries_lifetime_timer = Timer(10.0f);
     std::function<void(Enemy_Entity*, Game_State* const, f32)> velocity_function;
     std::function<void(Enemy_Entity*, Game_State*, f32)> on_fire_function;
 
