@@ -1332,8 +1332,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             if (state->intro.stage != GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE) {
                 ingame_update_introduction_sequence(&ui_render_commands, resources, dt);
             } else {
-                auto& stage_state = state->stage_state;
-                bool can_finish_stage = stage_state.update(&stage_state, dt, state);
+                bool can_finish_stage = stage_update(&state->stage_state, dt, state);
 
                 if (!state->triggered_stage_completion_cutscene && can_finish_stage) {
                     state->triggered_stage_completion_cutscene = true;
@@ -1349,10 +1348,9 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     }
 
     // main game rendering
-    { // draw stage specific things if I need to.
-        auto& stage_state = state->stage_state;
-        // NOTE: post processing will need a separate pass, but mostly with specific render commands.
-        stage_state.draw(&stage_state, dt, &game_render_commands, state);
+    // draw stage specific things if I need to.
+    { 
+        stage_draw(&state->stage_state, dt, &game_render_commands, state);
     }
     {
         for (int i = 0; i < (int)state->bullets.size; ++i) {

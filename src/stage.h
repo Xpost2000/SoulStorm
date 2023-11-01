@@ -39,6 +39,7 @@ typedef bool (*Stage_Update_Function)(Stage_State*, f32, Gameplay_Data*);
 // NOTE: the stage state is separate from the Stage information
 // which is in stages.h, which I think is fine for now. Not sure if that will change.
 struct Stage_State {
+    f32 timer; // generic timer in case I don't want anything too specific.
     s16 phase; // This is for choreography phases in C++.
                // I.E.: Enemy waves.
                // If working in LUA, this will be handled through some coroutines.
@@ -58,5 +59,8 @@ struct Stage_State {
 
 Stage_State stage_load_from_lua(const char* lua_filename);
 Stage_State stage_null(void); // A stage that finishes instantly.
+
+bool stage_update(Stage_State* stage, f32 dt, Gameplay_Data* gameplay_data);
+void stage_draw(Stage_State* stage, f32 dt, struct render_commands* render_commands, Gameplay_Data* gameplay_data);
 
 #endif
