@@ -652,6 +652,21 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                 }
             }
 
+            if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                switch_ui(UI_STATE_INACTIVE);
+
+                // undo the camera zoom
+
+                if (camera_not_already_interpolating_for(&state->mainmenu_data.main_camera, V2(commands->screen_width/2, commands->screen_height/2), 1.0)) {
+                    camera_set_point_to_interpolate(
+                        &state->mainmenu_data.main_camera,
+                        V2(commands->screen_width/2, commands->screen_height/2),
+                        1.0
+                    );
+                }
+            }
+            y += 30;
+
             if (display_level_icon != -1) {
                 // I don't have icon images yet, so the best I have is just printing text.
                 auto& level = stage.levels[display_level_icon];
@@ -692,21 +707,6 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                 );
             }
         }
-
-        if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-            switch_ui(UI_STATE_INACTIVE);
-
-            // undo the camera zoom
-
-            if (camera_not_already_interpolating_for(&state->mainmenu_data.main_camera, V2(commands->screen_width/2, commands->screen_height/2), 1.0)) {
-                camera_set_point_to_interpolate(
-                    &state->mainmenu_data.main_camera,
-                    V2(commands->screen_width/2, commands->screen_height/2),
-                    1.0
-                );
-            }
-        }
-        y += 30;
 
         {
             if (Action::is_pressed(ACTION_MOVE_DOWN)) {
@@ -830,11 +830,6 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
 
 
     auto subtitle_font = resources->get_font(MENU_FONT_COLOR_GOLD);
-
-    {
-        string text = string_literal("achievement ui test");
-        render_commands_push_text(commands, subtitle_font, 2, V2(0, 0), text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
-    }
 
     for (s32 index = notifications.size-1; index >= 0; index--) {
         auto& notification = notifications[index];
@@ -1371,7 +1366,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 
     // Handle transitions or stage specific data
     // so like cutscene/coroutine required sort of behaviors...
-    {
+    if (this->state->ui_state == UI_STATE_INACTIVE) {
         if (!Transitions::fading()) {
             if (state->intro.stage != GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE) {
                 ingame_update_introduction_sequence(&ui_render_commands, resources, dt);

@@ -82,10 +82,10 @@ namespace Action {
 
         switch (action.joystick_id) {
             case CONTROLLER_JOYSTICK_LEFT: {
-                controller_response = Input::controller_left_axis_flicked(gamepad, action.axis_id);
+                controller_response |= Input::controller_left_axis_flicked(gamepad, action.axis_id);
             } break;
             case CONTROLLER_JOYSTICK_RIGHT: {
-                controller_response = Input::controller_right_axis_flicked(gamepad, action.axis_id);
+                controller_response |= Input::controller_right_axis_flicked(gamepad, action.axis_id);
             } break;
         }
 

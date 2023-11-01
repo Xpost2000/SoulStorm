@@ -449,4 +449,9 @@ namespace Input {
 
         return false;
     }
+
+    rectangle_f32 mouse_rectangle(f32 k) {
+        V2 mouse_position = Input::mouse_location();
+        return rectangle_f32(mouse_position.x, mouse_position.y, k, k);
+    }
 }

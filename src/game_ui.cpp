@@ -9,8 +9,7 @@
 /*
   NOTE:
 
-  This UI wasn't really designed with a controller in mind, so
-  this is pretty bad tbh.
+  This UI wasn't really designed with keyboard in mind so whoops.
 */
 
 enum Widget_Type {
@@ -22,6 +21,7 @@ enum Widget_Type {
     WIDGET_TYPE_F32_SLIDER,
 };
 
+// TODO: not accounting for inactives.
 struct Widget {
     u32        type;
     V2         where;
@@ -101,6 +101,15 @@ namespace GameUI {
     }
 
     local bool is_selected_widget(Widget* widget) {
+        if (widget->type == WIDGET_TYPE_OPTION_SELECTOR) {
+            // NOTE: not working. Not a big deal but check later...
+            return (
+                widget->id   == global_ui_state.selected_index ||
+                widget->id+1 == global_ui_state.selected_index ||
+                widget->id-1 == global_ui_state.selected_index
+            );
+        }
+
         return widget->id-1 == global_ui_state.selected_index;
     }
 
@@ -217,18 +226,20 @@ namespace GameUI {
         auto text_height    = font_cache_text_height(font) * widget->scale;
         auto button_rect    = rectangle_f32(widget->where.x, widget->where.y, text_width, text_height);
 
-        V2   mouse_position = Input::mouse_location();
         bool clicked        = false;
 
+        auto mouse_rect = Input::mouse_rectangle();
+        bool intersecting = rectangle_f32_intersect(button_rect, mouse_rect);
+
         s32 status = WIDGET_ACTION_NONE;
-        if (is_selectable_on_active(widget) && active && (is_currently_hot(widget) || rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5)))) {
+        if (is_selectable_on_active(widget) && active && (is_currently_hot(widget) || intersecting)) {
             font = global_ui_state.active_font;
-            if (Input::mouse_left() && rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5))) {
+            if (Input::mouse_left() && intersecting) {
                 font = global_ui_state.selected_font;
                 register_hot_widget(widget);
             }
             
-            if ((Input::pressed_mouse_left() && rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5)))
+            if ((Input::pressed_mouse_left() && intersecting)
                 || (Action::is_pressed(ACTION_ACTION) && is_selected_widget(widget))) {
                 status = WIDGET_ACTION_ACTIVATE;
             } else {
@@ -236,9 +247,6 @@ namespace GameUI {
             }
         }
 
-#ifndef RELEASE
-        render_commands_push_quad(global_ui_state.commands, button_rect, color32u8(255, 0, 0, 64), BLEND_MODE_ALPHA);
-#endif
         if (!active) widget->modulation.a = 0.5 * modulation.a;
         else         widget->modulation.a = 1.0 * modulation.a;
         render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
@@ -254,17 +262,18 @@ namespace GameUI {
         auto text_height    = font_cache_text_height(font) * widget->scale;
         auto button_rect    = rectangle_f32(widget->where.x + text_width * 1.15f, widget->where.y, text_height, text_height);
 
-        V2   mouse_position = Input::mouse_location();
+        auto mouse_rect = Input::mouse_rectangle();
+        bool intersecting = rectangle_f32_intersect(button_rect, mouse_rect);
         bool clicked        = false;
 
-        if (is_selectable_on_active(widget) && active && (is_currently_hot(widget) || rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5)))) {
+        if (is_selectable_on_active(widget) && active && (is_currently_hot(widget) || intersecting)) {
             font = global_ui_state.active_font;
-            if (Input::mouse_left() && rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5))) {
+            if (Input::mouse_left() && intersecting) {
                 font = global_ui_state.selected_font;
                 register_hot_widget(widget);
             }
             
-            if ((Input::pressed_mouse_left() && rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5))) || (Action::is_pressed(ACTION_ACTION) && is_selected_widget(widget))) {
+            if ((Input::pressed_mouse_left() && intersecting) || (Action::is_pressed(ACTION_ACTION) && is_selected_widget(widget))) {
                 *ptr ^= 1;
             } else {
             }
@@ -306,20 +315,22 @@ namespace GameUI {
         where.x += font_cache_text_width(font, longest_string_in_list(options, options_count), widget->scale) * 1.25;
 
         // no wrapping behavior
-        if (button(where, string_literal("[+]"), modulation, scale, active) == WIDGET_ACTION_ACTIVATE) {
-            widget->current_selected_index += 1;
-            if (widget->current_selected_index >= options_count) {
-                widget->current_selected_index = options_count - 1;
-            }
-        }
-        where.x += font_cache_text_width(font, string_literal("[+]"), widget->scale)*1.2;
-        if (button(where, string_literal("[-]"), modulation, scale, active) == WIDGET_ACTION_ACTIVATE) {
+        if (button(where, string_literal("[<<]"), modulation, scale, active) == WIDGET_ACTION_ACTIVATE ||
+            is_selected_widget(widget) && Action::is_pressed(ACTION_MOVE_LEFT)) {
             widget->current_selected_index -= 1;
             if (widget->current_selected_index < 0) {
                 widget->current_selected_index = 0;
             }
         }
-        where.x += font_cache_text_width(font, string_literal("[-]"), widget->scale);
+        where.x += font_cache_text_width(font, string_literal("[<<]"), widget->scale);
+        if (button(where, string_literal("[>>]"), modulation, scale, active) == WIDGET_ACTION_ACTIVATE ||
+            is_selected_widget(widget) && Action::is_pressed(ACTION_MOVE_RIGHT)) {
+            widget->current_selected_index += 1;
+            if (widget->current_selected_index >= options_count) {
+                widget->current_selected_index = options_count - 1;
+            }
+        }
+        where.x += font_cache_text_width(font, string_literal("[>>]"), widget->scale)*1.2;
 
         // thankfully this is just a label and some buttons.
         *out_selected = widget->current_selected_index;
@@ -338,9 +349,14 @@ namespace GameUI {
         const f32 range = (max_value - min_value);
 
         V2 mouse_position = Input::mouse_location();
-        if (is_selectable_on_active(widget) && active && (is_currently_hot(widget) || rectangle_f32_intersect(bar_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5)))) {
+
+        auto mouse_rect = Input::mouse_rectangle();
+        bool intersecting = rectangle_f32_intersect(bar_rect, mouse_rect);
+
+        if (is_selectable_on_active(widget) && active && (is_currently_hot(widget) || intersecting)) {
             font = global_ui_state.active_font;
-            if (Input::mouse_left() && rectangle_f32_intersect(bar_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5))) {
+
+            if (Input::mouse_left() && intersecting) {
                 register_hot_widget(widget);
                 font = global_ui_state.selected_font;
 
@@ -350,9 +366,15 @@ namespace GameUI {
             }
 
             if (is_selected_widget(widget)) {
-                // think of better metric?
-                // NOTE: not sure how to make this work.
-                // *ptr += (Action::value(ACTION_MOVE_RIGHT) + Action::value(ACTION_MOVE_LEFT)) / range;
+                // usually this doesn't hurt anyone...
+                if (Action::is_pressed(ACTION_MOVE_RIGHT)) {
+                    *ptr += range/4.0f;
+                } else if (Action::is_pressed(ACTION_MOVE_LEFT)) {
+                    *ptr -= range/4.0f;
+                }
+
+                if (*ptr < min_value) *ptr = min_value;
+                if (*ptr > max_value) *ptr = max_value;
             }
         }
 
@@ -396,6 +418,10 @@ namespace GameUI {
     }
 
     void end_frame() {
+        auto font           = global_ui_state.default_font;
+        render_commands_push_text(global_ui_state.commands, font, 1.0, V2(0,0),
+                                  string_from_cstring(format_temp("(lastui_id: %s)\nselected_index: %d\n", global_ui_state.last_ui_id, global_ui_state.selected_index)), color32f32(1,1,1,1), BLEND_MODE_ALPHA);
+
         global_ui_state.in_frame = false;
         global_ui_state.commands = nullptr;
 
@@ -424,6 +450,7 @@ namespace GameUI {
     }
 
     void move_selected_widget_id(s32 increments) {
+        // NOTE: I want to skip the [+][-] buttons in the future
         global_ui_state.selected_index += increments;
 
         if (global_ui_state.selected_index < 0) {
@@ -435,7 +462,7 @@ namespace GameUI {
         auto& next_widget = global_ui_state.widgets[global_ui_state.selected_index];
 
         if (!is_selectable_widget_type(next_widget.type)) {
-            return move_selected_widget_id(sign_s32(increments));
+            move_selected_widget_id(sign_s32(increments));
         }
     }
 }
