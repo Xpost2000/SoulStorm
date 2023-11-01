@@ -29,12 +29,14 @@
  * all the stage specific data is defined here and implemented in one file.
  */
 
+// NOTE: should change to use gameplay data, but just in-case...
+
 struct Stage_State;
 struct Gameplay_Data;
 struct render_commands;
 
-typedef void (*Stage_Draw_Function)(Stage_State*, f32, struct render_commands*, Gameplay_Data*);
-typedef bool (*Stage_Update_Function)(Stage_State*, f32, Gameplay_Data*);
+typedef void (*Stage_Draw_Function)(Stage_State*, f32, struct render_commands*, Game_State*);
+typedef bool (*Stage_Update_Function)(Stage_State*, f32, Game_State*);
 
 // NOTE: the stage state is separate from the Stage information
 // which is in stages.h, which I think is fine for now. Not sure if that will change.
@@ -58,9 +60,19 @@ struct Stage_State {
 };
 
 Stage_State stage_load_from_lua(const char* lua_filename);
+
 Stage_State stage_null(void); // A stage that finishes instantly.
 
-bool stage_update(Stage_State* stage, f32 dt, Gameplay_Data* gameplay_data);
-void stage_draw(Stage_State* stage, f32 dt, struct render_commands* render_commands, Gameplay_Data* gameplay_data);
+// The main goal is to obviously avoid keeping these in code, but until I get
+// lua support, there's little reason to avoid doing this imo.
+// only boss stages are intended to actually be kept in C++ since they may be more complicated.
+/* Stage 1 */
+Stage_State stage_native_stage_1_1(void);
+/* Stage 2 */
+/* Stage 3 */
+/* Stage 4 */
+
+bool stage_update(Stage_State* stage, f32 dt, Game_State* gameplay_data);
+void stage_draw(Stage_State* stage, f32 dt, struct render_commands* render_commands, Game_State* gameplay_data);
 
 #endif

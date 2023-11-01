@@ -155,7 +155,12 @@ void Game::setup_stage_start() {
         s32 stage_id = this->state->mainmenu_data.stage_id_level_select;
         s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
         // NOTE: check the ids later.
-        state->stage_state = stage_null();
+
+        if (stage_id == 0 && level_id == 0) {
+            state->stage_state = stage_native_stage_1_1();
+        } else {
+            state->stage_state = stage_null();
+        }
     }
 
     state->player.position = V2(state->play_area.width / 2, 300);
@@ -308,6 +313,22 @@ void Gameplay_Data::add_explosion_hazard(Explosion_Hazard h) {
 
 void Gameplay_Data::add_enemy_entity(Enemy_Entity e) {
     enemies.push(e);
+}
+
+bool Gameplay_Data::any_hazards() const {
+    return (laser_hazards.size > 0) || (explosion_hazards.size > 0);
+}
+
+bool Gameplay_Data::any_enemies() const {
+    return (enemies.size > 0);
+}
+
+bool Gameplay_Data::any_bullets() const {
+    return (bullets.size > 0);
+}
+
+bool Gameplay_Data::any_living_danger() const {
+    return any_enemies() || any_hazards();
 }
 
 bool Game::can_access_stage(s32 id) {
@@ -1271,7 +1292,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             if (state->intro.stage != GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE) {
                 ingame_update_introduction_sequence(&ui_render_commands, resources, dt);
             } else {
-                bool can_finish_stage = stage_update(&state->stage_state, dt, state);
+                bool can_finish_stage = stage_update(&state->stage_state, dt, this->state);
 
                 if (!state->triggered_stage_completion_cutscene && can_finish_stage) {
                     state->triggered_stage_completion_cutscene = true;
@@ -1281,7 +1302,9 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
                     }
                 }
 
-                ingame_update_complete_stage_sequence(&ui_render_commands, resources, dt);
+                if (state->triggered_stage_completion_cutscene) {
+                    ingame_update_complete_stage_sequence(&ui_render_commands, resources, dt);
+                }
             }
         }
     }
@@ -1289,7 +1312,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     // main game rendering
     // draw stage specific things if I need to.
     { 
-        stage_draw(&state->stage_state, dt, &game_render_commands, state);
+        stage_draw(&state->stage_state, dt, &game_render_commands, this->state);
     }
     {
         for (int i = 0; i < (int)state->bullets.size; ++i) {
@@ -1305,6 +1328,11 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
             auto& h = state->laser_hazards[i];
             h.draw(this->state, &game_render_commands, resources);
+        }
+
+        for (int i = 0; i < (s32)state->enemies.size; ++i) {
+            auto& e = state->enemies[i];
+            e.draw(this->state, &game_render_commands, resources);
         }
 
         state->player.draw(this->state, &game_render_commands, resources);

@@ -174,6 +174,11 @@ struct Gameplay_Data {
     void add_laser_hazard(Laser_Hazard h);
     void add_explosion_hazard(Explosion_Hazard h);
     void add_enemy_entity(Enemy_Entity e);
+
+    bool any_hazards() const;
+    bool any_enemies() const;
+    bool any_bullets() const;
+    bool any_living_danger() const;
 };
 
 enum UI_State_Mode {
