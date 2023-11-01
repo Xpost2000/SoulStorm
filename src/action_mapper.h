@@ -24,6 +24,7 @@ enum Action_ID {
 };
 
 namespace Action {
+    // TODO: add with_repeat
     void register_action_keys(s32 action_id, s32 key_id, s32 key_id2=KEY_UNKNOWN, f32 analog_value=1.0);
     void register_action_button(s32 action_id, s32 button_id, f32 analog_value=1.0);
     void register_action_joystick_axis(s32 action_id, s32 which, s32 axis_id);

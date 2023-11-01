@@ -391,6 +391,7 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
+    GameUI::set_ui_id((char*)"ui_options_menu");
     GameUI::begin_frame(commands);
     {
 
@@ -460,6 +461,20 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
             switch_ui(state->last_ui_state);
         }
         y += 30;
+
+        {
+            if (Action::is_pressed(ACTION_MOVE_DOWN)) {
+                GameUI::move_selected_widget_id(1);
+            }
+
+            if (Action::is_pressed(ACTION_MOVE_UP)) {
+                GameUI::move_selected_widget_id(-1);
+            }
+
+            if (Action::is_pressed(ACTION_CANCEL)) {
+                switch_ui(state->last_ui_state);
+            }
+        }
     }
     GameUI::end_frame();
 }
@@ -470,6 +485,7 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
+    GameUI::set_ui_id((char*)"ui_pause_menu");
     GameUI::begin_frame(commands);
     {
         f32 y = 100;
@@ -562,6 +578,24 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
                 }
             );
         }
+
+        // NOTE:
+        // all the UI is the same with both interfaces, and fortunately because
+        // the game has extremely basic UI layout and design, I don't think there's
+        // anything crazy I need.
+        {
+            if (Action::is_pressed(ACTION_MOVE_DOWN)) {
+                GameUI::move_selected_widget_id(1);
+            }
+
+            if (Action::is_pressed(ACTION_MOVE_UP)) {
+                GameUI::move_selected_widget_id(-1);
+            }
+
+            if (Action::is_pressed(ACTION_CANCEL)) {
+                switch_ui(state->last_ui_state);
+            }
+        }
     }
     GameUI::end_frame();
     GameUI::update(dt);
@@ -573,6 +607,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
+    GameUI::set_ui_id((char*)"ui_stage_select_menu");
     GameUI::begin_frame(commands);
     {
         s32   stage_id = state->mainmenu_data.stage_id_level_select;
@@ -672,6 +707,20 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
             }
         }
         y += 30;
+
+        {
+            if (Action::is_pressed(ACTION_MOVE_DOWN)) {
+                GameUI::move_selected_widget_id(1);
+            }
+
+            if (Action::is_pressed(ACTION_MOVE_UP)) {
+                GameUI::move_selected_widget_id(-1);
+            }
+
+            if (Action::is_pressed(ACTION_CANCEL)) {
+                switch_ui(state->last_ui_state);
+            }
+        }
     }
     GameUI::end_frame();
     GameUI::update(dt);
@@ -681,6 +730,7 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
     if (state->gameplay_data.paused_from_death) {
         render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     }
+    GameUI::set_ui_id((char*)"ui_gameover_menu");
     GameUI::begin_frame(commands);
     {
         
@@ -752,6 +802,20 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
             );
         }
         y += 30;
+
+        {
+            if (Action::is_pressed(ACTION_MOVE_DOWN)) {
+                GameUI::move_selected_widget_id(1);
+            }
+
+            if (Action::is_pressed(ACTION_MOVE_UP)) {
+                GameUI::move_selected_widget_id(-1);
+            }
+
+            if (Action::is_pressed(ACTION_CANCEL)) {
+                switch_ui(state->last_ui_state);
+            }
+        }
     }
     GameUI::end_frame();
     GameUI::update(dt);
@@ -842,7 +906,9 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
 void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt) {
     switch (state->ui_state) {
         case UI_STATE_INACTIVE: {
-            
+            if (state->screen_mode != GAME_SCREEN_CREDITS) {
+                GameUI::set_ui_id(0);
+            }
         } break;
         case UI_STATE_PAUSED: {
             update_and_render_pause_menu(commands, dt);

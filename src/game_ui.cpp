@@ -1,9 +1,17 @@
 #include "input.h"
+#include "action_mapper.h"
 
 #include "game_ui.h"
 #include "fixed_array.h"
 
 #define RELEASE
+
+/*
+  NOTE:
+
+  This UI wasn't really designed with a controller in mind, so
+  this is pretty bad tbh.
+*/
 
 enum Widget_Type {
     WIDGET_TYPE_UNKNOWN,
@@ -39,6 +47,14 @@ struct UI_State {
 
     s32 hot_index = -1;
     bool ate_any_mouse_lefts = false;
+
+    // Don't want a frame of latency to possibly
+    // break things...
+    bool picked_first_index = false;
+    s32 selected_index = 0;
+
+    char* last_ui_id;
+    char* ui_id;
 };
 
 // void render_commands_push_text(
@@ -57,19 +73,44 @@ local UI_State global_ui_state = {};
   NOTE: this is sort of like a stateful IMGUI, which is an oxymoron!
  */
 namespace GameUI {
+    local bool is_selectable_widget_type(s32 type) {
+        switch (type) {
+            case WIDGET_TYPE_UNKNOWN:
+            case WIDGET_TYPE_TEXT:
+                return false;
+            case WIDGET_TYPE_OPTION_SELECTOR:
+            case WIDGET_TYPE_BUTTON:
+            case WIDGET_TYPE_CHECKBOX:
+            case WIDGET_TYPE_F32_SLIDER:
+                return true;
+        }
+        return false;
+    }
     local void common_widget_initialization(Widget* widget, V2 where, string text, f32 scale, color32f32 modulation) {
         widget->id         = global_ui_state.widgets.size;
         widget->where      = where;
         widget->modulation = modulation;
         widget->text       = text;
         widget->scale      = scale;
+
+        if (!global_ui_state.picked_first_index && is_selectable_widget_type(widget->type)) {
+            global_ui_state.selected_index     = widget->id-1;
+            global_ui_state.picked_first_index = true;
+            _debugprintf("I picked my first widget. (%d)", global_ui_state.selected_index);
+        }
+    }
+
+    local bool is_selected_widget(Widget* widget) {
+        return widget->id-1 == global_ui_state.selected_index;
     }
 
     local bool is_selectable_on_active(Widget* widget) {
-        return (global_ui_state.hot_index == -1 || global_ui_state.hot_index == widget->id);
+        return (global_ui_state.hot_index == -1 ||
+                global_ui_state.hot_index == widget->id ||
+                global_ui_state.selected_index == widget->id-1);
     }
     local bool is_currently_hot(Widget* widget) {
-        return (global_ui_state.hot_index == widget->id);
+        return (global_ui_state.hot_index == widget->id || global_ui_state.selected_index == widget->id-1);
     }
 
     local void register_hot_widget(Widget* widget) {
@@ -182,12 +223,13 @@ namespace GameUI {
         s32 status = WIDGET_ACTION_NONE;
         if (is_selectable_on_active(widget) && active && (is_currently_hot(widget) || rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5)))) {
             font = global_ui_state.active_font;
-            if (Input::mouse_left()) {
+            if (Input::mouse_left() && rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5))) {
                 font = global_ui_state.selected_font;
                 register_hot_widget(widget);
             }
             
-            if (Input::pressed_mouse_left()) {
+            if ((Input::pressed_mouse_left() && rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5)))
+                || (Action::is_pressed(ACTION_ACTION) && is_selected_widget(widget))) {
                 status = WIDGET_ACTION_ACTIVATE;
             } else {
                 status = WIDGET_ACTION_HOT;
@@ -217,12 +259,12 @@ namespace GameUI {
 
         if (is_selectable_on_active(widget) && active && (is_currently_hot(widget) || rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5)))) {
             font = global_ui_state.active_font;
-            if (Input::mouse_left()) {
+            if (Input::mouse_left() && rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5))) {
                 font = global_ui_state.selected_font;
                 register_hot_widget(widget);
             }
             
-            if (Input::pressed_mouse_left()) {
+            if ((Input::pressed_mouse_left() && rectangle_f32_intersect(button_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5))) || (Action::is_pressed(ACTION_ACTION) && is_selected_widget(widget))) {
                 *ptr ^= 1;
             } else {
             }
@@ -298,13 +340,19 @@ namespace GameUI {
         V2 mouse_position = Input::mouse_location();
         if (is_selectable_on_active(widget) && active && (is_currently_hot(widget) || rectangle_f32_intersect(bar_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5)))) {
             font = global_ui_state.active_font;
-            if (Input::mouse_left()) {
+            if (Input::mouse_left() && rectangle_f32_intersect(bar_rect, rectangle_f32(mouse_position.x, mouse_position.y, 5, 5))) {
                 register_hot_widget(widget);
                 font = global_ui_state.selected_font;
 
                 // drag the slider around...
                 f32 new_percentage = clamp<f32>((mouse_position.x - bar_rect.x) / slider_width_px, 0.0f, 1.0f);
                 *ptr               = (new_percentage * range) + min_value;
+            }
+
+            if (is_selected_widget(widget)) {
+                // think of better metric?
+                // NOTE: not sure how to make this work.
+                // *ptr += (Action::value(ACTION_MOVE_RIGHT) + Action::value(ACTION_MOVE_LEFT)) / range;
             }
         }
 
@@ -360,6 +408,34 @@ namespace GameUI {
         for (s32 i = 0; i < (s32)global_ui_state.widgets.size; ++i) {
             auto& widget = global_ui_state.widgets[i];
             // Nothing to do right now.
+        }
+    }
+
+    void set_ui_id(char* id_string) {
+        if (global_ui_state.last_ui_id != global_ui_state.ui_id) {
+            global_ui_state.picked_first_index = false;
+            global_ui_state.selected_index     = -1;
+
+            _debugprintf("This is a different UI id.");
+        }
+
+        global_ui_state.last_ui_id = global_ui_state.ui_id;
+        global_ui_state.ui_id = id_string;
+    }
+
+    void move_selected_widget_id(s32 increments) {
+        global_ui_state.selected_index += increments;
+
+        if (global_ui_state.selected_index < 0) {
+            global_ui_state.selected_index = global_ui_state.widgets.size-1;
+        } else if (global_ui_state.selected_index >= global_ui_state.widgets.size) {
+            global_ui_state.selected_index = 0;
+        }
+
+        auto& next_widget = global_ui_state.widgets[global_ui_state.selected_index];
+
+        if (!is_selectable_widget_type(next_widget.type)) {
+            return move_selected_widget_id(sign_s32(increments));
         }
     }
 }

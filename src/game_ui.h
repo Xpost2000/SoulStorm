@@ -29,6 +29,14 @@ enum Widget_Action {
     // like a mouse over
     WIDGET_ACTION_HOT      = 2,
 };
+
+/*
+  Since this is an IMGUI in the simplest sense, I don't store
+  previous UI screen state (usually you'd use a stack to do this, but this game
+  just doesn't need that advanced of a UI unlike Legends, which just had completely
+  hand-coded UI.)
+*/
+
 namespace GameUI {
     void set_font_selected(font_cache* font);
     void set_font_active(font_cache* font);
@@ -49,6 +57,20 @@ namespace GameUI {
     void begin_frame(struct render_commands* commands);
     void end_frame();
     void update(f32 dt);
+
+    /*
+      NOTE:
+      I'm just going to take a page from Eskil Steenberg's book, and take advantage
+      of the fact that string pointers must be unique, so I can just use them as IDs.
+
+      I kind of need them in order to act as a "hash" to figure out if I should reset
+      the selected_widget value from a controller.
+     */
+    void set_ui_id(char* id_string);
+
+    // do I need special logic to go across "multi" element UIs like the option selector which
+    // is composed of multiple selectable widgets?
+    void move_selected_widget_id(s32 increments);
 }
 
 #endif

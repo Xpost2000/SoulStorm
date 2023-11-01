@@ -120,6 +120,12 @@ T clamp(T x, T min, T max) {
     return (i > max)  ? max : i;
 }
 
+inline static s32 sign_s32(s32 a) {
+    if (a > 0) return 1;
+    if (a < 0) return -1;
+    return 0;
+}
+
 inline static s32 lerp_s32(s32 a, s32 b, f32 normalized_t) {
     return a * (1 - normalized_t) + (b * normalized_t);
 }

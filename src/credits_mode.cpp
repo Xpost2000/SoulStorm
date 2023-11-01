@@ -29,6 +29,7 @@ void Game::update_and_render_game_credits(Graphics_Driver* driver, f32 dt) {
         ui_render_commands.screen_height = resolution.y;
     }
 
+    GameUI::set_ui_id((char*)"ui_game_credits");
     GameUI::begin_frame(&ui_render_commands);
     {
         f32 y = 30;
@@ -107,6 +108,20 @@ void Game::update_and_render_game_credits(Graphics_Driver* driver, f32 dt) {
                 );
             }
         );
+    }
+
+    {
+        if (Action::is_pressed(ACTION_MOVE_DOWN)) {
+            GameUI::move_selected_widget_id(1);
+        }
+
+        if (Action::is_pressed(ACTION_MOVE_UP)) {
+            GameUI::move_selected_widget_id(-1);
+        }
+
+        if (Action::is_pressed(ACTION_CANCEL)) {
+            switch_ui(state->last_ui_state);
+        }
     }
     GameUI::end_frame();
     GameUI::update(dt);
