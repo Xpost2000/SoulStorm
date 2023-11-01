@@ -18,17 +18,17 @@ union V2 {
     V2 operator+(const V2& other);
     V2 operator-(const V2& other);
 
-    V2 operator+(f32 scalar);
-    V2 operator-(f32 scalar);
-    V2 operator*(f32 scalar);
-    V2 operator/(f32 scalar);
+    V2 operator+(const f32 scalar);
+    V2 operator-(const f32 scalar);
+    V2 operator*(const f32 scalar);
+    V2 operator/(const f32 scalar);
 
     V2& operator+=(const V2& other);
     V2& operator-=(const V2& other);
-    V2& operator+=(const float& other);
-    V2& operator-=(const float& other);
-    V2& operator*=(const float& other);
-    V2& operator/=(const float& other);
+    V2& operator+=(f32 other);
+    V2& operator-=(f32 other);
+    V2& operator*=(f32 other);
+    V2& operator/=(f32 other);
 
     f32& operator[](int index) {
         switch (index) {
@@ -37,10 +37,10 @@ union V2 {
         }
     }
 
-    float magnitude();
-    float magnitude_sq();
+    float magnitude() const;
+    float magnitude_sq() const;
 
-    V2 normalized();
+    V2 normalized() const;
 };
 
 V2 V2_lerp(V2 a, V2 b, V2 t);

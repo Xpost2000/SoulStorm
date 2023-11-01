@@ -12,19 +12,19 @@ V2 V2::operator-(const V2& other) {
     return V2(x - other.x, y - other.y);
 }
 
-V2 V2::operator+(f32 scalar) {
+V2 V2::operator+(const f32 scalar) {
     return V2(x + scalar, y + scalar);
 }
 
-V2 V2::operator-(f32 scalar) {
+V2 V2::operator-(const f32 scalar) {
     return V2(x - scalar, y - scalar);
 }
 
-V2 V2::operator*(f32 scalar) {
+V2 V2::operator*(const f32 scalar) {
     return V2(x * scalar, y * scalar);
 }
 
-V2 V2::operator/(f32 scalar) {
+V2 V2::operator/(const f32 scalar) {
     return V2(x / scalar, y / scalar);
 }
 
@@ -40,42 +40,43 @@ V2& V2::operator-=(const V2& other) {
     return *this;
 }
 
-V2& V2::operator+=(const float& other) {
+V2& V2::operator+=(f32 other) {
     x += other;
     y += other;
     return *this;
 }
 
-V2& V2::operator-=(const float& other) {
+V2& V2::operator-=(f32 other) {
     x -= other;
     y -= other;
     return *this;
 }
 
-V2& V2::operator*=(const float& other) {
+V2& V2::operator*=(f32 other) {
     x *= other;
     y *= other;
     return *this;
 }
 
-V2& V2::operator/=(const float& other) {
+V2& V2::operator/=(f32 other) {
     x /= other;
     y /= other;
     return *this;
 }
 
-float V2::magnitude() {
+float V2::magnitude() const {
     return sqrtf(magnitude_sq());
 }
 
-float V2::magnitude_sq() {
+float V2::magnitude_sq() const {
     return x*x + y*y;
 }
 
-V2 V2::normalized() {
+V2 V2::normalized() const {
     auto mag = magnitude();
     if (mag == 0.0f) return *this;
-    return *this / mag;
+    auto self = *this;
+    return self / mag;
 }
 
 // free functions
