@@ -77,7 +77,7 @@ void spawn_bullet_circling_down(Game_State* state, V2 position, f32 factor, f32 
     state->gameplay_data.add_bullet(bullet);
 }
 
-void spawn_enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed) {
+void spawn_enemy_linear_movement_with_circling_down_attack(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed) {
     Enemy_Entity enemy;
 
     enemy.position = position;
@@ -94,5 +94,24 @@ void spawn_enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 di
             spawn_bullet_circling_down(state, self->position, 0.35f, 50.0f, V2(0, -100));
         };
 
+    enemy.edge_top_behavior_override = enemy.edge_bottom_behavior_override =
+        enemy.edge_left_behavior_override = enemy.edge_right_behavior_override = PLAY_AREA_EDGE_PASSTHROUGH;
+    state->gameplay_data.add_enemy_entity(enemy);
+}
+
+void spawn_enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed) {
+    Enemy_Entity enemy;
+
+    enemy.position = position;
+    enemy.scale    = scale;
+    enemy.firing_cooldown = 0.055f;
+
+    enemy.velocity_function =
+        [direction, speed](Enemy_Entity* self, Game_State* const state, f32 dt) {
+            self->velocity = direction.normalized() * speed;
+        };
+
+    enemy.edge_top_behavior_override = enemy.edge_bottom_behavior_override =
+        enemy.edge_left_behavior_override = enemy.edge_right_behavior_override = PLAY_AREA_EDGE_PASSTHROUGH;
     state->gameplay_data.add_enemy_entity(enemy);
 }
