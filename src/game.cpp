@@ -921,6 +921,8 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
             unimplemented("Unknown ui state type");
         } break;
     }
+
+    DebugUI::render(commands, resources->get_font(MENU_FONT_COLOR_WHITE));
 }
 
 void Game::update_and_render_game_opening(Graphics_Driver* driver, f32 dt) {

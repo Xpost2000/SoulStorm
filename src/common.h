@@ -52,7 +52,8 @@
 
 #ifndef RELEASE
 #define _debugprintfhead()   fprintf(stderr, "[%s:%d:%s()]: " ,__FILE__, __LINE__, __func__)
-#define _debugprintf1(...)  do { _debugprintfhead(); fprintf(stderr, __VA_ARGS__); } while(0)
+// #define _debugprintf1(...)  do { _debugprintfhead(); fprintf(stderr, __VA_ARGS__); } while(0)
+#define _debugprintf1(...)  do { DebugUI::print(format_temp("[%s:%d:%s()]: %s", __FILE__, __LINE__, __func__,  format_temp(__VA_ARGS__))); _debugprintfhead(); fprintf(stderr, __VA_ARGS__); } while(0)
 #define _debugprintf(...)   do { _debugprintf1(__VA_ARGS__); fprintf(stderr, "\n"); } while (0) 
 #define DEBUG_CALL(fn) fn; _debugprintf("calling %s in [%s:%d:%s()]", #fn, __FILE__, __LINE__, __func__)
 #else
@@ -262,7 +263,7 @@ static inline void zero_memory(void* memory, size_t amount) {
 }
 
 #define TEMPORARY_STORAGE_BUFFER_SIZE (2048)
-#define TEMPORARY_STORAGE_BUFFER_COUNT (8)
+#define TEMPORARY_STORAGE_BUFFER_COUNT (32)
 local char* format_temp(const char* fmt, ...) {
     local int current_buffer = 0;
     local char temporary_text_buffer[TEMPORARY_STORAGE_BUFFER_COUNT][TEMPORARY_STORAGE_BUFFER_SIZE] = {};
@@ -464,5 +465,14 @@ Slice<T> make_slice(T* data, s32 length) {
     result.length = length;
     return result;
 }
+
+struct string{
+    s32   length;
+    char* data;
+};
+#define string_literal(x) string { sizeof(x)-1, (char*)x }
+#define string_null       string { 0, (char*) 0 }
+
+#include "debug_ui.h"
 
 #endif
