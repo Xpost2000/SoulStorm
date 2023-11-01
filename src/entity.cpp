@@ -1,3 +1,5 @@
+#include "action_mapper.h"
+
 #include "entity.h"
 #include "input.h"
 
@@ -357,25 +359,13 @@ void Player::update(Game_State* state, f32 dt) {
     // unfortunately the action mapper system doesn't exist
     // here like it did in the last project, so I'll have to use key inputs
     // and gamepad power.
-    auto gamepad  = Input::get_gamepad(0);
-    bool firing   = Input::is_key_down(KEY_SPACE) || gamepad->buttons[BUTTON_A];
-    bool focusing = Input::is_key_down(KEY_SHIFT) || gamepad->buttons[BUTTON_X];
+    bool firing   = Action::is_down(ACTION_ACTION);
+    bool focusing = Action::is_down(ACTION_FOCUS);
 
     under_focus = focusing;
 
-    V2 axes = V2(
-        1 * (Input::is_key_down(KEY_D) || Input::is_key_down(KEY_RIGHT)) + (-1) * (Input::is_key_down(KEY_A) || Input::is_key_down(KEY_LEFT)),
-        1 * (Input::is_key_down(KEY_S) || Input::is_key_down(KEY_DOWN)) + (-1) * (Input::is_key_down(KEY_W) || Input::is_key_down(KEY_UP))
-    );
-
-    axes = axes.normalized();
-
-    if (fabs(axes[0]) < fabs(gamepad->left_stick.axes[0])) {
-        axes[0] = gamepad->left_stick.axes[0];
-    }
-    if (fabs(axes[1]) < fabs(gamepad->left_stick.axes[1])) {
-        axes[1] = gamepad->left_stick.axes[1];
-    }
+    V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
+    if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
 
     float UNIT_SPEED = (under_focus) ? 225 : 550;
 

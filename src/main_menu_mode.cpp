@@ -71,23 +71,10 @@ void MainMenu_Player::draw(MainMenu_Data* const state, struct render_commands* c
 }
 
 void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
-    auto gamepad = Input::get_gamepad(0);
+    V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
+    if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
 
-    V2 axes = V2(
-        1 * (Input::is_key_down(KEY_D) || Input::is_key_down(KEY_RIGHT)) + (-1) * (Input::is_key_down(KEY_A) || Input::is_key_down(KEY_LEFT)),
-        1 * (Input::is_key_down(KEY_S) || Input::is_key_down(KEY_DOWN)) + (-1) * (Input::is_key_down(KEY_W) || Input::is_key_down(KEY_UP))
-    );
-
-    axes = axes.normalized();
-
-    if (fabs(axes[0]) < fabs(gamepad->left_stick.axes[0])) {
-        axes[0] = gamepad->left_stick.axes[0];
-    }
-    if (fabs(axes[1]) < fabs(gamepad->left_stick.axes[1])) {
-        axes[1] = gamepad->left_stick.axes[1];
-    }
-
-    const float UNIT_SPEED = 200;
+    const float UNIT_SPEED = 350;
 
     velocity.x = axes[0] * UNIT_SPEED;
     velocity.y = axes[1] * UNIT_SPEED;
@@ -107,7 +94,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
     }
 
 
-    if (Input::is_key_pressed(KEY_ESCAPE)) {
+    if (Action::is_pressed(ACTION_MENU)) {
         if (this->state->ui_state == UI_STATE_STAGE_SELECT) {
             
         } else {

@@ -15,6 +15,8 @@
 #include "file_buffer.h"
 #include "game_ui.h"
 
+#include "action_mapper.h"
+
 // This will be hard-coded, since this is how my game design idea is.
 
 // TBH, I think some of the names are cool from other mythologies but I seem
@@ -283,6 +285,37 @@ void Game::init(Graphics_Driver* driver) {
 
             state->portals.size = 4;
         }
+    }
+
+    // setup input
+    {
+        Action::register_action_keys(ACTION_MOVE_UP, KEY_UP, KEY_W, -1.0f);
+        Action::register_action_button(ACTION_MOVE_UP, DPAD_UP, -1.0f);
+        Action::register_action_joystick_axis(ACTION_MOVE_UP, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_POSITIVE_Y);
+
+        Action::register_action_keys(ACTION_MOVE_DOWN, KEY_DOWN, KEY_S, 1.0f);
+        Action::register_action_button(ACTION_MOVE_DOWN, DPAD_DOWN, 1.0f);
+        Action::register_action_joystick_axis(ACTION_MOVE_DOWN, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_NEGATIVE_Y);
+
+        Action::register_action_keys(ACTION_MOVE_LEFT, KEY_LEFT, KEY_A, -1.0f);
+        Action::register_action_button(ACTION_MOVE_LEFT, DPAD_LEFT, -1.0f);
+        Action::register_action_joystick_axis(ACTION_MOVE_LEFT, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_NEGATIVE_X);
+
+        Action::register_action_keys(ACTION_MOVE_RIGHT, KEY_RIGHT, KEY_D, 1.0f);
+        Action::register_action_button(ACTION_MOVE_RIGHT, DPAD_RIGHT, 1.0f);
+        Action::register_action_joystick_axis(ACTION_MOVE_RIGHT, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_POSITIVE_X);
+
+        Action::register_action_keys(ACTION_ACTION, KEY_SPACE, KEY_UNKNOWN, 1.0f);
+        Action::register_action_button(ACTION_ACTION, BUTTON_A, 1.0f);
+
+        Action::register_action_keys(ACTION_FOCUS, KEY_SHIFT, KEY_CTRL, 1.0f);
+        Action::register_action_button(ACTION_FOCUS, BUTTON_X, 1.0f);
+
+        Action::register_action_keys(ACTION_CANCEL, KEY_BACKSPACE, KEY_UNKNOWN, 1.0f);
+        Action::register_action_button(ACTION_CANCEL, BUTTON_B, 1.0f);
+
+        Action::register_action_keys(ACTION_MENU, KEY_ESCAPE, KEY_UNKNOWN, 1.0f);
+        Action::register_action_button(ACTION_MENU, BUTTON_START, 1.0f);
     }
 
     initialized = true;
@@ -1114,7 +1147,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         state->main_camera.xy.x = -state->play_area.x;
     }
 
-    if (Input::is_key_pressed(KEY_ESCAPE)) {
+    if (Action::is_pressed(ACTION_MENU)) {
         if (this->state->ui_state != UI_STATE_PAUSED) {
             switch_ui(UI_STATE_PAUSED);
         } else {
@@ -1172,11 +1205,6 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             spawn_bullet_circling_down_homing(this->state, position, t, ner, V2(0, 0));
         }
     }
-#endif
-
-    if (Input::is_key_pressed(KEY_I)) {
-        state->player.kill();
-    }
 
     if (Input::is_key_pressed(KEY_X)) {
         Explosion_Hazard h = Explosion_Hazard(state->player.position, 125, 0.5f, 1.0f);
@@ -1203,7 +1231,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         Achievements::get(ACHIEVEMENT_ID_STAGE3)->report();
         Achievements::get(ACHIEVEMENT_ID_STAGE4)->report();
     }
-
+#endif
 
     // for all of our entities and stuff.
     // will have a separate one for the UI.
