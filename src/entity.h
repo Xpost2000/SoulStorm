@@ -9,20 +9,8 @@
 
 #include <functional>
 /*
- * all entity type definitions or entity related code in here
- * it's a small game so this is okay.
- *
- * for now, everyone is going to be specialized until I wanna do something else.
- * Starting is always so difficult to do architecture for.
- */
-
-/*
-  10/16/2023
-  NOTE: I want to experiment with building patterns through basic manipulation of
-        velocity. I think I can get a lot of milage out of just doing this alone so
-        I hope my idea pans out.
-
-        IE: clever usage of waits + velocity functions should make things look cool.
+ * This is a "mega-header" which will include all the other entity
+ * related header files.
  */
 
 // This is a basic timer intended to do native timing related
@@ -240,6 +228,7 @@ enum Bullet_Source {
 
     BULLET_SOURCE_ENEMY,
 };
+
 struct Bullet : public Entity {
     Timer lifetime; // should be adjusted carefully!
 
@@ -257,5 +246,7 @@ struct Bullet : public Entity {
     // want this to be handled via lua
     std::function<void(Bullet*, Game_State* const, f32)> velocity_function;
 };
+
+#include "entity_prototypes.h"
 
 #endif

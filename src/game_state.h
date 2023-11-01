@@ -169,6 +169,11 @@ struct Gameplay_Data {
 
     Gameplay_Stage_Introduction_Sequence   intro;
     Gameplay_Stage_Complete_Stage_Sequence complete_stage;
+
+    void add_bullet(Bullet b);
+    void add_laser_hazard(Laser_Hazard h);
+    void add_explosion_hazard(Explosion_Hazard h);
+    void add_enemy_entity(Enemy_Entity e);
 };
 
 enum UI_State_Mode {
