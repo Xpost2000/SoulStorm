@@ -10,14 +10,6 @@ struct Level {
 
     // stages will be associated with a lua script
     // to spawn stuff based off of a "timeline".
-};
-
-struct Stage {
-    string name;
-    string subtitle;
-    s32    unlocked_levels;
-    // all levels are expected to be filled.
-    Level  levels[MAX_LEVELS_PER_STAGE];
 
     // NOTE: include stage lua script name
     //       if it exists, and use it to load a Lua
@@ -27,6 +19,17 @@ struct Stage {
     //       it to the engine, which will create an appropriate
     //       Stage State per stage, which is mostly for the boss fights
     //       which are basically only in C++.
+
+    s32 last_score = 0;
+    s32 best_score = 0;
+};
+
+struct Stage {
+    string name;
+    string subtitle;
+    s32    unlocked_levels;
+    // all levels are expected to be filled.
+    Level  levels[MAX_LEVELS_PER_STAGE];
 };
 
 #endif

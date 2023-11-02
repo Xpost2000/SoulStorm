@@ -140,6 +140,7 @@ struct Gameplay_Stage_Complete_Stage_Sequence {
     Timer stage_timer;
 };
 
+#define MAX_BASE_TRIES (3)
 struct Gameplay_Data {
     Stage_State stage_state;
 
@@ -170,6 +171,9 @@ struct Gameplay_Data {
     Gameplay_Stage_Introduction_Sequence   intro;
     Gameplay_Stage_Complete_Stage_Sequence complete_stage;
 
+    s32 tries = MAX_BASE_TRIES;
+    s32 current_score = 0;
+
     void add_bullet(Bullet b);
     void add_laser_hazard(Laser_Hazard h);
     void add_explosion_hazard(Explosion_Hazard h);
@@ -195,7 +199,6 @@ struct Achievement_Menu_Data {
     s32 page;
 };
 
-#define MAX_BASE_TRIES (3)
 struct Game_State {
     s32 screen_mode      = GAME_SCREEN_MAIN_MENU;
     s32 last_screen_mode = GAME_SCREEN_MAIN_MENU;
@@ -206,8 +209,6 @@ struct Game_State {
     MainMenu_Data    mainmenu_data;
     TitleScreen_Data titlescreen_data;
     Achievement_Menu_Data achievement_menu;
-
-    s32 tries = MAX_BASE_TRIES;
 };
 
 struct Game_Resources {

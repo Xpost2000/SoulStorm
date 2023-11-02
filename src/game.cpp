@@ -78,6 +78,13 @@ enum Game_Complete_Stage_Type {
     GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE,
 };
 
+local void game_update_stage_score(s32 stage_index, s32 level_index, s32 new_score) {
+    _debugprintf("Updating level (%d-%d) with score value: %d", stage_index, level_index, new_score);
+    auto& level = stage_list[stage_index].levels[level_index];
+    level.last_score = new_score;
+    level.best_score = max(new_score, level.best_score);
+}
+
 local int game_complete_stage_level(s32 id, s32 level_id) {
     auto& stage  = stage_list[id];
     s32   result = 0;
@@ -150,7 +157,7 @@ void Game::init_audio_resources() {
 }
 
 void Game::setup_stage_start() {
-    state->tries = MAX_BASE_TRIES;
+    state->gameplay_data.tries = MAX_BASE_TRIES;
 
     auto state             = &this->state->gameplay_data;
 
@@ -743,12 +750,12 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         {
             string text = {};
-            bool out_of_tries = state->tries <= 0;
+            bool out_of_tries = state->gameplay_data.tries <= 0;
 
             if (out_of_tries) {
                 text = string_literal("No more lives");
             } else {
-                text = string_from_cstring(format_temp("Retry (%d tries)", state->tries));
+                text = string_from_cstring(format_temp("Retry (%d tries)", state->gameplay_data.tries));
             }
 
             if (GameUI::button(V2(50, y), text, color32f32(1, 1, 1, alpha), 2, !out_of_tries && !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
@@ -759,7 +766,7 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
                 );
 
                 state->gameplay_data.paused_from_death  = false;
-                state->tries                           -= 1;
+                state->gameplay_data.tries             -= 1;
 
                 state->gameplay_data.player.invincibility_time.start();
                 state->gameplay_data.player.heal(1);
@@ -1139,7 +1146,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             }
             {
                 rect_y += 64;
-                string title = string_literal("*insert score here*");
+                string title = string_from_cstring(format_temp("Score: %d", state->gameplay_data.current_score));
                 auto   text_width = font_cache_text_width(subtitle_font, title, 2);
                 render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
             }
@@ -1160,7 +1167,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             }
             {
                 rect_y += 64;
-                string title = string_literal("*insert score here*");
+                string title = string_from_cstring(format_temp("Score: %d", state->gameplay_data.current_score));
                 auto   text_width = font_cache_text_width(subtitle_font, title, 2);
                 render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
@@ -1181,7 +1188,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             }
             {
                 rect_y += 64;
-                string title = string_literal("*insert score here*");
+                string title = string_from_cstring(format_temp("Score: %d", state->gameplay_data.current_score));
                 auto   text_width = font_cache_text_width(subtitle_font, title, 2);
                 render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
             }
@@ -1191,6 +1198,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                 s32 level_id = state->mainmenu_data.stage_id_level_in_stage_select;
                 complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
 
+                game_update_stage_score(stage_id, level_id, state->gameplay_data.current_score);
                 /*
                  * A neat thing to do would just be setup the main menu to preview
                  *
@@ -1810,9 +1818,11 @@ Save_File Game::construct_save_data() {
     {
         save_data.version = SAVE_FILE_VERSION_CURRENT;
         {
-            for (int stage = 0; stage < 4; ++stage) {
-                for (int level = 0; level < MAX_LEVELS_PER_STAGE; ++level) {
-                    save_data.stage_scores[stage][level] = 0;
+            for (int stage_index = 0; stage_index < 4; ++stage_index) {
+                for (int level_index = 0; level_index < MAX_LEVELS_PER_STAGE; ++level_index) {
+                    auto& level = stage_list[stage_index].levels[level_index];
+                    save_data.stage_last_scores[stage_index][level_index] = level.last_score;
+                    save_data.stage_best_scores[stage_index][level_index] = level.best_score;
                 }
             }
         }
@@ -1839,6 +1849,12 @@ void Game::update_from_save_data(Save_File* save_data) {
     for (int stage_index = 0; stage_index < 4; ++stage_index) {
         auto& stage = stage_list[stage_index];
         stage.unlocked_levels = save_data->stage_unlocks[stage_index];
+
+        for (int level_index = 0; level_index < MAX_LEVELS_PER_STAGE; ++level_index) {
+            auto& level = stage.levels[level_index];
+            level.last_score = save_data->stage_last_scores[stage_index][level_index];
+            level.best_score = save_data->stage_best_scores[stage_index][level_index];
+        }
     }
 
     total_playtime = save_data->playtime;
@@ -1873,10 +1889,15 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
 
         // only one version for now anyways.
         switch (save_data.version) {
+            case SAVE_FILE_VERSION_0: {
+                _debugprintf("Rejecting prerelease save file");
+                return save_data;
+            } break;
             default: {
                 for (int stage_index = 0; stage_index < 4; ++stage_index) {
-                    for (int level = 0; level < MAX_LEVELS_PER_STAGE; ++level) {
-                        serialize_s32(serializer, &save_data.stage_scores[stage_index][level]);
+                    for (int level_index = 0; level_index < MAX_LEVELS_PER_STAGE; ++level_index) {
+                        serialize_s32(serializer, &save_data.stage_last_scores[stage_index][level_index]);
+                        serialize_s32(serializer, &save_data.stage_best_scores[stage_index][level_index]);
                     }
                 }
                 for (int stage_index = 0; stage_index < 4; ++stage_index) {
