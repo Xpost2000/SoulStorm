@@ -29,6 +29,12 @@
 #include "graphics_driver.h"
 #include "graphics_driver_software.h"
 
+extern "C" {
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
+
 enum graphics_device_type {
     GRAPHICS_DEVICE_SOFTWARE,
     GRAPHICS_DEVICE_OPENGL,
@@ -421,38 +427,69 @@ void confirm_preferences(Game_Preferences* preferences) {
     preferences->resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences->width, preferences->height);
 }
 
-// TODO:
-// for now I'm just going to use scanf/fprintf because I don't think I have
-// to write another word tokenizer just to get a few values.
-// I mean maybe I will later to make it more config like but it doesn't matter right now.
+/*
+ * These are my first LUA proving grounds.
+ */
 bool save_preferences_to_disk(Game_Preferences* preferences, string path) {
     _debugprintf("Hi, preferences are not written to disk yet.");
     FILE* f = fopen(path.data, "wb+");
     {
-        _debugprintf("Hopefully fprintf doesn't explode.");
-        fprintf(f, "%d\n",    preferences->width);
-        fprintf(f, "%d\n",    preferences->height);
-        fprintf(f, "%3.3f\n", preferences->music_volume);
-        fprintf(f, "%3.3f\n", preferences->sound_volume);
-        fprintf(f, "%d\n",    (s32)preferences->fullscreen);
+        fprintf(f, "---- Preferences generated from the game\n");
+        fprintf(f, "---- NOTE: while this is a lua file, you can't really use any thing special :P");
+        fprintf(f, "width = %d\n",    preferences->width);
+        fprintf(f, "height = %d\n",    preferences->height);
+        fprintf(f, "music_volume = %3.3f\n", preferences->music_volume);
+        fprintf(f, "sound_volume = %3.3f\n", preferences->sound_volume);
+        fprintf(f, "fullscreen = %s\n",    ((s32)preferences->fullscreen) ? "true" : "false");
     } fclose(f);
     return true;
 }
 
 bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
-    _debugprintf("Hi, preferences are not loaded from disk yet.");
-    FILE* f = fopen(path.data, "rb+");
+    lua_State* L = luaL_newstate();
 
-    if (!f) return false;
-    else {
-        _debugprintf("Hopefully fscanf doesn't explode.");
-        fscanf(f, "%d ", &preferences->width);
-        fscanf(f, "%d ", &preferences->height);
-        fscanf(f, "%f ", &preferences->music_volume);
-        fscanf(f, "%f ", &preferences->sound_volume);
-        fscanf(f, "%d ", (s32*) &preferences->fullscreen);
-        fclose(f);
+    if (luaL_dofile(L, path.data) != 0) {
+        _debugprintf("Could not exec preferences.lua. Hopefully it doesn't exist.");
+        lua_close(L);
+        return false;
     }
+
+    {
+        lua_getglobal(L, "width");
+        preferences->width = lua_tointeger(L, -1);
+    }
+    {
+        lua_getglobal(L, "height");
+        preferences->height = lua_tointeger(L, -1);
+    }
+    {
+        lua_getglobal(L, "music_volume");
+        preferences->music_volume = lua_tonumber(L, -1);
+    }
+
+    {
+        lua_getglobal(L, "sound_volume");
+        preferences->music_volume = lua_tonumber(L, -1);
+    }
+    {
+        lua_getglobal(L, "fullscreen");
+        preferences->fullscreen = lua_toboolean(L, -1);
+    }
+
+    lua_close(L);
+    // _debugprintf("Hi, preferences are not loaded from disk yet.");
+    // FILE* f = fopen(path.data, "rb+");
+
+    // if (!f) return false;
+    // else {
+    //     _debugprintf("Hopefully fscanf doesn't explode.");
+    //     fscanf(f, "%d ", &preferences->width);
+    //     fscanf(f, "%d ", &preferences->height);
+    //     fscanf(f, "%f ", &preferences->music_volume);
+    //     fscanf(f, "%f ", &preferences->sound_volume);
+    //     fscanf(f, "%d ", (s32*) &preferences->fullscreen);
+    //     fclose(f);
+    // }
 
     return true;
 }
@@ -543,12 +580,6 @@ local void set_graphics_device(s32 id) {
     // reinitialize game assets (reuploading stuff basically)
     game.init_graphics_resources(global_graphics_driver);
     Global_Engine()->driver = global_graphics_driver;
-}
-
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
 }
 
 int real_fac(int i) {

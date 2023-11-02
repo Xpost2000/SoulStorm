@@ -192,7 +192,7 @@ void Game::init(Graphics_Driver* driver) {
     this->resources = (Game_Resources*)arena->push_unaligned(sizeof(*this->resources));
     this->state = (Game_State*)arena->push_unaligned(sizeof(*this->state)); (new (this->state) Game_State);
 
-    if (load_preferences_from_disk(&preferences, string_literal("preferences.txt"))) {
+    if (load_preferences_from_disk(&preferences, string_literal("preferences.lua"))) {
         confirm_preferences(&preferences);
     } else {
         // the main code will provide us with a default
@@ -447,7 +447,7 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
             switch_ui(state->last_ui_state);
             update_preferences(&preferences, &temp_preferences);
             confirm_preferences(&preferences);
-            save_preferences_to_disk(&preferences, string_literal("preferences.txt"));
+            save_preferences_to_disk(&preferences, string_literal("preferences.lua"));
 
             // NOTE: readjust the camera.
             {
