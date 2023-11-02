@@ -462,18 +462,8 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
         }
         y += 30;
 
-        {
-            if (Action::is_pressed(ACTION_MOVE_DOWN)) {
-                GameUI::move_selected_widget_id(1);
-            }
-
-            if (Action::is_pressed(ACTION_MOVE_UP)) {
-                GameUI::move_selected_widget_id(-1);
-            }
-
-            if (Action::is_pressed(ACTION_CANCEL)) {
-                switch_ui(state->last_ui_state);
-            }
+        if (Action::is_pressed(ACTION_CANCEL)) {
+            switch_ui(state->last_ui_state);
         }
     }
     GameUI::end_frame();
@@ -534,6 +524,11 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
         }
         y += 30;
 
+        if (GameUI::button(V2(100, y), string_literal("Achievements"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            switch_ui(UI_STATE_ACHIEVEMENTS);
+        }
+        y += 30;
+
         if (state->screen_mode != GAME_SCREEN_CREDITS) {
             if (GameUI::button(V2(100, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 _debugprintf("Open the credits screen I guess");
@@ -583,18 +578,8 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
         // all the UI is the same with both interfaces, and fortunately because
         // the game has extremely basic UI layout and design, I don't think there's
         // anything crazy I need.
-        {
-            if (Action::is_pressed(ACTION_MOVE_DOWN)) {
-                GameUI::move_selected_widget_id(1);
-            }
-
-            if (Action::is_pressed(ACTION_MOVE_UP)) {
-                GameUI::move_selected_widget_id(-1);
-            }
-
-            if (Action::is_pressed(ACTION_CANCEL)) {
-                switch_ui(state->last_ui_state);
-            }
+        if (Action::is_pressed(ACTION_CANCEL)) {
+            switch_ui(UI_STATE_INACTIVE);
         }
     }
     GameUI::end_frame();
@@ -708,18 +693,8 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
             }
         }
 
-        {
-            if (Action::is_pressed(ACTION_MOVE_DOWN)) {
-                GameUI::move_selected_widget_id(1);
-            }
-
-            if (Action::is_pressed(ACTION_MOVE_UP)) {
-                GameUI::move_selected_widget_id(-1);
-            }
-
-            if (Action::is_pressed(ACTION_CANCEL)) {
-                switch_ui(state->last_ui_state);
-            }
+        if (Action::is_pressed(ACTION_CANCEL)) {
+            switch_ui(state->last_ui_state);
         }
     }
     GameUI::end_frame();
@@ -804,14 +779,6 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
         y += 30;
 
         {
-            if (Action::is_pressed(ACTION_MOVE_DOWN)) {
-                GameUI::move_selected_widget_id(1);
-            }
-
-            if (Action::is_pressed(ACTION_MOVE_UP)) {
-                GameUI::move_selected_widget_id(-1);
-            }
-
             if (Action::is_pressed(ACTION_CANCEL)) {
                 switch_ui(state->last_ui_state);
             }
@@ -898,6 +865,87 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
     }
 }
 
+void Game::update_and_render_achievements_menu(struct render_commands* commands, f32 dt) {
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+    auto achievements = Achievements::get_all();
+    // I want a very simple layout so it'll just be a basic "list", not a table.
+    const s32 MAX_ACHIEVEMENTS_PER_COLUMN = 4;
+    const s32 page_count = achievements.length / MAX_ACHIEVEMENTS_PER_COLUMN + ((achievements.length%MAX_ACHIEVEMENTS_PER_COLUMN) > 0);
+
+    auto& achievement_menu = state->achievement_menu;
+    GameUI::set_ui_id((char*)"ui_achievements_menu");
+
+    // render achievement boxes.
+    // Will need to make some nice UI for all of this but at least that's art stuff.
+    {
+
+        auto locked_title_font       = resources->get_font(MENU_FONT_COLOR_STEEL);
+        auto unlocked_title_font       = resources->get_font(MENU_FONT_COLOR_GOLD);
+        auto description_font = resources->get_font(MENU_FONT_COLOR_WHITE);
+
+        for (s32 i = 0; i < MAX_ACHIEVEMENTS_PER_COLUMN; ++i) {
+            s32 actual_i = i + MAX_ACHIEVEMENTS_PER_COLUMN * achievement_menu.page;
+            if (actual_i >= achievements.length) break;
+
+            auto& achievement = achievements[actual_i];
+
+            rectangle_f32 rectangle = rectangle_f32(30, i * 65 + 80, 300, 60);
+            render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
+            {
+                string text = achievement.name;
+                render_commands_push_text(commands,
+                                          (achievement.achieved) ? unlocked_title_font : locked_title_font,
+                                          2, V2(rectangle.x+10, rectangle.y+10), text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+            }
+            {
+                string text = achievement.description;
+                render_commands_push_text(commands, description_font, 2, V2(rectangle.x+10, rectangle.y+35), text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+            }
+        }
+    }
+
+    GameUI::begin_frame(commands);
+    {
+        GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+        GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(0, 0), string_literal("ACHIEVEMENTS"), color32f32(1, 1, 1, 1), 4);
+
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+
+        f32 y = commands->screen_height - font_cache_text_height(resources->get_font(MENU_FONT_COLOR_GOLD)) * 4.5;
+        if (GameUI::button(V2(50, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            switch_ui(state->last_ui_state);
+        }
+
+        y -= font_cache_text_height(resources->get_font(MENU_FONT_COLOR_GOLD)) * 2;
+
+        f32 x = 50;
+        if (GameUI::button(V2(x, y), string_literal("Next"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            achievement_menu.page += 1;
+            if (achievement_menu.page >= page_count) {
+                achievement_menu.page = 0;
+            }
+        }
+
+        x += font_cache_text_width(resources->get_font(MENU_FONT_COLOR_GOLD), string_literal("Next"), 2) * 1.5;
+        if (GameUI::button(V2(x, y), string_literal("Previous"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            achievement_menu.page -= 1;
+            if (achievement_menu.page < 0) {
+                achievement_menu.page = page_count-1;
+            }
+        }
+
+        {
+            if (Action::is_pressed(ACTION_CANCEL)) {
+                switch_ui(state->last_ui_state);
+            }
+        }
+    }
+    GameUI::end_frame();
+}
+
 void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt) {
     switch (state->ui_state) {
         case UI_STATE_INACTIVE: {
@@ -916,6 +964,9 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
         } break;
         case UI_STATE_DEAD_MAYBE_RETRY: {
             update_and_render_game_death_maybe_retry_menu(commands, dt);
+        } break;
+        case UI_STATE_ACHIEVEMENTS: {
+            update_and_render_achievements_menu(commands, dt);
         } break;
         default: {
             unimplemented("Unknown ui state type");
@@ -1679,6 +1730,12 @@ void Game::switch_screen(s32 screen) {
 void Game::switch_ui(s32 ui) {
     state->last_ui_state = state->ui_state;
     state->ui_state = ui;
+
+    switch (ui) {
+        case UI_STATE_ACHIEVEMENTS: {
+            state->achievement_menu.page = 0;
+        } break;
+    }
 }
 
 void Game::notify_new_achievement(s32 id) {

@@ -418,6 +418,14 @@ namespace GameUI {
     }
 
     void end_frame() {
+        if (Action::is_pressed(ACTION_MOVE_DOWN)) {
+            GameUI::move_selected_widget_id(1);
+        }
+
+        if (Action::is_pressed(ACTION_MOVE_UP)) {
+            GameUI::move_selected_widget_id(-1);
+        }
+
         auto font           = global_ui_state.default_font;
         render_commands_push_text(global_ui_state.commands, font, 1.0, V2(0,0),
                                   string_from_cstring(format_temp("(lastui_id: %s)\nselected_index: %d\n", global_ui_state.last_ui_id, global_ui_state.selected_index)), color32f32(1,1,1,1), BLEND_MODE_ALPHA);

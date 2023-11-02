@@ -110,19 +110,10 @@ void Game::update_and_render_game_credits(Graphics_Driver* driver, f32 dt) {
         );
     }
 
-    {
-        if (Action::is_pressed(ACTION_MOVE_DOWN)) {
-            GameUI::move_selected_widget_id(1);
-        }
-
-        if (Action::is_pressed(ACTION_MOVE_UP)) {
-            GameUI::move_selected_widget_id(-1);
-        }
-
-        if (Action::is_pressed(ACTION_CANCEL)) {
-            switch_ui(state->last_ui_state);
-        }
+    if (Action::is_pressed(ACTION_CANCEL)) {
+        switch_ui(state->last_ui_state);
     }
+
     GameUI::end_frame();
     GameUI::update(dt);
 

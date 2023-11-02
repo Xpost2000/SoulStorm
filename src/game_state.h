@@ -187,10 +187,15 @@ enum UI_State_Mode {
     UI_STATE_OPTIONS,
     UI_STATE_STAGE_SELECT,
     UI_STATE_DEAD_MAYBE_RETRY,
+    UI_STATE_ACHIEVEMENTS,
     UI_STATE_COUNT,
 };
 
-#define MAX_BASE_TRIES (1)
+struct Achievement_Menu_Data {
+    s32 page;
+};
+
+#define MAX_BASE_TRIES (3)
 struct Game_State {
     s32 screen_mode      = GAME_SCREEN_MAIN_MENU;
     s32 last_screen_mode = GAME_SCREEN_MAIN_MENU;
@@ -200,6 +205,7 @@ struct Game_State {
     Gameplay_Data    gameplay_data;
     MainMenu_Data    mainmenu_data;
     TitleScreen_Data titlescreen_data;
+    Achievement_Menu_Data achievement_menu;
 
     s32 tries = MAX_BASE_TRIES;
 };
