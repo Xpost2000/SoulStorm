@@ -3,7 +3,10 @@
 
 #include "common.h"
 
+// #define SIMULATE_SYNCHRONOUS 1
+
 typedef s32 (*job_queue_function)(void*);
+// using job_queue_function = std::function<int(void*)>;
 enum {
     THREAD_JOB_STATUS_FINISHED,
     THREAD_JOB_STATUS_READY,

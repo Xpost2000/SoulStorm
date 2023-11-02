@@ -17,6 +17,10 @@ struct thread_job_queue global_job_queue                                = {};
 
 namespace Thread_Pool {
     void add_job(job_queue_function job, void* data) {
+#ifdef SIMULATE_SYNCHRONOUS
+        _debugprintf("Synchronously doing job.");
+        job(data);
+#else
         for (s32 index = 0; index < MAX_JOBS; ++index) {
             struct thread_job* current_job = &global_job_queue.jobs[index];
         
@@ -32,9 +36,13 @@ namespace Thread_Pool {
                 return;
             }
         }
+        #endif
     }
 
     void synchronize_tasks() {
+#ifdef SIMULATE_SYNCHRONOUS
+        return; // busy body.
+#else
         bool done = false;
         /* NOTE:
            fix this, I'm pretty sure this is the cause of those mysterious,
@@ -51,6 +59,7 @@ namespace Thread_Pool {
                 }
             }
         }
+#endif
     }
 
     static int _thread_job_executor(void* context) {
@@ -101,6 +110,10 @@ namespace Thread_Pool {
     }
 
     void initialize(void) {
+#ifdef SIMULATE_SYNCHRONOUS
+        _debugprintf("Thread system is in synchronous mode for profiling and predictability.");
+        return;
+#else
         s32 cpu_count = SDL_GetCPUCount();
         global_thread_count = cpu_count * 2;
         _debugprintf("%d cpus reported.", cpu_count);
@@ -114,9 +127,14 @@ namespace Thread_Pool {
             global_thread_pool_arenas[index] = Memory_Arena((char*)"thread pool", Kilobyte(256));
             global_thread_pool[index]        = SDL_CreateThread(_thread_job_executor, format_temp("slave%d", index), &global_thread_pool_arenas[index]);
         }
+#endif
     }
 
     void synchronize_and_finish(void) {
+#ifdef SIMULATE_SYNCHRONOUS
+        _debugprintf("lol");
+        return;
+#else
         _debugprintf("Trying to synchronize and finish the threads... Please");
         /* signal to quit the threads since we do a blocking wait */
 
@@ -150,5 +168,6 @@ namespace Thread_Pool {
 
         SDL_DestroySemaphore(global_job_queue.notification);
         SDL_DestroyMutex(global_job_queue.mutex);
+#endif
     }
 }

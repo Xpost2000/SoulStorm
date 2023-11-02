@@ -26,6 +26,7 @@ struct Engine {
     Graphics_Driver* driver;
 
     void die();
+    string memory_usage_strings();
 };
 
 Engine* Global_Engine();

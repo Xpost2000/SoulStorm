@@ -3,6 +3,8 @@
 #include "render_commands.h"
 #include "input.h"
 
+#include "engine.h"
+
 #define DEBUG_UI_MAX_STORED_LINES (16)
 #define DEBUG_UI_MAX_CHARACTER_LENGTH (512)
 
@@ -46,6 +48,8 @@ namespace DebugUI {
             }
             render_commands_push_text(commands, font, scale, xy, string_from_cstring(line), color32f32(a, a, a, 1.0f), BLEND_MODE_ALPHA);
         }
+
+        render_commands_push_text(commands, font, 2, V2(0, commands->screen_height-32), Global_Engine()->memory_usage_strings(), color32f32(1,1,1,1), BLEND_MODE_ALPHA);
     }
 }
 #else

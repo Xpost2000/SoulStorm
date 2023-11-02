@@ -21,3 +21,38 @@ Engine* Global_Engine() {
 void Engine::die() {
     running = false;
 }
+
+local char* memory_strings(size_t in_bytes) {
+    return format_temp("%llu(B) (%llu)(KB) (%llu)(MB) (%llu)(GB)",
+                       in_bytes,
+                       in_bytes / Kilobyte(1),
+                       in_bytes / Megabyte(1),
+                       in_bytes / Gigabyte(1));
+}
+
+local char* biggest_valid_memory_string(size_t in_bytes) {
+    size_t bytes     = in_bytes/Byte(1);
+    size_t kilobytes = in_bytes/Kilobyte(1);
+    size_t megabytes = in_bytes/Megabyte(1);
+    size_t gigabytes = in_bytes/Gigabyte(1);
+
+    if (gigabytes) {
+        return format_temp("%llu (GB)", gigabytes);
+    } else if (megabytes) {
+        return format_temp("%llu (MB)", megabytes);
+    } else if (kilobytes) {
+        return format_temp("%llu (KB)", kilobytes);
+    }
+
+    return format_temp("%llu (B)", bytes);
+}
+
+string Engine::memory_usage_strings() {
+    return string_from_cstring(format_temp(
+        "(MainArena: %s / %s) (ScratchArena: %s / %s)",
+        biggest_valid_memory_string(main_arena.used + main_arena.used_top),
+        biggest_valid_memory_string(main_arena.capacity),
+        biggest_valid_memory_string(scratch_arena.used + scratch_arena.used_top),
+        biggest_valid_memory_string(scratch_arena.capacity)
+    ));
+}
