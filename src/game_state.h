@@ -141,6 +141,22 @@ struct Gameplay_Stage_Complete_Stage_Sequence {
 };
 
 #define MAX_BASE_TRIES (3)
+
+// will do a small jump before dying.
+// NOTE: not the same as the hit marker score notifications
+#define GAMEPLAY_UI_SCORE_NOTIFICATION_DEFAULT_LIFETIME (0.25f)
+#define GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT      (65)
+struct Gameplay_UI_Score_Notification {
+    s32 additional_score;
+    Timer lifetime = Timer(GAMEPLAY_UI_SCORE_NOTIFICATION_DEFAULT_LIFETIME);
+};
+
+struct Gameplay_UI_Hitmark_Score_Notification {
+    V2 where;
+    s32 additional_score;
+    Timer lifetime = Timer(GAMEPLAY_UI_SCORE_NOTIFICATION_DEFAULT_LIFETIME);
+};
+
 struct Gameplay_Data {
     Stage_State stage_state;
 
@@ -148,6 +164,9 @@ struct Gameplay_Data {
     Fixed_Array<Laser_Hazard>     laser_hazards;
     Fixed_Array<Enemy_Entity>     enemies;
     Fixed_Array<Explosion_Hazard> explosion_hazards;
+
+    Fixed_Array<Gameplay_UI_Score_Notification> score_notifications;
+    Fixed_Array<Gameplay_UI_Hitmark_Score_Notification> hit_score_notifications;
     // should be in a separate list of it's own...
     Player              player;
 
@@ -173,6 +192,7 @@ struct Gameplay_Data {
 
     s32 tries = MAX_BASE_TRIES;
     s32 current_score = 0;
+    f32 auto_score_timer = 0;
 
     void add_bullet(Bullet b);
     void add_laser_hazard(Laser_Hazard h);
@@ -183,6 +203,10 @@ struct Gameplay_Data {
     bool any_enemies() const;
     bool any_bullets() const;
     bool any_living_danger() const;
+
+    void notify_score(s32 amount, bool interesting=false);
+    // NOTE: is implicitly an "interesting" score.
+    void notify_score_with_hitmarker(s32 amount, V2 where);
 };
 
 enum UI_State_Mode {

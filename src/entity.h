@@ -48,6 +48,8 @@ struct Timer {
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
 #define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.0f)
 #define DEFAULT_FIRING_COOLDOWN (0.035)
+#define DEFAULT_ENTITY_SCORE_VALUE_PER_HIT (30)
+#define DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER (5)
 
 // NOTE: no real system for a visual sprite quite yet.
 struct Entity {
@@ -68,6 +70,9 @@ struct Entity {
     f32   firing_t      = 0;
     f32   firing_cooldown = DEFAULT_FIRING_COOLDOWN;
     bool  firing        = false;
+
+    s32   score_value      = DEFAULT_ENTITY_SCORE_VALUE_PER_HIT;
+    s32   death_multiplier = DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER;
 
     bool attack();
 

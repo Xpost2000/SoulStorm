@@ -189,7 +189,7 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
     if (edge_behavior_bottom == -1) edge_behavior_bottom = play_area.edge_behaviors[1];
     if (edge_behavior_left == -1) edge_behavior_left     = play_area.edge_behaviors[2];
     if (edge_behavior_right == -1) edge_behavior_right   = play_area.edge_behaviors[3];
-    // TODO: killing, since there is no concept of HP yet.
+
     // NOTE: these behaviors are mostly for the players... Enemies will just act
     // as if it was "wrapping" behavior by default.
 
@@ -256,6 +256,7 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
     }
 }
 
+// TODO: sprite support
 void Entity::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
     auto r = get_rect();
 

@@ -157,7 +157,6 @@ void Game::init_audio_resources() {
 }
 
 void Game::setup_stage_start() {
-    state->gameplay_data.tries = MAX_BASE_TRIES;
 
     auto state             = &this->state->gameplay_data;
 
@@ -181,6 +180,12 @@ void Game::setup_stage_start() {
     state->bullets.clear();
     state->explosion_hazards.clear();
     state->laser_hazards.clear();
+    state->score_notifications.clear();
+    state->hit_score_notifications.clear();
+
+    state->tries = MAX_BASE_TRIES;
+    state->current_score = 0;
+    state->auto_score_timer = 0;
 
     // setup introduction badge
     {
@@ -253,14 +258,16 @@ void Game::init(Graphics_Driver* driver) {
 
     // gameplay_data initialize
     {
-        auto state = &this->state->gameplay_data;
-        state->bullets           = Fixed_Array<Bullet>(arena, 10000);
-        state->explosion_hazards = Fixed_Array<Explosion_Hazard>(arena, 256);
-        state->laser_hazards     = Fixed_Array<Laser_Hazard>(arena, 128);
-        state->enemies           = Fixed_Array<Enemy_Entity>(arena, 512);
-        state->prng              = random_state();
-        state->main_camera       = camera(V2(0, 0), 1.0);
-        state->main_camera.rng   = &state->prng;
+        auto state                     = &this->state->gameplay_data;
+        state->bullets                 = Fixed_Array<Bullet>(arena, 10000);
+        state->explosion_hazards       = Fixed_Array<Explosion_Hazard>(arena, 256);
+        state->laser_hazards           = Fixed_Array<Laser_Hazard>(arena, 128);
+        state->enemies                 = Fixed_Array<Enemy_Entity>(arena, 512);
+        state->score_notifications     = Fixed_Array<Gameplay_UI_Score_Notification>(arena, 4096);
+        state->hit_score_notifications = Fixed_Array<Gameplay_UI_Hitmark_Score_Notification>(arena, 4096);
+        state->prng                    = random_state();
+        state->main_camera             = camera(V2(0, 0), 1.0);
+        state->main_camera.rng         = &state->prng;
     }
 
     // mainmenu_data initialize
@@ -340,7 +347,7 @@ void Game::init(Graphics_Driver* driver) {
                 bkg_slow_stars[i] = V2(random_ranged_float(&prng, -640, 640),
                                        random_ranged_float(&prng, -480, 480));
                 bkg_faster_stars[i] = V2(random_ranged_float(&prng, -640, 640),
-                                       random_ranged_float(&prng, -480, 480));
+                                         random_ranged_float(&prng, -480, 480));
             }
         }
     }
@@ -359,6 +366,7 @@ void Game::deinit() {
     
 }
 
+// Gameplay_Data
 void Gameplay_Data::add_bullet(Bullet b) {
     bullets.push(b);
 }
@@ -390,6 +398,26 @@ bool Gameplay_Data::any_bullets() const {
 bool Gameplay_Data::any_living_danger() const {
     return any_enemies() || any_hazards();
 }
+
+void Gameplay_Data::notify_score(s32 amount, bool interesting) {
+    current_score += amount;
+
+    if (!interesting)
+        return;
+
+    auto notification = Gameplay_UI_Score_Notification {amount};
+    notification.lifetime.start();
+    score_notifications.push(notification);
+}
+
+void Gameplay_Data::notify_score_with_hitmarker(s32 amount, V2 where) {
+    notify_score(amount, true);
+    auto notification = Gameplay_UI_Hitmark_Score_Notification {where, amount};
+    notification.lifetime.start();
+    hit_score_notifications.push(notification);
+}
+
+// End of Gameplay_Data
 
 bool Game::can_access_stage(s32 id) {
     auto state = &this->state->mainmenu_data;
@@ -1387,11 +1415,12 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     // draw play area borders / Game UI
     // I'd like to have the UI fade in / animate all fancy like when I can
     {
-        auto border_color = color32u8(128, 128, 128, 255);
+        auto border_color = color32u8(0, 15, 18, 255);
  
         int play_area_width = state->play_area.width;
         int play_area_x     = state->play_area.x;
 
+        // These should also be nice images in the future.
         // left border
         render_commands_push_quad(&ui_render_commands,
                                   rectangle_f32(0,
@@ -1406,9 +1435,52 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
                                                 resolution.x - play_area_width,
                                                 resolution.y),
                                   border_color, BLEND_MODE_ALPHA);
+
+        // Render_Score
+        // Draw score and other stats like attack power or speed or something
+        {
+            auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
+            auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
+            auto text = string_from_cstring(format_temp("Score: %d", state->current_score));
+
+            // show scoring notifications (for interesting scoring reasons like picking up points or killing an enemy)
+            // you'll gradually accumulate score just from surviving on a map...
+            // NOTE: hitmarker scores are rendered on the game layer.
+            {
+                for (s32 index = 0; index < state->score_notifications.size; ++index) {
+                    auto& s = state->score_notifications[index];
+                    auto text = string_from_cstring(format_temp("%d", s.additional_score));
+                    s.lifetime.update(dt);
+
+                    if (s.lifetime.triggered()) {
+                        state->score_notifications.pop_and_swap(index);
+                        continue;
+                    }
+
+                    render_commands_push_text(&ui_render_commands,
+                                              font1,
+                                              2,
+                                              V2(play_area_x+play_area_width + 10,
+                                                 100 + normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
+                                              text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+                }
+            }
+
+            render_commands_push_text(&ui_render_commands, font, 2, V2(play_area_x+play_area_width + 10, 100), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+        }
     }
 
     if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
+        // Update Auto Score
+        {
+            if (state->auto_score_timer >= 0.025f) {
+                state->current_score    += 1;
+                state->auto_score_timer  = 0;
+            } else {
+                state->auto_score_timer += dt;
+            }
+        }
+
         for (int i = 0; i < (int)state->bullets.size; ++i) {
             auto& b = state->bullets[i];
             b.update(this->state, dt);
@@ -1493,6 +1565,29 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         for (int i = 0; i < (s32)state->enemies.size; ++i) {
             auto& e = state->enemies[i];
             e.draw(this->state, &game_render_commands, resources);
+        }
+
+        {
+            auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
+
+            for (s32 index = 0; index < state->hit_score_notifications.size; ++index) {
+                auto& s = state->hit_score_notifications[index];
+                auto text = string_from_cstring(format_temp("%d", s.additional_score));
+                s.lifetime.update(dt);
+
+                if (s.lifetime.triggered()) {
+                    state->hit_score_notifications.pop_and_swap(index);
+                    continue;
+                }
+
+                f32 text_size  = 2 + s.lifetime.percentage();
+                f32 text_width = font_cache_text_width(font1, text, text_size);
+                render_commands_push_text(&game_render_commands,
+                                          font1,
+                                          text_size,
+                                          s.where + V2(-text_width/2, normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
+                                          text, color32f32(1,1,1, 1 - s.lifetime.percentage()), BLEND_MODE_ALPHA); 
+            }
         }
 
         state->player.draw(this->state, &game_render_commands, resources);
@@ -1710,9 +1805,13 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                 auto enemy_rect = e.get_rect();
 
                 if (rectangle_f32_intersect(enemy_rect, bullet_rect)) {
-                    if (e.kill()) {
-                        b.die = true;
+                    e.damage(1);
+                    if (e.die) {
+                        state->notify_score_with_hitmarker(e.score_value * e.death_multiplier, e.position);   
+                    } else {
+                        state->notify_score_with_hitmarker(e.score_value, e.position);
                     }
+                    b.die = true;
                     break;
                 }
             }
