@@ -435,7 +435,7 @@ bool save_preferences_to_disk(Game_Preferences* preferences, string path) {
     FILE* f = fopen(path.data, "wb+");
     {
         fprintf(f, "---- Preferences generated from the game\n");
-        fprintf(f, "---- NOTE: while this is a lua file, you can't really use any thing special :P");
+        fprintf(f, "---- NOTE: while this is a lua file, you can't really use any thing special :P\n");
         fprintf(f, "width = %d\n",    preferences->width);
         fprintf(f, "height = %d\n",    preferences->height);
         fprintf(f, "music_volume = %3.3f\n", preferences->music_volume);
