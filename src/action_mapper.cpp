@@ -178,7 +178,7 @@ MENU = 7
                 }
 
                 if (!(action.joystick_id == -1 && action.axis_id == -1)) {
-                    fprintf(f, "register_action_joystick_axis(%d, %d, %d)\n", i, action, action.joystick_id, action.axis_id);
+                    fprintf(f, "register_action_joystick_axis(%d, %d, %d)\n", i, action.joystick_id, action.axis_id);
                 }
             }
         }
