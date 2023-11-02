@@ -78,6 +78,11 @@ enum Game_Complete_Stage_Type {
     GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE,
 };
 
+local bool game_will_be_new_high_score(s32 stage_index, s32 level_index, s32 new_score) {
+    auto& level = stage_list[stage_index].levels[level_index];
+    return (new_score > level.best_score);
+}
+
 local void game_update_stage_score(s32 stage_index, s32 level_index, s32 new_score) {
     _debugprintf("Updating level (%d-%d) with score value: %d", stage_index, level_index, new_score);
     auto& level = stage_list[stage_index].levels[level_index];
@@ -712,6 +717,9 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                 auto& level = stage.levels[display_level_icon];
                 color32f32 color = color32f32(1, 1, 1, 1);
                 if (level.boss_stage) color = color32f32(1, 0, 0, 1);
+                // TODO: figure out an okay layout later.
+                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2 - 150), string_from_cstring(format_temp("Best Score: %d", level.best_score)), color, 2);
+                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2 - 100), string_from_cstring(format_temp("Last Score: %d", level.last_score)), color, 2);
                 GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2), level.subtitle, color, 2);
             }
 
@@ -1147,13 +1155,24 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
 
 void Game::ingame_update_complete_stage_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt) {
     auto& complete_stage_state = state->gameplay_data.complete_stage;
-    auto& timer       = complete_stage_state.stage_timer;
+    auto& timer                = complete_stage_state.stage_timer;
 
-    timer.start();
     auto title_font    = resources->get_font(MENU_FONT_COLOR_BLOODRED);
     auto subtitle_font = resources->get_font(MENU_FONT_COLOR_GOLD);
 
     f32 timer_percentage = timer.percentage();
+
+    s32 stage_id = state->mainmenu_data.stage_id_level_select;
+    s32 level_id = state->mainmenu_data.stage_id_level_in_stage_select;
+
+    timer.start();
+
+    string level_complete_text = string_literal("LEVEL COMPLETE");
+    string score_string_result = string_from_cstring(format_temp(
+                                                         (game_will_be_new_high_score(stage_id, level_id, state->gameplay_data.current_score)) ?
+                                                         "New High Score: %d" :
+                                                         "Score: %d",
+                                                         state->gameplay_data.current_score));
 
     switch (complete_stage_state.stage) {
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN: {
@@ -1168,15 +1187,13 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             f32 rect_y = commands->screen_height/2-32;
             render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
             {
-                string title = string_literal("LEVEL COMPLETE");
-                auto   text_width = font_cache_text_width(title_font, title, 4);
-                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
+                auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
             }
             {
                 rect_y += 64;
-                string title = string_from_cstring(format_temp("Score: %d", state->gameplay_data.current_score));
-                auto   text_width = font_cache_text_width(subtitle_font, title, 2);
-                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
+                auto   text_width = font_cache_text_width(subtitle_font, score_string_result, 2);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), score_string_result, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
             }
 
             if (timer.triggered()) {
@@ -1189,15 +1206,13 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             f32 rect_y = commands->screen_height/2-32;
             render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
             {
-                string title = string_literal("LEVEL COMPLETE");
-                auto   text_width = font_cache_text_width(title_font, title, 4);
-                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+                auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
             {
                 rect_y += 64;
-                string title = string_from_cstring(format_temp("Score: %d", state->gameplay_data.current_score));
-                auto   text_width = font_cache_text_width(subtitle_font, title, 2);
-                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+                auto   text_width = font_cache_text_width(subtitle_font, score_string_result, 2);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), score_string_result, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
 
             if (timer.triggered()) {
@@ -1210,20 +1225,16 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             f32 rect_y = commands->screen_height/2-32;
             render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128 * (1 - timer_percentage)), BLEND_MODE_ALPHA);
             {
-                string title = string_literal("LEVEL COMPLETE");
-                auto   text_width = font_cache_text_width(title_font, title, 4);
-                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
+                auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
             }
             {
                 rect_y += 64;
-                string title = string_from_cstring(format_temp("Score: %d", state->gameplay_data.current_score));
-                auto   text_width = font_cache_text_width(subtitle_font, title, 2);
-                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
+                auto   text_width = font_cache_text_width(subtitle_font, score_string_result, 2);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), score_string_result, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
             }
 
             if (timer.triggered())  {
-                s32 stage_id = state->mainmenu_data.stage_id_level_select;
-                s32 level_id = state->mainmenu_data.stage_id_level_in_stage_select;
                 complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
 
                 game_update_stage_score(stage_id, level_id, state->gameplay_data.current_score);
