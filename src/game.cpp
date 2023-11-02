@@ -305,7 +305,7 @@ void Game::init(Graphics_Driver* driver) {
         Action::register_action_button(ACTION_MOVE_RIGHT, DPAD_RIGHT, 1.0f);
         Action::register_action_joystick_axis(ACTION_MOVE_RIGHT, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_POSITIVE_X);
 
-        Action::register_action_keys(ACTION_ACTION, KEY_SPACE, KEY_UNKNOWN, 1.0f);
+        Action::register_action_keys(ACTION_ACTION, KEY_SPACE, KEY_RETURN, 1.0f);
         Action::register_action_button(ACTION_ACTION, BUTTON_A, 1.0f);
 
         Action::register_action_keys(ACTION_FOCUS, KEY_SHIFT, KEY_CTRL, 1.0f);
