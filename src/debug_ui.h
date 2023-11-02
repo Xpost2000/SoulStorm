@@ -14,9 +14,6 @@
 // just "functional" and not too uncomfortable since the other parts are
 // more important.
 
-#define DEBUG_UI_MAX_STORED_LINES (16)
-#define DEBUG_UI_MAX_CHARACTER_LENGTH (512)
-
 struct render_commands;
 struct font_cache;
 namespace DebugUI {

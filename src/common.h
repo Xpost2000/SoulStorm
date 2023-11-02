@@ -50,10 +50,24 @@
 #define Gigabyte(x)                 (uint64_t)(x * 1024LL * 1024LL * 1024LL)
 #define Terabyte(x)                 (uint64_t)(x * 1024LL * 1024LL * 1024LL * 1024LL)
 
+inline static char* __shorten_path_length(char* original, int depth) {
+    if (depth < 0) depth = 1;
+    // assumed from __FILE__...
+    int length = strlen(original);
+
+    char* ptr = original + (length-1);
+    while (depth && *ptr) {
+        ptr--;
+        if (*ptr == '\\' || *ptr == '/') depth--;
+    }
+
+    return ptr;
+}
+
 #ifndef RELEASE
-#define _debugprintfhead()   fprintf(stderr, "[%s:%d:%s()]: " ,__FILE__, __LINE__, __func__)
+#define _debugprintfhead()   fprintf(stderr, "[%s:%d:%s()]: " , __shorten_path_length((char*)__FILE__, 2), __LINE__, __func__)
 // #define _debugprintf1(...)  do { _debugprintfhead(); fprintf(stderr, __VA_ARGS__); } while(0)
-#define _debugprintf1(...)  do { DebugUI::print(format_temp("[%s:%d:%s()]: %s", __FILE__, __LINE__, __func__,  format_temp(__VA_ARGS__))); _debugprintfhead(); fprintf(stderr, __VA_ARGS__); } while(0)
+#define _debugprintf1(...)  do { DebugUI::print(format_temp("[%s:%d:%s()]: %s", __shorten_path_length((char*)__FILE__, 2), __LINE__, __func__,  format_temp(__VA_ARGS__))); _debugprintfhead(); fprintf(stderr, __VA_ARGS__); } while(0)
 #define _debugprintf(...)   do { _debugprintf1(__VA_ARGS__); fprintf(stderr, "\n"); } while (0) 
 #define DEBUG_CALL(fn) fn; _debugprintf("calling %s in [%s:%d:%s()]", #fn, __FILE__, __LINE__, __func__)
 #else
