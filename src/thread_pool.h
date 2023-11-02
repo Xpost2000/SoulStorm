@@ -14,7 +14,7 @@ enum {
 };
 
 #define MAX_POSSIBLE_THREADS (16)
-#define MAX_JOBS (512)
+#define MAX_JOBS (1024)
 
 struct thread_job {
     u8                 status;
@@ -27,6 +27,7 @@ namespace Thread_Pool {
     void synchronize_tasks();
     void initialize();
     void synchronize_and_finish();
+    s32 active_jobs();
 }
 
 #endif

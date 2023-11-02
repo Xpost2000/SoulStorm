@@ -130,6 +130,19 @@ namespace Thread_Pool {
 #endif
     }
 
+    s32 active_jobs() {
+        s32 count = 0;
+
+        for (s32 index = 0; index < MAX_JOBS; ++index) {
+            struct thread_job* current_job = global_job_queue.jobs + index;
+            if (current_job->status != THREAD_JOB_STATUS_FINISHED) {
+                count += 1;
+            }
+        }
+
+        return count;
+    }
+
     void synchronize_and_finish(void) {
 #ifdef SIMULATE_SYNCHRONOUS
         _debugprintf("lol");

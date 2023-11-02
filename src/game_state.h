@@ -9,6 +9,12 @@
 #include "prng.h"
 #include "camera.h"
 
+#define MAX_BULLETS           (10000)
+#define MAX_EXPLOSION_HAZARDS (1024)
+#define MAX_LASER_HAZARDS     (1024)
+#define MAX_ENEMIES           (1024)
+#define MAX_SCORE_NOTIFICATIONS (4096)
+
 static string menu_font_variation_string_names[] = {
     string_literal("res/fonts/gnsh-bitmapfont-colour1.png"),
     string_literal("res/fonts/gnsh-bitmapfont-colour2.png"),
@@ -229,6 +235,8 @@ enum UI_State_Mode {
     UI_STATE_STAGE_SELECT,
     UI_STATE_DEAD_MAYBE_RETRY,
     UI_STATE_ACHIEVEMENTS,
+    UI_STATE_CONFIRM_BACK_TO_MAIN_MENU,
+    UI_STATE_CONFIRM_EXIT_TO_WINDOWS,
     UI_STATE_COUNT,
 };
 

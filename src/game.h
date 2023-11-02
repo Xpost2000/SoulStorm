@@ -63,23 +63,33 @@ public:
 private: 
     void handle_ui_update_and_render(struct render_commands* commands, f32 dt);
 
+    /*
+      NOTE: this game / engine doesn't have a fully fledged UI system.
+
+      It's just an IMGUI that's basically glued together, with these states
+      to separate screens.
+
+      This happens to be just fine when working with a controller though because
+      you can't use a mouse to go through lots of stuff...
+    */
     void update_and_render_pause_menu(struct render_commands* commands, f32 dt);
     void update_and_render_options_menu(struct render_commands* commands, f32 dt);
     void update_and_render_stage_select_menu(struct render_commands* commands, f32 dt);
     void update_and_render_achievements_menu(struct render_commands* commands, f32 dt);
     void update_and_render_game_death_maybe_retry_menu(struct render_commands* commands, f32 dt);
+    void update_and_render_achievement_notifications(struct render_commands* commands, f32 dt);
+    void update_and_render_confirm_back_to_main_menu(struct render_commands* commands, f32 dt);
+    void update_and_render_confirm_exit_to_windows(struct render_commands* commands, f32 dt);
 
+    // Game Modes
     void update_and_render_game_opening(Graphics_Driver* driver, f32 dt);
     void update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt);
-
-    void update_and_render_achievement_notifications(struct render_commands* commands, f32 dt);
-
-    void ingame_update_introduction_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);
-    void ingame_update_complete_stage_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);
-
     void update_and_render_game_ingame(Graphics_Driver* driver, f32 dt);
     void update_and_render_game_credits(Graphics_Driver* driver, f32 dt);
     void update_and_render_game_title_screen(Graphics_Driver* driver, f32 dt);
+
+    void ingame_update_introduction_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);
+    void ingame_update_complete_stage_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);
 
     // NOTE: most of these should be easy to parallesize.
     void handle_all_bullet_collisions(f32 dt);

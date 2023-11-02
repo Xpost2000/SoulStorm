@@ -265,12 +265,12 @@ void Game::init(Graphics_Driver* driver) {
     // gameplay_data initialize
     {
         auto state                     = &this->state->gameplay_data;
-        state->bullets                 = Fixed_Array<Bullet>(arena, 10000);
-        state->explosion_hazards       = Fixed_Array<Explosion_Hazard>(arena, 256);
-        state->laser_hazards           = Fixed_Array<Laser_Hazard>(arena, 128);
-        state->enemies                 = Fixed_Array<Enemy_Entity>(arena, 512);
-        state->score_notifications     = Fixed_Array<Gameplay_UI_Score_Notification>(arena, 4096);
-        state->hit_score_notifications = Fixed_Array<Gameplay_UI_Hitmark_Score_Notification>(arena, 4096);
+        state->bullets                 = Fixed_Array<Bullet>(arena, MAX_BULLETS);
+        state->explosion_hazards       = Fixed_Array<Explosion_Hazard>(arena, MAX_EXPLOSION_HAZARDS);
+        state->laser_hazards           = Fixed_Array<Laser_Hazard>(arena, MAX_LASER_HAZARDS);
+        state->enemies                 = Fixed_Array<Enemy_Entity>(arena, MAX_ENEMIES);
+        state->score_notifications     = Fixed_Array<Gameplay_UI_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
+        state->hit_score_notifications = Fixed_Array<Gameplay_UI_Hitmark_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
         state->prng                    = random_state();
         state->main_camera             = camera(V2(0, 0), 1.0);
         state->main_camera.rng         = &state->prng;
@@ -278,9 +278,9 @@ void Game::init(Graphics_Driver* driver) {
         // creation queues
         {
             // It's easier to just use more memory, and then remerge at the end...
-            state->to_create_player_bullets = Fixed_Array<Bullet>(arena, 10000);
-            state->to_create_enemy_bullets  = Fixed_Array<Bullet>(arena, 10000);
-            state->to_create_enemies        = Fixed_Array<Enemy_Entity>(arena, 512);
+            state->to_create_player_bullets = Fixed_Array<Bullet>(arena, MAX_BULLETS);
+            state->to_create_enemy_bullets  = Fixed_Array<Bullet>(arena, MAX_BULLETS);
+            state->to_create_enemies        = Fixed_Array<Enemy_Entity>(arena, MAX_ENEMIES);
         }
     }
 
@@ -585,6 +585,104 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
     GameUI::end_frame();
 }
 
+void Game::update_and_render_confirm_back_to_main_menu(struct render_commands* commands, f32 dt) {
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+    GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+    GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+
+    GameUI::set_ui_id((char*)"ui_confirm_back_to_main_menu");
+    GameUI::begin_frame(commands);
+    {
+        f32 y = 100;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(50, y), string_literal("CONFIRMATION?"), color32f32(1, 1, 1, 1), 4);
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        y += 45;
+        GameUI::label(V2(50, y), string_literal("Are you sure? You will lose your current stage progress."), color32f32(1, 1, 1, 1), 2);
+        y += 30;
+
+        if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            Transitions::do_shuteye_in(
+                color32f32(0, 0, 0, 1),
+                0.15f,
+                0.3f
+            );
+                
+
+            Transitions::register_on_finish(
+                [&](void*) mutable {
+                    state->ui_state    = UI_STATE_INACTIVE;
+                    switch_screen(GAME_SCREEN_MAIN_MENU);
+
+                    Transitions::do_shuteye_out(
+                        color32f32(0, 0, 0, 1),
+                        0.15f,
+                        0.3f
+                    );
+                }
+            );
+        }
+        y += 30;
+
+        if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            switch_ui(state->last_ui_state);
+        }
+
+        if (Action::is_pressed(ACTION_CANCEL)) {
+            switch_ui(state->last_ui_state);
+        }
+    }
+    GameUI::end_frame();
+}
+
+void Game::update_and_render_confirm_exit_to_windows(struct render_commands* commands, f32 dt) {
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+    GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+    GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+
+    GameUI::set_ui_id((char*)"ui_confirm_exit_to_windows");
+    GameUI::begin_frame(commands);
+    {
+        f32 y = 100;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(50, y), string_literal("CONFIRMATION?"), color32f32(1, 1, 1, 1), 4);
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        y += 45;
+        if (state->screen_mode == GAME_SCREEN_INGAME) {
+            GameUI::label(V2(50, y), string_literal("Are you sure? You will lose your current stage progress."), color32f32(1, 1, 1, 1), 2);
+        } else {
+            GameUI::label(V2(50, y), string_literal("Are you sure? I thought we were having so much fun!"), color32f32(1, 1, 1, 1), 2);
+        }
+        y += 30;
+
+        if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            Transitions::do_color_transition_in(
+                color32f32(0, 0, 0, 1),
+                0.15f,
+                0.3f
+            );
+                
+
+            Transitions::register_on_finish(
+                [&](void*) mutable {
+                    save_game();
+                    Global_Engine()->die();
+                }
+            );
+        }
+        y += 30;
+
+        if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            switch_ui(state->last_ui_state);
+        }
+
+        if (Action::is_pressed(ACTION_CANCEL)) {
+            switch_ui(state->last_ui_state);
+        }
+    }
+    GameUI::end_frame();
+}
+
 void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
 
@@ -606,28 +704,30 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
 
         if (state->screen_mode != GAME_SCREEN_MAIN_MENU) {
             if (GameUI::button(V2(100, y), string_literal("Return To Menu"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-                _debugprintf("return to main menu.");
-
-                Transitions::do_shuteye_in(
-                    color32f32(0, 0, 0, 1),
-                    0.15f,
-                    0.3f
-                );
+                if (state->screen_mode != GAME_SCREEN_INGAME) {
+                    Transitions::do_shuteye_in(
+                        color32f32(0, 0, 0, 1),
+                        0.15f,
+                        0.3f
+                    );
                 
 
-                Transitions::register_on_finish(
-                    [&](void*) mutable {
-                        state->ui_state    = UI_STATE_INACTIVE;
-                        switch_screen(GAME_SCREEN_MAIN_MENU);
-                        _debugprintf("Hi menu.");
+                    Transitions::register_on_finish(
+                        [&](void*) mutable {
+                            state->ui_state    = UI_STATE_INACTIVE;
+                            switch_screen(GAME_SCREEN_MAIN_MENU);
+                            _debugprintf("Hi menu.");
 
-                        Transitions::do_shuteye_out(
-                            color32f32(0, 0, 0, 1),
-                            0.15f,
-                            0.3f
-                        );
-                    }
-                );
+                            Transitions::do_shuteye_out(
+                                color32f32(0, 0, 0, 1),
+                                0.15f,
+                                0.3f
+                            );
+                        }
+                    );
+                } else {
+                    state->ui_state = UI_STATE_CONFIRM_BACK_TO_MAIN_MENU;
+                }
             }
             y += 30;
         }
@@ -675,19 +775,7 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
         }
 
         if (GameUI::button(V2(100, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-            Transitions::do_color_transition_in(
-                color32f32(0, 0, 0, 1),
-                0.15f,
-                0.3f
-            );
-                
-
-            Transitions::register_on_finish(
-                [&](void*) mutable {
-                    save_game();
-                    Global_Engine()->die();
-                }
-            );
+            switch_ui(UI_STATE_CONFIRM_EXIT_TO_WINDOWS);
         }
 
         // NOTE:
@@ -1074,6 +1162,12 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
         } break;
         case UI_STATE_PAUSED: {
             update_and_render_pause_menu(commands, dt);
+        } break;
+        case UI_STATE_CONFIRM_BACK_TO_MAIN_MENU: {
+            update_and_render_confirm_back_to_main_menu(commands, dt);
+        } break;
+        case UI_STATE_CONFIRM_EXIT_TO_WINDOWS: {
+            update_and_render_confirm_exit_to_windows(commands, dt);
         } break;
         case UI_STATE_OPTIONS: {
             update_and_render_options_menu(commands, dt); 
@@ -1610,7 +1704,17 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             (void*)update_packet_data
         );
 
-        state->player.update(this->state, dt);
+        Thread_Pool::add_job(
+            [](void* ctx) {
+                auto packet = (Entity_Loop_Update_Packet*) ctx;
+                Game_State* game_state = packet->game_state;
+                Gameplay_Data* state = &packet->game_state->gameplay_data;
+                f32 dt = packet->dt;
+                state->player.update(game_state, dt);
+                return 0;
+            },
+            (void*)update_packet_data
+        );
 
         // these need to play sounds and a few other non-thread safe behaviors
         // and besides, might as well have these guys just burn some time while we wait
@@ -1852,9 +1956,6 @@ void Game::handle_all_dead_entities(f32 dt) {
                     switch_ui(UI_STATE_DEAD_MAYBE_RETRY);
                 }
             );
-            // would like to slowly grayscale or something
-            // but for now we'll fade.
-            // Global_Engine()->die();
         }
     }
 }

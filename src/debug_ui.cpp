@@ -4,6 +4,7 @@
 #include "input.h"
 
 #include "engine.h"
+#include "thread_pool.h"
 
 #define DEBUG_UI_MAX_STORED_LINES (16)
 #define DEBUG_UI_MAX_CHARACTER_LENGTH (512)
@@ -49,6 +50,9 @@ namespace DebugUI {
             render_commands_push_text(commands, font, scale, xy, string_from_cstring(line), color32f32(a, a, a, 1.0f), BLEND_MODE_ALPHA);
         }
 
+        // I realize this is mildy dumb because I await all the jobs, so they should all be finished.
+        // I do parallel update but not necessarily asynchronous in this engine.
+        // render_commands_push_text(commands, font, 2, V2(0, commands->screen_height-64), string_from_cstring(format_temp("ThreadPool::active_jobs: %d", Thread_Pool::active_jobs())), color32f32(1,1,1,1), BLEND_MODE_ALPHA);
         render_commands_push_text(commands, font, 2, V2(0, commands->screen_height-32), Global_Engine()->memory_usage_strings(), color32f32(1,1,1,1), BLEND_MODE_ALPHA);
     }
 }
