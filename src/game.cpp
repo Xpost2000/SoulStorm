@@ -320,6 +320,19 @@ void Game::init(Graphics_Driver* driver) {
 
             state->portals.size = 4;
         }
+
+        // initializing all the stars' positions
+        {
+            auto bkg_slow_stars = state->star_positions[0];
+            auto bkg_faster_stars = state->star_positions[1];
+            auto& prng = this->state->gameplay_data.prng;
+            for (int i = 0; i < MAX_MAINMENU_OUTERSPACE_STARS; ++i) {
+                bkg_slow_stars[i] = V2(random_ranged_float(&prng, -640, 640),
+                                       random_ranged_float(&prng, -480, 480));
+                bkg_faster_stars[i] = V2(random_ranged_float(&prng, -640, 640),
+                                       random_ranged_float(&prng, -480, 480));
+            }
+        }
     }
 
     initialized = true;

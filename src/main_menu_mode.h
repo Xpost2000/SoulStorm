@@ -35,7 +35,11 @@ struct MainMenu_Stage_Portal {
     rectangle_f32 get_rect();
 };
 
+#define MAX_MAINMENU_OUTERSPACE_STARS (2048)
 struct MainMenu_Data {
+    // For now I'll just use a basic outerspacy sort of theme.
+    V2 star_positions[2][MAX_MAINMENU_OUTERSPACE_STARS];
+
     struct camera   main_camera;
     MainMenu_Player player;
 

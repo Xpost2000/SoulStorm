@@ -93,6 +93,70 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
         game_render_commands.screen_height = ui_render_commands.screen_height = resolution.y;
     }
 
+    // Draw main menu stars...
+    {
+        f32 brightness = normalized_sinf(Global_Engine()->global_elapsed_time)/2;
+        render_commands_push_quad_ext(
+            &game_render_commands,
+            rectangle_f32(-300, -300, game_render_commands.screen_width*2, game_render_commands.screen_height*2),
+            color32u8(brightness, brightness, brightness, 255),
+            V2(0, 0), 0,
+            BLEND_MODE_ALPHA);
+
+        // background stars are slower
+
+        auto bkg_slow_stars = main_menu_state.star_positions[0];
+        auto bkg_faster_stars = main_menu_state.star_positions[1];
+        // forward stars are moving more
+        {
+            // uh. I hope this looks fine.
+            for (int i = 0; i < MAX_MAINMENU_OUTERSPACE_STARS; ++i) {
+                bkg_slow_stars[i].x += dt * 10.0f * (normalized_sinf(i)+0.25);
+                bkg_slow_stars[i].y += dt * 10.0f * (normalized_sinf(Global_Engine()->global_elapsed_time)+0.25);
+
+                bkg_faster_stars[i].x += dt * 250.0f * (normalized_sinf(i*25)+0.15);
+                bkg_faster_stars[i].y += dt * 250.0f * (sinf(Global_Engine()->global_elapsed_time)/4+0.25);
+
+                if (bkg_faster_stars[i].x > game_render_commands.screen_width)  bkg_faster_stars[i].x = 0;
+                if (bkg_faster_stars[i].y > game_render_commands.screen_height) bkg_faster_stars[i].y = 0;
+
+                if (bkg_slow_stars[i].x > game_render_commands.screen_width)  bkg_slow_stars[i].x = 0;
+                if (bkg_slow_stars[i].y > game_render_commands.screen_height) bkg_slow_stars[i].y = 0;
+            }
+
+            // Need to make these have different sizes.
+            for (int i = 0; i < MAX_MAINMENU_OUTERSPACE_STARS; ++i) {
+                auto r = rectangle_f32(bkg_slow_stars[i].x, bkg_slow_stars[i].y, 1, 1);
+                auto r1 = rectangle_f32(bkg_faster_stars[i].x, bkg_faster_stars[i].y, 0.5, 0.5);
+                auto r2 = rectangle_f32(bkg_faster_stars[i].x-45, bkg_faster_stars[i].y-45, 0.5, 0.5);
+
+                render_commands_push_quad_ext(
+                    &game_render_commands,
+                    r,
+                    color32u8(230, 230, 255, 255),
+                    V2(0, 0), 0,
+                    BLEND_MODE_ALPHA
+                );
+
+                render_commands_push_quad_ext(
+                    &game_render_commands,
+                    r2,
+                    color32u8(200, 245, 200, 255),
+                    V2(0, 0), 0,
+                    BLEND_MODE_ALPHA
+                );
+
+                render_commands_push_quad_ext(
+                    &game_render_commands,
+                    r1,
+                    color32u8(200, 200, 245, 255),
+                    V2(0, 0), 0,
+                    BLEND_MODE_ALPHA
+                );
+            }
+        }
+    }
+
 
     if (Action::is_pressed(ACTION_MENU)) {
         if (this->state->ui_state == UI_STATE_STAGE_SELECT) {

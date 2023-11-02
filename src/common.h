@@ -141,6 +141,13 @@ inline static s32 sign_s32(s32 a) {
     return 0;
 }
 
+inline static f32 normalized_sinf(f32 t) {
+    return (sinf(t)+1)/2.0;
+}
+inline static f32 normalized_cosf(f32 t) {
+    return (cosf(t)+1)/2.0;
+}
+
 inline static s32 lerp_s32(s32 a, s32 b, f32 normalized_t) {
     return a * (1 - normalized_t) + (b * normalized_t);
 }
