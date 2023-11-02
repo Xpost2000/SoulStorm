@@ -160,9 +160,17 @@ struct Gameplay_UI_Hitmark_Score_Notification {
 struct Gameplay_Data {
     Stage_State stage_state;
 
+    // NOTE:
+    // to make this parallel safe, I need to
+    // defer entity creation to after the existing entity updates so my
+    // engine will not explode dangerously :)
+    Fixed_Array<Bullet>           to_create_player_bullets;
+    Fixed_Array<Bullet>           to_create_enemy_bullets;
+    Fixed_Array<Enemy_Entity>     to_create_enemies;
+
     Fixed_Array<Bullet>           bullets;
-    Fixed_Array<Laser_Hazard>     laser_hazards;
     Fixed_Array<Enemy_Entity>     enemies;
+    Fixed_Array<Laser_Hazard>     laser_hazards;
     Fixed_Array<Explosion_Hazard> explosion_hazards;
 
     Fixed_Array<Gameplay_UI_Score_Notification> score_notifications;
@@ -194,10 +202,15 @@ struct Gameplay_Data {
     s32 current_score = 0;
     f32 auto_score_timer = 0;
 
+    // NOTE:
+    // Bullets and enemy entities are queued up because
+    // they are multithreaded.
     void add_bullet(Bullet b);
     void add_laser_hazard(Laser_Hazard h);
     void add_explosion_hazard(Explosion_Hazard h);
     void add_enemy_entity(Enemy_Entity e);
+
+    void reify_all_creation_queues();
 
     bool any_hazards() const;
     bool any_enemies() const;

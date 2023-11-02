@@ -17,6 +17,7 @@
 
 #include "action_mapper.h"
 
+#define DEFAULT_AUTO_SCORE_INTERVAL (0.055f)
 
 // This will be hard-coded, since this is how my game design idea is.
 
@@ -273,6 +274,14 @@ void Game::init(Graphics_Driver* driver) {
         state->prng                    = random_state();
         state->main_camera             = camera(V2(0, 0), 1.0);
         state->main_camera.rng         = &state->prng;
+
+        // creation queues
+        {
+            // It's easier to just use more memory, and then remerge at the end...
+            state->to_create_player_bullets = Fixed_Array<Bullet>(arena, 10000);
+            state->to_create_enemy_bullets  = Fixed_Array<Bullet>(arena, 10000);
+            state->to_create_enemies        = Fixed_Array<Enemy_Entity>(arena, 512);
+        }
     }
 
     // mainmenu_data initialize
@@ -373,7 +382,14 @@ void Game::deinit() {
 
 // Gameplay_Data
 void Gameplay_Data::add_bullet(Bullet b) {
-    bullets.push(b);
+    switch (b.source_type) {
+        case BULLET_SOURCE_PLAYER: {
+            to_create_player_bullets.push(b);
+        } break;
+        default: {
+            to_create_enemy_bullets.push(b);
+        } break;
+    }
 }
 
 void Gameplay_Data::add_laser_hazard(Laser_Hazard h) {
@@ -385,7 +401,47 @@ void Gameplay_Data::add_explosion_hazard(Explosion_Hazard h) {
 }
 
 void Gameplay_Data::add_enemy_entity(Enemy_Entity e) {
-    enemies.push(e);
+    to_create_enemies.push(e);
+}
+
+void Gameplay_Data::reify_all_creation_queues() {
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            Gameplay_Data* state = (Gameplay_Data*)ctx;
+
+            for (int i = 0; i < (int)state->to_create_enemy_bullets.size; ++i) {
+                auto& b = state->to_create_enemy_bullets[i];
+                state->bullets.push(b);
+            }
+
+            for (int i = 0; i < (int)state->to_create_player_bullets.size; ++i) {
+                auto& b = state->to_create_player_bullets[i];
+                state->bullets.push(b);
+            }
+
+            state->to_create_player_bullets.clear();
+            state->to_create_enemy_bullets.clear();
+            return 0;
+        },
+        this
+    );
+
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            Gameplay_Data* state = (Gameplay_Data*)ctx;
+
+            for (int i = 0; i < (int)state->to_create_enemies.size; ++i) {
+                auto& e = state->to_create_enemies[i];
+                state->enemies.push(e);
+            }
+
+            state->to_create_enemies.clear();
+            return 0;
+        },
+        this
+    );
+
+    Thread_Pool::synchronize_tasks();
 }
 
 bool Gameplay_Data::any_hazards() const {
@@ -1161,6 +1217,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
     auto subtitle_font = resources->get_font(MENU_FONT_COLOR_GOLD);
 
     f32 timer_percentage = timer.percentage();
+    if (timer_percentage > 1.0) timer_percentage = 1.0f;
 
     s32 stage_id = state->mainmenu_data.stage_id_level_select;
     s32 level_id = state->mainmenu_data.stage_id_level_in_stage_select;
@@ -1235,6 +1292,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             }
 
             if (timer.triggered())  {
+                _debugprintf("Okay. Transition bye?");
                 complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
 
                 game_update_stage_score(stage_id, level_id, state->gameplay_data.current_score);
@@ -1290,14 +1348,18 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                         );
                     } break;
                     case GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY: {
-                        state->ui_state    = UI_STATE_STAGE_SELECT;
-                        switch_screen(GAME_SCREEN_MAIN_MENU);
-                        _debugprintf("Hi main menu. We can do some more stuff like demonstrate if we unlocked a new stage!");
+                        Transitions::register_on_finish(
+                            [&](void*) mutable {
+                                state->ui_state    = UI_STATE_STAGE_SELECT;
+                                switch_screen(GAME_SCREEN_MAIN_MENU);
+                                _debugprintf("Hi main menu. We can do some more stuff like demonstrate if we unlocked a new stage!");
 
-                        Transitions::do_shuteye_out(
-                            color32f32(0, 0, 0, 1),
-                            0.15f,
-                            0.3f
+                                Transitions::do_shuteye_out(
+                                    color32f32(0, 0, 0, 1),
+                                    0.15f,
+                                    0.3f
+                                );
+                            }
                         );
                     } break;
                 }
@@ -1391,27 +1453,6 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         Explosion_Hazard h = Explosion_Hazard(state->player.position, 125, 0.5f, 1.0f);
         state->explosion_hazards.push(h);
     }
-    if (Input::is_key_pressed(KEY_C)) {
-        // Laser_Hazard h = Laser_Hazard(state->player.position.y, 30.0f, LASER_HAZARD_DIRECTION_HORIZONTAL, 1.0f, 15.0f);
-        // state->laser_hazards.push(h);
-
-        // NOTE: these could just act as subscribers in the future.
-        //       to death events but it's not too big of a deal for now.
-        Achievements::get(ACHIEVEMENT_ID_KILLER)->report((s32)500);
-        Achievements::get(ACHIEVEMENT_ID_MURDERER)->report((s32)500);
-        Achievements::get(ACHIEVEMENT_ID_SLAYER)->report((s32)500);
-    }
-
-    if (Input::is_key_pressed(KEY_V)) {
-        // Laser_Hazard h = Laser_Hazard(state->player.position.x, 30.0f, LASER_HAZARD_DIRECTION_VERTICAL, 1.0f, 15.0f);
-        // state->laser_hazards.push(h);
-        // test unlock all stage achievements
-        Achievements::get(ACHIEVEMENT_ID_TEST_ACHIEVEMENT0)->report();
-        Achievements::get(ACHIEVEMENT_ID_STAGE1)->report();
-        Achievements::get(ACHIEVEMENT_ID_STAGE2)->report();
-        Achievements::get(ACHIEVEMENT_ID_STAGE3)->report();
-        Achievements::get(ACHIEVEMENT_ID_STAGE4)->report();
-    }
 #endif
 
     // for all of our entities and stuff.
@@ -1484,7 +1525,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
         // Update Auto Score
         {
-            if (state->auto_score_timer >= 0.025f) {
+            if (state->auto_score_timer >= DEFAULT_AUTO_SCORE_INTERVAL) {
                 state->current_score    += 1;
                 state->auto_score_timer  = 0;
             } else {
@@ -1492,39 +1533,101 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             }
         }
 
-        for (int i = 0; i < (int)state->bullets.size; ++i) {
-            auto& b = state->bullets[i];
-            b.update(this->state, dt);
-        }
+        struct Entity_Loop_Update_Packet {
+            Game_State* game_state;
+            f32         dt;
+        };
 
-        for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
-            auto& h = state->explosion_hazards[i];
-            h.update(this->state, dt);
-        }
+        auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
+        update_packet_data->dt = dt;
+        update_packet_data->game_state = this->state;
 
-        for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
-            auto& h = state->laser_hazards[i];
-            h.update(this->state, dt);
-        }
+        Thread_Pool::add_job(
+            [](void* ctx) {
+                auto packet = (Entity_Loop_Update_Packet*) ctx;
+                Game_State* game_state = packet->game_state;
+                Gameplay_Data* state = &packet->game_state->gameplay_data;
+                f32 dt = packet->dt;
 
-        for (int i = 0; i < (s32)state->enemies.size; ++i) {
-            auto& e = state->enemies[i];
-            e.update(this->state, dt);
-        }
+                for (int i = 0; i < (int)state->bullets.size; ++i) {
+                    auto& b = state->bullets[i];
+                    b.update(packet->game_state, dt);
+                }
 
-        // firing
-        for (int i = 0; i < (s32)state->enemies.size; ++i) {
-            auto& e = state->enemies[i];
-            e.try_and_fire(this->state, dt);
-        }
+                return 0;
+            },
+            (void*)update_packet_data
+        );
+
+        Thread_Pool::add_job(
+            [](void* ctx) {
+                auto packet = (Entity_Loop_Update_Packet*) ctx;
+                Game_State* game_state = packet->game_state;
+                Gameplay_Data* state = &packet->game_state->gameplay_data;
+                f32 dt = packet->dt;
+
+                for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
+                    auto& h = state->explosion_hazards[i];
+                    h.update(game_state, dt);
+                }
+
+                return 0;
+            },
+            (void*)update_packet_data
+        );
+
+        Thread_Pool::add_job(
+            [](void* ctx) {
+                auto packet = (Entity_Loop_Update_Packet*) ctx;
+                Game_State* game_state = packet->game_state;
+                Gameplay_Data* state = &packet->game_state->gameplay_data;
+                f32 dt = packet->dt;
+
+                for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
+                    auto& h = state->laser_hazards[i];
+                    h.update(game_state, dt);
+                }
+
+                return 0;
+            },
+            (void*)update_packet_data
+        );
+
+        Thread_Pool::add_job(
+            [](void* ctx) {
+                auto packet = (Entity_Loop_Update_Packet*) ctx;
+                Game_State* game_state = packet->game_state;
+                Gameplay_Data* state = &packet->game_state->gameplay_data;
+                f32 dt = packet->dt;
+
+                for (int i = 0; i < (s32)state->enemies.size; ++i) {
+                    auto& e = state->enemies[i];
+                    e.update(game_state, dt);
+                }
+
+                return 0;
+            },
+            (void*)update_packet_data
+        );
 
         state->player.update(this->state, dt);
 
-        handle_all_bullet_collisions(dt);
+        // these need to play sounds and a few other non-thread safe behaviors
+        // and besides, might as well have these guys just burn some time while we wait
+        // for the heavier loads...
         handle_all_explosions(dt);
         handle_all_lasers(dt);
 
+        Thread_Pool::synchronize_tasks();
+
+        // NOTE: these deliberately have to be after,
+        // because I need clean up to happen at the end exactly. 
+
+        handle_all_bullet_collisions(dt);
         handle_all_dead_entities(dt);
+
+        // Actually spawn the stuff we wanted to make...
+        state->reify_all_creation_queues();
     }
     handle_ui_update_and_render(&ui_render_commands, dt);
 
@@ -1778,13 +1881,13 @@ void Game::handle_all_lasers(f32 dt) {
     }
 }
 
+// NOTE: hazards only work on players which is neat.
 void Game::handle_all_explosions(f32 dt) {
     auto state = &this->state->gameplay_data;
     for (int i = 0; i < state->explosion_hazards.size; ++i) {
         auto& h = state->explosion_hazards[i];
 
         if (h.exploded) {
-            _debugprintf("biggest boom ever.");
             camera_traumatize(&state->main_camera, 0.25f);
             // check explosion against all entities
             // by all entities, I just mean the player right now.
