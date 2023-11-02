@@ -441,15 +441,17 @@ bool save_preferences_to_disk(Game_Preferences* preferences, string path) {
         fprintf(f, "music_volume = %3.3f\n", preferences->music_volume);
         fprintf(f, "sound_volume = %3.3f\n", preferences->sound_volume);
         fprintf(f, "fullscreen = %s\n",    ((s32)preferences->fullscreen) ? "true" : "false");
+        // controls are separate.
     } fclose(f);
     return true;
 }
 
+// TODO: sandbox by removing loops and similar keywords that cause danger.
 bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
     lua_State* L = luaL_newstate();
 
     if (luaL_dofile(L, path.data) != 0) {
-        _debugprintf("Could not exec preferences.lua. Hopefully it doesn't exist.");
+        _debugprintf("Could not exec %.*s. Hopefully it doesn't exist.", path.length, path.data);
         lua_close(L);
         return false;
     }
@@ -601,11 +603,14 @@ int main(int argc, char** argv) {
     {
         // hi. I'm going to play with lua and be a good boy.
         lua_State* L = luaL_newstate();
+        Input::luaL_open_game_inputlib(L);
         luaL_openlibs(L);
         lua_register(L, "fac", factorial_l);
-        luaL_dostring(L, "print(\"hello world\")");
-        luaL_dostring(L, "print(fac(5))");
-        luaL_dostring(L, "for i=1, 10 do print(fac(i)) end");
+        luaL_dostring(L, "print(Buttons.X)");
+        luaL_dostring(L, "print(Buttons)");
+        // luaL_dostring(L, "print(\"hello world\")");
+        // luaL_dostring(L, "print(fac(5))");
+        // luaL_dostring(L, "for i=1, 10 do print(fac(i)) end");
         
         lua_close(L);
     }

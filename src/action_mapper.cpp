@@ -1,3 +1,9 @@
+extern "C" {
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
+
 #include "action_mapper.h"
 
 struct Action_Data {
@@ -14,8 +20,7 @@ struct Action_Data {
     f32 analog_value = 0.0f;
 };
 
-local Action_Data action_map[ACTION_COUNT];
-
+local Action_Data action_map[ACTION_COUNT] = {};
 namespace Action {
     void register_action_keys(s32 action_id, s32 key_id, s32 key_id2, f32 analog_value) {
         auto& action        = action_map[action_id];
@@ -90,5 +95,113 @@ namespace Action {
         }
 
         return controller_response || keyboard_response;
+    }
+
+    int luaL_open_game_actionlib(lua_State* L) {
+        const char* action_enums = R"(
+Actions = {
+MOVE_UP = 0,
+MOVE_DOWN = 1,
+MOVE_LEFT = 2,
+MOVE_RIGHT = 3,
+ACTION = 4,
+FOCUS = 5,
+CANCEL = 6,
+MENU = 7
+}
+)";
+        luaL_dostring(L, action_enums);
+
+        /* for now the API will mirror the C one (which admittedly isn't perfect but whatever.) */
+        lua_register(L, "register_action_keys",
+                     [](lua_State* L) {
+                         int   action_id    = luaL_checkinteger(L, 1);
+                         int   key_id       = luaL_checkinteger(L, 2);
+                         int   key_id2      = luaL_checkinteger(L, 3);
+                         float analog_value = luaL_checknumber(L, 4);
+
+                         register_action_keys(action_id, key_id, key_id2, analog_value);
+                         return 1;
+                     }
+        );
+        lua_register(L, "register_action_button",
+                     [](lua_State* L) {
+                         int   action_id    = luaL_checkinteger(L, 1);
+                         int   button_id    = luaL_checkinteger(L, 2);
+                         float analog_value = luaL_checknumber(L, 3);
+
+                         register_action_button(action_id, button_id, analog_value);
+                         return 1;
+                     }
+        );
+        lua_register(L, "register_action_joystick_axis",
+                     [](lua_State* L) {
+                         int action_id = luaL_checkinteger(L, 1);
+                         int which     = luaL_checkinteger(L, 2);
+                         int axis_id   = luaL_checkinteger(L, 3);
+
+                         register_action_joystick_axis(action_id, which, axis_id);
+                         return 1;
+                     }
+        );
+        // NOTE: the intended use of lua is to author level choreographies and configuration
+        // so I only need this much.
+        // lua_register(L, "value");
+        // lua_register(L, "is_down");
+        // lua_register(L, "is_pressed");
+        return 1;
+    }
+
+    bool save(string filename) {
+        // NOTE:
+        // So this is not very user friendly, but that can change pretty quickly.
+        // Unfortunately because I don't have access to designated initializers
+        // there is no real convenient way to map files to strings without the standard library.
+
+        FILE* f = fopen(filename.data, "wb+");
+        if (!f) {
+            _debugprintf("Could not save action preferences?");
+            return false;
+        }
+        {
+            fprintf(f, "---- Action preferences. Currently not user-friendly. Check engine code action_mapper.h & input.h for key ids.\n");
+            for (int i = 0; i < ACTION_COUNT; ++i) {
+                auto action = action_map[i];
+
+                /* I need a way to reverse all the amppings. */
+                if (!(action.key_id[0] == -1 && action.key_id[1] == -1)) {
+                    fprintf(f,  "register_action_keys(%d, %d, %d, %3.3f)\n", i, action.key_id[0], action.key_id[1], action.analog_value);
+                }
+
+                if (action.button_id != -1) {
+                    fprintf(f, "register_action_button(%d, %d, %3.3f)\n", i, action.button_id, action.analog_value);
+                }
+
+                if (!(action.joystick_id == -1 && action.axis_id == -1)) {
+                    fprintf(f, "register_action_joystick_axis(%d, %d, %d)\n", i, action, action.joystick_id, action.axis_id);
+                }
+            }
+        }
+
+        _debugprintf("Wrote action mapper config");
+        fclose(f);
+        return true;
+    }
+
+    bool load(string filename) {
+        lua_State* L = luaL_newstate();
+
+        Input::luaL_open_game_inputlib(L);
+        luaL_open_game_actionlib(L);
+
+        if (luaL_dofile(L, filename.data) != 0) {
+            _debugprintf("Could not exec %.*s. Hopefully it doesn't exist.", filename.length, filename.data);
+            lua_close(L);
+            return false;
+        }
+
+        _debugprintf("Successfully loaded config from file");
+        lua_close(L);
+        return true;
     }
 };

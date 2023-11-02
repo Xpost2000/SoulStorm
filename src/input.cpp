@@ -1,3 +1,9 @@
+extern "C" {
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
+
 #include "input.h"
 
 // NOTE: if I'm exposing this to a config, especially a lua one where arbitrary parsing
@@ -453,5 +459,167 @@ namespace Input {
     rectangle_f32 mouse_rectangle(f32 k) {
         V2 mouse_position = Input::mouse_location();
         return rectangle_f32(mouse_position.x, mouse_position.y, k, k);
+    }
+
+    int luaL_open_game_inputlib(lua_State* L) {
+        /*
+         * Using the Lua C API to make a giant table is a recipe for disaster
+         * imo, so I'm just going to inline write the code...
+         *
+         * I'm just going to say. I'm glad my enums are basically never changing...
+         *
+         * There's no real code, since I don't want the lua script to have access to
+         * the raw engine stuff. So this is really just an enum library.
+         */
+        const char* lua_code = R"(
+GamepadAxis = {
+AXIS_X = 0,
+AXIS_Y = 1,
+
+AXIS_POSITIVE_X = 2,
+AXIS_NEGATIVE_X = 3,
+AXIS_POSITIVE_Y = 4,
+AXIS_NEGATIVE_Y = 5
+}
+
+Joystick = {
+LEFT = 0,
+RIGHT = 1,
+UNKNOWN = 2,
+}
+
+Buttons = {
+UNKNOWN = 0,
+A = 1,
+B = 2,
+X = 3,
+Y = 4,
+RS = 5,
+LS = 6,
+RB = 7,
+LB = 8,
+START = 9,
+BACK = 10,
+DPAD_UP = 11,
+DPAD_DOWN = 12,
+DPAD_LEFT = 13,
+DPAD_RIGHT = 14
+}
+
+Keys = {
+UNKNOWN = 0,
+A =  1,
+B =  2,
+C =  3,
+D =  4,
+E =  5,
+F =  6,
+G =  7,
+H =  8,
+I =  9,
+J =  10,
+K =  11,
+L =  12,
+M =  13,
+N =  14,
+O =  15,
+P =  16,
+Q =  17,
+R =  18,
+S =  19,
+T =  21,
+U =  22,
+V =  23,
+W =  24,
+X =  25,
+Y =  26,
+Z =  27,
+F1 =  28,
+F2 =  29,
+F3 =  30,
+F4 =  31,
+F5 =  32,
+F6 =  33,
+F7 =  34,
+F8 =  35,
+F9 =  36,
+F10 =  38,
+F11 =  39,
+F12 =  40,
+UP =  41,
+DOWN =  42,
+RIGHT =  43,
+LEFT =  44,
+KEY_0 =  45,
+KEY_1 =  46,
+KEY_2 =  47,
+KEY_3 =  48,
+KEY_4 =  49,
+KEY_5 =  50,
+KEY_6 =  51,
+KEY_7 =  52,
+KEY_8 =  53,
+KEY_9 =  54,
+
+MINUS =  55,
+BACKQUOTE =  56,
+EQUALS =  57,
+SEMICOLON =  58,
+QUOTE =  59,
+COMMA =  60,
+PERIOD =  61,
+RETURN =  62,
+BACKSPACE =  63,
+ESCAPE =  64,
+
+INSERT = 65,
+HOME = 66,
+PAGEUP = 67,
+PAGEDOWN = 68,
+DELETE = 69,
+END = 70,
+PRINTSCREEN = 71,
+
+PAUSE = 72,
+SCROLL_LOCK = 73,
+NUMBER_LOCK = 74,
+KEYPAD_0 = 75,
+KEYPAD_1 = 76,
+KEYPAD_2 = 77,
+KEYPAD_3 = 78,
+KEYPAD_4 = 79,
+KEYPAD_5 = 80,
+KEYPAD_6 = 81,
+KEYPAD_7 = 82,
+KEYPAD_8 = 83,
+KEYPAD_9 = 84,
+
+KEYPAD_LEFT = 85,
+KEYPAD_RIGHT = 86,
+KEYPAD_UP = 87,
+KEYPAD_DOWN = 88,
+KEYPAD_ASTERISK = 89,
+KEYPAD_BACKSLASH = 90,
+KEYPAD_MINUS = 91,
+KEYPAD_PLUS = 92,
+KEYPAD_PERIOD = 93,
+
+LEFT_BRACKET = 94,
+RIGHT_BRACKET = 95,
+FORWARDSLASH = 96,
+BACKSLASH = 97,
+
+TAB = 98,
+SHIFT = 99,
+META = 100,
+SUPER = 101,
+SPACE = 102,
+
+CTRL = 103,
+ALT = 104
+}
+)";
+        luaL_dostring(L, lua_code);
+        return 1;
     }
 }

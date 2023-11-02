@@ -23,6 +23,7 @@ enum Action_ID {
     ACTION_COUNT,
 };
 
+struct lua_State;
 namespace Action {
     // TODO: add with_repeat
     void register_action_keys(s32 action_id, s32 key_id, s32 key_id2=KEY_UNKNOWN, f32 analog_value=1.0);
@@ -34,6 +35,11 @@ namespace Action {
 
     bool is_down(s32 action_id);
     bool is_pressed(s32 action_id); // might be a bit harder to "judge" with joysticks...
+
+    int luaL_open_game_actionlib(lua_State* L);
+
+    bool save(string filename);
+    bool load(string filename);
 };
 
 #endif

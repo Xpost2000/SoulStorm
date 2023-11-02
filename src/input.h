@@ -231,6 +231,7 @@ struct input_state {
     // but since this game is small I can afford to just directly handle UI input state consumption
 };
 
+struct lua_State;
 namespace Input {
     game_controller* get_game_controller(int idx);
 
@@ -291,6 +292,8 @@ namespace Input {
     void send_text_input(char* text, size_t text_length);
     bool is_editing_text(void);
     char* current_text_buffer(void);
+
+    int luaL_open_game_inputlib(lua_State* L);
 }
 
 #endif
