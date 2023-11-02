@@ -25,6 +25,7 @@ public:
 
     void upload_texture(struct graphics_assets* assets, image_id image);
     void upload_font(struct graphics_assets* assets, font_id font);
+    void screenshot(char* where);
 
 private:
     SDL_Renderer*        game_sdl_renderer    = nullptr;

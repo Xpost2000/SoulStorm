@@ -17,6 +17,7 @@
 
 #include "action_mapper.h"
 
+
 // This will be hard-coded, since this is how my game design idea is.
 
 // TBH, I think some of the names are cool from other mythologies but I seem
@@ -230,6 +231,8 @@ void Game::init(Graphics_Driver* driver) {
 
             Action::register_action_keys(ACTION_MENU, KEY_ESCAPE, KEY_UNKNOWN, 1.0f);
             Action::register_action_button(ACTION_MENU, BUTTON_START, 1.0f);
+
+            Action::register_action_keys(ACTION_SCREENSHOT, KEY_F12, KEY_UNKNOWN, 1.0f);
         }
 
         Action::save(string_literal("controls.lua"));
@@ -1497,6 +1500,11 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 }
 
 void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
+    if (Action::is_pressed(ACTION_SCREENSHOT)) {
+        _debugprintf("Saved a screenshot!"); // picture sound?
+        driver->screenshot((char*)"screenshot.png");
+    }
+
     switch (state->screen_mode) {
         case GAME_SCREEN_TITLE_SCREEN: {
             update_and_render_game_title_screen(driver, dt);

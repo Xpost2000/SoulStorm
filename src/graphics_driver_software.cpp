@@ -78,3 +78,11 @@ void Software_Renderer_Graphics_Driver::upload_texture(struct graphics_assets* a
 void Software_Renderer_Graphics_Driver::upload_font(struct graphics_assets* assets, font_id font) {
     _debugprintf("Software Renderer upload font is NOP");
 }
+
+#include <stb_image_write.h>
+
+void Software_Renderer_Graphics_Driver::screenshot(char* where) {
+    stbi_write_png(where, default_framebuffer.width, default_framebuffer.height, 4, default_framebuffer.pixels, 4 * default_framebuffer.width);
+    //stbi_write_bmp(where, default_framebuffer.width, default_framebuffer.height, 1, default_framebuffer.pixels);
+  //  stbi_write_jpg(where, default_framebuffer.width, default_framebuffer.height, 0, default_framebuffer.pixels, 0);
+}

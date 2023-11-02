@@ -20,6 +20,7 @@ enum Action_ID {
     ACTION_FOCUS,
     ACTION_CANCEL,
     ACTION_MENU,
+    ACTION_SCREENSHOT,
     ACTION_COUNT,
 };
 
