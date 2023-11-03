@@ -16,6 +16,7 @@
 
 #include <SDL.h>
 
+#define JDR_COROUTINE_IMPLEMENTATION
 #include "common.h"
 #include "audio.h"
 #include "input.h"

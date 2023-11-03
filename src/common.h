@@ -495,5 +495,6 @@ struct string{
 #define string_null       string { 0, (char*) 0 }
 
 #include "debug_ui.h"
+#include "duffcoroutine.h"
 
 #endif
