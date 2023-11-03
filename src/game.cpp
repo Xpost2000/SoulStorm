@@ -91,6 +91,19 @@ local void game_update_stage_score(s32 stage_index, s32 level_index, s32 new_sco
     level.best_score = max(new_score, level.best_score);
 }
 
+// NOTE: attempts are recorded when you start a stage at all.
+//       As I'm intending to use them for one-time messages like tutorial messages
+//       or attempt events.
+local void game_register_stage_completion(s32 stage_index, s32 level_index) {
+    auto& level = stage_list[stage_index].levels[level_index];
+    level.completions += 1;
+}
+
+local void game_register_stage_attempt(s32 stage_index, s32 level_index) {
+    auto& level = stage_list[stage_index].levels[level_index];
+    level.attempts += 1;
+}
+
 local int game_complete_stage_level(s32 id, s32 level_id) {
     auto& stage  = stage_list[id];
     s32   result = 0;
@@ -170,7 +183,7 @@ void Game::setup_stage_start() {
         s32 stage_id = this->state->mainmenu_data.stage_id_level_select;
         s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
         // NOTE: check the ids later.
-
+        game_register_stage_attempt(stage_id, level_id);
         if (stage_id == 0 && level_id == 0) {
             state->stage_state = stage_native_stage_1_1();
         } else {
@@ -896,8 +909,10 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                 color32f32 color = color32f32(1, 1, 1, 1);
                 if (level.boss_stage) color = color32f32(1, 0, 0, 1);
                 // TODO: figure out an okay layout later.
-                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2 - 150), string_from_cstring(format_temp("Best Score: %d", level.best_score)), color, 2);
-                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2 - 100), string_from_cstring(format_temp("Last Score: %d", level.last_score)), color, 2);
+                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2 - 200), string_from_cstring(format_temp("Best Score: %d", level.best_score)), color, 2);
+                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2 - 170), string_from_cstring(format_temp("Last Score: %d", level.last_score)), color, 2);
+                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2 - 140), string_from_cstring(format_temp("Attempts: %d", level.attempts)), color, 2);
+                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2 - 110), string_from_cstring(format_temp("Completions: %d", level.completions)), color, 2);
                 GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2), level.subtitle, color, 2);
             }
 
@@ -1424,6 +1439,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                 complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
 
                 game_update_stage_score(stage_id, level_id, state->gameplay_data.current_score);
+                game_register_stage_completion(stage_id, level_id);
                 /*
                  * A neat thing to do would just be setup the main menu to preview
                  *
@@ -2188,6 +2204,8 @@ Save_File Game::construct_save_data() {
                     auto& level = stage_list[stage_index].levels[level_index];
                     save_data.stage_last_scores[stage_index][level_index] = level.last_score;
                     save_data.stage_best_scores[stage_index][level_index] = level.best_score;
+                    save_data.stage_completions[stage_index][level_index] = level.attempts;
+                    save_data.stage_attempts[stage_index][level_index]    = level.completions;
                 }
             }
         }
@@ -2217,8 +2235,10 @@ void Game::update_from_save_data(Save_File* save_data) {
 
         for (int level_index = 0; level_index < MAX_LEVELS_PER_STAGE; ++level_index) {
             auto& level = stage.levels[level_index];
-            level.last_score = save_data->stage_last_scores[stage_index][level_index];
-            level.best_score = save_data->stage_best_scores[stage_index][level_index];
+            level.last_score  = save_data->stage_last_scores[stage_index][level_index];
+            level.best_score  = save_data->stage_best_scores[stage_index][level_index];
+            level.attempts    = save_data->stage_attempts[stage_index][level_index];
+            level.completions = save_data->stage_completions[stage_index][level_index];
         }
     }
 
@@ -2254,15 +2274,20 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
 
         // only one version for now anyways.
         switch (save_data.version) {
-            case SAVE_FILE_VERSION_0: {
+            case SAVE_FILE_VERSION_PRERELEASE0:
+            case SAVE_FILE_VERSION_PRERELEASE1: {
                 _debugprintf("Rejecting prerelease save file");
                 return save_data;
             } break;
+
+            case SAVE_FILE_VERSION_CURRENT:
             default: {
                 for (int stage_index = 0; stage_index < 4; ++stage_index) {
                     for (int level_index = 0; level_index < MAX_LEVELS_PER_STAGE; ++level_index) {
                         serialize_s32(serializer, &save_data.stage_last_scores[stage_index][level_index]);
                         serialize_s32(serializer, &save_data.stage_best_scores[stage_index][level_index]);
+                        serialize_s32(serializer, &save_data.stage_attempts[stage_index][level_index]);
+                        serialize_s32(serializer, &save_data.stage_completions[stage_index][level_index]);
                     }
                 }
                 for (int stage_index = 0; stage_index < 4; ++stage_index) {
