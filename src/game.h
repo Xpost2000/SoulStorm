@@ -93,6 +93,7 @@ private:
 
     // NOTE: most of these should be easy to parallesize.
     void handle_all_bullet_collisions(f32 dt);
+    void handle_player_enemy_collisions(f32 dt);
     void handle_all_explosions(f32 dt);
     void handle_all_lasers(f32 dt);
     void handle_all_dead_entities(f32 dt);
