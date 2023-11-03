@@ -39,6 +39,10 @@ void stage_native_stage_1_1_draw(Stage_State* stage, f32 dt, struct render_comma
     return;
 }
 
+/*
+  likely just going to use duff's device,
+  since longjmp and setjmp are creepin me out.
+*/
 bool stage_native_stage_1_1_update(Stage_State* stage, f32 dt, Game_State* state) {
     auto gameplay_state = &state->gameplay_data;
 

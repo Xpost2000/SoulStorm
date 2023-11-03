@@ -92,8 +92,8 @@ void                _jdr_bind_current(jdr_duffcoroutine_t* co);
 #define JDR_Coroutine_Start(co, lbl)  _jdr_bind_current(co); switch(_jdr_current()->state[_jdr_current()->depth++]) { case 0: _jdr_current()->status = JDR_DUFFCOROUTINE_RUNNING; lbl: (void)"terminatewithsemicolon"
 #define _JDR_Cleanup                  do { _jdr_current()->depth--; _jdr_current()->stackused = 0; if(_jdr_current()->depth == 0) _jdr_current()->status = JDR_DUFFCOROUTINE_FINISHED; } while (0)
 #define _JDR_YIELD_BODY _jdr_current()->state[_jdr_current()->depth-1] = __LINE__; _JDR_Cleanup; _jdr_current()->status = JDR_DUFFCOROUTINE_SUSPENDED;
-#define JDR_Coroutine_Yield(x)        do {_JDR_YIELD_BODY; _jdr_current()->userdata = x; return; case __LINE__:} while(0);
-#define JDR_Coroutine_YieldNR()       do {_JDR_YIELD_BODY; return; case __LINE__:} while(0);
+#define JDR_Coroutine_Yield(x)        do {_JDR_YIELD_BODY; _jdr_current()->userdata = x; return; case __LINE__:{}} while(0);
+#define JDR_Coroutine_YieldNR()       do {_JDR_YIELD_BODY; return; case __LINE__:{}} while(0);
 #define JDR_Coroutine_End             default: _JDR_Cleanup; }
 
 #ifdef JDR_COROUTINE_IMPLEMENTATION
