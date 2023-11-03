@@ -104,8 +104,8 @@ local void game_register_stage_attempt(s32 stage_index, s32 level_index) {
     level.attempts += 1;
 }
 
-local int game_complete_stage_level(s32 id, s32 level_id) {
-    auto& stage  = stage_list[id];
+local int game_complete_stage_level(s32 stage_id, s32 level_id) {
+    auto& stage  = stage_list[stage_id];
     s32   result = 0;
     {
         /*
@@ -123,20 +123,20 @@ local int game_complete_stage_level(s32 id, s32 level_id) {
              *  This will increment on the last level to unlock a "stage 4" which doesn't
              *  exist, but will just be used as a marker for allowing the next stage to be unlocked.
              */
-            _debugprintf("Completed stage (%d-%d) and unlocked the next stage!", id+1, level_id+1);
+            _debugprintf("Completed stage (%d-%d) and unlocked the next stage!", stage_id+1, level_id+1);
             stage.unlocked_levels += 1;
 
             result = GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL;
         } else {
-            _debugprintf("Completed stage (%d-%d) another time!", id+1, level_id+1);
+            _debugprintf("Completed stage (%d-%d) another time!", stage_id+1, level_id+1);
             result = GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY; 
         }
     }
 
     // Check for all stages completed.
     if (stage.unlocked_levels > MAX_LEVELS_PER_STAGE) {
-        assertion(ACHIEVEMENT_ID_STAGE1 + id <= ACHIEVEMENT_ID_STAGE4 && "Invalid achievement for stage id.");
-        auto achievement = Achievements::get(ACHIEVEMENT_ID_STAGE1 + id);
+        assertion(ACHIEVEMENT_ID_STAGE1 + stage_id <= ACHIEVEMENT_ID_STAGE4 && "Invalid achievement for stage id.");
+        auto achievement = Achievements::get(ACHIEVEMENT_ID_STAGE1 + stage_id);
         achievement->report();
 
         result = GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE;
@@ -358,6 +358,7 @@ void Game::init(Graphics_Driver* driver) {
                 for (int i = 0; i < array_count(portal.prerequisites); ++i) {
                     portal.prerequisites[i] = -1;
                 }
+                portal.visible = true;
             }
 
             {
@@ -369,6 +370,7 @@ void Game::init(Graphics_Driver* driver) {
                     portal.prerequisites[i] = -1;
                 }
                 portal.prerequisites[0] = 0;
+                portal.visible = true;
             }
 
             {
@@ -381,8 +383,10 @@ void Game::init(Graphics_Driver* driver) {
                 }
                 portal.prerequisites[0] = 0;
                 portal.prerequisites[1] = 1;
+                portal.visible = true;
             }
 
+            // NOTE: postgame portal.
             {
                 auto& portal = state->portals[3]; 
                 portal.stage_id = 3;
@@ -420,7 +424,12 @@ void Game::init(Graphics_Driver* driver) {
     Achievements::init_achievements(arena, make_slice<Achievement>(achievement_list, array_count(achievement_list)));
     GameUI::initialize(arena);
 
-    load_game();
+    // no save file? Going to start
+    if (!load_game()) {
+        // first time, we'll load the full cutscene...
+        auto state = &this->state->mainmenu_data;
+        state->start_introduction_cutscene(false);
+    }
 }
 
 void Game::deinit() {
@@ -1467,6 +1476,14 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                                 switch_screen(GAME_SCREEN_MAIN_MENU);
                                 _debugprintf("Hi main menu. We can do some more stuff like demonstrate if we unlocked a new stage!");
 
+                                // Check for postgame cutscene playing
+                                {
+                                    auto& main_menu_state = state->mainmenu_data;
+                                    if (!main_menu_state.cutscene1.triggered && can_access_stage(3)) {
+                                        main_menu_state.start_completed_maingame_cutscene();
+                                    }
+                                }
+
                                 Transitions::do_shuteye_out(
                                     color32f32(0, 0, 0, 1),
                                     0.15f,
@@ -2166,7 +2183,7 @@ void Game::notify_new_achievement(s32 id) {
 // save game information
 local string save_file_name = string_literal("game_save.save");
 
-void Game::save_game() {
+bool Game::save_game() {
     _debugprintf("Attempting to save game.");
     if (OS_file_exists(save_file_name)) {
         _debugprintf("NOTE: overriding old save file.");
@@ -2176,20 +2193,25 @@ void Game::save_game() {
     serializer.expected_endianess = ENDIANESS_LITTLE;
     serialize_game_state(&serializer);
     serializer_finish(&serializer);
+
+    return true;
 }
 
-void Game::load_game() {
+bool Game::load_game() {
     if (OS_file_exists(save_file_name)) {
         _debugprintf("Attempting to load save game.");
         auto serializer = open_read_file_serializer(save_file_name);
         serializer.expected_endianess = ENDIANESS_LITTLE;
+        // NOTE: serialize game_state should be allowed to fail.
         auto updated_save_data = serialize_game_state(&serializer);
         serializer_finish(&serializer);
 
         update_from_save_data(&updated_save_data);
         _debugprintf("Hopefully loaded.");
+        return true;
     } else {
         _debugprintf("Save file does not exist. Nothing to load.");
+        return false;
     }
 }
 
@@ -2221,6 +2243,9 @@ Save_File Game::construct_save_data() {
         {
             save_data.playtime = total_playtime;
         }
+        {
+            save_data.first_load = 1;
+        }
     }
 
     return save_data;
@@ -2243,6 +2268,32 @@ void Game::update_from_save_data(Save_File* save_data) {
     }
 
     total_playtime = save_data->playtime;
+
+    /*
+      Affect some state based on save data.
+
+      These are various things to prevent cutscenes from triggering when they
+      shouldn't.
+    */
+
+    // Prevent congratulations cutscene from showing up
+    {
+        auto state = &this->state->mainmenu_data;
+        bool have_postgame_access = can_access_stage(3);
+        {
+            state->cutscene1.triggered = have_postgame_access;
+        }
+        // Enable postgame portal if we're in the postgame
+        {
+            auto& portal = state->portals[3]; 
+            portal.visible = can_access_stage(3);
+        }
+
+        
+        // if we were able to get to this point, we were able to load a save
+        // which means we probably already saw the original cutscene.
+        state->start_introduction_cutscene(true);
+    }
 }
 
 local void serialize_achievement(struct binary_serializer* serializer, Achievement* achievement) {
@@ -2275,7 +2326,9 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
         // only one version for now anyways.
         switch (save_data.version) {
             case SAVE_FILE_VERSION_PRERELEASE0:
-            case SAVE_FILE_VERSION_PRERELEASE1: {
+            case SAVE_FILE_VERSION_PRERELEASE1:
+            case SAVE_FILE_VERSION_PRERELEASE2:
+            {
                 _debugprintf("Rejecting prerelease save file");
                 return save_data;
             } break;
@@ -2295,6 +2348,7 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
                 }
                 serialize_u8(serializer, &save_data.post_game);
                 serialize_f32(serializer, &save_data.playtime);
+                serialize_s32(serializer, &save_data.first_load);
 
                 // serialize all achievements
                 // NOTE: slices are writable in my "library of code" so I'm

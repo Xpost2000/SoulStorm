@@ -82,6 +82,114 @@ void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
     position += velocity * dt;
 }
 
+void MainMenu_Data::start_completed_maingame_cutscene() {
+    if (!cutscene1.triggered) {
+        _debugprintf("Starting main game completion cutscene!");
+        cutscene1.triggered        = true;
+        cutscene1.characters_shown = 0;
+        cutscene1.timer            = 0.0f;
+        cutscene1.type_timer       = 0.0f;
+        cutscene1.phase            = 1;
+    }
+}
+
+void MainMenu_Data::start_introduction_cutscene(bool fasttrack) {
+    if (!cutscene2.triggered) {
+        _debugprintf("Starting intro cutscene!");
+        cutscene2.triggered        = true;
+        cutscene2.characters_shown = 0;
+        cutscene2.timer            = 0.0f;
+        cutscene2.type_timer       = 0.0f;
+        cutscene2.phase            = 1;
+        cutscene2.first_time_load  = !fasttrack;
+    }
+}
+
+void MainMenu_Data::update_and_render_cutscene1(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt) {
+    // _debugprintf("TODO implement this cutscene");
+    switch (cutscene1.phase) {
+        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_FADE_IN: {
+            _debugprintf("cutscene fade in");
+            cutscene1.phase++;
+        } break;
+        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_MESSAGE1: {
+            cutscene1.phase++;
+        } break;
+        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_FOCUS_ON_POSTGAME_PORTAL: {
+            cutscene1.phase++;
+        } break;
+        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_SPAWN_POSTGAME_PORTAL: {
+            _debugprintf("unlock portal");
+            camera_traumatize(&main_camera, 0.35f);
+            portals[3].visible = true;
+            cutscene1.phase++;
+        } break;
+        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_UNFOCUS: {
+            cutscene1.phase++;
+        } break;
+        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_MESSAGE2: {
+            cutscene1.phase++;
+        } break;
+        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_FADE_OUT: {
+            cutscene1.phase = MAINMENU_COMPLETED_MAINGAME_CUTSCENE_NONE;
+        } break;
+    }
+    // _debugprintf("cutscene bye");
+}
+
+void MainMenu_Data::update_and_render_cutscene2(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt) {
+    if (cutscene2.first_time_load) {
+        update_and_render_cutscene2_firsttime(game_commands, ui_commands, dt);
+    } else {
+        update_and_render_cutscene2_fasttrack(game_commands, ui_commands, dt);
+    }
+}
+
+void MainMenu_Data::update_and_render_cutscene2_firsttime(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt) {
+    switch (cutscene2.phase) {
+        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_START: {
+            _debugprintf("Hi, first time playing?");
+            cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_FADE_OUT_REST;
+        } break;
+        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_ZOOM_IN: {
+            
+        } break;
+        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_BUILD_UP: {
+        } break;
+        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_MESSAGE1: {
+            
+        } break;
+        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_SPAWN_PLAYER: {
+            
+        } break;
+        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_MESSAGE2: {
+            
+        } break;
+        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_FADE_OUT_MESSAGE: {
+            
+        } break;
+        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_FADE_OUT_REST: {
+            cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_NONE;
+        } break;
+    }
+}
+
+void MainMenu_Data::update_and_render_cutscene2_fasttrack(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt) {
+    switch (cutscene2.phase) {
+        case MAIN_MENU_INTRODUCTION_CUTSCENE_BUILD_UP: {
+            _debugprintf("Hi, we've already seen the main cutscene right?");
+            cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_SPAWN_PLAYER;
+        } break;
+        case MAIN_MENU_INTRODUCTION_CUTSCENE_SPAWN_PLAYER: {
+            cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_NONE;
+        } break;
+    }
+}
+
+bool MainMenu_Data::cutscene_active() {
+    return cutscene1.phase != 0 || cutscene2.phase != 0;
+}
+
 void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
     auto& main_menu_state = state->mainmenu_data;
 
@@ -170,7 +278,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
         }
     }
 
-    if (state->ui_state == UI_STATE_INACTIVE) {
+    if (state->ui_state == UI_STATE_INACTIVE && !main_menu_state.cutscene_active()) {
 
         // debug achievement testing.
         if (Input::is_key_pressed(KEY_C)) {
@@ -187,6 +295,13 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
 
         main_menu_state.player.update(&main_menu_state, dt);
     }
+
+    for (int i = 0; i < main_menu_state.portals.size; ++i) {
+        auto& p = main_menu_state.portals[i];
+        p.draw(&main_menu_state, &game_render_commands, resources);
+    }
+
+    main_menu_state.player.draw(&main_menu_state, &game_render_commands, resources);
 
     handle_ui_update_and_render(&ui_render_commands, dt);
 
@@ -207,6 +322,8 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
         for (int i = 0; i < main_menu_state.portals.size; ++i) {
             auto& p = main_menu_state.portals[i];
             auto circle_portal = circle_f32(p.position.x, p.position.y, p.scale.x * 3.5f);
+
+            if (!p.visible) continue;
 
             if (circle_f32_intersect(circle_portal, circle_player)) {
                 focus_portal = &p;
@@ -243,12 +360,14 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
         main_menu_state.last_focus_portal = focus_portal;
     }
 
-    for (int i = 0; i < main_menu_state.portals.size; ++i) {
-        auto& p = main_menu_state.portals[i];
-        p.draw(&main_menu_state, &game_render_commands, resources);
+    /*
+     * Run all cutscene logic here
+     */
+    if (main_menu_state.cutscene_active()) {
+        // NOTE: the cutscenes are mutually exclusive.
+        main_menu_state.update_and_render_cutscene1(&game_render_commands, &ui_render_commands, dt);
+        main_menu_state.update_and_render_cutscene2(&game_render_commands, &ui_render_commands, dt);
     }
-
-    main_menu_state.player.draw(&main_menu_state, &game_render_commands, resources);
 
     Transitions::update_and_render(&ui_render_commands, dt);
 
