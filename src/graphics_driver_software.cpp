@@ -1,6 +1,6 @@
 #include "graphics_driver_software.h"
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 void Software_Renderer_Graphics_Driver::initialize(SDL_Window* window, int width, int height) {
     game_window = window;

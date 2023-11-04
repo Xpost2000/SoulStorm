@@ -1,5 +1,5 @@
 #include "graphics_driver.h"
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 s32  Graphics_Driver::find_index_of_resolution(s32 w, s32 h) {
     for (int i = 0; i < display_mode_count; ++i) {

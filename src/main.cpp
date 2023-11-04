@@ -14,7 +14,7 @@
 #include <Windows.h>
 #endif
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #define JDR_COROUTINE_IMPLEMENTATION
 #include "common.h"

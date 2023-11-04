@@ -1,7 +1,7 @@
 #include "common.h"
 #include "audio.h"
 
-#include <SDL_mixer.h>
+#include <SDL2/SDL_mixer.h>
 
 namespace Audio {
     local Mix_Chunk* loaded_samples[MAX_LOADED_SAMPLES]       = {};

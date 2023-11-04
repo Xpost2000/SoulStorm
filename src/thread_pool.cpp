@@ -1,4 +1,4 @@
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include "thread_pool.h"
 #include "memory_arena.h"
 
