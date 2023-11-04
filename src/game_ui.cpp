@@ -36,11 +36,11 @@ struct Widget {
 };
 
 struct UI_State {
-    font_cache* selected_font;
-    font_cache* default_font;
-    font_cache* active_font;
+    font_cache* selected_font = nullptr;
+    font_cache* default_font = nullptr;
+    font_cache* active_font = nullptr;
 
-    struct render_commands* commands;
+    struct render_commands* commands = nullptr;
 
     Fixed_Array<Widget> widgets;
     bool in_frame;
@@ -53,8 +53,8 @@ struct UI_State {
     bool picked_first_index = false;
     s32 selected_index = 0;
 
-    char* last_ui_id;
-    char* ui_id;
+    char* last_ui_id = nullptr;
+    char* ui_id      = nullptr;
 };
 
 // void render_commands_push_text(

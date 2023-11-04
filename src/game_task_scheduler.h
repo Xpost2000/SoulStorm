@@ -33,6 +33,8 @@ struct Game_Task_Yield_Result {
 };
 
 #define TASK_WAIT(time) do {((Game_Task_Yield_Result*)(_jdr_current())->userdata)->timer_max = time; ((Game_Task_Yield_Result*)(_jdr_current())->userdata)->timer = 0.0f;((Game_Task_Yield_Result*)(_jdr_current())->userdata)->reason = TASK_YIELD_REASON_WAIT_FOR_SECONDS; JDR_Coroutine_YieldNR()} while(0)
+
+struct Game_State;
 struct Game_Task {
     u8              source = GAME_TASK_AVALIABLE;
     s32             associated_state;
@@ -42,18 +44,48 @@ struct Game_Task {
     // Essential tasks will finish no matter what.
     // and cannot be killed normally.
     bool essential;
-    Game_Task_Yield_Result yielded;
 
+    Game_Task_Yield_Result yielded;
+    /*
+      NOTE: game specific common task data.
+      (
+         since this is specifically designed for the stages to be written as coroutines,
+         these are parameters that the stage update requires.
+
+         This also happens to work for enemies/bullets or anything that looks like
+
+         Object::method(Game_State* state, f32 dt), where userdata should be assumed to be the
+         'this' pointer.
+
+         I think this is more than enough for the needs of this game, but obviously a more
+         fully-fledged scheduler would have more generic facilities.
+
+         NOTE: I'm sandboxing the coroutine code from the lowest levels of the engine core, so it has no
+         ability to render anything on it's own (and I'm not intending on exposing any real rendering APIs or
+         anything that's shifty like the transitions API.) There are very few, and clear defined actions on
+         most entity types like bosses.
+
+         Not sure if bosses will use my coroutine system or just be written as state machines for simplicity...
+      )
+
+      Since this is intended to be for a game specific task manager
+      it should be completely appropriate to allow this. It also
+      means I don't get any funny questions regarding allocation
+      of the userdata pointer since I often just need one more pointer.
+
+      TODO: change the userdata coroutine pointer to look at this.
+    */
+    Game_State*            game_state;
+    void*                  userdata;
+    f32                    dt; // current dt. Although we can look at the engine object for this.
     /*
       NOTE:
       the coroutine's userdata will be a yield value,
       this userdata will be the game_state
     */
-    void* userdata;
 };
 
 
-struct Game_State;
 struct Game_Task_Scheduler {
     /*
       NOTE:

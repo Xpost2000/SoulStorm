@@ -37,6 +37,7 @@ struct render_commands;
 
 typedef void (*Stage_Draw_Function)(Stage_State*, f32, struct render_commands*, Game_State*);
 typedef bool (*Stage_Update_Function)(Stage_State*, f32, Game_State*);
+/* typedef bool (*Stage_Update_Function)(jdr_duffcoroutine_t*); */
 
 // NOTE: the stage state is separate from the Stage information
 // which is in stages.h, which I think is fine for now. Not sure if that will change.

@@ -20,11 +20,11 @@ struct Level {
     //       Stage State per stage, which is mostly for the boss fights
     //       which are basically only in C++.
 
-    s32 last_score    = 0;
-    s32 best_score    = 0;
+    s32 last_score;
+    s32 best_score;
 
-    s32 attempts      = 0;
-    s32 completions   = 0;
+    s32 attempts;
+    s32 completions;
 };
 
 struct Stage {

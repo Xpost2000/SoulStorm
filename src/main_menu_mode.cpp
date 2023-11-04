@@ -83,6 +83,7 @@ void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
 }
 
 void MainMenu_Data::start_completed_maingame_cutscene() {
+    return;
     if (!cutscene1.triggered) {
         _debugprintf("Starting main game completion cutscene!");
         cutscene1.triggered        = true;
@@ -94,6 +95,7 @@ void MainMenu_Data::start_completed_maingame_cutscene() {
 }
 
 void MainMenu_Data::start_introduction_cutscene(bool fasttrack) {
+    return;
     if (!cutscene2.triggered) {
         _debugprintf("Starting intro cutscene!");
         cutscene2.triggered        = true;

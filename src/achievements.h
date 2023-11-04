@@ -29,7 +29,7 @@ struct Bounded {
 
 template<typename T>
 Bounded<T> bounded(T min, T max) {
-    Bounded result;
+    Bounded<T> result;
     result.min = result.current = min;
     result.max = max;
     return result;
@@ -57,7 +57,7 @@ struct Achievement {
         Bounded<f32> as_float;
     } progress;
 
-    s8 notified_of_unlock = 0;
+    s8 notified_of_unlock;
 
     /*
      * We can never "re-lock" an achievement. Assume that

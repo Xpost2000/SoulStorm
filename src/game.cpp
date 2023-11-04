@@ -186,6 +186,7 @@ void Game::setup_stage_start() {
         game_register_stage_attempt(stage_id, level_id);
         if (stage_id == 0 && level_id == 0) {
             state->stage_state = stage_native_stage_1_1();
+            // state->coroutine_tasks.add_task(state, state->stage_state.update);
         } else {
             state->stage_state = stage_null();
         }
@@ -522,14 +523,17 @@ void Gameplay_Data::notify_score(s32 amount, bool interesting) {
     if (!interesting)
         return;
 
-    auto notification = Gameplay_UI_Score_Notification {amount};
+    Gameplay_UI_Score_Notification notification;
+    notification.additional_score = amount;
     notification.lifetime.start();
     score_notifications.push(notification);
 }
 
 void Gameplay_Data::notify_score_with_hitmarker(s32 amount, V2 where) {
     notify_score(amount, true);
-    auto notification = Gameplay_UI_Hitmark_Score_Notification {where, amount};
+    Gameplay_UI_Hitmark_Score_Notification notification;
+    notification.where = where;
+    notification.additional_score = amount;
     notification.lifetime.start();
     hit_score_notifications.push(notification);
 }
