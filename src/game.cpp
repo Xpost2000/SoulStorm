@@ -185,12 +185,13 @@ void Game::setup_stage_start() {
         // NOTE: check the ids later.
         game_register_stage_attempt(stage_id, level_id);
         if (stage_id == 0 && level_id == 0) {
-            state->stage_state = stage_native_stage_1_1();
-            this->state->coroutine_tasks.add_task(this->state, state->stage_state.tick_task);
+            state->stage_state = STAGE(1_1);
             // state->coroutine_tasks.add_task(state, state->stage_state.update);
         } else {
-            state->stage_state = stage_null();
+            state->stage_state = STAGE(null);
         }
+
+        this->state->coroutine_tasks.add_task(this->state, state->stage_state.tick_task);
     }
 
     state->player.position = V2(state->play_area.width / 2, 300);
@@ -198,6 +199,7 @@ void Game::setup_stage_start() {
     state->player.die      = false;
     state->player.scale    = V2(15, 15);
 
+    state->enemies.clear();
     state->bullets.clear();
     state->explosion_hazards.clear();
     state->laser_hazards.clear();
@@ -290,7 +292,7 @@ void Game::init(Graphics_Driver* driver) {
     {
         state->coroutine_tasks.tasks = Fixed_Array<Game_Task>(arena, 128);
 
-#if 1
+#if 0
         // test eternal task
         {
             state->coroutine_tasks.add_global_task(
@@ -507,11 +509,13 @@ bool Gameplay_Data::any_hazards() const {
 }
 
 bool Gameplay_Data::any_enemies() const {
-    return (enemies.size > 0);
+    // NOTE: queued entities will also count.
+    return (enemies.size > 0) || (to_create_enemies.size > 0);
 }
 
 bool Gameplay_Data::any_bullets() const {
-    return (bullets.size > 0);
+    // NOTE: queued entities will also count.
+    return (bullets.size > 0) || (to_create_enemy_bullets.size > 0);
 }
 
 bool Gameplay_Data::any_living_danger() const {
@@ -1816,7 +1820,6 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
                 ingame_update_introduction_sequence(&ui_render_commands, resources, dt);
             } else {
                 bool can_finish_stage = state->stage_completed;
-                // bool can_finish_stage = stage_update(&state->stage_state, dt, this->state);
 
                 if (!state->triggered_stage_completion_cutscene && can_finish_stage) {
                     state->triggered_stage_completion_cutscene = true;

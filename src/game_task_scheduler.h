@@ -26,13 +26,23 @@ enum {
     GAME_TASK_SOURCE_ALWAYS
 };
 
-enum { TASK_YIELD_REASON_NONE, TASK_YIELD_REASON_WAIT_FOR_SECONDS, };
+enum {
+    TASK_YIELD_REASON_NONE,
+    TASK_YIELD_REASON_WAIT_FOR_SECONDS,
+    TASK_YIELD_REASON_COMPLETE_STAGE,
+};
 struct Game_Task_Yield_Result {
     s32 reason = TASK_YIELD_REASON_NONE;
     f32 timer, timer_max;
 };
 
-#define TASK_WAIT(time) do {((Game_Task_Yield_Result*)(_jdr_current())->userdata)->timer_max = time; ((Game_Task_Yield_Result*)(_jdr_current())->userdata)->timer = 0.0f;((Game_Task_Yield_Result*)(_jdr_current())->userdata)->reason = TASK_YIELD_REASON_WAIT_FOR_SECONDS; JDR_Coroutine_YieldNR()} while(0)
+#define _Task_YieldData()     ((Game_Task_Yield_Result*)(_jdr_current())->userdata)
+#define TASK_YIELD()          \
+    do {JDR_Coroutine_YieldNR()} while(0)
+#define TASK_WAIT(time)                                                 \
+    do {_Task_YieldData()->timer_max = time; _Task_YieldData()->timer = 0.0f;_Task_YieldData()->reason = TASK_YIELD_REASON_WAIT_FOR_SECONDS; JDR_Coroutine_YieldNR()} while(0)
+#define TASK_COMPLETE_STAGE() \
+    do {_Task_YieldData()->reason    = TASK_YIELD_REASON_COMPLETE_STAGE; JDR_Coroutine_YieldNR()} while(0)
 
 struct Game_State;
 

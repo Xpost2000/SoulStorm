@@ -77,14 +77,21 @@ bool Game_Task_Scheduler::kill_task(s32 index) {
 void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
     s32 current_ui_state     = state->ui_state;
     s32 current_screen_state = state->screen_mode;
+
     for (s32 index = 0; index < tasks.capacity; ++index) {
         auto& task = tasks[index];
 
-        if (jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED || task.source == GAME_TASK_AVALIABLE) continue;
+        if (jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED || task.source == GAME_TASK_AVALIABLE) {
+            zero_memory(&task, sizeof(task));
+        }
 
         {
             switch (task.userdata.yielded.reason) {
                 case TASK_YIELD_REASON_NONE: {} break;
+                case TASK_YIELD_REASON_COMPLETE_STAGE: {
+                    state->gameplay_data.stage_completed = true;
+                    task.userdata.yielded.reason = TASK_YIELD_REASON_NONE;
+                } break;
                 case TASK_YIELD_REASON_WAIT_FOR_SECONDS: {
                     if (task.userdata.yielded.timer < task.userdata.yielded.timer_max) {
                         /*

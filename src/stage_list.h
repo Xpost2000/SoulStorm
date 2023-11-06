@@ -21,8 +21,8 @@
                     string_literal("Reaper's Gate"),
                         string_literal("Judgement awaits."),
                         1,
-                        },
-                    }
+                },
+            }
     },
     
     // Stage 2

@@ -3,6 +3,25 @@
 
 #include "common.h"
 
+// The main goal is to obviously avoid keeping these in code, but until I get
+// lua support, there's little reason to avoid doing this imo.
+// only boss stages are intended to actually be kept in C++ since they may be more complicated.
+
+// This is the most macro heavy section of the codebase, and I don't personally
+// like it, but this is where a lot of the highest level code is anyway...
+
+#define STAGE_TASK_DECLS                                                \
+        Game_State*  state = ((Game_Task_Userdata*)(co->userdata))->game_state; \
+        Stage_State* stage = &state->gameplay_data.stage_state;         \
+        auto         gameplay_state = &state->gameplay_data;            \
+        f32          dt = ((Game_Task_Userdata*)(co->userdata))->dt
+#define STAGE_TICK(name)                                          \
+    void stage_##name##_tick(struct jdr_duffcoroutine* co)
+#define STAGE_DRAW(name)                                                \
+    void stage_##name##_draw(Stage_State* stage, f32 dt, struct render_commands* commands, Game_State* state)
+#define STAGE(name)                                     \
+    Stage_State stage_##name##(void)
+
 /*
  * Personally speaking, I think that function pointers are more
  * powerful in this case compared to using Inheritance to specify stage
@@ -36,13 +55,11 @@ struct Gameplay_Data;
 struct render_commands;
 
 typedef void (*Stage_Draw_Function)(Stage_State*, f32, struct render_commands*, Game_State*);
-typedef bool (*Stage_Update_Function)(Stage_State*, f32, Game_State*);
-/* typedef bool (*Stage_Update_Function)(jdr_duffcoroutine_t*); */
 
 // NOTE: the stage state is separate from the Stage information
 // which is in stages.h, which I think is fine for now. Not sure if that will change.
 struct Stage_State {
-    f32 timer; // generic timer in case I don't want anything too specific.
+    f32 timer;
     s16 phase; // This is for choreography phases in C++.
                // I.E.: Enemy waves.
                // If working in LUA, this will be handled through some coroutines.
@@ -52,29 +69,26 @@ struct Stage_State {
     };
 
     // TODO: post process drawing
-    Stage_Draw_Function   draw;
+    /*
+      Also, I think I would prefer to keep this as a state machine powered
+      behavior, unlike the update which I would more clearly just keep as
+      a coroutine style update.
 
-    /* // NOTE: the return value is whether the stage is "finished". */
-    /* //       When the stage is complete, it'll give the main loop permission */
-    /* //       to show the "stage completion" screen. */
-    Stage_Update_Function update;
+      Although I may toy with making a coroutine way as well.
+     */
+    Stage_Draw_Function   draw;
     jdr_duffcoroutine_fn tick_task;
 };
 
 Stage_State stage_load_from_lua(const char* lua_filename);
 
-Stage_State stage_null(void); // A stage that finishes instantly.
-
-// The main goal is to obviously avoid keeping these in code, but until I get
-// lua support, there's little reason to avoid doing this imo.
-// only boss stages are intended to actually be kept in C++ since they may be more complicated.
-/* Stage 1 */
-Stage_State stage_native_stage_1_1(void);
+STAGE(1_1);
+STAGE(null);
 /* Stage 2 */
 /* Stage 3 */
 /* Stage 4 */
 
-bool stage_update(Stage_State* stage, f32 dt, Game_State* gameplay_data);
 void stage_draw(Stage_State* stage, f32 dt, struct render_commands* render_commands, Game_State* gameplay_data);
-
+#undef STAGE
+#define STAGE(name) stage_##name()
 #endif
