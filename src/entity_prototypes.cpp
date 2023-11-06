@@ -115,3 +115,29 @@ void spawn_enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 di
         enemy.edge_left_behavior_override = enemy.edge_right_behavior_override = PLAY_AREA_EDGE_PASSTHROUGH;
     state->gameplay_data.add_enemy_entity(enemy);
 }
+
+void spawn_enemy_generic(Game_State* state, V2 position, V2 scale, f32 fire_cooldown, Enemy_Entity_Velocity_Fn velocity, Enemy_Entity_Fire_Fn fire) {
+    Enemy_Entity enemy;
+
+    enemy.position = position;
+    enemy.scale    = scale;
+    enemy.firing_cooldown = fire_cooldown;
+
+    enemy.velocity_function = velocity;
+    enemy.on_fire_function  = fire;
+
+    enemy.edge_top_behavior_override = enemy.edge_bottom_behavior_override =
+        enemy.edge_left_behavior_override = enemy.edge_right_behavior_override = PLAY_AREA_EDGE_PASSTHROUGH;
+    state->gameplay_data.add_enemy_entity(enemy);
+}
+
+void spawn_bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bullet_Entity_Velocity_Fn velocity) {
+    Bullet bullet;
+    bullet.position    = position;
+    bullet.scale       = V2(5,5);
+    bullet.lifetime    = Timer(3.0f);
+    bullet.source_type = source;
+
+    bullet.velocity_function = velocity;
+    state->gameplay_data.add_bullet(bullet);
+}

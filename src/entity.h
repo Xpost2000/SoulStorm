@@ -124,10 +124,13 @@ struct Entity {
     s32 edge_right_behavior_override = -1;
 };
 
+struct Enemy_Entity;
+using Enemy_Entity_Fire_Fn = std::function<void(Enemy_Entity*, Game_State*, f32)>;
+using Enemy_Entity_Velocity_Fn = std::function<void(Enemy_Entity*, Game_State* const, f32)>;
 struct Enemy_Entity : public Entity {
     Timer outside_boundaries_lifetime_timer = Timer(10.0f);
-    std::function<void(Enemy_Entity*, Game_State* const, f32)> velocity_function;
-    std::function<void(Enemy_Entity*, Game_State*, f32)> on_fire_function;
+    Enemy_Entity_Velocity_Fn velocity_function;
+    Enemy_Entity_Fire_Fn     on_fire_function;
 
     void update(Game_State* state, f32 dt);
 
@@ -240,6 +243,8 @@ enum Bullet_Source {
     BULLET_SOURCE_ENEMY,
 };
 
+struct Bullet;
+using Bullet_Entity_Velocity_Fn = std::function<void(Bullet*, Game_State* const, f32)>; 
 struct Bullet : public Entity {
     Timer lifetime; // should be adjusted carefully!
 
@@ -255,7 +260,7 @@ struct Bullet : public Entity {
     void update(Game_State* state, f32 dt);
 
     // want this to be handled via lua
-    std::function<void(Bullet*, Game_State* const, f32)> velocity_function;
+    Bullet_Entity_Velocity_Fn velocity_function;
 };
 
 #include "entity_prototypes.h"
