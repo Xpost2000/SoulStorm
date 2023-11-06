@@ -21,6 +21,8 @@
     void stage_##name##_draw(Stage_State* stage, f32 dt, struct render_commands* commands, Game_State* state)
 #define STAGE(name)                                     \
     Stage_State stage_##name##(void)
+#define DEF_LEVEL_DATA(name) struct Stage_##name##_Data
+#define LEVEL_DATA(name, as) auto as = (struct Stage_##name##_Data*)(stage->stage_memory_buffer)
 
 /*
  * Personally speaking, I think that function pointers are more
@@ -64,9 +66,25 @@ struct Stage_State {
                // I.E.: Enemy waves.
                // If working in LUA, this will be handled through some coroutines.
 
-    union {
-        // stage data to be added at later dates.
-    };
+    // I don't really know how much memory I actually
+    // need, but my memory arena is relatively large so
+    // might as well over-estimate...
+
+    /*
+     * While I generally like exposing things directly,
+     * I would actually like to encapsulate the level code in
+     * it's own files since this legitimately makes sense to do,
+     *
+     * IE: I don't care about looking at level 1 / level 3 code when
+     * I'm working on level 2.
+     *
+     * Also frankly I shouldn't even care about looking at any of this
+     * stage code when I'm working on a level.
+     *
+     * So I'm just going to unsafely cast this into an appropriate stage
+     * data structure within the level file implementations.
+     */
+    char stage_memory_buffer[Kilobyte(128)];
 
     // TODO: post process drawing
     /*
