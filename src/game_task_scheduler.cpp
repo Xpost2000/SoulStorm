@@ -21,13 +21,13 @@ s32 Game_Task_Scheduler::add_task(struct Game_State* state, jdr_duffcoroutine_fn
 
     if (first_free == -1) return false;
 
-    auto& task            = tasks[first_free];
-    task.source           = GAME_TASK_SOURCE_GAME;
-    task.associated_state = current_screen_state;
-    task.essential        = essential;
-    task.userdata         = (void*)state;
-    task.coroutine        = jdr_coroutine_new(f);
-    task.coroutine.userdata = &task.yielded;
+    auto& task               = tasks[first_free];
+    task.source              = GAME_TASK_SOURCE_GAME;
+    task.associated_state    = current_screen_state;
+    task.essential           = essential;
+    task.userdata.game_state = state;
+    task.coroutine           = jdr_coroutine_new(f);
+    task.coroutine.userdata = &task.userdata;
 
     return first_free;
 }
@@ -42,9 +42,9 @@ s32 Game_Task_Scheduler::add_ui_task(struct Game_State* state, jdr_duffcoroutine
     task.source           = GAME_TASK_SOURCE_UI;
     task.associated_state = current_ui_state;
     task.essential        = essential;
-    task.userdata         = (void*)state;
+    task.userdata.game_state = state;
     task.coroutine        = jdr_coroutine_new(f);
-    task.coroutine.userdata = &task.yielded;
+    task.coroutine.userdata = &task.userdata;
 
     return first_free;
 }
@@ -57,10 +57,9 @@ s32 Game_Task_Scheduler::add_global_task(jdr_duffcoroutine_fn f) {
     task.source           = GAME_TASK_SOURCE_ALWAYS;
     task.associated_state = -1;
     task.essential        = true;
-    task.userdata         = (void*)0;
     task.coroutine        = jdr_coroutine_new(f);
     // NOTE: need userdata info.
-    task.coroutine.userdata = &task.yielded;
+    task.coroutine.userdata = &task.userdata;
 
     return first_free;
 }
@@ -84,10 +83,10 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
         if (jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED || task.source == GAME_TASK_AVALIABLE) continue;
 
         {
-            switch (task.yielded.reason) {
+            switch (task.userdata.yielded.reason) {
                 case TASK_YIELD_REASON_NONE: {} break;
                 case TASK_YIELD_REASON_WAIT_FOR_SECONDS: {
-                    if (task.yielded.timer < task.yielded.timer_max) {
+                    if (task.userdata.yielded.timer < task.userdata.yielded.timer_max) {
                         /*
                          * Special case for Game tasks, which should logically
                          * not advance if the game is in any UI.
@@ -95,10 +94,10 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
                         if (task.source == GAME_TASK_SOURCE_GAME && current_ui_state != UI_STATE_INACTIVE)
                             break;
 
-                        task.yielded.timer += dt;
+                        task.userdata.yielded.timer += dt;
                         continue;
                     } else {
-                        task.yielded.reason = TASK_YIELD_REASON_NONE;
+                        task.userdata.yielded.reason = TASK_YIELD_REASON_NONE;
                     }
                 } break;
             }

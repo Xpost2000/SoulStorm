@@ -54,10 +54,11 @@ struct Stage_State {
     // TODO: post process drawing
     Stage_Draw_Function   draw;
 
-    // NOTE: the return value is whether the stage is "finished".
-    //       When the stage is complete, it'll give the main loop permission
-    //       to show the "stage completion" screen.
+    /* // NOTE: the return value is whether the stage is "finished". */
+    /* //       When the stage is complete, it'll give the main loop permission */
+    /* //       to show the "stage completion" screen. */
     Stage_Update_Function update;
+    jdr_duffcoroutine_fn tick_task;
 };
 
 Stage_State stage_load_from_lua(const char* lua_filename);

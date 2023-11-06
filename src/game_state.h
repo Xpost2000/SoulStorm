@@ -168,6 +168,13 @@ struct Gameplay_UI_Hitmark_Score_Notification {
 };
 
 struct Gameplay_Data {
+    // As a coroutine, the stage will have to yield
+    // and set this flag on it's own.
+    // The only other thing I can do is just repeatedly
+    // monitor coroutine task id, but that's dirty.
+    // This is the least bad idea I could think of to handle
+    // this, which is fine since it's really one thing.
+    bool stage_completed;
     Stage_State stage_state;
 
     // NOTE:

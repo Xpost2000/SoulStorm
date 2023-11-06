@@ -186,6 +186,7 @@ void Game::setup_stage_start() {
         game_register_stage_attempt(stage_id, level_id);
         if (stage_id == 0 && level_id == 0) {
             state->stage_state = stage_native_stage_1_1();
+            this->state->coroutine_tasks.add_task(this->state, state->stage_state.tick_task);
             // state->coroutine_tasks.add_task(state, state->stage_state.update);
         } else {
             state->stage_state = stage_null();
@@ -1814,10 +1815,12 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             if (state->intro.stage != GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE) {
                 ingame_update_introduction_sequence(&ui_render_commands, resources, dt);
             } else {
-                bool can_finish_stage = stage_update(&state->stage_state, dt, this->state);
+                bool can_finish_stage = state->stage_completed;
+                // bool can_finish_stage = stage_update(&state->stage_state, dt, this->state);
 
                 if (!state->triggered_stage_completion_cutscene && can_finish_stage) {
                     state->triggered_stage_completion_cutscene = true;
+                    state->stage_completed                     = false;
                     {
                         state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
                         state->complete_stage.stage_timer = Timer(0.35f);
