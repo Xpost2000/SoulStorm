@@ -166,6 +166,9 @@ void register_controller_down(s32 which, s32 button) {
 
 void controller_rumble(struct game_controller* controller, f32 x_magnitude, f32 y_magnitude, u32 ms) {
     SDL_GameController* sdl_controller = (SDL_GameController*)controller->_internal_controller_handle;
+    if (!sdl_controller)
+        return;
+
     x_magnitude                        = clamp<f32>(x_magnitude, 0, 1);
     y_magnitude                        = clamp<f32>(y_magnitude, 0, 1);
     SDL_GameControllerRumble(sdl_controller, (0xFFFF * x_magnitude), (0xFFFF * y_magnitude), ms);

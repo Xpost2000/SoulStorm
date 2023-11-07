@@ -2049,6 +2049,7 @@ void Game::handle_all_lasers(f32 dt) {
             // played sound + camera hit
             if (!h.already_emitted) {
                 h.already_emitted = true;
+                controller_rumble(Input::get_gamepad(0), 0.5f, 0.5f, 150);
                 camera_traumatize(&state->main_camera, 0.25f);
             }
 
@@ -2069,6 +2070,7 @@ void Game::handle_all_explosions(f32 dt) {
         auto& h = state->explosion_hazards[i];
 
         if (h.exploded) {
+            controller_rumble(Input::get_gamepad(0), 0.8f, 0.8f, 150);
             camera_traumatize(&state->main_camera, 0.25f);
             // check explosion against all entities
             // by all entities, I just mean the player right now.

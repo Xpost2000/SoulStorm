@@ -46,11 +46,13 @@ void cutscene_completed_maingame_task(jdr_duffcoroutine_t* co) {
     // do the same shake and spawn effect.
     // maybe play a sound?
     while ((*trauma_timer) < 1.5f) {
+        controller_rumble(Input::get_gamepad(0), 0.25f, 0.25f, 10);
         camera_set_trauma(&camera, clamp<f32>(*trauma_timer + 0.35f, 0.15f, 0.35f));
         *trauma_timer += dt;
         JDR_Coroutine_YieldNR();
     }
 
+    controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 350);
     camera_traumatize(&camera, 0.58f);
     {
         auto& focus_portal = main_menu_state->portals[3];
@@ -90,10 +92,13 @@ void cutscene_introduction_fasttrack_task(jdr_duffcoroutine_t* co) {
     }
 
     while ((*trauma_timer) < 0.45f) {
+        controller_rumble(Input::get_gamepad(0), 0.25f, 0.25f, 10);
         camera_set_trauma(&camera, 0.17f);
         *trauma_timer += dt;
         JDR_Coroutine_YieldNR();
     }
+
+    controller_rumble(Input::get_gamepad(0), 0.5f, 0.5f, 350);
     camera_traumatize(&camera, 0.55f);
 
     main_menu_state->player.visible = true;
@@ -128,10 +133,13 @@ void cutscene_introduction_firsttime_task(jdr_duffcoroutine_t* co) {
     }
 
     while ((*trauma_timer) < 1.5f) {
+        controller_rumble(Input::get_gamepad(0), 0.25f, 0.25f, 10);
         camera_set_trauma(&camera, 0.15f);
         *trauma_timer += dt;
         JDR_Coroutine_YieldNR();
     }
+
+    controller_rumble(Input::get_gamepad(0), 0.4f, 0.4f, 350);
     camera_traumatize(&camera, 0.47f);
 
     main_menu_state->player.visible = true;

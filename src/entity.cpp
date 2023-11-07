@@ -382,6 +382,7 @@ void Player::update(Game_State* state, f32 dt) {
     if (firing) {
         // okay these are normal real bullets
         if (attack()) {
+            controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
             if (under_focus) {
                 spawn_bullet_upwards_linear(state, position + V2(-10, 0), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
                 spawn_bullet_upwards_linear(state, position + V2(10, 0), V2(0, -1), 1250.0f, BULLET_SOURCE_PLAYER);
