@@ -296,6 +296,7 @@ namespace Input {
     int luaL_open_game_inputlib(lua_State* L);
 }
 
+void controller_rumble_set(bool v);
 void controller_rumble(struct game_controller* controller, f32 x_magnitude, f32 y_magnitude, u32 ms);
 
 #endif

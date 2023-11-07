@@ -592,6 +592,8 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
         }
         if (GameUI::checkbox(V2(100, y), string_literal("Fullscreen "), color32f32(1, 1, 1, 1), 2, &temp_preferences.fullscreen)) {}
         y += 30;
+        if (GameUI::checkbox(V2(100, y), string_literal("Controller Vibration"), color32f32(1, 1, 1, 1), 2, &temp_preferences.controller_vibration)) {}
+        y += 30;
         GameUI::f32_slider(V2(100, y), string_literal("Music Volume: "), color32f32(1, 1, 1, 1), 2, &temp_preferences.music_volume, 0, 1.0, 100);
         y += 30;
         GameUI::f32_slider(V2(100, y), string_literal("Sound Volume: "), color32f32(1, 1, 1, 1), 2, &temp_preferences.sound_volume, 0, 1.0, 100);

@@ -164,7 +164,16 @@ void register_controller_down(s32 which, s32 button) {
     }
 }
 
+
+local bool _use_controller_rumble = true;
+void controller_rumble_set(bool v) {
+    _use_controller_rumble = v;
+}
+
 void controller_rumble(struct game_controller* controller, f32 x_magnitude, f32 y_magnitude, u32 ms) {
+    if (!_use_controller_rumble)
+        return;
+
     SDL_GameController* sdl_controller = (SDL_GameController*)controller->_internal_controller_handle;
     if (!sdl_controller)
         return;
@@ -402,6 +411,7 @@ void initialize() {
         preferences.music_volume = 0.5f;
         preferences.sound_volume = 0.5f;
         preferences.fullscreen   = SCREEN_IS_FULLSCREEN;
+        preferences.controller_vibration = true;
     }
 
     game.init(global_graphics_driver);
@@ -429,6 +439,7 @@ void confirm_preferences(Game_Preferences* preferences) {
 
     global_graphics_driver->get_display_modes(); // update internal list of display modes.
     preferences->resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences->width, preferences->height);
+    _use_controller_rumble = preferences->controller_vibration;
 }
 
 /*
@@ -445,6 +456,7 @@ bool save_preferences_to_disk(Game_Preferences* preferences, string path) {
         fprintf(f, "music_volume = %3.3f\n", preferences->music_volume);
         fprintf(f, "sound_volume = %3.3f\n", preferences->sound_volume);
         fprintf(f, "fullscreen = %s\n",    ((s32)preferences->fullscreen) ? "true" : "false");
+        fprintf(f, "controller_vibration = %s\n",    ((s32)preferences->controller_vibration) ? "true" : "false");
         // controls are separate.
     } fclose(f);
     return true;
@@ -481,22 +493,12 @@ bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
         lua_getglobal(L, "fullscreen");
         preferences->fullscreen = lua_toboolean(L, -1);
     }
+    {
+        lua_getglobal(L, "controller_vibration");
+        preferences->controller_vibration = lua_toboolean(L, -1);
+    }
 
     lua_close(L);
-    // _debugprintf("Hi, preferences are not loaded from disk yet.");
-    // FILE* f = fopen(path.data, "rb+");
-
-    // if (!f) return false;
-    // else {
-    //     _debugprintf("Hopefully fscanf doesn't explode.");
-    //     fscanf(f, "%d ", &preferences->width);
-    //     fscanf(f, "%d ", &preferences->height);
-    //     fscanf(f, "%f ", &preferences->music_volume);
-    //     fscanf(f, "%f ", &preferences->sound_volume);
-    //     fscanf(f, "%d ", (s32*) &preferences->fullscreen);
-    //     fclose(f);
-    // }
-
     return true;
 }
 

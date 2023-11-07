@@ -19,6 +19,7 @@ struct Game_Preferences {
     f32 sound_volume;
 
     bool fullscreen;
+    bool controller_vibration;
 };
 
 // NOTE: implemented in main.cpp, since it's kind of platform layer code
