@@ -80,6 +80,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
 
     for (s32 index = 0; index < tasks.capacity; ++index) {
         auto& task = tasks[index];
+        task.userdata.dt = dt;
 
         if (jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED || task.source == GAME_TASK_AVALIABLE) {
             zero_memory(&task, sizeof(task));
@@ -113,12 +114,12 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
         if (
             (task.source == GAME_TASK_SOURCE_ALWAYS)                                          ||
             (task.source == GAME_TASK_SOURCE_UI && task.associated_state == current_ui_state) ||
-            (task.source == GAME_TASK_SOURCE_GAME && task.associated_state == current_screen_state
+            (task.source == GAME_TASK_SOURCE_GAME && task.associated_state == current_screen_state)
              /*
               * special case for gameplay. Do not run any of the game coroutines while a stage is in the introduction
               * stage
               */
-             && state->gameplay_data.intro.stage == GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE)
+            || (task.source == GAME_TASK_SOURCE_GAME && task.associated_state == GAME_SCREEN_INGAME && state->gameplay_data.intro.stage == GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE)
         ) {
             jdr_resume(&task.coroutine);
         }

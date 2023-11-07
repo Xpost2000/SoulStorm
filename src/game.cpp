@@ -426,7 +426,7 @@ void Game::init(Graphics_Driver* driver) {
     if (!load_game()) {
         // first time, we'll load the full cutscene...
         auto state = &this->state->mainmenu_data;
-        state->start_introduction_cutscene(false);
+        state->start_introduction_cutscene(this->state, false);
     }
 }
 
@@ -1483,7 +1483,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                                 {
                                     auto& main_menu_state = state->mainmenu_data;
                                     if (!main_menu_state.cutscene1.triggered && can_access_stage(3)) {
-                                        main_menu_state.start_completed_maingame_cutscene();
+                                        main_menu_state.start_completed_maingame_cutscene(state);
                                     }
                                 }
 
@@ -1492,6 +1492,9 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                                     0.15f,
                                     0.3f
                                 );
+
+                                // Register save game on any level completion.
+                                save_game();
                             }
                         );
                     } break;
@@ -1508,6 +1511,9 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                                     0.15f,
                                     0.3f
                                 );
+
+                                // Register save game on any level completion.
+                                save_game();
                             }
                         );
                     } break;
@@ -1523,13 +1529,13 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                                     0.15f,
                                     0.3f
                                 );
+
+                                // Register save game on any level completion.
+                                save_game();
                             }
                         );
                     } break;
                 }
-
-                // Register save game on any level completion.
-                save_game();
             }
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE: {} break;
@@ -2296,7 +2302,7 @@ void Game::update_from_save_data(Save_File* save_data) {
         
         // if we were able to get to this point, we were able to load a save
         // which means we probably already saw the original cutscene.
-        state->start_introduction_cutscene(true);
+        state->start_introduction_cutscene(this->state, true);
     }
 }
 

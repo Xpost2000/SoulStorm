@@ -1,6 +1,159 @@
 // NOTE: meant to be included inside of game.cpp
 // main menu code
 
+// cutscene coroutines.
+void cutscene_completed_maingame_task(jdr_duffcoroutine_t* co) {
+    _jdr_bind_current(co);
+    Game_State* state           = ((Game_Task_Userdata*)(co->userdata))->game_state;
+    auto        main_menu_state = &state->mainmenu_data;
+    f32         dt              = ((Game_Task_Userdata*)(co->userdata))->dt;
+    V2          resolution      = Global_Engine()->driver->resolution();
+
+    auto& camera = main_menu_state->main_camera;
+    float* trauma_timer = (float*)_jdr_alloc_var(sizeof(*trauma_timer));
+
+    JDR_Coroutine_Start(co, Start);
+
+    *trauma_timer = 0;
+
+    main_menu_state->screen_message_add(string_literal("You have proven yourself!"));
+    while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
+    main_menu_state->screen_message_add(string_literal("But it is not enough."));
+    while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
+    main_menu_state->screen_message_add(string_literal("A final trial remains."));
+    while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
+
+
+    // post game portal focus and spawn.
+    // Using a similar animation to the player.
+    {
+        auto focus_portal = &main_menu_state->portals[3];
+        auto position = focus_portal->position;
+        position *= 1.5f;
+        camera_set_point_to_interpolate(&camera, position, 1.5f);
+    }
+
+    main_menu_state->screen_message_add(string_literal("Prepare yourself well."));
+    main_menu_state->screen_message_add(string_literal("Your final challenge awaits."));
+    while (camera_interpolating(&camera)) {
+        JDR_Coroutine_YieldNR();
+    }
+
+    while (!main_menu_state->screen_messages_finished()) {
+        JDR_Coroutine_YieldNR();
+    }
+
+    // do the same shake and spawn effect.
+    // maybe play a sound?
+    while ((*trauma_timer) < 1.5f) {
+        camera_set_trauma(&camera, clamp<f32>(*trauma_timer + 0.35f, 0.15f, 0.35f));
+        *trauma_timer += dt;
+        JDR_Coroutine_YieldNR();
+    }
+
+    camera_traumatize(&camera, 0.58f);
+    {
+        auto& focus_portal = main_menu_state->portals[3];
+        focus_portal.visible = true;
+    }
+
+    camera_set_point_to_interpolate(&camera, V2(resolution.x/2, resolution.y/2), 1.0f);
+
+    while (camera_interpolating(&camera)) {
+        JDR_Coroutine_YieldNR();
+    }
+
+    TASK_WAIT(0.5f);
+
+    main_menu_state->cutscene1.phase = 0;
+    JDR_Coroutine_End;
+}
+
+void cutscene_introduction_fasttrack_task(jdr_duffcoroutine_t* co) {
+    _jdr_bind_current(co);
+    Game_State* state           = ((Game_Task_Userdata*)(co->userdata))->game_state;
+    auto        main_menu_state = &state->mainmenu_data;
+    f32         dt              = ((Game_Task_Userdata*)(co->userdata))->dt;
+    V2          resolution      = Global_Engine()->driver->resolution();
+
+    auto& camera = main_menu_state->main_camera;
+    float* trauma_timer = (float*)_jdr_alloc_var(sizeof(*trauma_timer));
+
+    JDR_Coroutine_Start(co, Start);
+    *trauma_timer = 0.0f;
+    main_menu_state->player.visible = false;
+
+    TASK_WAIT(0.25f);
+    main_menu_state->screen_message_add(string_literal("There is always more to do."));
+    while (!main_menu_state->screen_messages_finished()) {
+        JDR_Coroutine_YieldNR();
+    }
+
+    while ((*trauma_timer) < 0.45f) {
+        camera_set_trauma(&camera, 0.17f);
+        *trauma_timer += dt;
+        JDR_Coroutine_YieldNR();
+    }
+    camera_traumatize(&camera, 0.55f);
+
+    main_menu_state->player.visible = true;
+    while (!main_menu_state->screen_messages_finished()) {
+        JDR_Coroutine_YieldNR();
+    }
+
+    main_menu_state->cutscene2.phase = 0;
+    JDR_Coroutine_End;
+}
+
+void cutscene_introduction_firsttime_task(jdr_duffcoroutine_t* co) {
+    _jdr_bind_current(co);
+    Game_State* state           = ((Game_Task_Userdata*)(co->userdata))->game_state;
+    auto        main_menu_state = &state->mainmenu_data;
+    f32         dt              = ((Game_Task_Userdata*)(co->userdata))->dt;
+    V2          resolution      = Global_Engine()->driver->resolution();
+
+    auto& camera = main_menu_state->main_camera;
+    float* trauma_timer = (float*)_jdr_alloc_var(sizeof(*trauma_timer));
+
+    JDR_Coroutine_Start(co, Start);
+    *trauma_timer = 0.0f;
+    main_menu_state->player.visible = false;
+
+    TASK_WAIT(1.0f);
+    camera_set_point_to_interpolate(&camera, V2(resolution.x, resolution.y), 2.0);
+
+    // wait for camera to finish manually...
+    while (camera_interpolating(&camera)) {
+        JDR_Coroutine_YieldNR();
+    }
+
+    while ((*trauma_timer) < 1.5f) {
+        camera_set_trauma(&camera, 0.15f);
+        *trauma_timer += dt;
+        JDR_Coroutine_YieldNR();
+    }
+    camera_traumatize(&camera, 0.47f);
+
+    main_menu_state->player.visible = true;
+    main_menu_state->screen_message_add(string_literal("Can you absolve yourself?"));
+    main_menu_state->screen_message_add(string_literal("Take the trials"));
+    main_menu_state->screen_message_add(string_literal("Prove your worthiness"));
+
+    while (!main_menu_state->screen_messages_finished()) {
+        JDR_Coroutine_YieldNR();
+    }
+
+    camera_set_point_to_interpolate(&camera, V2(resolution.x/2, resolution.y/2), 1.0);
+
+    while (camera_interpolating(&camera)) {
+        JDR_Coroutine_YieldNR();
+    }
+
+    main_menu_state->cutscene2.phase = 0;
+    JDR_Coroutine_End;
+}
+
+
 // NOTE: this main menu entity code is pretty similar to the
 //       main entity code, but I just don't wanna have the baggage of all the gameplay
 //       specific stuff.
@@ -85,167 +238,25 @@ void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
     position += velocity * dt;
 }
 
-void MainMenu_Data::start_completed_maingame_cutscene() {
-    return;
+void MainMenu_Data::start_completed_maingame_cutscene(Game_State* game_state) {
     if (!cutscene1.triggered) {
         _debugprintf("Starting main game completion cutscene!");
         cutscene1.triggered        = true;
-        cutscene1.characters_shown = 0;
-        cutscene1.timer            = 0.0f;
-        cutscene1.type_timer       = 0.0f;
         cutscene1.phase            = 1;
+        game_state->coroutine_tasks.add_task(game_state, cutscene_completed_maingame_task);
     }
 }
 
-void MainMenu_Data::start_introduction_cutscene(bool fasttrack) {
+void MainMenu_Data::start_introduction_cutscene(Game_State* game_state, bool fasttrack){
     if (!cutscene2.triggered) {
-        _debugprintf("Starting intro cutscene!");
-        cutscene2.triggered        = true;
-        cutscene2.characters_shown = 0;
-        cutscene2.timer            = 0.0f;
-        cutscene2.type_timer       = 0.0f;
-        cutscene2.phase            = 1;
-        cutscene2.first_time_load  = !fasttrack;
-    }
-}
+        cutscene2.phase     = 1;
+        cutscene2.triggered = true;
 
-void MainMenu_Data::update_and_render_cutscene1(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt) {
-    // _debugprintf("TODO implement this cutscene");
-    switch (cutscene1.phase) {
-        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_FADE_IN: {
-            _debugprintf("cutscene fade in");
-            cutscene1.phase++;
-        } break;
-        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_MESSAGE1: {
-            cutscene1.phase++;
-        } break;
-        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_FOCUS_ON_POSTGAME_PORTAL: {
-            cutscene1.phase++;
-        } break;
-        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_SPAWN_POSTGAME_PORTAL: {
-            _debugprintf("unlock portal");
-            camera_traumatize(&main_camera, 0.35f);
-            portals[3].visible = true;
-            cutscene1.phase++;
-        } break;
-        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_UNFOCUS: {
-            cutscene1.phase++;
-        } break;
-        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_MESSAGE2: {
-            cutscene1.phase++;
-        } break;
-        case MAINMENU_COMPLETED_MAINGAME_CUTSCENE_FADE_OUT: {
-            cutscene1.phase = MAINMENU_COMPLETED_MAINGAME_CUTSCENE_NONE;
-        } break;
-    }
-    // _debugprintf("cutscene bye");
-}
-
-void MainMenu_Data::update_and_render_cutscene2(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt) {
-    if (cutscene2.first_time_load) {
-        update_and_render_cutscene2_firsttime(game_commands, ui_commands, dt);
-    } else {
-        update_and_render_cutscene2_fasttrack(game_commands, ui_commands, dt);
-    }
-}
-
-// NOTE: cutscenes are not skippable, but these don't take too long.
-void MainMenu_Data::update_and_render_cutscene2_firsttime(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt) {
-    auto& camera = main_camera;
-    switch (cutscene2.phase) {
-        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_START: {
-            _debugprintf("Hi, first time playing?");
-            player.visible = false;
-
-            cutscene2.timer += dt;
-            if (cutscene2.timer >= 1.0f) {
-                cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_ZOOM_IN;
-                cutscene2.timer = 0.0f;
-            }
-        } break;
-        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_ZOOM_IN: {
-            _debugprintf("Zoom into the player spawn");
-
-            V2 resolution = V2(game_commands->screen_width, game_commands->screen_height);
-            if (!camera_already_interpolating_for(&camera, V2(resolution.x, resolution.y), 2.0f)) {
-                _debugprintf("Hopefully interpolating.");
-                camera_set_point_to_interpolate(
-                    &camera,
-                    V2(resolution.x, resolution.y),
-                    2.0
-                );
-            } else {
-                _debugprintf("Should already be interpolating?");
-                // already animating
-                // delay timer
-                if (!camera_interpolating(&camera)) {
-                    _debugprintf("Am I not interpolating?");
-                    cutscene2.timer += dt;
-                    if (cutscene2.timer >= 1.0f) {
-                        cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_BUILD_UP;
-                        cutscene2.timer = 0.0f;
-                    }
-                }
-            }
-        } break;
-        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_BUILD_UP: {
-            // I would have a particle system here.
-            // but I currently don't, so I won't use one.
-            f32 effective_t  = clamp<f32>(cutscene2.timer / 1.5f, 0.0f, 1.0f);
-            f32 trauma_value = lerp_f32(0.10f, 0.25f, effective_t);
-            camera_set_trauma(&camera, 0.10f);
-
-            cutscene2.timer += dt;
-            if (cutscene2.timer >= 1.8f) {
-                // punch the camera
-                camera_traumatize(&camera, 0.35f);
-                cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_MESSAGE1;
-                cutscene2.timer = 0.0f;
-            }
-        } break;
-        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_MESSAGE1: {
-            // Okay, currently I've decided I don't actually want a message here.
-            cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_SPAWN_PLAYER;
-        } break;
-        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_SPAWN_PLAYER: {
-            player.visible = true;
-            screen_message_add(string_literal("Can you absolve yourself?"));
-            screen_message_add(string_literal("Take the trials and find your worth."));
-            cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_MESSAGE2;
-        } break;
-        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_MESSAGE2: {
-            if (screen_messages_finished()) {
-                cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_FADE_OUT_REST;
-            }
-        } break;
-        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_FADE_OUT_MESSAGE: {} break;
-        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_FADE_OUT_REST: {
-            V2 resolution = V2(game_commands->screen_width, game_commands->screen_height);
-            if (!camera_already_interpolating_for(&camera, V2(resolution.x/2, resolution.y/2), 1.0f)) {
-                camera_set_point_to_interpolate(
-                    &camera,
-                    V2(resolution.x/2, resolution.y/2),
-                    1.0
-                );
-            } else {
-                if (!camera_interpolating(&camera)) {
-                    // cutscene finish.
-                    cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_NONE;
-                }
-            }
-        } break;
-    }
-}
-
-void MainMenu_Data::update_and_render_cutscene2_fasttrack(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt) {
-    switch (cutscene2.phase) {
-        case MAIN_MENU_INTRODUCTION_CUTSCENE_BUILD_UP: {
-            _debugprintf("Hi, we've already seen the main cutscene right?");
-            cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_SPAWN_PLAYER;
-        } break;
-        case MAIN_MENU_INTRODUCTION_CUTSCENE_SPAWN_PLAYER: {
-            cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_NONE;
-        } break;
+        if (fasttrack) {
+            game_state->coroutine_tasks.add_task(game_state, cutscene_introduction_fasttrack_task);
+        } else {
+            game_state->coroutine_tasks.add_task(game_state, cutscene_introduction_firsttime_task);
+        }
     }
 }
 
@@ -391,7 +402,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
     }
 
     // do a fancy camera zoom in effect
-    {
+    { //... NOTE: must resist the urge. To throw everything into coroutines...
         MainMenu_Stage_Portal* focus_portal = nullptr;
         auto circle_player = circle_f32(main_menu_state.player.position.x, main_menu_state.player.position.y, main_menu_state.player.scale.x);
         for (int i = 0; i < main_menu_state.portals.size; ++i) {
@@ -435,17 +446,6 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
         main_menu_state.last_focus_portal = focus_portal;
     }
 
-    /*
-     * Run all cutscene logic here
-     *
-     * TODO: converting to coroutine mode.
-     */
-    if (main_menu_state.cutscene_active()) {
-        // NOTE: the cutscenes are mutually exclusive.
-        main_menu_state.update_and_render_cutscene1(&game_render_commands, &ui_render_commands, dt);
-        main_menu_state.update_and_render_cutscene2(&game_render_commands, &ui_render_commands, dt);
-    }
-
     // screen messages
     {
         if (main_menu_state.screen_messages.size > 0) {
@@ -471,9 +471,10 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
             s32 message_index = 0;
             auto& message = main_menu_state.screen_messages[message_index];
 
+            // TODO: fix alignment and visual look.
             switch (message.phase) {
                 case MAIN_MENU_SCREEN_MESSAGE_APPEAR: {
-                    const f32 PHASE_MAX = 0.5f;
+                    const f32 PHASE_MAX = 0.35f;
                     message.timer += dt;
                     f32 alpha = clamp<f32>(message.timer/PHASE_MAX, 0.0f, 1.0f);
 
@@ -490,7 +491,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
                     }
                 } break;
                 case MAIN_MENU_SCREEN_MESSAGE_DISAPPEAR: {
-                    const f32 PHASE_MAX = 0.5f;
+                    const f32 PHASE_MAX = 0.25f;
                     message.timer += dt;
                     f32 alpha = clamp<f32>(1 - message.timer/PHASE_MAX, 0.0f, 1.0f);
                     render_commands_push_text(&ui_render_commands, font, 4.0f, V2(0, 0), message.text, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA);
