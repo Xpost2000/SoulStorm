@@ -455,7 +455,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
     }
 
     // screen messages
-    {
+    if (state->ui_state == UI_STATE_INACTIVE) {
         if (main_menu_state.screen_messages.size > 0) {
             main_menu_state.screen_message_fade_t += dt;
         } else {
