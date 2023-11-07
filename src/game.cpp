@@ -223,15 +223,6 @@ void Game::setup_stage_start() {
     }
 }
 
-void test_inf_task(jdr_duffcoroutine_t* co) {
-    // JDR_Coroutine_Start(co, Start);
-    // while (true) {
-    //     _debugprintf("I... Hope I got scheduled? Going to wait for a bit okay?");
-    //     JDR_Coroutine_YieldNR();
-    // }
-    // JDR_Coroutine_End;
-}
-
 void Game::init(Graphics_Driver* driver) {
     this->arena     = &Global_Engine()->main_arena;
     this->resources = (Game_Resources*)arena->push_unaligned(sizeof(*this->resources));
@@ -348,7 +339,10 @@ void Game::init(Graphics_Driver* driver) {
         // for polish reasons.
         state->main_camera          = camera(V2(resolution.x/2, resolution.y/2), 1.0);
         state->main_camera.centered = true;
+        state->prng                    = random_state();
+        state->main_camera.rng       = &state->prng;
 
+        state->screen_messages = Fixed_Array<MainMenu_ScreenMessage>(arena, 32);
         state->portals = Fixed_Array<MainMenu_Stage_Portal>(arena, 4);
         {
             // initialize all portals here for the main menu
@@ -911,7 +905,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
 
                 // undo the camera zoom
 
-                if (camera_not_already_interpolating_for(&state->mainmenu_data.main_camera, V2(commands->screen_width/2, commands->screen_height/2), 1.0)) {
+                if (!camera_already_interpolating_for(&state->mainmenu_data.main_camera, V2(commands->screen_width/2, commands->screen_height/2), 1.0)) {
                     camera_set_point_to_interpolate(
                         &state->mainmenu_data.main_camera,
                         V2(commands->screen_width/2, commands->screen_height/2),

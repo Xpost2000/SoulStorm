@@ -13,6 +13,7 @@
 struct MainMenu_Data;
 
 struct MainMenu_Player {
+    bool visible = false;
     V2 position;
     V2 scale;
     V2 velocity;
@@ -100,15 +101,33 @@ struct MainMenu_Introduction_Cutscene_Data {
 };
 
 #define MAX_MAINMENU_OUTERSPACE_STARS (2048)
+
+enum MainMenu_ScreenMessage_Phase {
+    MAIN_MENU_SCREEN_MESSAGE_APPEAR,
+    MAIN_MENU_SCREEN_MESSAGE_WAIT_FOR_CONTINUE,
+    MAIN_MENU_SCREEN_MESSAGE_DISAPPEAR,
+};
+struct MainMenu_ScreenMessage {
+    s32    phase;
+    f32    timer;
+    string text;
+};
+
 struct MainMenu_Data {
     MainMenu_Completed_MainGame_Cutscene_Data cutscene1;
     MainMenu_Introduction_Cutscene_Data       cutscene2;
+
+    Fixed_Array<MainMenu_ScreenMessage> screen_messages;
+    // For the background allowing you to read the messages.
+    f32                                 screen_message_fade_t;
     
     // For now I'll just use a basic outerspacy sort of theme.
     V2 star_positions[2][MAX_MAINMENU_OUTERSPACE_STARS];
 
     struct camera   main_camera;
     MainMenu_Player player;
+
+    random_state prng;
 
     // NOTE: rename later.
     s32 stage_id_level_select = -1;
@@ -125,10 +144,18 @@ struct MainMenu_Data {
     
     void update_and_render_cutscene1(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt);
 
+    // These **could** be rewritten as coroutines but
+    // I'm more used to doing this, and they're not being touched often
+    // enough to require the usage of the scheduler.
+    // If I really feel it. I can rewrite it, but I'd rather just write it the
+    // way I actually know how to do reliably first :)
     void update_and_render_cutscene2(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt);
     void update_and_render_cutscene2_firsttime(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt);
     void update_and_render_cutscene2_fasttrack(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt);
     bool cutscene_active();
+
+    bool screen_messages_finished();
+    void screen_message_add(string message);
 };
 
 #endif

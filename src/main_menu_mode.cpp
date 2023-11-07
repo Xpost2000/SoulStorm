@@ -6,6 +6,8 @@
 //       specific stuff.
 
 void MainMenu_Stage_Portal::draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources) {
+    if (!visible) return;
+
     auto r = get_rect();
 
     auto& stage_details   = stage_list[stage_id];
@@ -51,6 +53,7 @@ rectangle_f32 MainMenu_Player::get_rect() {
 }
 
 void MainMenu_Player::draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources) {
+    if (!visible) return;
     auto r = get_rect();
 
     // black rectangles for default
@@ -95,7 +98,6 @@ void MainMenu_Data::start_completed_maingame_cutscene() {
 }
 
 void MainMenu_Data::start_introduction_cutscene(bool fasttrack) {
-    return;
     if (!cutscene2.triggered) {
         _debugprintf("Starting intro cutscene!");
         cutscene2.triggered        = true;
@@ -147,31 +149,90 @@ void MainMenu_Data::update_and_render_cutscene2(struct render_commands* game_com
     }
 }
 
+// NOTE: cutscenes are not skippable, but these don't take too long.
 void MainMenu_Data::update_and_render_cutscene2_firsttime(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt) {
+    auto& camera = main_camera;
     switch (cutscene2.phase) {
         case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_START: {
             _debugprintf("Hi, first time playing?");
-            cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_FADE_OUT_REST;
+            player.visible = false;
+
+            cutscene2.timer += dt;
+            if (cutscene2.timer >= 1.0f) {
+                cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_ZOOM_IN;
+                cutscene2.timer = 0.0f;
+            }
         } break;
         case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_ZOOM_IN: {
-            
+            _debugprintf("Zoom into the player spawn");
+
+            V2 resolution = V2(game_commands->screen_width, game_commands->screen_height);
+            if (!camera_already_interpolating_for(&camera, V2(resolution.x, resolution.y), 2.0f)) {
+                _debugprintf("Hopefully interpolating.");
+                camera_set_point_to_interpolate(
+                    &camera,
+                    V2(resolution.x, resolution.y),
+                    2.0
+                );
+            } else {
+                _debugprintf("Should already be interpolating?");
+                // already animating
+                // delay timer
+                if (!camera_interpolating(&camera)) {
+                    _debugprintf("Am I not interpolating?");
+                    cutscene2.timer += dt;
+                    if (cutscene2.timer >= 1.0f) {
+                        cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_BUILD_UP;
+                        cutscene2.timer = 0.0f;
+                    }
+                }
+            }
         } break;
         case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_BUILD_UP: {
+            // I would have a particle system here.
+            // but I currently don't, so I won't use one.
+            f32 effective_t  = clamp<f32>(cutscene2.timer / 1.5f, 0.0f, 1.0f);
+            f32 trauma_value = lerp_f32(0.10f, 0.25f, effective_t);
+            camera_set_trauma(&camera, 0.10f);
+
+            cutscene2.timer += dt;
+            if (cutscene2.timer >= 1.8f) {
+                // punch the camera
+                camera_traumatize(&camera, 0.35f);
+                cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_MESSAGE1;
+                cutscene2.timer = 0.0f;
+            }
         } break;
         case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_MESSAGE1: {
-            
+            // Okay, currently I've decided I don't actually want a message here.
+            cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_SPAWN_PLAYER;
         } break;
         case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_SPAWN_PLAYER: {
-            
+            player.visible = true;
+            screen_message_add(string_literal("Can you absolve yourself?"));
+            screen_message_add(string_literal("Take the trials and find your worth."));
+            cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_MESSAGE2;
         } break;
         case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_MESSAGE2: {
-            
+            if (screen_messages_finished()) {
+                cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_FADE_OUT_REST;
+            }
         } break;
-        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_FADE_OUT_MESSAGE: {
-            
-        } break;
+        case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_FADE_OUT_MESSAGE: {} break;
         case MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_FADE_OUT_REST: {
-            cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_NONE;
+            V2 resolution = V2(game_commands->screen_width, game_commands->screen_height);
+            if (!camera_already_interpolating_for(&camera, V2(resolution.x/2, resolution.y/2), 1.0f)) {
+                camera_set_point_to_interpolate(
+                    &camera,
+                    V2(resolution.x/2, resolution.y/2),
+                    1.0
+                );
+            } else {
+                if (!camera_interpolating(&camera)) {
+                    // cutscene finish.
+                    cutscene2.phase = MAIN_MENU_INTRODUCTION_CUTSCENE_FIRSTTIME_NONE;
+                }
+            }
         } break;
     }
 }
@@ -190,6 +251,18 @@ void MainMenu_Data::update_and_render_cutscene2_fasttrack(struct render_commands
 
 bool MainMenu_Data::cutscene_active() {
     return cutscene1.phase != 0 || cutscene2.phase != 0;
+}
+
+bool MainMenu_Data::screen_messages_finished() {
+    return (screen_message_fade_t <= 0.0f && screen_messages.size == 0);
+}
+
+void MainMenu_Data::screen_message_add(string message) {
+    MainMenu_ScreenMessage new_message;
+    new_message.phase = MAIN_MENU_SCREEN_MESSAGE_APPEAR;
+    new_message.timer = 0.0f;
+    new_message.text = message;
+    screen_messages.push(new_message);
 }
 
 void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
@@ -349,7 +422,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
         } else {
             if (main_menu_state.last_focus_portal != nullptr) {
                 V2 resolution = driver->resolution();
-                if (camera_not_already_interpolating_for(&main_menu_state.main_camera, V2(resolution.x/2, resolution.y/2), 1.0f)) {
+                if (!camera_already_interpolating_for(&main_menu_state.main_camera, V2(resolution.x/2, resolution.y/2), 1.0f)) {
                     camera_set_point_to_interpolate(
                         &main_menu_state.main_camera,
                         V2(resolution.x/2, resolution.y/2),
@@ -364,11 +437,72 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
 
     /*
      * Run all cutscene logic here
+     *
+     * TODO: converting to coroutine mode.
      */
     if (main_menu_state.cutscene_active()) {
         // NOTE: the cutscenes are mutually exclusive.
         main_menu_state.update_and_render_cutscene1(&game_render_commands, &ui_render_commands, dt);
         main_menu_state.update_and_render_cutscene2(&game_render_commands, &ui_render_commands, dt);
+    }
+
+    // screen messages
+    {
+        if (main_menu_state.screen_messages.size > 0) {
+            main_menu_state.screen_message_fade_t += dt;
+        } else {
+            main_menu_state.screen_message_fade_t -= dt;
+        }
+
+        main_menu_state.screen_message_fade_t = clamp<f32>(main_menu_state.screen_message_fade_t, 0.0f, 1.0f);
+
+        auto font = resources->get_font(MENU_FONT_COLOR_GOLD);
+
+        render_commands_push_quad_ext(
+            &ui_render_commands,
+            rectangle_f32(0, 0, ui_render_commands.screen_width, ui_render_commands.screen_height),
+            color32u8(0, 0, 47, main_menu_state.screen_message_fade_t * 150),
+            V2(0, 0), 0,
+            BLEND_MODE_ALPHA
+        );
+
+        // one message per "screen"
+        if (main_menu_state.screen_messages.size > 0) {
+            s32 message_index = 0;
+            auto& message = main_menu_state.screen_messages[message_index];
+
+            switch (message.phase) {
+                case MAIN_MENU_SCREEN_MESSAGE_APPEAR: {
+                    const f32 PHASE_MAX = 0.5f;
+                    message.timer += dt;
+                    f32 alpha = clamp<f32>(message.timer/PHASE_MAX, 0.0f, 1.0f);
+
+                    render_commands_push_text(&ui_render_commands, font, 4.0f, V2(0, 0), message.text, color32f32(1,1,1, alpha), BLEND_MODE_ALPHA);
+                    if (message.timer >= PHASE_MAX) {
+                        message.phase = MAIN_MENU_SCREEN_MESSAGE_WAIT_FOR_CONTINUE;
+                        message.timer = 0.0f;
+                    }
+                } break;
+                case MAIN_MENU_SCREEN_MESSAGE_WAIT_FOR_CONTINUE: {
+                    render_commands_push_text(&ui_render_commands, font, 4.0f, V2(0, 0), message.text, color32f32(1,1,1,1), BLEND_MODE_ALPHA);
+                    if (Input::any_key_down() || Input::controller_any_button_down(Input::get_gamepad(0))) {
+                        message.phase = MAIN_MENU_SCREEN_MESSAGE_DISAPPEAR;
+                    }
+                } break;
+                case MAIN_MENU_SCREEN_MESSAGE_DISAPPEAR: {
+                    const f32 PHASE_MAX = 0.5f;
+                    message.timer += dt;
+                    f32 alpha = clamp<f32>(1 - message.timer/PHASE_MAX, 0.0f, 1.0f);
+                    render_commands_push_text(&ui_render_commands, font, 4.0f, V2(0, 0), message.text, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA);
+
+                    if (message.timer >= PHASE_MAX) {
+                        message.timer = 0.0f;
+
+                        main_menu_state.screen_messages.pop_and_swap(message_index);
+                    }
+                } break;
+            }
+        }
     }
 
     Transitions::update_and_render(&ui_render_commands, dt);
