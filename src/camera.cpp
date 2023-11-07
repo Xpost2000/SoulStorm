@@ -187,13 +187,28 @@ f32  camera_get_tracking_component(struct camera* camera, s32 index) {
     return *component_pointer;
 }
 
-bool camera_not_already_interpolating_for(struct camera* camera, V2 where, f32 zoom) {
+bool camera_already_interpolating_for(struct camera* camera, V2 where, f32 zoom) {
     return (
-        camera->tracking_xy.x != where.x &&
-        camera->tracking_xy.y != where.y &&
-        camera->tracking_zoom != zoom &&
-        camera->interpolation_t[0] != 0.0f &&
-        camera->interpolation_t[1] != 0.0f &&
-        camera->interpolation_t[2] != 0.0f
+        (
+            camera->tracking_xy.x == where.x &&
+            camera->tracking_xy.y == where.y &&
+            camera->tracking_zoom == zoom
+        )
+        &&
+        (
+            camera->interpolation_t[0] != 0.0f &&
+            camera->interpolation_t[1] != 0.0f &&
+            camera->interpolation_t[2] != 0.0f
+        )
     );
+}
+
+bool camera_interpolating(struct camera* camera) {
+    for (int i = 0; i < 3; ++i) {
+        if (camera->try_interpolation[i]) {
+            return true;
+        }
+    }
+
+    return false;
 }

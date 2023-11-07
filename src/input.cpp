@@ -320,6 +320,9 @@ namespace Input {
     }
 
     bool controller_any_button_down(struct game_controller* controller) {
+        if (!controller)
+            return false;
+
         for (unsigned index = 0; index < array_count(controller->buttons); ++index) {
             if (!controller->last_buttons[index] && controller->buttons[index]) {
                 return true;
