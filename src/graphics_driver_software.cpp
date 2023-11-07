@@ -14,11 +14,6 @@ void Software_Renderer_Graphics_Driver::initialize(SDL_Window* window, int width
 void Software_Renderer_Graphics_Driver::initialize_backbuffer(V2 resolution) {
     _debugprintf("Reconstructing backbuffer.");
 
-    if (default_framebuffer.width == (s32)resolution.x && default_framebuffer.height == (s32)resolution.y) {
-        _debugprintf("No need to construct framebuffer which has the same target resolution");
-        return;
-    }
-
     software_framebuffer_finish(&default_framebuffer);
     // lightmask_buffer_finish(&global_lightmask_buffer);
 
