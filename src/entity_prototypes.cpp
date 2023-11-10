@@ -63,30 +63,64 @@ Bullet bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 m
     return bullet;
 }
 
-Enemy_Entity enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed) {
+Enemy_Entity enemy_circular_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed, f32 r) {
     Enemy_Entity enemy = enemy_generic(
         state,
-        position, scale, 0.055f,
-        [direction, speed](Enemy_Entity* self, Game_State* const state, f32 dt) {
+        position, scale,
+        [direction, speed, r](Enemy_Entity* self, Game_State* const state, f32 dt) {
+            self->velocity += velocity_circle_orbit(self->t_since_spawn, 0, r);
             self->velocity += velocity_linear(direction, speed);
-        },
-        [](Enemy_Entity* self, Game_State* state, f32 dt) {
-            
         }
     );
 
     return enemy;
 }
 
-Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, f32 fire_cooldown, Enemy_Entity_Velocity_Fn velocity, Enemy_Entity_Fire_Fn fire) {
+Enemy_Entity enemy_sine_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed, f32 amp) {
+    Enemy_Entity enemy = enemy_generic(
+        state,
+        position, scale,
+        [direction, speed, amp](Enemy_Entity* self, Game_State* const state, f32 dt) {
+            self->velocity += velocity_cyclic_sine(self->t_since_spawn, direction) * amp;
+            self->velocity += velocity_linear(direction, speed);
+        }
+    );
+
+    return enemy;
+}
+
+Enemy_Entity enemy_cosine_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed, f32 amp) {
+    Enemy_Entity enemy = enemy_generic(
+        state,
+        position, scale,
+        [direction, speed, amp](Enemy_Entity* self, Game_State* const state, f32 dt) {
+            self->velocity += velocity_cyclic_cosine(self->t_since_spawn, direction) * amp;
+            self->velocity += velocity_linear(direction, speed);
+        }
+    );
+
+    return enemy;
+}
+
+Enemy_Entity enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed) {
+    Enemy_Entity enemy = enemy_generic(
+        state,
+        position, scale,
+        [direction, speed](Enemy_Entity* self, Game_State* const state, f32 dt) {
+            self->velocity += velocity_linear(direction, speed);
+        }
+    );
+
+    return enemy;
+}
+
+Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, Enemy_Entity_Velocity_Fn velocity) {
     Enemy_Entity enemy;
 
     enemy.position = position;
     enemy.scale    = scale;
-    enemy.firing_cooldown = fire_cooldown;
 
     enemy.velocity_function = velocity;
-    enemy.on_fire_function  = fire;
 
     enemy.edge_top_behavior_override = enemy.edge_bottom_behavior_override =
         enemy.edge_left_behavior_override = enemy.edge_right_behavior_override = PLAY_AREA_EDGE_PASSTHROUGH;

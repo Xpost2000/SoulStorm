@@ -31,10 +31,24 @@ Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bull
 
 
 // Normal Enemy Types
-Enemy_Entity enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed);
-Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, f32 fire_cooldown, Enemy_Entity_Velocity_Fn velocity, Enemy_Entity_Fire_Fn fire);
+// NOTE: none of these guys fire anything.
+// also I'm aware that this might be an allocation festival because I'm building up
+// stuff by copying it over and over again, however it does lead to nice compositional behavior...
+// in lua it should generally still work with a similar API.
+#if 0
+enemy = new_enemy_linear_movement(...);
+enemy = new_enemy_shoots_pattern_x(enemy);
+add_enemy(enemy);
+#endif
 
-// Enemy Wave Presets
+Enemy_Entity enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed);
+Enemy_Entity enemy_circular_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed, f32 r);
+Enemy_Entity enemy_sine_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed, f32 amp);
+Enemy_Entity enemy_cosine_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed, f32 amp);
+Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, Enemy_Entity_Velocity_Fn velocity);
+
+// need to rethink how entities fire stuff.
+
 /*
   Generally, each level **should** have custom
   wave setups, but it's not impossible to reuse enemy waves sometimes
