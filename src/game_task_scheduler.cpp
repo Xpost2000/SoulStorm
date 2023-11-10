@@ -115,12 +115,17 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             (task.source == GAME_TASK_SOURCE_ALWAYS)                                          ||
             (task.source == GAME_TASK_SOURCE_UI && task.associated_state == current_ui_state) ||
             (task.source == GAME_TASK_SOURCE_GAME && task.associated_state == current_screen_state)
-             /*
-              * special case for gameplay. Do not run any of the game coroutines while a stage is in the introduction
-              * stage
-              */
-            || (task.source == GAME_TASK_SOURCE_GAME && task.associated_state == GAME_SCREEN_INGAME && state->gameplay_data.intro.stage == GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE)
         ) {
+            /*
+             * special case for gameplay. Do not run any of the game coroutines while a stage is in the introduction
+             * stage
+             */
+            if ((task.source == GAME_TASK_SOURCE_GAME &&
+                 task.associated_state == GAME_SCREEN_INGAME &&
+                 state->gameplay_data.intro.stage != GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE)) {
+                continue;
+            }
+
             jdr_resume(&task.coroutine);
         }
     }
