@@ -410,9 +410,11 @@ void Bullet::update(Game_State* state, f32 dt) {
         }
     }
 
-    velocity = V2(0, 0);
     if (velocity_function) {
+        velocity = V2(0, 0);
         velocity_function(this, state, dt);
+    } else {
+        velocity += acceleration * dt;
     }
 
     Entity::update(state, dt);
@@ -443,9 +445,11 @@ void Enemy_Entity::update(Game_State* state, f32 dt) {
         outside_boundaries_lifetime_timer.reset();
     }
 
-    velocity = V2(0, 0);
     if (velocity_function) {
+        velocity = V2(0, 0);
         velocity_function(this, state, dt);
+    } else {
+        velocity += acceleration * dt;
     }
 
     Entity::update(state, dt);

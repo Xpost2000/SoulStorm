@@ -23,6 +23,7 @@
     Stage_State stage_##name##(void)
 #define DEF_LEVEL_DATA(name) struct Stage_##name##_Data
 #define LEVEL_DATA(name, as) auto as = (struct Stage_##name##_Data*)(stage->stage_memory_buffer)
+#define STAGE_WAIT_CLEARED_WAVE() do { while (gameplay_state->any_living_danger()) {TASK_YIELD();} } while(0)
 
 /*
  * Personally speaking, I think that function pointers are more

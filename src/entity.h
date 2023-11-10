@@ -57,7 +57,14 @@ struct Entity {
     // a visual representation can be drawn separately
     V2    position      = V2(0, 0);
     V2    scale         = V2(0, 0); 
+
+    // NOTE: Going to take an... Alternate
+    // approach to movement through scripting
+    // which is more "classic".
+    // It's more annoying, but it's the safest method
     V2    velocity      = V2(0, 0);
+    V2    acceleration  = V2(0, 0);
+
     f32   t_since_spawn = 0.0f;
 
     Timer cleanup_time                    = Timer(ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION);

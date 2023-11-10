@@ -195,7 +195,7 @@ void Game::setup_stage_start() {
     state->player.position = V2(state->play_area.width / 2, 300);
     state->player.hp       = 1;
     state->player.die      = false;
-    state->player.scale    = V2(15, 15);
+    state->player.scale    = V2(5, 5);
 
     state->enemies.clear();
     state->bullets.clear();
@@ -1549,7 +1549,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     auto state = &this->state->gameplay_data;
     V2 resolution = driver->resolution();
     {
-        state->play_area.x      = resolution.x / 2 - state->play_area.width / 2;
+        state->play_area.x      = resolution.x / 2 - state->play_area.width * 0.75;
         state->play_area.height = resolution.y;
 
         // state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_WRAPPING);
