@@ -13,11 +13,11 @@ STAGE_TICK(1_1) {
     LEVEL_DATA(1_1, data);
 
     JDR_Coroutine_Start(co, Start);
-    for (int i = 0; i < 6; ++i) 
-        state->gameplay_data.add_enemy_entity(
-            enemy_linear_movement(state, V2(i * 35, -30), V2(10, 10), V2(0, 1), 150)
-        );
-        // spawn_enemy_linear_movement(state, V2(i * 35, -30), V2(10, 10), V2(0, 1), 150);
+    for (int i = 0; i < 6; ++i)  {
+        auto e = enemy_linear_movement(state, V2(i * 35, -30), V2(10, 10), V2(0, 1), 150);
+        e.hp = 15;
+        state->gameplay_data.add_enemy_entity(e);
+    }
 
     while (gameplay_state->any_living_danger()) {
         TASK_YIELD();

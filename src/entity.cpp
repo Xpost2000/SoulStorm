@@ -265,7 +265,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         render_commands,
         rectangle_f32(r.x, r.y, r.w, r.h),
         color32u8(0, 0, 255 * flashing, 255),
-        V2(0.5, 0.5), 45,
+        V2(0.5, 0.5), 0,
         BLEND_MODE_ALPHA);
 
     render_commands_push_image(render_commands,
@@ -384,11 +384,10 @@ void Player::update(Game_State* state, f32 dt) {
         if (attack()) {
             controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
             if (under_focus) {
-                state->gameplay_data.add_bullet(bullet_upwards_linear(state, position + V2(-10, 0), V2(0, -1), 1850.0f, BULLET_SOURCE_PLAYER));
-                state->gameplay_data.add_bullet(bullet_upwards_linear(state, position + V2(10, 0), V2(0, -1), 1850.0f, BULLET_SOURCE_PLAYER));
+                spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 2050.0f, BULLET_SOURCE_PLAYER);
             } else {
-                state->gameplay_data.add_bullet(bullet_upwards_linear(state, position + V2(-10, 0), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER));
-                state->gameplay_data.add_bullet(bullet_upwards_linear(state, position + V2(10, 0), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER));
+                // spawn_bullet_line_pattern1(state, position, 1, 20.0f, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
+                spawn_bullet_arc_pattern1(state, position, 3, 45, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
             }
         }
     }

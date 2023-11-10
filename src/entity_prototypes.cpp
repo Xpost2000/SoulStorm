@@ -127,3 +127,48 @@ Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, Enemy_Entit
 
     return enemy;
 }
+
+void spawn_bullet_line_pattern1(Game_State* state, V2 center, s32 how_many, f32 spacing, V2 scale, V2 direction, f32 speed, s32 source) {
+    direction = direction.normalized();
+
+    f32 pattern_width = spacing * how_many + scale.x * how_many;
+    V2 perpendicular_direction = V2_perpendicular(direction);
+    center -= (perpendicular_direction * (pattern_width/2));
+
+    for (s32 i = 0; i < how_many; ++i) {
+        state->gameplay_data.add_bullet(
+            bullet_upwards_linear(state, center, direction, speed, source)
+        );
+
+        center += perpendicular_direction * (spacing + scale.x);
+    }
+}
+
+void spawn_bullet_arc_pattern1(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, s32 source) {
+    spawn_bullet_arc_pattern2(
+        state,
+        center,
+        how_many,
+        arc_degrees,
+        scale,
+        direction,
+        speed,
+        0.0f,
+        source
+    );
+}
+
+void spawn_bullet_arc_pattern2(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, f32 distance_from_center, s32 source) {
+    direction = direction.normalized();
+    f32 arc_sub_length = (f32)arc_degrees / (how_many);
+
+    f32 direction_angle = radians_to_degrees(atan2(direction.y, direction.x));
+    for (s32 i = 0; i < how_many; ++i) {
+        f32 angle = direction_angle + arc_sub_length * (i-(how_many/2)); // adjust the center projectile to be 0 degrees
+        V2 current_arc_direction = V2_direction_from_degree(angle);
+        V2 position = center + current_arc_direction * distance_from_center;
+        state->gameplay_data.add_bullet(
+            bullet_upwards_linear(state, position, current_arc_direction, speed, source)
+        );
+    }
+}

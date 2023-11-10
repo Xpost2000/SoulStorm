@@ -2090,14 +2090,12 @@ void Game::handle_all_explosions(f32 dt) {
 
 // TODO: Spatial partition all the bullets some how. Probably going to use another spatial hash.
 void Game::handle_all_bullet_collisions(f32 dt) {
-    // NOTE: for now entities will die in one hit.
     auto state = &this->state->gameplay_data;
 
     for (s32 bullet_index = 0; bullet_index < state->bullets.size; ++bullet_index) {
         auto& b = state->bullets[bullet_index];
         auto bullet_rect = b.get_rect();
 
-        // NOTE: does not account for invulnerability right now.
         if (b.source_type == BULLET_SOURCE_NEUTRAL || b.source_type == BULLET_SOURCE_PLAYER) {
             for (s32 enemy_index = 0; enemy_index < state->enemies.size; ++enemy_index) {
                 auto& e = state->enemies[enemy_index];
