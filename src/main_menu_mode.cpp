@@ -319,11 +319,10 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
                 bkg_faster_stars[i].x += dt * 250.0f * (normalized_sinf(i*25)+0.15);
                 bkg_faster_stars[i].y += dt * 250.0f * (sinf(Global_Engine()->global_elapsed_time)/4+0.25);
 
-                if (bkg_faster_stars[i].x > game_render_commands.screen_width)  bkg_faster_stars[i].x = 0;
-                if (bkg_faster_stars[i].y > game_render_commands.screen_height) bkg_faster_stars[i].y = 0;
-
-                if (bkg_slow_stars[i].x > game_render_commands.screen_width)  bkg_slow_stars[i].x = 0;
-                if (bkg_slow_stars[i].y > game_render_commands.screen_height) bkg_slow_stars[i].y = 0;
+                if (bkg_faster_stars[i].x > game_render_commands.screen_width*1.5f)  bkg_faster_stars[i].x = -150;
+                if (bkg_faster_stars[i].y > game_render_commands.screen_height*1.5f) bkg_faster_stars[i].y = -150;
+                if (bkg_slow_stars[i].x > game_render_commands.screen_width*1.5f)  bkg_slow_stars[i].x     = -150;
+                if (bkg_slow_stars[i].y > game_render_commands.screen_height*1.5f) bkg_slow_stars[i].y     = -150;
             }
 
             // Need to make these have different sizes.
@@ -464,12 +463,13 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
 
         main_menu_state.screen_message_fade_t = clamp<f32>(main_menu_state.screen_message_fade_t, 0.0f, 1.0f);
 
-        auto font = resources->get_font(MENU_FONT_COLOR_GOLD);
+        auto font = resources->get_font(MENU_FONT_COLOR_WHITE);
+        f32 text_scale = 4.0f;
 
         render_commands_push_quad_ext(
             &ui_render_commands,
             rectangle_f32(0, 0, ui_render_commands.screen_width, ui_render_commands.screen_height),
-            color32u8(0, 0, 47, main_menu_state.screen_message_fade_t * 150),
+            color32u8(0, 0, 0, main_menu_state.screen_message_fade_t * 150),
             V2(0, 0), 0,
             BLEND_MODE_ALPHA
         );
@@ -479,6 +479,10 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
             s32 message_index = 0;
             auto& message = main_menu_state.screen_messages[message_index];
 
+            f32 text_width       = font_cache_text_width(font, message.text, text_scale);
+            f32 text_height      = font_cache_text_height(font) * text_scale;
+            V2  message_position = V2(ui_render_commands.screen_width/2 - text_width/2.0f, ui_render_commands.screen_height/2 - text_height/2);
+
             // TODO: fix alignment and visual look.
             switch (message.phase) {
                 case MAIN_MENU_SCREEN_MESSAGE_APPEAR: {
@@ -486,14 +490,14 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
                     message.timer += dt;
                     f32 alpha = clamp<f32>(message.timer/PHASE_MAX, 0.0f, 1.0f);
 
-                    render_commands_push_text(&ui_render_commands, font, 4.0f, V2(0, 0), message.text, color32f32(1,1,1, alpha), BLEND_MODE_ALPHA);
+                    render_commands_push_text(&ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1, alpha), BLEND_MODE_ALPHA);
                     if (message.timer >= PHASE_MAX) {
                         message.phase = MAIN_MENU_SCREEN_MESSAGE_WAIT_FOR_CONTINUE;
                         message.timer = 0.0f;
                     }
                 } break;
                 case MAIN_MENU_SCREEN_MESSAGE_WAIT_FOR_CONTINUE: {
-                    render_commands_push_text(&ui_render_commands, font, 4.0f, V2(0, 0), message.text, color32f32(1,1,1,1), BLEND_MODE_ALPHA);
+                    render_commands_push_text(&ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1,1), BLEND_MODE_ALPHA);
                     if (Input::any_key_down() || Input::controller_any_button_down(Input::get_gamepad(0))) {
                         message.phase = MAIN_MENU_SCREEN_MESSAGE_DISAPPEAR;
                     }
@@ -502,7 +506,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
                     const f32 PHASE_MAX = 0.25f;
                     message.timer += dt;
                     f32 alpha = clamp<f32>(1 - message.timer/PHASE_MAX, 0.0f, 1.0f);
-                    render_commands_push_text(&ui_render_commands, font, 4.0f, V2(0, 0), message.text, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA);
+                    render_commands_push_text(&ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA);
 
                     if (message.timer >= PHASE_MAX) {
                         message.timer = 0.0f;
