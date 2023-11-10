@@ -176,9 +176,7 @@ void Game::init_audio_resources() {
 }
 
 void Game::setup_stage_start() {
-
-    auto state             = &this->state->gameplay_data;
-
+    auto state = &this->state->gameplay_data;
     {
         s32 stage_id = this->state->mainmenu_data.stage_id_level_select;
         s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
@@ -190,7 +188,7 @@ void Game::setup_stage_start() {
         } else {
             state->stage_state = STAGE(null);
         }
-
+        state->current_stage_timer = 0.0f;
         this->state->coroutine_tasks.add_task(this->state, state->stage_state.tick_task);
     }
 
@@ -1569,64 +1567,6 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             switch_ui(UI_STATE_INACTIVE);
         }
     }
-#if 0
-    if (Input::is_key_pressed(KEY_T)) {
-        int amount = 10;
-        int r = 50;
-        for (int i = 0; i < amount; ++i) {
-            f32 t = degree_to_radians(i * (360.0f/amount));
-            V2 position = V2(cosf(t) * r, sinf(t) * r) + state->player.position;
-            spawn_bullet_circling_down(this->state, position, t, r, V2(0, 60));
-        }
-    }
-    if (Input::is_key_pressed(KEY_U)) {
-        int amount = 10;
-        int r = 50;
-        for (int i = 0; i < amount; ++i) {
-            f32 t = degree_to_radians(i * (360.0f/amount));
-            V2 position = V2(cosf(t) * r, sinf(t) * r) + state->player.position;
-            spawn_bullet_circling_down_homing(this->state, position, t, r, V2(0, 0));
-        }
-    }
-    if (Input::is_key_pressed(KEY_I)) {
-        int amount = 10;
-        int r = 50;
-        for (int i = 0; i < amount; ++i) {
-            f32 t = degree_to_radians(i * (360.0f/amount));
-            V2 position = V2(cosf(t) * r, sinf(t) * r) + state->player.position;
-            spawn_bullet_circling_down_homing2(this->state, position, t, r, V2(0, 100));
-        }
-    }
-
-    if (Input::is_key_pressed(KEY_P)) {
-        int amount = 250;
-        int r = 500;
-        f32 step = r / (amount/2);
-        int ll = 0;
-        for (int i = 0; i < amount; ++i) {
-            if (ll > 0) {
-                ll--;
-                continue;
-            }
-            // spawn_bullet_circling_down(state, position, t, 150, V2(0, 60));
-            f32 t = degree_to_radians(i * (360.0f/amount));
-            f32 ner = r - (step) * i;
-            if ((i % 5) == 0) {
-                ll = 15;
-
-            }
-            if (ner <= 0) continue;
-            V2 position = V2(cosf(t) * ner, sinf(t) * ner) + state->player.position;
-            spawn_bullet_circling_down_homing(this->state, position, t, ner, V2(0, 0));
-        }
-    }
-
-    if (Input::is_key_pressed(KEY_X)) {
-        Explosion_Hazard h = Explosion_Hazard(state->player.position, 125, 0.5f, 1.0f);
-        state->explosion_hazards.push(h);
-    }
-#endif
-
     // for all of our entities and stuff.
     // will have a separate one for the UI.
     auto game_render_commands = render_commands(&Global_Engine()->scratch_arena, 12000, state->main_camera);
@@ -1665,7 +1605,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         {
             auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
             auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
-            auto text = string_from_cstring(format_temp("Score: %d", state->current_score));
+            auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("Score: %d", state->current_score)));
 
             // show scoring notifications (for interesting scoring reasons like picking up points or killing an enemy)
             // you'll gradually accumulate score just from surviving on a map...
@@ -1673,7 +1613,8 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             {
                 for (s32 index = 0; index < state->score_notifications.size; ++index) {
                     auto& s = state->score_notifications[index];
-                    auto text = string_from_cstring(format_temp("%d", s.additional_score));
+                    auto text =
+                        string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("%d", s.additional_score)));
                     s.lifetime.update(dt);
 
                     if (s.lifetime.triggered()) {
@@ -1692,6 +1633,21 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 
             render_commands_push_text(&ui_render_commands, font, 2, V2(play_area_x+play_area_width + 10, 100), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
         }
+        // Render_Time
+        {
+            auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
+            auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
+            s32 hours = 0;
+            s32 minutes = 0;
+            s32 seconds = 0;
+            {
+                seconds = (s32)state->current_stage_timer;
+                minutes = seconds / 60;
+                hours   = minutes / 60;
+            }
+            auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("Time %02d:%02d:%02d", hours, minutes, seconds)));
+            render_commands_push_text(&ui_render_commands, font, 2, V2(play_area_x+play_area_width, 130), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+        }
     }
 
     if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
@@ -1703,6 +1659,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             } else {
                 state->auto_score_timer += dt;
             }
+            state->current_stage_timer += dt;
         }
 
         struct Entity_Loop_Update_Packet {

@@ -218,6 +218,7 @@ struct Gameplay_Data {
     s32 tries = MAX_BASE_TRIES;
     s32 current_score = 0;
     f32 auto_score_timer = 0;
+    f32 current_stage_timer = 0;
 
     // NOTE:
     // Bullets and enemy entities are queued up because
