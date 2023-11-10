@@ -41,122 +41,44 @@ inline local V2 velocity_cyclic_cosine(f32 t, V2 direction) {
     return direction * cosf(t);
 }
 
-void spawn_bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 magnitude, s32 source) {
+Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bullet_Entity_Velocity_Fn velocity) {
     Bullet bullet;
-    bullet.position = position;
-    bullet.scale    = V2(5,5);
-    bullet.lifetime = Timer(3.0f);
+    bullet.position    = position;
+    bullet.scale       = scale;
+    //bullet.lifetime    = Timer(3.0f);
     bullet.source_type = source;
 
-    bullet.velocity_function =
+    bullet.velocity_function = velocity;
+    state->gameplay_data.add_bullet(bullet);
+    return bullet;
+}
+
+Bullet bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 magnitude, s32 source) {
+    Bullet bullet = bullet_generic(state, position, V2(5, 5), source,
         [=](Bullet* self, Game_State* const state, f32 dt) {
-            self->velocity = V2(direction.x * magnitude, direction.y * magnitude) + V2(direction.x * magnitude/2, direction.y * magnitude/2);
-        };
-
-    state->gameplay_data.add_bullet(bullet);
-}
-
-void spawn_bullet_circling_down_homing(Game_State* state, V2 position, f32 factor, f32 factor2, s32 source, V2 additional) {
-    Bullet bullet;
-    bullet.position = position;
-    bullet.scale    = V2(5,5);
+        self->velocity += velocity_linear(direction, magnitude);
+    }
+    );
     bullet.lifetime = Timer(3.0f);
-    bullet.source_type = source;
-
-    bullet.velocity_function =
-        [=](Bullet* self, Game_State* const state, f32 dt) {
-            self->velocity = V2(-sinf(self->t_since_spawn + factor) * factor2, cos(self->t_since_spawn + factor) * factor2) + state->gameplay_data.player.velocity;
-        };
-
-    state->gameplay_data.add_bullet(bullet);
+    return bullet;
 }
 
-void spawn_bullet_circling_down_homing2(Game_State* state, V2 position, f32 factor, f32 factor2, s32 source, V2 additional) {
-    Bullet bullet;
-    bullet.position = position;
-    bullet.scale    = V2(5,5);
-    bullet.lifetime = Timer(3.0f);
-    bullet.source_type = source;
-
-    Timer until_release(2.0f);
-    bool triggered = false;
-    f32 t_hit = 0;
-
-    bullet.velocity_function =
-        [=](Bullet* self, Game_State* const state, f32 dt) mutable {
-            until_release.start();
-            if (until_release.triggered()) {
-                triggered = true;
-                t_hit = self->t_since_spawn;
-            }
-            until_release.update(dt);
-
-            if (triggered)
-                self->velocity = additional + (additional.normalized() * 50 * self->t_since_spawn - t_hit);
-            else
-                self->velocity = V2(-sinf(self->t_since_spawn + factor) * factor2, cos(self->t_since_spawn + factor) * factor2) + state->gameplay_data.player.velocity;
-        };
-
-    state->gameplay_data.add_bullet(bullet);
-}
-
-void spawn_bullet_circling_down(Game_State* state, V2 position, f32 factor, f32 factor2, V2 additional) {
-    Bullet bullet;
-    bullet.position = position;
-    bullet.scale    = V2(5,5);
-    bullet.lifetime = Timer(3.0f);
-
-    bullet.velocity_function =
-        [=](Bullet* self, Game_State* const state, f32 dt) {
-            f32 t_extra = self->t_since_spawn;
-            f32 t = (factor + t_extra);
-            self->velocity = V2(-sinf(t) * factor2,
-                                cos(t) * factor2) + additional;
-        };
-
-    state->gameplay_data.add_bullet(bullet);
-}
-
-void spawn_enemy_linear_movement_with_circling_down_attack(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed) {
-    Enemy_Entity enemy;
-
-    enemy.position = position;
-    enemy.scale    = scale;
-    enemy.firing_cooldown = 0.055f;
-
-    enemy.velocity_function =
+Enemy_Entity enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed) {
+    Enemy_Entity enemy = enemy_generic(
+        state,
+        position, scale, 0.055f,
         [direction, speed](Enemy_Entity* self, Game_State* const state, f32 dt) {
-            self->velocity = direction.normalized() * speed;
-        };
+            self->velocity += velocity_linear(direction, speed);
+        },
+        [](Enemy_Entity* self, Game_State* state, f32 dt) {
+            
+        }
+    );
 
-    enemy.on_fire_function =
-        [](Enemy_Entity* self, Game_State* state, f32 dt){
-            spawn_bullet_circling_down(state, self->position, 0.35f, 50.0f, V2(0, -100));
-        };
-
-    enemy.edge_top_behavior_override = enemy.edge_bottom_behavior_override =
-        enemy.edge_left_behavior_override = enemy.edge_right_behavior_override = PLAY_AREA_EDGE_PASSTHROUGH;
-    state->gameplay_data.add_enemy_entity(enemy);
+    return enemy;
 }
 
-void spawn_enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed) {
-    Enemy_Entity enemy;
-
-    enemy.position = position;
-    enemy.scale    = scale;
-    enemy.firing_cooldown = 0.055f;
-
-    enemy.velocity_function =
-        [direction, speed](Enemy_Entity* self, Game_State* const state, f32 dt) {
-            self->velocity = direction.normalized() * speed;
-        };
-
-    enemy.edge_top_behavior_override = enemy.edge_bottom_behavior_override =
-        enemy.edge_left_behavior_override = enemy.edge_right_behavior_override = PLAY_AREA_EDGE_PASSTHROUGH;
-    state->gameplay_data.add_enemy_entity(enemy);
-}
-
-void spawn_enemy_generic(Game_State* state, V2 position, V2 scale, f32 fire_cooldown, Enemy_Entity_Velocity_Fn velocity, Enemy_Entity_Fire_Fn fire) {
+Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, f32 fire_cooldown, Enemy_Entity_Velocity_Fn velocity, Enemy_Entity_Fire_Fn fire) {
     Enemy_Entity enemy;
 
     enemy.position = position;
@@ -168,16 +90,6 @@ void spawn_enemy_generic(Game_State* state, V2 position, V2 scale, f32 fire_cool
 
     enemy.edge_top_behavior_override = enemy.edge_bottom_behavior_override =
         enemy.edge_left_behavior_override = enemy.edge_right_behavior_override = PLAY_AREA_EDGE_PASSTHROUGH;
-    state->gameplay_data.add_enemy_entity(enemy);
-}
 
-void spawn_bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bullet_Entity_Velocity_Fn velocity) {
-    Bullet bullet;
-    bullet.position    = position;
-    bullet.scale       = V2(5,5);
-    bullet.lifetime    = Timer(3.0f);
-    bullet.source_type = source;
-
-    bullet.velocity_function = velocity;
-    state->gameplay_data.add_bullet(bullet);
+    return enemy;
 }

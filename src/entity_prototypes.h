@@ -23,25 +23,22 @@ struct Game_State;
 
 
 // Bullet Types
-void spawn_bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 magnitude, s32 source = BULLET_SOURCE_NEUTRAL);
-void spawn_bullet_circling_down_homing(Game_State* state, V2 position, f32 factor, f32 factor2, s32 source = BULLET_SOURCE_NEUTRAL, V2 additional = V2(0,0));
-void spawn_bullet_circling_down_homing2(Game_State* state, V2 position, f32 factor, f32 factor2, s32 source = BULLET_SOURCE_NEUTRAL, V2 additional = V2(0,0));
-void spawn_bullet_circling_down(Game_State* state, V2 position, f32 factor, f32 factor2, V2 additional = V2(0,0));
+// not necessarily with sprites yet. Those need to be done separately.
+Bullet bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 magnitude, s32 source = BULLET_SOURCE_NEUTRAL);
+Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bullet_Entity_Velocity_Fn velocity);
 
 // Bullet Patterns
 
 
 // Normal Enemy Types
-// NOTE: I need these to take firing parameters, because these should only define movement types.
-void spawn_enemy_linear_movement_with_circling_down_attack(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed);
-void spawn_enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed);
+Enemy_Entity enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed);
+Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, f32 fire_cooldown, Enemy_Entity_Velocity_Fn velocity, Enemy_Entity_Fire_Fn fire);
 
-/* NOTE: I need more parameters for these
-
-   These are mostly if I need something in C++ that I don't have a defined archetype. These are mostly
-   used for experimenting, in which case I'll finalizing them and turn them into fixed prototypes above.
+// Enemy Wave Presets
+/*
+  Generally, each level **should** have custom
+  wave setups, but it's not impossible to reuse enemy waves sometimes
+  as small filler...
  */
-void spawn_enemy_generic(Game_State* state, V2 position, V2 scale, f32 fire_cooldown, Enemy_Entity_Velocity_Fn velocity, Enemy_Entity_Fire_Fn fire);
-void spawn_bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bullet_Entity_Velocity_Fn velocity);
 
 #endif
