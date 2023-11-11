@@ -93,8 +93,30 @@ s32  Game_Task_Scheduler::add_lua_game_task(Game_State* state, lua_State* L, cha
     task.essential           = essential;
     task.userdata.game_state = state;
     task.L_C                 = lua_newthread(L);
+    task.nargs = 0;
 
     lua_getglobal(task.L_C, fn_name);
+    _debugprintf("Lua task (%p) assigned to coroutine on : %s", task.L_C, fn_name);
+    return first_free;
+}
+
+s32 Game_Task_Scheduler::add_enemy_lua_game_task(struct Game_State* state, lua_State* L, char* fn_name, u64 uid, bool essential) {
+    s32 current_screen_state = state->screen_mode;
+    s32 first_free           = first_avaliable_task();
+
+    if (first_free == -1) return false;
+    this->L = L;
+
+    auto& task               = tasks[first_free];
+    task.source              = GAME_TASK_SOURCE_GAME;
+    task.associated_state    = current_screen_state;
+    task.essential           = essential;
+    task.userdata.game_state = state;
+    task.L_C                 = lua_newthread(L);
+
+    task.nargs = 1;
+    lua_getglobal(task.L_C, fn_name);
+    lua_pushinteger(task.L_C, uid);
     _debugprintf("Lua task (%p) assigned to coroutine on : %s", task.L_C, fn_name);
     return first_free;
 }
@@ -149,7 +171,6 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
                 } break;
                 case TASK_YIELD_REASON_WAIT_FOR_SECONDS: {
                     if (task.userdata.yielded.timer < task.userdata.yielded.timer_max) {
-                        _debugprintf("Waiting for timer to finish.");
                         /*
                          * Special case for Game tasks, which should logically
                          * not advance if the game is in any UI.
@@ -191,7 +212,9 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             // We either have lua powered tasks or native tasks.
             if (task.L_C) {
                 s32 _nres;
-                s32 status = lua_resume(task.L_C, L, 0, &_nres);
+                _debugprintf("Resumed lua task %p\n", task.L_C);
+                s32 status = lua_resume(task.L_C, L, task.nargs, &_nres);
+                _debugprintf("status: %d", status);
                 task.last_L_C_status                 = status;
                 if (status == LUA_YIELD)      status = JDR_DUFFCOROUTINE_SUSPENDED;
                 if (status == LUA_OK)         status = JDR_DUFFCOROUTINE_FINISHED;

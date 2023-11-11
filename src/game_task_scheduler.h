@@ -109,6 +109,7 @@ struct Game_Task {
     // NOTE: I'm using this scheduler for lua code as well.
     lua_State* L_C = nullptr;
     s32        last_L_C_status = 0;
+    s32        nargs = 0;
 };
 
 
@@ -134,6 +135,7 @@ struct Game_Task_Scheduler {
       lua is specifically sandboxed to ONLY work on gameplay scenes.
     */
     s32  add_lua_game_task(struct Game_State* state, lua_State* L, char* fn_name, bool essential=false);
+    s32  add_enemy_lua_game_task(struct Game_State* state, lua_State* L, char* fn_name, u64 uid, bool essential=false);
     s32  search_for_lua_task(lua_State* L);
 
     s32  add_task(struct Game_State* state, jdr_duffcoroutine_fn f, void* userdata, bool essential=false);
