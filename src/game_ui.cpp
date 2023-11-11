@@ -57,17 +57,7 @@ struct UI_State {
     char* ui_id      = nullptr;
 };
 
-// void render_commands_push_text(
-//     struct render_commands* commands,
-//     struct font_cache* font,
-//     f32 scale,
-//     V2 xy,
-//     string cstring,
-//     union color32f32 rgba,
-//     u8 blend_mode
-// );
-
-UI_State global_ui_state = {};
+UI_State* global_ui_state = nullptr;
 
 /*
   NOTE: this is sort of like a stateful IMGUI, which is an oxymoron!
@@ -87,16 +77,16 @@ namespace GameUI {
         return false;
     }
     local void common_widget_initialization(Widget* widget, V2 where, string text, f32 scale, color32f32 modulation) {
-        widget->id         = global_ui_state.widgets.size;
+        widget->id         = global_ui_state->widgets.size;
         widget->where      = where;
         widget->modulation = modulation;
         widget->text       = text;
         widget->scale      = scale;
 
-        if (!global_ui_state.picked_first_index && is_selectable_widget_type(widget->type)) {
-            global_ui_state.selected_index     = widget->id-1;
-            global_ui_state.picked_first_index = true;
-            _debugprintf("I picked my first widget. (%d)", global_ui_state.selected_index);
+        if (!global_ui_state->picked_first_index && is_selectable_widget_type(widget->type)) {
+            global_ui_state->selected_index     = widget->id-1;
+            global_ui_state->picked_first_index = true;
+            _debugprintf("I picked my first widget. (%d)", global_ui_state->selected_index);
         }
     }
 
@@ -104,33 +94,33 @@ namespace GameUI {
         if (widget->type == WIDGET_TYPE_OPTION_SELECTOR) {
             // NOTE: not working. Not a big deal but check later...
             return (
-                widget->id   == global_ui_state.selected_index ||
-                widget->id+1 == global_ui_state.selected_index ||
-                widget->id-1 == global_ui_state.selected_index
+                widget->id   == global_ui_state->selected_index ||
+                widget->id+1 == global_ui_state->selected_index ||
+                widget->id-1 == global_ui_state->selected_index
             );
         }
 
-        return widget->id-1 == global_ui_state.selected_index;
+        return widget->id-1 == global_ui_state->selected_index;
     }
 
     local bool is_selectable_on_active(Widget* widget) {
-        return (global_ui_state.hot_index == -1 ||
-                global_ui_state.hot_index == widget->id ||
-                global_ui_state.selected_index == widget->id-1);
+        return (global_ui_state->hot_index == -1 ||
+                global_ui_state->hot_index == widget->id ||
+                global_ui_state->selected_index == widget->id-1);
     }
     local bool is_currently_hot(Widget* widget) {
-        return (global_ui_state.hot_index == widget->id || global_ui_state.selected_index == widget->id-1);
+        return (global_ui_state->hot_index == widget->id || global_ui_state->selected_index == widget->id-1);
     }
 
     local void register_hot_widget(Widget* widget) {
-        if (global_ui_state.hot_index == -1 || global_ui_state.hot_index == widget->id) {
-            global_ui_state.hot_index           = widget->id;
-            global_ui_state.ate_any_mouse_lefts = true;
+        if (global_ui_state->hot_index == -1 || global_ui_state->hot_index == widget->id) {
+            global_ui_state->hot_index           = widget->id;
+            global_ui_state->ate_any_mouse_lefts = true;
         }
     }
 
     local Widget* push_label(V2 where, string text, f32 scale, color32f32 modulation) {
-        auto result   = global_ui_state.widgets.alloc();
+        auto result   = global_ui_state->widgets.alloc();
 
         // specific initialization behavior if this was a different
         // widget last frame.
@@ -143,7 +133,7 @@ namespace GameUI {
     }
 
     local Widget* push_button(V2 where, string text, f32 scale, color32f32 modulation) {
-        auto result   = global_ui_state.widgets.alloc();
+        auto result   = global_ui_state->widgets.alloc();
 
         // specific initialization behavior if this was a different
         // widget last frame.
@@ -156,7 +146,7 @@ namespace GameUI {
     }
 
     local Widget* push_checkbox(V2 where, string text, f32 scale, color32f32 modulation) {
-        auto result   = global_ui_state.widgets.alloc();
+        auto result   = global_ui_state->widgets.alloc();
 
         // specific initialization behavior if this was a different
         // widget last frame.
@@ -169,7 +159,7 @@ namespace GameUI {
     }
 
     local Widget* push_f32_slider(V2 where, string text, f32 scale, color32f32 modulation) {
-        auto result   = global_ui_state.widgets.alloc();
+        auto result   = global_ui_state->widgets.alloc();
 
         // specific initialization behavior if this was a different
         // widget last frame.
@@ -182,7 +172,7 @@ namespace GameUI {
     }
 
     local Widget* push_option_selector(V2 where, string text, f32 scale, color32f32 modulation, s32* value) {
-        auto result   = global_ui_state.widgets.alloc();
+        auto result   = global_ui_state->widgets.alloc();
 
         // specific initialization behavior if this was a different
         // widget last frame.
@@ -197,31 +187,31 @@ namespace GameUI {
     }
 
     void set_font_selected(font_cache* font) {
-        global_ui_state.selected_font = font;
+        global_ui_state->selected_font = font;
     }
 
     void set_font_active(font_cache* font) {
-        global_ui_state.active_font = font;
+        global_ui_state->active_font = font;
     }
 
     void set_font(font_cache* font) {
-        global_ui_state.default_font = font;
+        global_ui_state->default_font = font;
     }
 
     void label(V2 where, string text, color32f32 modulation, f32 scale, bool active) {
-        assertion(global_ui_state.in_frame && "Need to call begin_frame first.");
+        assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
         auto widget = push_label(where, text, scale, modulation);
-        auto font = global_ui_state.default_font;
+        auto font = global_ui_state->default_font;
 
         if (!active) widget->modulation.a = 0.5 * modulation.a;
         else         widget->modulation.a = 1.0 * modulation.a;
-        render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
+        render_commands_push_text(global_ui_state->commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
     }
 
     s32 button(V2 where, string text, color32f32 modulation, f32 scale, bool active) {
-        assertion(global_ui_state.in_frame && "Need to call begin_frame first.");
+        assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
         auto widget         = push_button(where, text, scale, modulation);
-        auto font           = global_ui_state.default_font;
+        auto font           = global_ui_state->default_font;
         auto text_width     = font_cache_text_width(font, widget->text, widget->scale);
         auto text_height    = font_cache_text_height(font) * widget->scale;
         auto button_rect    = rectangle_f32(widget->where.x, widget->where.y, text_width, text_height);
@@ -233,9 +223,9 @@ namespace GameUI {
 
         s32 status = WIDGET_ACTION_NONE;
         if (is_selectable_on_active(widget) && active && (is_currently_hot(widget) || intersecting)) {
-            font = global_ui_state.active_font;
+            font = global_ui_state->active_font;
             if (Input::mouse_left() && intersecting) {
-                font = global_ui_state.selected_font;
+                font = global_ui_state->selected_font;
                 register_hot_widget(widget);
             }
             
@@ -249,15 +239,15 @@ namespace GameUI {
 
         if (!active) widget->modulation.a = 0.5 * modulation.a;
         else         widget->modulation.a = 1.0 * modulation.a;
-        render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
+        render_commands_push_text(global_ui_state->commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
 
         return status;
     }
 
     bool checkbox(V2 where, string text, color32f32 modulation, f32 scale, bool* ptr, bool active) {
-        assertion(global_ui_state.in_frame && "Need to call begin_frame first.");
+        assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
         auto widget         = push_button(where, text, scale, modulation);
-        auto font           = global_ui_state.default_font;
+        auto font           = global_ui_state->default_font;
         auto text_width     = font_cache_text_width(font, widget->text, widget->scale);
         auto text_height    = font_cache_text_height(font) * widget->scale;
         auto button_rect    = rectangle_f32(widget->where.x + text_width * 1.15f, widget->where.y, text_height, text_height);
@@ -267,9 +257,9 @@ namespace GameUI {
         bool clicked        = false;
 
         if (is_selectable_on_active(widget) && active && (is_currently_hot(widget) || intersecting)) {
-            font = global_ui_state.active_font;
+            font = global_ui_state->active_font;
             if (Input::mouse_left() && intersecting) {
-                font = global_ui_state.selected_font;
+                font = global_ui_state->selected_font;
                 register_hot_widget(widget);
             }
             
@@ -281,9 +271,9 @@ namespace GameUI {
 
         if (!active) widget->modulation.a = 0.5 * modulation.a;
         else         widget->modulation.a = 1.0 * modulation.a;
-        render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
+        render_commands_push_text(global_ui_state->commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
 
-        render_commands_push_quad(global_ui_state.commands, button_rect, color32u8(255, 255, 255, widget->modulation.a * 255), BLEND_MODE_ALPHA);
+        render_commands_push_quad(global_ui_state->commands, button_rect, color32u8(255, 255, 255, widget->modulation.a * 255), BLEND_MODE_ALPHA);
         {
             // inner "value".
             auto inner_rect = button_rect;
@@ -298,16 +288,16 @@ namespace GameUI {
 
 
             color32u8 color = color32u8(255 * !(*ptr), 255 * (*ptr), 0, 255 - 128 * !active);
-            render_commands_push_quad(global_ui_state.commands, inner_rect, color, BLEND_MODE_ALPHA);
+            render_commands_push_quad(global_ui_state->commands, inner_rect, color, BLEND_MODE_ALPHA);
         }
 
         return *ptr;
     }
 
     void option_selector(V2 where, string text, color32f32 modulation, f32 scale, string* options, s32 options_count, s32* out_selected, bool active) {
-        assertion(global_ui_state.in_frame && "Need to call begin_frame first.");
+        assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
         auto widget = push_option_selector(where, text, scale, modulation, out_selected);
-        auto font   = global_ui_state.default_font;
+        auto font   = global_ui_state->default_font;
 
         label(where, text, modulation, scale, active);
         where.x += font_cache_text_width(font, widget->text, widget->scale);
@@ -337,10 +327,10 @@ namespace GameUI {
     }
 
     void f32_slider(V2 where, string text, color32f32 modulation, f32 scale, f32* ptr, f32 min_value, f32 max_value, f32 slider_width_px, bool active) {
-        assertion(global_ui_state.in_frame && "Need to call begin_frame first.");
+        assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
         auto widget         = push_f32_slider(where, text, scale, modulation);
 
-        auto font           = global_ui_state.default_font;
+        auto font           = global_ui_state->default_font;
         auto text_width     = font_cache_text_width(font, widget->text, widget->scale);
         auto text_height    = font_cache_text_height(font) * widget->scale;
 
@@ -354,11 +344,11 @@ namespace GameUI {
         bool intersecting = rectangle_f32_intersect(bar_rect, mouse_rect);
 
         if (is_selectable_on_active(widget) && active && (is_currently_hot(widget) || intersecting)) {
-            font = global_ui_state.active_font;
+            font = global_ui_state->active_font;
 
             if (Input::mouse_left() && intersecting) {
                 register_hot_widget(widget);
-                font = global_ui_state.selected_font;
+                font = global_ui_state->selected_font;
 
                 // drag the slider around...
                 f32 new_percentage = clamp<f32>((mouse_position.x - bar_rect.x) / slider_width_px, 0.0f, 1.0f);
@@ -382,9 +372,9 @@ namespace GameUI {
 
         if (!active) widget->modulation.a = 0.5 * modulation.a;
         else         widget->modulation.a = 1.0 * modulation.a;
-        render_commands_push_text(global_ui_state.commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
+        render_commands_push_text(global_ui_state->commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
 
-        render_commands_push_quad(global_ui_state.commands, bar_rect, color32u8(255, 255, 255, widget->modulation.a * 255), BLEND_MODE_ALPHA);
+        render_commands_push_quad(global_ui_state->commands, bar_rect, color32u8(255, 255, 255, widget->modulation.a * 255), BLEND_MODE_ALPHA);
         {
             // inner "value".
             auto inner_rect = bar_rect;
@@ -398,23 +388,24 @@ namespace GameUI {
             inner_rect.y += (dy / 2);
 
 
-            render_commands_push_quad(global_ui_state.commands, inner_rect, color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
+            render_commands_push_quad(global_ui_state->commands, inner_rect, color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
 
             color32u8 color = color32u8(255 * !(*ptr), 255 * (*ptr), 0, 255 - 128 * !active);
             inner_rect.w *= percentage_of;
-            render_commands_push_quad(global_ui_state.commands, inner_rect, color, BLEND_MODE_ALPHA);
+            render_commands_push_quad(global_ui_state->commands, inner_rect, color, BLEND_MODE_ALPHA);
         }
     }
 
     void initialize(Memory_Arena* arena) {
-        global_ui_state.widgets = Fixed_Array<Widget>(arena, 256);
+        global_ui_state         = (UI_State*)arena->push_unaligned(sizeof(*global_ui_state));
+        global_ui_state->widgets = Fixed_Array<Widget>(arena, 256);
     }
 
     void begin_frame(struct render_commands* commands) {
-        global_ui_state.widgets.clear();
-        global_ui_state.in_frame = true;
-        global_ui_state.commands = commands;
-        global_ui_state.ate_any_mouse_lefts = false;
+        global_ui_state->widgets.clear();
+        global_ui_state->in_frame = true;
+        global_ui_state->commands = commands;
+        global_ui_state->ate_any_mouse_lefts = false;
     }
 
     void end_frame() {
@@ -426,48 +417,48 @@ namespace GameUI {
             GameUI::move_selected_widget_id(-1);
         }
 
-        auto font           = global_ui_state.default_font;
-        render_commands_push_text(global_ui_state.commands, font, 1.0, V2(0,0),
-                                  string_from_cstring(format_temp("(lastui_id: %s)\nselected_index: %d\n", global_ui_state.last_ui_id, global_ui_state.selected_index)), color32f32(1,1,1,1), BLEND_MODE_ALPHA);
+        auto font           = global_ui_state->default_font;
+        render_commands_push_text(global_ui_state->commands, font, 1.0, V2(0,0),
+                                  string_from_cstring(format_temp("(lastui_id: %s)\nselected_index: %d\n", global_ui_state->last_ui_id, global_ui_state->selected_index)), color32f32(1,1,1,1), BLEND_MODE_ALPHA);
 
-        global_ui_state.in_frame = false;
-        global_ui_state.commands = nullptr;
+        global_ui_state->in_frame = false;
+        global_ui_state->commands = nullptr;
 
-        if (!global_ui_state.ate_any_mouse_lefts) {
-            global_ui_state.hot_index = -1;
+        if (!global_ui_state->ate_any_mouse_lefts) {
+            global_ui_state->hot_index = -1;
         }
     }
 
     void update(f32 dt) {
-        for (s32 i = 0; i < (s32)global_ui_state.widgets.size; ++i) {
-            auto& widget = global_ui_state.widgets[i];
+        for (s32 i = 0; i < (s32)global_ui_state->widgets.size; ++i) {
+            auto& widget = global_ui_state->widgets[i];
             // Nothing to do right now.
         }
     }
 
     void set_ui_id(char* id_string) {
-        if (global_ui_state.last_ui_id != global_ui_state.ui_id) {
-            global_ui_state.picked_first_index = false;
-            global_ui_state.selected_index     = -1;
+        if (global_ui_state->last_ui_id != global_ui_state->ui_id) {
+            global_ui_state->picked_first_index = false;
+            global_ui_state->selected_index     = -1;
 
             _debugprintf("This is a different UI id.");
         }
 
-        global_ui_state.last_ui_id = global_ui_state.ui_id;
-        global_ui_state.ui_id = id_string;
+        global_ui_state->last_ui_id = global_ui_state->ui_id;
+        global_ui_state->ui_id = id_string;
     }
 
     void move_selected_widget_id(s32 increments) {
         // NOTE: I want to skip the [+][-] buttons in the future
-        global_ui_state.selected_index += increments;
+        global_ui_state->selected_index += increments;
 
-        if (global_ui_state.selected_index < 0) {
-            global_ui_state.selected_index = global_ui_state.widgets.size-1;
-        } else if (global_ui_state.selected_index >= global_ui_state.widgets.size) {
-            global_ui_state.selected_index = 0;
+        if (global_ui_state->selected_index < 0) {
+            global_ui_state->selected_index = global_ui_state->widgets.size-1;
+        } else if (global_ui_state->selected_index >= global_ui_state->widgets.size) {
+            global_ui_state->selected_index = 0;
         }
 
-        auto& next_widget = global_ui_state.widgets[global_ui_state.selected_index];
+        auto& next_widget = global_ui_state->widgets[global_ui_state->selected_index];
 
         if (!is_selectable_widget_type(next_widget.type)) {
             move_selected_widget_id(sign_s32(increments));
