@@ -1039,12 +1039,6 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
             );
         }
         y += 30;
-
-        {
-            if (Action::is_pressed(ACTION_CANCEL)) {
-                switch_ui(state->last_ui_state);
-            }
-        }
     }
     GameUI::end_frame();
     GameUI::update(dt);

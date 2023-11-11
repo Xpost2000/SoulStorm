@@ -82,7 +82,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
         auto& task = tasks[index];
         task.userdata.dt = dt;
 
-        if (jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED || task.source == GAME_TASK_AVALIABLE) {
+        if (jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED && task.source != GAME_TASK_AVALIABLE) {
             zero_memory(&task, sizeof(task));
         }
 
