@@ -518,7 +518,6 @@ void deinitialize() {
 
 void engine_main_loop() {
     char window_name_title_buffer[256] = {};
-    u32 start_frame_time = SDL_GetTicks();
 
     Input::begin_input_frame();
     {
@@ -557,8 +556,6 @@ void engine_main_loop() {
     Input::end_input_frame();
     global_graphics_driver->swap_and_present();
 
-    Global_Engine()->last_elapsed_delta_time = (SDL_GetTicks() - start_frame_time) / 1000.0f;
-    Global_Engine()->global_elapsed_time += Global_Engine()->last_elapsed_delta_time;
     add_frametime_sample(Global_Engine()->last_elapsed_delta_time);
 
     {
@@ -596,7 +593,10 @@ int main(int argc, char** argv) {
 #endif
     initialize();
     while (Global_Engine()->running) {
+        u32 start_frame_time = SDL_GetTicks();
         engine_main_loop();
+        Global_Engine()->last_elapsed_delta_time = (SDL_GetTicks() - start_frame_time) / 1000.0f;
+        Global_Engine()->global_elapsed_time += Global_Engine()->last_elapsed_delta_time;
     }
     deinitialize();
     return 0; 

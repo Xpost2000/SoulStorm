@@ -2,6 +2,8 @@
 #include "thread_pool.h"
 #include "memory_arena.h"
 
+// #define SIMULATE_SYNCHRONOUS
+
 #include "engine.h"
 
 struct thread_job_queue {
@@ -18,7 +20,6 @@ struct thread_job_queue global_job_queue                                = {};
 namespace Thread_Pool {
     void add_job(job_queue_function job, void* data) {
 #ifdef SIMULATE_SYNCHRONOUS
-        _debugprintf("Synchronously doing job.");
         job(data);
 #else
         for (s32 index = 0; index < MAX_JOBS; ++index) {

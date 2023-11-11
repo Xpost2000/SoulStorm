@@ -409,10 +409,12 @@ namespace GameUI {
 
     void end_frame() {
         if (Action::is_pressed(ACTION_MOVE_DOWN)) {
+            // _debugprintf("Move down!");
             GameUI::move_selected_widget_id(1);
         }
 
         if (Action::is_pressed(ACTION_MOVE_UP)) {
+            // _debugprintf("Move up!");
             GameUI::move_selected_widget_id(-1);
         }
 

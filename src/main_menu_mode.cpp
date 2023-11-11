@@ -395,7 +395,6 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
     }
 
     main_menu_state.player.draw(&main_menu_state, &game_render_commands, resources);
-
     handle_ui_update_and_render(&ui_render_commands, dt);
 
     // Wrap player to edges

@@ -17,8 +17,8 @@ STAGE_TICK(1_1) {
     LEVEL_DATA(1_1, data);
 
     JDR_Coroutine_Start(co, Start);
+#if 0
     TASK_WAIT(0.5);
-
     {
         for (int i = 0; i < 3; ++i)  {
             auto e = enemy_linear_movement(state, V2(i * 35, -30), V2(10, 10), V2(0, 1), 125);
@@ -90,6 +90,10 @@ STAGE_TICK(1_1) {
     STAGE_WAIT_CLEARED_WAVE();
 
     TASK_WAIT(1.5);
+#else
+    // Score test. I want to see if my timing is busted.
+    TASK_WAIT(5);
+#endif
     TASK_COMPLETE_STAGE();
     JDR_Coroutine_End;
 } 
