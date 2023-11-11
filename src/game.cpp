@@ -492,6 +492,10 @@ void Game::init(Graphics_Driver* driver) {
      //   }
     }
 
+    initialized = true;
+    init_graphics_resources(driver);
+    init_audio_resources();
+
     // gameplay_data initialize
     {
         auto state                     = &this->state->gameplay_data;
@@ -518,6 +522,21 @@ void Game::init(Graphics_Driver* driver) {
     {
         auto state = &this->state->mainmenu_data;
         auto resolution = driver->resolution();
+
+        state->particle_pool.init(arena, 5000);
+        {
+            auto& emitter = state->test_emitter;
+            emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
+            emitter.scale  = 16.0f;
+            emitter.shape = particle_emit_shape_circle(V2(resolution.x/2, resolution.y/2), 50.0f);
+            emitter.lifetime = 5.0f;
+            emitter.velocity_x_variance = V2(-100, 100);
+            emitter.velocity_y_variance = V2(-100, 100);
+            emitter.lifetime_variance   = V2(-0.5f, 1.0f);
+
+            emitter.active = true;
+            emitter.emission_max_timer = 0.055f;
+        }
 
         
         state->player.position      = V2(resolution.x / 2, resolution.y / 2);
@@ -602,10 +621,6 @@ void Game::init(Graphics_Driver* driver) {
             }
         }
     }
-
-    initialized = true;
-    init_graphics_resources(driver);
-    init_audio_resources();
 
     Achievements::init_achievements(arena, make_slice<Achievement>(achievement_list, array_count(achievement_list)));
     GameUI::initialize(arena);

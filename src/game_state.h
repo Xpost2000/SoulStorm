@@ -6,6 +6,7 @@
 
 #include "common.h"
 
+#include "particle_system.h"
 #include "entity.h"
 #include "fixed_array.h"
 #include "prng.h"

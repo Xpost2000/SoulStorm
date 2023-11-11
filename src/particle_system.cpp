@@ -1,6 +1,41 @@
 #include "game_state.h"
 #include "particle_system.h"
 
+Particle_Emit_Shape::Particle_Emit_Shape() {type = 0;}
+
+Particle_Emit_Shape particle_emit_shape_point(V2 point) {
+    Particle_Emit_Shape result;
+    result.type = PARTICLE_EMIT_SHAPE_POINT;
+    result.point.position = point;
+    return result;
+}
+
+Particle_Emit_Shape particle_emit_shape_circle(V2 center, f32 radius, bool filled) {
+    Particle_Emit_Shape result;
+    result.type          = PARTICLE_EMIT_SHAPE_CIRCLE;
+    result.circle.center = center;
+    result.circle.radius = radius;
+    result.filled_shape  = filled;
+    return result;
+}
+
+Particle_Emit_Shape particle_emit_shape_quad(V2 center, V2 half_lengths, bool filled) {
+    Particle_Emit_Shape result;
+    result.type                 = PARTICLE_EMIT_SHAPE_QUAD;
+    result.quad.center          = center;
+    result.quad.half_dimensions = half_lengths;
+    result.filled_shape         = filled;
+    return result;
+}
+
+Particle_Emit_Shape particle_emit_shape_line(V2 start, V2 end) {
+    Particle_Emit_Shape result;
+    result.type       = PARTICLE_EMIT_SHAPE_LINE;
+    result.line.start = start;
+    result.line.end   = end;
+    return result;
+}
+
 V2 Particle_Emit_Shape::emit_position(random_state* prng) {
     switch (type) {
         case PARTICLE_EMIT_SHAPE_POINT: {
@@ -71,6 +106,7 @@ void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
 
     if (emission_timer <= 0.0f) {
         for (s32 index = 0; index < emit_per_emission; ++index) {
+            if (pool->particles.size >= pool->particles.capacity) break;
             auto p = pool->particles.alloc();
 
             p->position = shape.emit_position(prng);
@@ -104,7 +140,7 @@ void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
 }
 
 // Particle Pool
-Particle_Pool::Particle_Pool(Memory_Arena* arena, s32 amount) {
+void Particle_Pool::init(Memory_Arena* arena, s32 amount) {
     particles = Fixed_Array<Particle>(arena, amount);
 }
 

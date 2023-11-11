@@ -1,6 +1,7 @@
 #ifndef MAIN_MENU_MODE_H
 #define MAIN_MENU_MODE_H
 
+#include "particle_system.h"
 #include "v2.h"
 #include "camera.h"
 
@@ -61,6 +62,9 @@ struct MainMenu_ScreenMessage {
 };
 
 struct MainMenu_Data {
+    Particle_Pool particle_pool;
+    Particle_Emitter test_emitter;
+
     MainMenu_Completed_MainGame_Cutscene_Data cutscene1;
     MainMenu_Introduction_Cutscene_Data       cutscene2;
 

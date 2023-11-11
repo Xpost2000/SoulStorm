@@ -48,6 +48,7 @@ struct Particle_Emit_Shape_Line {
 };
 
 struct Particle_Emit_Shape {
+    Particle_Emit_Shape();
     s32  type;
     bool filled_shape;
     union {
@@ -60,15 +61,20 @@ struct Particle_Emit_Shape {
     V2 emit_position(random_state* prng);
 };
 
+Particle_Emit_Shape particle_emit_shape_point(V2 point);
+Particle_Emit_Shape particle_emit_shape_circle(V2 center, f32 radius, bool filled=false);
+Particle_Emit_Shape particle_emit_shape_quad(V2 center, V2 half_lengths, bool filled=false);
+Particle_Emit_Shape particle_emit_shape_line(V2 start, V2 end);
+
 struct Particle_Pool;
 struct Particle_Emitter {
     Particle_Emit_Shape shape;
 
     Sprite_Instance sprite;
     f32             scale;
-    V2              velocity;
-    V2              acceleration;
-    color32f32      modulation;
+    V2              velocity = V2(0,0);
+    V2              acceleration = V2(0,0);
+    color32f32      modulation = color32f32(1, 1, 1, 1);
     f32             lifetime;
 
     V2 scale_variance          = V2(0,0); // particles are going to be "square/quads" only.
@@ -106,7 +112,7 @@ struct Game_Resources;
   game_screen states, effectively "independent" things.
 */
 struct Particle_Pool {
-    Particle_Pool(Memory_Arena* arena, s32 amount);
+    void init(Memory_Arena* arena, s32 amount);
 
     void update(Game_State* state, f32 dt);
     void draw(struct render_commands* commands, Game_Resources* resources);
