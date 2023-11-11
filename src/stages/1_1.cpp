@@ -38,35 +38,54 @@ STAGE_TICK(1_1) {
         }
     }
     TASK_WAIT(1.0);
-    do {
+    {
         auto e = enemy_linear_movement(state, V2(0 * 50, -40), V2(10, 10), V2(0, 1), 250);
         e.hp = 10; state->gameplay_data.add_enemy_entity(e);
-    } while(0);
+    }
     TASK_WAIT(0.25);
-    do {
+    {
         auto e = enemy_linear_movement(state, V2(1 * 50, -40), V2(10, 10), V2(0, 1), 250);
         e.hp = 10; state->gameplay_data.add_enemy_entity(e);
-    } while(0);
+    }
     TASK_WAIT(0.25);
-    do {
+
+    // Entity 17
+    {
         auto e = enemy_linear_movement(state, V2(2 * 50, -40), V2(10, 10), V2(0, 1), 250);
         e.hp = 10; state->gameplay_data.add_enemy_entity(e);
-    } while(0);
+    }
+
     TASK_WAIT(0.25);
-    do {
+    WITH_ENTITY(gameplay_state->lookup_enemy(17)) {
+        it->reset_movement();
+        state->coroutine_tasks.add_task(
+            state,
+            [](struct jdr_duffcoroutine* co) {
+                STAGE_TASK_DECLS;
+                auto e = gameplay_state->lookup_enemy(17);
+                JDR_Coroutine_Start(co, Start);
+                while (e) {
+                    spawn_bullet_arc_pattern2(state, e->position, 5, 45, V2(5, 5), V2(0, 1), 1000, 0, BULLET_SOURCE_ENEMY);
+                    TASK_WAIT(0.15);
+                }
+                JDR_Coroutine_End;
+            }
+        );
+    }
+    {
         auto e = enemy_linear_movement(state, V2(3 * 50, -40), V2(10, 10), V2(0, 1), 250);
         e.hp = 10; state->gameplay_data.add_enemy_entity(e);
-    } while(0);
+    };
     TASK_WAIT(0.25);
-    do {
+    {
         auto e = enemy_linear_movement(state, V2(4 * 50, -40), V2(10, 10), V2(0, 1), 250);
         e.hp = 10; state->gameplay_data.add_enemy_entity(e);
-    } while(0);
+    };
     TASK_WAIT(0.25);
-    do {
+    {
         auto e = enemy_linear_movement(state, V2(5 * 50, -40), V2(10, 10), V2(0, 1), 250);
         e.hp = 10; state->gameplay_data.add_enemy_entity(e);
-    } while(0);
+    };
     TASK_WAIT(0.25);
     STAGE_WAIT_CLEARED_WAVE();
 

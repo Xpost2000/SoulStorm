@@ -464,6 +464,12 @@ void Enemy_Entity::try_and_fire(Game_State* state, f32 dt) {
     }
 }
 
+void Enemy_Entity::reset_movement() {
+    velocity_function = nullptr;
+    velocity          = V2(0, 0);
+    acceleration      = V2(0, 0);
+}
+
 // Hazard Warning
 Hazard_Warning::Hazard_Warning(f32 amount_of_time_for_warning)
     : warning_flash_timer(amount_of_time_for_warning),

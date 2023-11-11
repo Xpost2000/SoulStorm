@@ -10,6 +10,7 @@
 // This is the most macro heavy section of the codebase, and I don't personally
 // like it, but this is where a lot of the highest level code is anyway...
 
+// STAGE DSL
 #define STAGE_TASK_DECLS                                                \
         Game_State*  state = ((Game_Task_Userdata*)(co->userdata))->game_state; \
         Stage_State* stage = &state->gameplay_data.stage_state;         \
@@ -24,6 +25,7 @@
 #define DEF_LEVEL_DATA(name) struct Stage_##name##_Data
 #define LEVEL_DATA(name, as) auto as = (struct Stage_##name##_Data*)(stage->stage_memory_buffer)
 #define STAGE_WAIT_CLEARED_WAVE() do { while (gameplay_state->any_living_danger()) {TASK_YIELD();} } while(0)
+#define WITH_ENTITY(e) for (Enemy_Entity* it = e; it; it = nullptr)
 
 /*
  * Personally speaking, I think that function pointers are more

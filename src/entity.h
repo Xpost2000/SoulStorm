@@ -145,6 +145,7 @@ struct Enemy_Entity : public Entity {
     //       however for specifically entities that fire things, this is not possible
     //       to multithread because Fixed_Array is not thread_safe (and also it would defeat the purpose of threading in this architecture.)
     void try_and_fire(Game_State* state, f32 dt);
+    void reset_movement();
 };
 
 struct Hazard_Warning {

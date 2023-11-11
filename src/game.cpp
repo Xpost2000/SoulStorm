@@ -282,7 +282,7 @@ void Game::init(Graphics_Driver* driver) {
 
     // Initialize coroutine scheduler
     {
-        state->coroutine_tasks.tasks = Fixed_Array<Game_Task>(arena, 128);
+        state->coroutine_tasks.tasks = Fixed_Array<Game_Task>(arena, 255);
 
 #if 0
         // test eternal task
