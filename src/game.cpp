@@ -282,27 +282,7 @@ void Game::init(Graphics_Driver* driver) {
 
     // Initialize coroutine scheduler
     {
-        state->coroutine_tasks.tasks = Fixed_Array<Game_Task>(arena, 255);
-
-#if 0
-        // test eternal task
-        {
-            state->coroutine_tasks.add_global_task(
-                [](jdr_duffcoroutine_t* co) {
-                    JDR_Coroutine_Start(co, Start);
-                    while (true) {
-                        _debugprintf("I... Hope I got scheduled? Going to wait for a bit okay?");
-                        TASK_WAIT(5.0f);
-                        _debugprintf("Hopefully five seconds");
-                        TASK_WAIT(3.0f);
-                        _debugprintf("Wait for me more!");
-                        TASK_WAIT(3.0f);
-                    }
-                    JDR_Coroutine_End;
-                }
-            );
-        }
-#endif
+        state->coroutine_tasks.tasks = Fixed_Array<Game_Task>(arena, MAX_BULLETS + MAX_ENEMIES + 512);
     }
 
     // gameplay_data initialize
