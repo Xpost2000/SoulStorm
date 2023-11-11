@@ -251,8 +251,8 @@ struct Achievement_Menu_Data {
 };
 
 struct Game_State {
-    s32 screen_mode      = GAME_SCREEN_MAIN_MENU;
-    s32 last_screen_mode = GAME_SCREEN_MAIN_MENU;
+    s32 screen_mode      = GAME_SCREEN_TITLE_SCREEN;
+    s32 last_screen_mode = GAME_SCREEN_TITLE_SCREEN;
     s32 ui_state         = UI_STATE_INACTIVE;
     s32 last_ui_state    = UI_STATE_INACTIVE;
 

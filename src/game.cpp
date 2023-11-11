@@ -393,12 +393,6 @@ void Game::init(Graphics_Driver* driver) {
     Achievements::init_achievements(arena, make_slice<Achievement>(achievement_list, array_count(achievement_list)));
     GameUI::initialize(arena);
 
-    // no save file? Going to start
-    if (!load_game()) {
-        // first time, we'll load the full cutscene...
-        auto state = &this->state->mainmenu_data;
-        state->start_introduction_cutscene(this->state, false);
-    }
 }
 
 void Game::deinit() {
@@ -754,10 +748,9 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
                         0.3f
                     );
                 
-
                     Transitions::register_on_finish(
                         [&](void*) mutable {
-                            state->ui_state    = UI_STATE_INACTIVE;
+                            switch_ui(UI_STATE_INACTIVE);
                             switch_screen(GAME_SCREEN_MAIN_MENU);
                             _debugprintf("Hi menu.");
 
@@ -1195,7 +1188,8 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
 void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt) {
     switch (state->ui_state) {
         case UI_STATE_INACTIVE: {
-            if (state->screen_mode != GAME_SCREEN_CREDITS) {
+            // These are the two "full UI" screens
+            if (state->screen_mode != GAME_SCREEN_CREDITS && state->screen_mode != GAME_SCREEN_TITLE_SCREEN) {
                 GameUI::set_ui_id(0);
             }
         } break;
@@ -1648,7 +1642,11 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
           Also, I'm aware that I should be interpolating between the last and current frame with an accumulator, but
           I don't think it's necessary for a bullet hell game like this.
         */
-        const f32 TARGET_FRAMERATE = 1.0f / 300.0f;
+#if 0
+        const f32 TARGET_FRAMERATE = 0.0f; // use 0 for unlimited
+#else
+        const f32 TARGET_FRAMERATE = 1.0f / 300.0f; // use 0 for unlimited
+#endif
         static f32 accumulator = 0.0f;
         accumulator += dt;
 
@@ -1766,6 +1764,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         // Actually spawn the stuff we wanted to make...
         state->reify_all_creation_queues();
     }
+
     handle_ui_update_and_render(&ui_render_commands, dt);
 
     // Handle transitions or stage specific data
@@ -2218,8 +2217,6 @@ Save_File Game::construct_save_data() {
 }
 
 void Game::update_from_save_data(Save_File* save_data) {
-    // TODO: nothing for scores yet
-
     for (int stage_index = 0; stage_index < 4; ++stage_index) {
         auto& stage = stage_list[stage_index];
         stage.unlocked_levels = save_data->stage_unlocks[stage_index];
@@ -2253,12 +2250,7 @@ void Game::update_from_save_data(Save_File* save_data) {
         {
             auto& portal = state->portals[3]; 
             portal.visible = can_access_stage(3);
-        }
-
-        
-        // if we were able to get to this point, we were able to load a save
-        // which means we probably already saw the original cutscene.
-        state->start_introduction_cutscene(this->state, true);
+        }    
     }
 }
 
