@@ -66,8 +66,8 @@ namespace GameUI {
         switch (type) {
             case WIDGET_TYPE_UNKNOWN:
             case WIDGET_TYPE_TEXT:
-                return false;
             case WIDGET_TYPE_OPTION_SELECTOR:
+                return false;
             case WIDGET_TYPE_BUTTON:
             case WIDGET_TYPE_CHECKBOX:
             case WIDGET_TYPE_F32_SLIDER:
@@ -449,6 +449,7 @@ namespace GameUI {
     }
 
     void move_selected_widget_id(s32 increments) {
+        _debugprintf("Moving selected widget id by %d", increments);
         // NOTE: I want to skip the [+][-] buttons in the future
         global_ui_state->selected_index += increments;
 
