@@ -168,19 +168,22 @@ struct Gameplay_UI_Hitmark_Score_Notification {
 };
 
 struct Gameplay_Data {
-    // As a coroutine, the stage will have to yield
-    // and set this flag on it's own.
-    // The only other thing I can do is just repeatedly
-    // monitor coroutine task id, but that's dirty.
-    // This is the least bad idea I could think of to handle
-    // this, which is fine since it's really one thing.
+    /*
+      NOTE: this is useful for the game level design functionalities,
+      and I'm aware of a generational counter, but I don't legitimately
+      need one.
+
+      This allows me to reference entities in a simple way, and I know
+      that there will always be less entities than bullets.
+
+      These are persistent references.
+    */
+    u64 enemy_entity_uid = 0;
+
+
     bool stage_completed;
     Stage_State stage_state;
 
-    // NOTE:
-    // to make this parallel safe, I need to
-    // defer entity creation to after the existing entity updates so my
-    // engine will not explode dangerously :)
     Fixed_Array<Bullet>           to_create_player_bullets;
     Fixed_Array<Bullet>           to_create_enemy_bullets;
     Fixed_Array<Enemy_Entity>     to_create_enemies;
@@ -192,20 +195,10 @@ struct Gameplay_Data {
 
     Fixed_Array<Gameplay_UI_Score_Notification> score_notifications;
     Fixed_Array<Gameplay_UI_Hitmark_Score_Notification> hit_score_notifications;
-    // should be in a separate list of it's own...
     Player              player;
 
-    // should also have some form of entity iterator
-    // or something later.
-
-    // NOTE: the game runs in a "logical" resolution of (w)x480?
-    // so I'll pick a play area that's generally okay for the base configuration...
     Play_Area play_area;
 
-    // The camera is technically "static",
-    // or really static. This is really only here so I can get working
-    // screen shake behavior that looks cool.
-    // I'll fake the illusion of movement through the background primarily
     random_state prng;
     camera       main_camera;
 
@@ -227,6 +220,8 @@ struct Gameplay_Data {
     void add_laser_hazard(Laser_Hazard h);
     void add_explosion_hazard(Explosion_Hazard h);
     void add_enemy_entity(Enemy_Entity e);
+
+    Enemy_Entity* lookup_enemy(u64 uid);
 
     void reify_all_creation_queues();
 

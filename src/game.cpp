@@ -192,6 +192,9 @@ void Game::setup_stage_start() {
         this->state->coroutine_tasks.add_task(this->state, state->stage_state.tick_task);
     }
 
+    // reset UID to 0.
+    state->enemy_entity_uid = 0;
+
     state->player.position = V2(state->play_area.width / 2, 300);
     state->player.hp       = 1;
     state->player.die      = false;
@@ -453,7 +456,18 @@ void Gameplay_Data::add_explosion_hazard(Explosion_Hazard h) {
 }
 
 void Gameplay_Data::add_enemy_entity(Enemy_Entity e) {
+    e.uid = enemy_entity_uid++;
     to_create_enemies.push(e);
+}
+
+Enemy_Entity* Gameplay_Data::lookup_enemy(u64 uid) {
+    for (s32 index = 0; index < to_create_enemies.size; ++index) {
+        if (to_create_enemies[index].uid == uid) return &to_create_enemies[index];
+    }
+    for (s32 index = 0; index < enemies.size; ++index) {
+        if (enemies[index].uid == uid) return &enemies[index];
+    }
+    return nullptr;
 }
 
 void Gameplay_Data::reify_all_creation_queues() {

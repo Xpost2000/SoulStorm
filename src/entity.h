@@ -40,8 +40,7 @@ struct Timer {
     float percentage();
 
     bool running = false;
-    f32 t, hit_t;
-    f32 max_t;
+    f32 t, hit_t, max_t;
 };
 
 #define PLAYER_INVINICIBILITY_TIME (1.35)
@@ -53,6 +52,7 @@ struct Timer {
 
 // NOTE: no real system for a visual sprite quite yet.
 struct Entity {
+    u64 uid;
     // primarily for collision purposes
     // a visual representation can be drawn separately
     V2    position      = V2(0, 0);

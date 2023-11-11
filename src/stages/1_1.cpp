@@ -30,13 +30,44 @@ STAGE_TICK(1_1) {
             e.hp = 10; state->gameplay_data.add_enemy_entity(e);
         }
     }
-    TASK_WAIT(1.5);
+    TASK_WAIT(1.0);
     {
         for (int i = 0; i < 10; ++i)  {
             auto e = enemy_linear_movement(state, V2(i * 35, -30), V2(10, 10), V2(0, 1), 155);
             e.hp = 10; state->gameplay_data.add_enemy_entity(e);
         }
     }
+    TASK_WAIT(1.0);
+    do {
+        auto e = enemy_linear_movement(state, V2(0 * 50, -40), V2(10, 10), V2(0, 1), 250);
+        e.hp = 10; state->gameplay_data.add_enemy_entity(e);
+    } while(0);
+    TASK_WAIT(0.25);
+    do {
+        auto e = enemy_linear_movement(state, V2(1 * 50, -40), V2(10, 10), V2(0, 1), 250);
+        e.hp = 10; state->gameplay_data.add_enemy_entity(e);
+    } while(0);
+    TASK_WAIT(0.25);
+    do {
+        auto e = enemy_linear_movement(state, V2(2 * 50, -40), V2(10, 10), V2(0, 1), 250);
+        e.hp = 10; state->gameplay_data.add_enemy_entity(e);
+    } while(0);
+    TASK_WAIT(0.25);
+    do {
+        auto e = enemy_linear_movement(state, V2(3 * 50, -40), V2(10, 10), V2(0, 1), 250);
+        e.hp = 10; state->gameplay_data.add_enemy_entity(e);
+    } while(0);
+    TASK_WAIT(0.25);
+    do {
+        auto e = enemy_linear_movement(state, V2(4 * 50, -40), V2(10, 10), V2(0, 1), 250);
+        e.hp = 10; state->gameplay_data.add_enemy_entity(e);
+    } while(0);
+    TASK_WAIT(0.25);
+    do {
+        auto e = enemy_linear_movement(state, V2(5 * 50, -40), V2(10, 10), V2(0, 1), 250);
+        e.hp = 10; state->gameplay_data.add_enemy_entity(e);
+    } while(0);
+    TASK_WAIT(0.25);
     STAGE_WAIT_CLEARED_WAVE();
 
     TASK_WAIT(1.5);
