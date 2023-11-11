@@ -55,6 +55,9 @@ struct Fixed_Array {
 
     T& operator[](int index) {
         if (index < 0) index = (size + index);
+        // NOTE: I don't actually want to catch "invalid access". I want to catch "out of bounds" access.
+        // I don't mind poking within memory in defined areas as long as it's within my yard.
+        assertion(index >= 0 && index < capacity && "Out of bounds access on fixed array");
         return data[index];
     }
 
@@ -63,6 +66,7 @@ struct Fixed_Array {
             data[i+1] = data[i];
         }
         size+=1;
+        assertion(size >= 0 && size <= capacity && "Over allocated.");
         data[at] = x;
     }
 
@@ -76,18 +80,23 @@ struct Fixed_Array {
     // erase alternative
     void pop_and_swap(int at) {
         data[at] = data[--size];
+        assertion(size >= 0 && size <= capacity && "Impossible?");
     }
 
     void push(T& x) {
         data[size++] = x;
+        assertion(size >= 0 && size <= capacity && "Over allocated.");
     }
     
     T* alloc() {
-        return &data[size++];
+        T* r = &data[size++];
+        assertion(size >= 0 && size <= capacity && "Over allocated.");
+        return r;
     }
 
     void pop() {
         size--;
+        assertion(size >= 0 && size <= capacity && "Impossible?");
     }
 
     // NOTE: I'm not zeroing out the memory to allow
