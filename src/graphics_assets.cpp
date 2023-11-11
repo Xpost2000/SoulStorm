@@ -121,16 +121,18 @@ f32 font_cache_text_width(struct font_cache* font_cache, string text, f32 scale)
 
 // Graphics Assets
 
-struct graphics_assets graphics_assets_create(Memory_Arena* arena, u32 font_limit, u32 image_limit) {
+struct graphics_assets graphics_assets_create(Memory_Arena* arena, u32 font_limit, u32 image_limit, u32 sprite_limit) {
     struct graphics_assets assets = {
         .font_capacity  = font_limit,
         .image_capacity = image_limit,
+        .sprite_capacity = sprite_limit,
     };
 
     assets.arena              = arena;
     assets.images             = (image_buffer*)arena->push_unaligned(sizeof(*assets.images) * image_limit);
     assets.image_file_strings = (string*)arena->push_unaligned(sizeof(*assets.image_file_strings) *image_limit);
     assets.fonts              = (font_cache*)arena->push_unaligned(sizeof(*assets.fonts)  * font_limit);
+    assets.sprites            = (Sprite*)arena->push_unaligned(sizeof(*assets.sprites) * sprite_limit);
 
     assets.image_device_context_ptrs = (void*)arena->push_unaligned(sizeof(void*) * image_limit);
     assets.font_device_context_ptrs  = (void*)arena->push_unaligned(sizeof(void*) * font_limit);
@@ -195,3 +197,20 @@ image_id graphics_assets_get_image_by_filepath(struct graphics_assets* assets, s
     return graphics_assets_load_image(assets, filepath);
 }
 
+sprite_id graphics_assets_alloc_sprite(struct graphics_assets* assets, u32 frames) {
+    sprite_id result    = {.index = (s32)assets->sprite_count+1};
+    auto      sprite    = &assets->sprites[assets->sprite_count++];
+    sprite->frame_count = frames;
+    sprite->frames      = (Sprite_Frame*)assets->arena->push_unaligned(sizeof(*sprite->frames));
+    return result;
+}
+
+Sprite* graphics_get_sprite_by_id(struct graphics_assets* assets, sprite_id id) {
+    assertion(id.index > 0 && id.index <= assets->sprite_count);
+    return &assets->sprites[id.index-1];
+}
+
+Sprite_Frame* sprite_get_frame(Sprite* sprite, s32 index) {
+    assertion(index > 0 && index <= sprite->frame_count);
+    return &sprite->frames[index];
+}

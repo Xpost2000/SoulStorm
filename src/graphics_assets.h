@@ -9,6 +9,31 @@
 #include "string.h"
 #include "memory_arena.h"
 
+typedef struct image_id { s32 index; } image_id;
+typedef struct font_id  { s32 index; } font_id;
+typedef struct sprite_id { s32 index; } sprite_id;
+
+
+// This is new code, compared to the stuff below, LOL
+struct Sprite_Frame {
+    image_id             img;
+    s32                  width;
+    s32                  height; // you should be using this to render, but not required.
+    struct rectangle_f32 source_rect;
+    f32                  frame_length;
+};
+
+struct Sprite {
+    u32           frame_count;
+    Sprite_Frame* frames;
+};
+
+struct Sprite_Instance {
+    sprite_id id;
+    s32       frame;
+    f32       frame_timer;
+};
+
 struct graphics_assets {
     Memory_Arena* arena;
 
@@ -19,6 +44,10 @@ struct graphics_assets {
     struct image_buffer* images;
     struct font_cache*   fonts;
     string*              image_file_strings;
+
+    u32                  sprite_capacity;
+    u32                  sprite_count;
+    Sprite*              sprites;
 
     void*                image_device_context_ptrs;
     void*                font_device_context_ptrs;
@@ -34,10 +63,12 @@ struct image_buffer image_buffer_load_from_file(string file_path);
 void                image_buffer_write_to_disk(struct image_buffer* image, string as);
 void                image_buffer_free(struct image_buffer* image);
 
-typedef struct image_id { s32 index; } image_id;
-typedef struct font_id  { s32 index; } font_id;
+struct graphics_assets graphics_assets_create(Memory_Arena* arena, u32 font_limit, u32 image_limit, u32 sprite_limit);
 
-struct graphics_assets graphics_assets_create(Memory_Arena* arena, u32 font_limit, u32 image_limit);
+sprite_id              graphics_assets_alloc_sprite(struct graphics_assets* assets, u32 frames);     
+Sprite*                graphics_get_sprite_by_id(struct graphics_assets* assets, sprite_id id);
+Sprite_Frame*          sprite_get_frame(Sprite* sprite, s32 index);
+
 void                   graphics_assets_finish(struct graphics_assets* assets);
 image_id               graphics_assets_load_image(struct graphics_assets* assets, string path);
 image_id               graphics_assets_get_image_by_filepath(struct graphics_assets* assets, string filepath);

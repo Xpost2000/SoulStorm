@@ -215,10 +215,55 @@ void Game::setup_stage_start() {
     }
 }
 
+#if 0
+static int kfunction(lua_State* L, int status, lua_KContext ctx)
+{
+    static int x = 0;
+    
+    if (x < 3)
+    {
+        x++;
+        lua_pushfstring(L, "Wonderfull");
+        return lua_yieldk(L, 1, 0, kfunction);
+    }
+    lua_pushfstring(L, "End");
+    return 1;
+}
+
+static int iter(lua_State* L)
+{
+    lua_pushfstring(L, "Wonderfull");
+    return lua_yieldk(L, 1, 0, kfunction);
+}
+
+#endif
+
+// Lua doesn't take methods, so I do need this as global script state...
+#if 0
+static Game_State* _global_game_state = nullptr;
+int EngineWait(lua_State* L) {
+    f32 wait_time = luaL_checknumber(L, 1);
+    _debugprintf("Lua engine_wait requested (%3.3f)", wait_time);
+
+    s32 task = _global_game_state->coroutine_tasks.add_lua_thread(L);
+    _global_game_state->coroutine_tasks.force_task_wait(task, wait_time)
+    // _global_game_state->coroutine_tasks.add_task(
+    //     _global_game_state,
+    //     [](jdr_duffcoroutine_t* co) {
+    //         JDR_Coroutine_Start(co, Start);
+    //         TASK_WAIT(1.5);
+    //         JDR_Coroutine_End;
+    //     }
+    // );
+    return lua_yield(L, 0);
+}
+#endif
+
 void Game::init(Graphics_Driver* driver) {
     this->arena     = &Global_Engine()->main_arena;
     this->resources = (Game_Resources*)arena->push_unaligned(sizeof(*this->resources));
     this->state = (Game_State*)arena->push_unaligned(sizeof(*this->state)); (new (this->state) Game_State);
+ //   _global_game_state = this->state;
 
     if (load_preferences_from_disk(&preferences, string_literal("preferences.lua"))) {
         confirm_preferences(&preferences);
@@ -265,7 +310,7 @@ void Game::init(Graphics_Driver* driver) {
         Action::save(string_literal("controls.lua"));
     }
 
-    resources->graphics_assets   = graphics_assets_create(arena, 16, 256);
+    resources->graphics_assets   = graphics_assets_create(arena, 16, 256, 512);
     // initialize achievement notifier
     {
         achievement_state.notifications = Fixed_Array<Achievement_Notification>(arena, ACHIEVEMENT_ID_COUNT);
@@ -274,6 +319,19 @@ void Game::init(Graphics_Driver* driver) {
     // Initialize coroutine scheduler
     {
         state->coroutine_tasks.tasks = Fixed_Array<Game_Task>(arena, MAX_BULLETS + MAX_ENEMIES + 512);
+        state->coroutine_tasks.primary_state = luaL_newstate();
+
+        // load game libraries...
+        {
+            lua_State* L = state->coroutine_tasks.primary_state;
+            luaL_openlibs(L);
+            luaL_dostring(L, "print(\"Hello world\")");
+        //    luaL_dostring(L, "print(\"Hello world\")\nEngineWait(1.5f)\nprint(\"did it work\")");
+        }
+
+     //  for (s32 index = 0; index < state->coroutine_tasks.tasks.capacity; ++index) {
+     //       state->coroutine_tasks.tasks[index].L = lua_newthread(state->coroutine_tasks.primary_state);
+     //   }
     }
 
     // gameplay_data initialize

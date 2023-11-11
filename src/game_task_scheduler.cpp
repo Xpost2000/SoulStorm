@@ -142,6 +142,10 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             }
 
             jdr_resume(&task.coroutine);
+            if (task.L) {
+              //  s32 status = lua_resume(task.L, task.primary, 0, 0);
+                // if (status)
+            }
         }
     }
 }

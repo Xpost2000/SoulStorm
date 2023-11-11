@@ -4,6 +4,12 @@
 #include "common.h"
 #include "fixed_array.h"
 
+extern "C" {
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
+
 /*
   Since the game is heavily based around state machines, this task
   scheduler actually needs to be aware of the current state of everything
@@ -99,6 +105,9 @@ struct Game_Task {
       the coroutine's userdata will be a yield value,
       this userdata will be the game_state
     */
+
+    // NOTE: I'm using this scheduler for lua code as well.
+    lua_State* L;
 };
 
 
@@ -112,6 +121,7 @@ struct Game_Task_Scheduler {
       all lua tasks are GAME_TASKS
     */
     Fixed_Array<Game_Task> tasks;
+    lua_State* primary_state;
 
     // NOTE: will override non-essential tasks.
     s32  add_task(struct Game_State* state, jdr_duffcoroutine_fn f, bool essential=false);
