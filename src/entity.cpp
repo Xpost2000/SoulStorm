@@ -264,7 +264,6 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         //       animating their own sprites!
         auto sprite_object   = graphics_get_sprite_by_id(&resources->graphics_assets, sprite.id);
         auto sprite_frame    = sprite_get_frame(sprite_object, sprite.frame);
-
         auto sprite_img = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
         V2 sprite_image_size = V2(sprite_img->width, sprite_img->height);
         sprite_image_size.x *= sprite.scale.x; sprite_image_size.y *= sprite.scale.y;
@@ -489,21 +488,11 @@ void Bullet::update(Game_State* state, f32 dt) {
         velocity += acceleration * dt;
     }
 
-#if 1
-    if (sprite.id.index != 0) {
-        auto sprite_object = graphics_get_sprite_by_id(&state->resources->graphics_assets, sprite.id);
-        // auto sprite_frame  = sprite_get_frame(sprite_object, sprite.frame);
-
-        sprite.frame_timer += dt;
-        if (sprite.frame_timer > 0.035) {
-            sprite.frame += 1;
-            if (sprite.frame >= sprite_object->frame_count) {
-                sprite.frame = 0;
-            }
-            sprite.frame_timer = 0;
-        }
-    }
-#endif
+    sprite.animate(
+        &state->resources->graphics_assets,
+        dt,
+        0.035
+    );
 
     Entity::update(state, dt);
 }

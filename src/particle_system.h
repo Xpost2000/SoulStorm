@@ -12,7 +12,7 @@ struct Particle {
     V2 acceleration;
 
     f32 scale;
-    f32 lifetime;
+    f32 lifetime, lifetime_max;
     Sprite_Instance sprite;
     color32f32 modulation;
 
@@ -93,6 +93,7 @@ struct Particle_Emitter {
     void reset();
 };
 
+struct Game_State;
 struct Game_Resources;
 /*
   So unlike Legends, I decided it would just be best to allow different particle
@@ -105,7 +106,7 @@ struct Game_Resources;
 struct Particle_Pool {
     Particle_Pool(Memory_Arena* arena, s32 amount);
 
-    void update(f32 dt);
+    void update(Game_State* state, f32 dt);
     void draw(struct render_commands* commands, Game_Resources* resources);
 
     Fixed_Array<Particle> particles;

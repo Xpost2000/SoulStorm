@@ -224,3 +224,29 @@ Sprite_Instance sprite_instance(sprite_id id) {
     result.scale = V2(1, 1);
     return result;
 }
+
+void Sprite_Instance::animate(struct graphics_assets* graphics_assets, f32 dt, f32 anim_t, s32 start, s32 end) {
+    if (id.index == 0) {
+        return;
+    }
+
+    auto sprite_object = graphics_get_sprite_by_id(graphics_assets, id);
+
+    if (start == -1) start = 0;
+    if (end == -1) end = sprite_object->frame_count;
+    if (frame < start || frame >= end) frame = start;
+
+    auto sprite_frame  = sprite_get_frame(sprite_object, frame);
+
+    if (anim_t == -1.0f) anim_t = sprite_frame->frame_length;
+    frame_timer += dt;
+
+    if (frame_timer > anim_t) {
+        frame += 1;
+
+        if (frame < start || frame >= end) {
+            frame = start;  
+        } 
+        frame_timer = 0;
+    }
+}

@@ -29,12 +29,18 @@ struct Sprite {
     Sprite_Frame* frames;
 };
 
+struct graphics_assets;
 struct Sprite_Instance {
     sprite_id id;
     V2        offset;
     V2        scale;
     s32       frame;
     f32       frame_timer;
+
+    // if anim_t == -1.0, use the time in the frame data.
+    // otherwise, we override with our own fixed timer.
+    // start and end, are the frames we animate between.
+    void animate(struct graphics_assets* graphics_assets, f32 dt, f32 anim_t=-1.0f, s32 start = -1, s32 end = -1);
 };
 
 Sprite_Instance sprite_instance(sprite_id id);
