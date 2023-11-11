@@ -20,7 +20,8 @@ struct software_framebuffer software_framebuffer_create(u32 width, u32 height) {
 }
 
 struct software_framebuffer software_framebuffer_create_from_arena(Memory_Arena* arena, u32 width, u32 height) {
-    u8* pixels = (u8*)arena->push_unaligned(width * height * sizeof(u32)+64);
+    // padding space... Just in case the framebuffer is being bad...
+    u8* pixels = (u8*)arena->push_unaligned((width+16) * (height+16) * sizeof(u32));
 
     struct software_framebuffer result;
     result.width = width;

@@ -449,7 +449,7 @@ namespace GameUI {
     }
 
     void move_selected_widget_id(s32 increments) {
-        _debugprintf("Moving selected widget id by %d", increments);
+        _debugprintf("Moving selected widget id by (%d is the current id) %d", global_ui_state->selected_index, increments);
         // NOTE: I want to skip the [+][-] buttons in the future
         global_ui_state->selected_index += increments;
 
@@ -460,8 +460,9 @@ namespace GameUI {
         }
 
         auto& next_widget = global_ui_state->widgets[global_ui_state->selected_index];
-
+        _debugprintf("Next widget is id(%d)", global_ui_state->selected_index);
         if (!is_selectable_widget_type(next_widget.type)) {
+            _debugprintf("I do not think (%d) is selectable.", global_ui_state->selected_index);
             move_selected_widget_id(sign_s32(increments));
         }
     }
