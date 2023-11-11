@@ -22,7 +22,7 @@ enum Widget_Type {
 
 // TODO: not accounting for inactives.
 struct Widget {
-    u32        type;
+    u32        type = 0;
     V2         where;
     color32f32 modulation;
     string     text;
@@ -31,7 +31,7 @@ struct Widget {
     // for option_selector
     s32 current_selected_index;
 
-    s32 id;
+    s32 id = -1;
 };
 
 struct UI_State {

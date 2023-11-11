@@ -283,6 +283,7 @@ namespace Input {
 
     rectangle_f32 mouse_rectangle(f32 k=5);
 
+    void initialize(void);
     void begin_input_frame(void);
     void end_input_frame(void);
 

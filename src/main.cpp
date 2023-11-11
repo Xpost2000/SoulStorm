@@ -415,6 +415,7 @@ void initialize() {
     }
 
     game.init(global_graphics_driver);
+    Input::initialize();
 }
 
 void update_preferences(Game_Preferences* a, Game_Preferences* b) {

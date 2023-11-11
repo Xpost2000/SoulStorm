@@ -19,6 +19,11 @@ namespace Input {
 
     struct game_controller global_controllers[4];
 
+    void initialize() {
+        zero_memory(global_controllers, sizeof(global_controllers));
+        zero_memory(&global_input,      sizeof(global_input));
+    }
+
     game_controller* get_game_controller(int idx) {
         return &global_controllers[idx];
     }
