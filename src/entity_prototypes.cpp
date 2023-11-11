@@ -43,7 +43,7 @@ V2 velocity_cyclic_cosine(f32 t, V2 direction) {
     return direction * cosf(t);
 }
 
-Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bullet_Entity_Velocity_Fn velocity) {
+Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bullet_Entity_Velocity_Fn velocity, s32 visual) {
     Bullet bullet;
     bullet.uid = UID::bullet_uid();
     bullet.position    = position;
@@ -51,16 +51,24 @@ Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bull
     //bullet.lifetime    = Timer(3.0f);
     bullet.source_type = source;
 
+    bullet.sprite = sprite_instance(
+        // state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]
+        state->resources->projectile_sprites[visual]
+        // state->resources->projectile_sprites[PROJECTILE_SPRITE_NEGATIVE_ELECTRIC]
+    );
+    bullet.sprite.scale = V2(0.5, 0.5);
     bullet.velocity_function = velocity;
     state->gameplay_data.add_bullet(bullet);
     return bullet;
 }
 
-Bullet bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 magnitude, s32 source) {
-    Bullet bullet = bullet_generic(state, position, V2(5, 5), source,
+Bullet bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 magnitude, s32 visual, s32 source) {
+    Bullet bullet = bullet_generic(
+        state, position, V2(5, 5), source,
         [=](Bullet* self, Game_State* const state, f32 dt) {
-        self->velocity += velocity_linear(direction, magnitude);
-    }
+            self->velocity += velocity_linear(direction, magnitude);
+        },
+        visual
     );
     bullet.lifetime = Timer(3.0f);
     return bullet;
@@ -132,7 +140,7 @@ Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, Enemy_Entit
     return enemy;
 }
 
-void spawn_bullet_line_pattern1(Game_State* state, V2 center, s32 how_many, f32 spacing, V2 scale, V2 direction, f32 speed, s32 source) {
+void spawn_bullet_line_pattern1(Game_State* state, V2 center, s32 how_many, f32 spacing, V2 scale, V2 direction, f32 speed, s32 source, s32 visual) {
     direction = direction.normalized();
 
     f32 pattern_width = spacing * how_many + scale.x * how_many;
@@ -141,14 +149,14 @@ void spawn_bullet_line_pattern1(Game_State* state, V2 center, s32 how_many, f32 
 
     for (s32 i = 0; i < how_many; ++i) {
         state->gameplay_data.add_bullet(
-            bullet_upwards_linear(state, center, direction, speed, source)
+            bullet_upwards_linear(state, center, direction, speed, visual, source)
         );
 
         center += perpendicular_direction * (spacing + scale.x);
     }
 }
 
-void spawn_bullet_arc_pattern1(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, s32 source) {
+void spawn_bullet_arc_pattern1(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, s32 source, s32 visual) {
     spawn_bullet_arc_pattern2(
         state,
         center,
@@ -158,11 +166,12 @@ void spawn_bullet_arc_pattern1(Game_State* state, V2 center, s32 how_many, s32 a
         direction,
         speed,
         0.0f,
-        source
+        source,
+        visual
     );
 }
 
-void spawn_bullet_arc_pattern2(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, f32 distance_from_center, s32 source) {
+void spawn_bullet_arc_pattern2(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, f32 distance_from_center, s32 source, s32 visual) {
     direction = direction.normalized();
     f32 arc_sub_length = (f32)arc_degrees / (how_many);
 
@@ -172,7 +181,7 @@ void spawn_bullet_arc_pattern2(Game_State* state, V2 center, s32 how_many, s32 a
         V2 current_arc_direction = V2_direction_from_degree(angle);
         V2 position = center + current_arc_direction * distance_from_center;
         state->gameplay_data.add_bullet(
-            bullet_upwards_linear(state, position, current_arc_direction, speed, source)
+            bullet_upwards_linear(state, position, current_arc_direction, speed, visual, source)
         );
     }
 }
@@ -185,9 +194,9 @@ Enemy_Entity enemy_generic_with_task(Game_State* state, V2 position, V2 scale, j
     return result;
 }
 
-Bullet bullet_generic_with_task(Game_State* state, V2 position, V2 scale, s32 source, jdr_duffcoroutine_fn task) {
+Bullet bullet_generic_with_task(Game_State* state, V2 position, V2 scale, s32 source, jdr_duffcoroutine_fn task, s32 visual) {
     auto result = bullet_generic(
-        state, position, scale, source, nullptr
+        state, position, scale, source, nullptr, visual
     );
 
     state->coroutine_tasks.add_task(state, task, (void*)result.uid);

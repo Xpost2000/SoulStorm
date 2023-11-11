@@ -201,7 +201,7 @@ sprite_id graphics_assets_alloc_sprite(struct graphics_assets* assets, u32 frame
     sprite_id result    = {.index = (s32)assets->sprite_count+1};
     auto      sprite    = &assets->sprites[assets->sprite_count++];
     sprite->frame_count = frames;
-    sprite->frames      = (Sprite_Frame*)assets->arena->push_unaligned(sizeof(*sprite->frames));
+    sprite->frames      = (Sprite_Frame*)assets->arena->push_unaligned(sizeof(*sprite->frames) * frames);
     return result;
 }
 
@@ -211,6 +211,16 @@ Sprite* graphics_get_sprite_by_id(struct graphics_assets* assets, sprite_id id) 
 }
 
 Sprite_Frame* sprite_get_frame(Sprite* sprite, s32 index) {
-    assertion(index > 0 && index <= sprite->frame_count);
+    assertion(index >= 0 && index < sprite->frame_count);
     return &sprite->frames[index];
+}
+
+Sprite_Instance sprite_instance(sprite_id id) {
+    Sprite_Instance result = {};
+    result.id = id;
+    result.frame = 0;
+    result.frame_timer = 0.0f;
+    result.offset = V2(0,0);
+    result.scale = V2(1, 1);
+    return result;
 }

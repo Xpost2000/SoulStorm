@@ -49,6 +49,22 @@ enum menu_font_variation {
     MENU_FONT_COUNT,
 };
 
+enum Projectile_Sprite_Type {
+    PROJECTILE_SPRITE_BLUE,
+    PROJECTILE_SPRITE_BLUE_STROBING,
+    PROJECTILE_SPRITE_BLUE_ELECTRIC,
+
+    PROJECTILE_SPRITE_RED,
+    PROJECTILE_SPRITE_RED_STROBING,
+    PROJECTILE_SPRITE_RED_ELECTRIC,
+
+    PROJECTILE_SPRITE_NEGATIVE,
+    PROJECTILE_SPRITE_NEGATIVE_STROBING,
+    PROJECTILE_SPRITE_NEGATIVE_ELECTRIC,
+
+    PROJECTILE_SPRITE_TYPES
+};
+
 #define PLAY_AREA_WIDTH_PX (370)
 
 // this is where the actual member variables of the game go
@@ -253,12 +269,15 @@ struct Game_State {
     Achievement_Menu_Data achievement_menu;
 
     Game_Task_Scheduler coroutine_tasks;
+    Game_Resources* resources;
 };
 
 struct Game_Resources {
     struct graphics_assets graphics_assets;
     font_id         menu_fonts[MENU_FONT_COUNT];
     image_id        circle;
+
+    sprite_id       projectile_sprites[PROJECTILE_SPRITE_TYPES];
 
     inline font_cache* get_font(s32 variation) {
         struct font_cache* font = graphics_assets_get_font_by_id(&graphics_assets, menu_fonts[variation]);

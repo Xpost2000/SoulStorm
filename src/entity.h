@@ -46,7 +46,7 @@ struct Timer {
 #define PLAYER_INVINICIBILITY_TIME (1.35)
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
 #define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.0f)
-#define DEFAULT_FIRING_COOLDOWN (0.045)
+#define DEFAULT_FIRING_COOLDOWN (0.125)
 #define DEFAULT_ENTITY_SCORE_VALUE_PER_HIT (30)
 #define DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER (5)
 
@@ -66,6 +66,7 @@ struct Entity {
     V2    acceleration  = V2(0, 0);
 
     f32   t_since_spawn = 0.0f;
+    Sprite_Instance sprite;
 
     Timer cleanup_time                    = Timer(ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION);
     Timer invincibility_time_flash_period = Timer(INVINCIBILITY_FLASH_TIME_PERIOD);

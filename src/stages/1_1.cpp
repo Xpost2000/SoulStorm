@@ -63,7 +63,7 @@ STAGE_TICK(1_1) {
                 TASK_WAIT(0.55);
                 e->reset_movement();
                 while (e) {
-                    spawn_bullet_arc_pattern2(state, e->position, 5, 45, V2(5, 5), V2(0, 1), 1000, 0, BULLET_SOURCE_ENEMY);
+                    spawn_bullet_arc_pattern2(state, e->position, 5, 45, V2(5, 5), V2(0, 1), 1000, 0, BULLET_SOURCE_ENEMY, PROJECTILE_SPRITE_RED_ELECTRIC);
                     TASK_WAIT(0.15);
                 }
                 JDR_Coroutine_End;

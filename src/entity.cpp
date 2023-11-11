@@ -256,33 +256,61 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
     }
 }
 
-// TODO: sprite support
 void Entity::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
     auto r = get_rect();
 
-    // black rectangles for default
-    render_commands_push_quad_ext(
-        render_commands,
-        rectangle_f32(r.x, r.y, r.w, r.h),
-        color32u8(0, 0, 255 * flashing, 255),
-        V2(0.5, 0.5), 0,
-        BLEND_MODE_ALPHA);
+    if (sprite.id.index != 0) {
+        // NOTE: entity updates are responsible for actually
+        //       animating their own sprites!
+        auto sprite_object   = graphics_get_sprite_by_id(&resources->graphics_assets, sprite.id);
+        auto sprite_frame    = sprite_get_frame(sprite_object, sprite.frame);
 
-    render_commands_push_image(render_commands,
-                               graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
-                               rectangle_f32(position.x - scale.x, position.y - scale.x, scale.x*2, scale.x*2),
-                               RECTANGLE_F32_NULL,
-                               color32f32(1.0, 0, 1.0, 0.5f),
-                               0,
-                               BLEND_MODE_ALPHA);
+        auto sprite_img = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
+        V2 sprite_image_size = V2(sprite_img->width, sprite_img->height);
+        sprite_image_size.x *= sprite.scale.x; sprite_image_size.y *= sprite.scale.y;
+        // _debugprintf("%p sprite img, %d sprite id", sprite_img, sprite_frame->img.index);
+
+        V2 sprite_position = V2(
+            position.x - scale.x/2 + (sprite.offset.x - sprite_image_size.x/2),
+            position.y - scale.x/2 + (sprite.offset.y - sprite_image_size.y/2)
+        );
+
+        render_commands_push_image(
+            render_commands,
+            sprite_img,
+            rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+            // sprite_frame->source_rect,
+            sprite_frame->source_rect,
+            color32f32(1.0, 1.0, 1.0, 1.0),
+            0,
+            BLEND_MODE_ALPHA
+        );
+    } else {
+        render_commands_push_quad_ext(
+            render_commands,
+            rectangle_f32(r.x, r.y, r.w, r.h),
+            color32u8(0, 0, 255 * flashing, 255),
+            V2(0.5, 0.5), 0,
+            BLEND_MODE_ALPHA
+        );
+
+        render_commands_push_image(render_commands,
+                                   graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
+                                   rectangle_f32(position.x - scale.x, position.y - scale.x, scale.x*2, scale.x*2),
+                                   RECTANGLE_F32_NULL,
+                                   color32f32(1.0, 0, 1.0, 0.5f),
+                                   0,
+                                   BLEND_MODE_ALPHA);
 
 
-    // center point
-    render_commands_push_quad(
-        render_commands,
-        rectangle_f32(position.x - 1, position.y-1, 2, 2),
-        color32u8(255, 0, 0, 255),
-        BLEND_MODE_ALPHA);
+        // center point
+        render_commands_push_quad(
+            render_commands,
+            rectangle_f32(position.x - 1, position.y-1, 2, 2),
+            color32u8(255, 0, 0, 255),
+            BLEND_MODE_ALPHA
+        );
+    }
 }
 
 bool Entity::attack() {
@@ -384,10 +412,11 @@ void Player::update(Game_State* state, f32 dt) {
         if (attack()) {
             controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
             if (under_focus) {
-                spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 2050.0f, BULLET_SOURCE_PLAYER);
+                spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 1000.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_NEGATIVE_STROBING);
             } else {
                 // spawn_bullet_line_pattern1(state, position, 1, 20.0f, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
-                spawn_bullet_arc_pattern1(state, position, 3, 45, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
+                
+                spawn_bullet_arc_pattern1(state, position, 3, 45, V2(5, 5), V2(0, -1), 650.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_ELECTRIC);
             }
         }
     }
@@ -416,6 +445,22 @@ void Bullet::update(Game_State* state, f32 dt) {
     } else {
         velocity += acceleration * dt;
     }
+
+#if 1
+    if (sprite.id.index != 0) {
+        auto sprite_object = graphics_get_sprite_by_id(&state->resources->graphics_assets, sprite.id);
+        // auto sprite_frame  = sprite_get_frame(sprite_object, sprite.frame);
+
+        sprite.frame_timer += dt;
+        if (sprite.frame_timer > 0.035) {
+            sprite.frame += 1;
+            if (sprite.frame >= sprite_object->frame_count) {
+                sprite.frame = 0;
+            }
+            sprite.frame_timer = 0;
+        }
+    }
+#endif
 
     Entity::update(state, dt);
 }

@@ -28,8 +28,8 @@ V2 velocity_cyclic_cosine(f32 t, V2 direction);
 
 // Bullet Types
 // not necessarily with sprites yet. Those need to be done separately.
-Bullet bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 magnitude, s32 source = BULLET_SOURCE_NEUTRAL);
-Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bullet_Entity_Velocity_Fn velocity);
+Bullet bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 magnitude, s32 visual, s32 source = BULLET_SOURCE_NEUTRAL);
+Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bullet_Entity_Velocity_Fn velocity, s32 visual);
 
 // Basic Bullet Patterns, bullet sprites are not accounted for here, but I don't have sprites yet. Hopefully soon.
 /*
@@ -41,13 +41,13 @@ Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bull
  * a new set of bindings, which is annoying, but it is faster than making a smaller sub language for the bullets to run scripts
  * on (I preallocate all my bullets, and lua coroutines might not be super smart on a decent amount of bullets...)
  */
-void spawn_bullet_line_pattern1(Game_State* state, V2 center, s32 how_many, f32 spacing, V2 scale, V2 direction, f32 speed, s32 source);
+void spawn_bullet_line_pattern1(Game_State* state, V2 center, s32 how_many, f32 spacing, V2 scale, V2 direction, f32 speed, s32 source, s32 visual);
 
 // NOTE: regarding angles, they are relative to the original direction.
 // NOTE: spreads out in an arc!
-void spawn_bullet_arc_pattern1(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, s32 source);
+void spawn_bullet_arc_pattern1(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, s32 source, s32 visual);
 // NOTE: spawns and spreads from an arc!
-void spawn_bullet_arc_pattern2(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, f32 distance_from_center, s32 source);
+void spawn_bullet_arc_pattern2(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, f32 distance_from_center, s32 source, s32 visual);
 
 
 // Normal Enemy Types
@@ -72,7 +72,7 @@ Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, Enemy_Entit
   is preferred now, since tasks are more logical for game logic "pun-intended?".
 */
 Enemy_Entity enemy_generic_with_task(Game_State* state, V2 position, V2 scale, jdr_duffcoroutine_fn task);
-Bullet       bullet_generic_with_task(Game_State* state, V2 position, V2 scale, s32 source, jdr_duffcoroutine_fn task);
+Bullet       bullet_generic_with_task(Game_State* state, V2 position, V2 scale, s32 source, jdr_duffcoroutine_fn task, s32 visual);
 
 // need to rethink how entities fire stuff.
 
