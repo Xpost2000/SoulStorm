@@ -28,7 +28,9 @@
 #include "game.h"
 
 #include "graphics_driver.h"
+
 #include "graphics_driver_software.h"
+#include "graphics_driver_null.h"
 
 extern "C" {
 #include <lua.h>
@@ -37,6 +39,7 @@ extern "C" {
 }
 
 enum graphics_device_type {
+    GRAPHICS_DEVICE_NULL,
     GRAPHICS_DEVICE_SOFTWARE,
     GRAPHICS_DEVICE_OPENGL,
     // GRAPHICS_DEVICE_D3D11,
@@ -44,7 +47,8 @@ enum graphics_device_type {
 local void set_graphics_device(s32 id);
 
 Software_Renderer_Graphics_Driver global_software_renderer_driver;
-Graphics_Driver* global_graphics_driver = nullptr;
+Null_Graphics_Driver              global_null_renderer_driver;
+Graphics_Driver* global_graphics_driver = &global_null_renderer_driver;
 
 const char* _build_flags =
 #ifdef USE_SIMD_OPTIMIZATIONS
@@ -398,6 +402,7 @@ void initialize() {
 #endif
     SDL_ShowWindow(global_game_window);
 
+    // set_graphics_device(GRAPHICS_DEVICE_NULL);
     set_graphics_device(GRAPHICS_DEVICE_SOFTWARE);
     initialize_framebuffer();
 
@@ -414,6 +419,12 @@ void initialize() {
         preferences.controller_vibration = true;
     }
 
+    /*
+     * NOTE: since graphics resources aren't initialized yet. It's generally safe
+     *       to set_graphics_device one last time, from here. Any point after, I do not
+     *       retain any resources, and the Graphics_Assets system does not reload stuff from
+     *       disk!
+     */
     game.init(global_graphics_driver);
     Input::initialize();
 }

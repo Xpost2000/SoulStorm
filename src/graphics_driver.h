@@ -20,6 +20,8 @@ struct SDL_Window;
 //       hardware drivers are likely going to be rendering at a lower
 //       resolution then they actually have to, so I might change something
 //       to circumvent this...
+//       (Or use a specific projection matrix to make sure it uses the same coordinate system, as
+//        the software renderer which is the "reference")
 struct Resolution_Mode {
     // I don't really care about different display modes outside of resolution
     // to be honest, I'm not sure if 16bit or 24bit color depth matters much in 2023 anymore...
