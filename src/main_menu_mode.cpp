@@ -391,12 +391,18 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
 
     for (int i = 0; i < main_menu_state.portals.size; ++i) {
         auto& p = main_menu_state.portals[i];
+        p.emitter_main.active   = p.visible;
+
+        p.emitter_main.update(&main_menu_state.particle_pool, &main_menu_state.prng, dt);
+        p.emitter_vortex.update(&main_menu_state.particle_pool, &main_menu_state.prng, dt);
+    }
+    main_menu_state.particle_pool.update(state, dt);
+
+    for (int i = 0; i < main_menu_state.portals.size; ++i) {
+        auto& p = main_menu_state.portals[i];
         p.draw(&main_menu_state, &game_render_commands, resources);
     }
 
-    main_menu_state.test_emitter.update(&main_menu_state.particle_pool, &main_menu_state.prng, dt);
-
-    main_menu_state.particle_pool.update(state, dt);
     main_menu_state.particle_pool.draw(&game_render_commands, resources);
     main_menu_state.player.draw(&main_menu_state, &game_render_commands, resources);
     handle_ui_update_and_render(&ui_render_commands, dt);
@@ -425,12 +431,17 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
                 focus_portal = &p;
                 break;
             }
+
             p.triggered_level_selection = false;
+            p.emitter_vortex.active = false;
         } 
 
         if (focus_portal) {
             if (!focus_portal->triggered_level_selection) {
                 focus_portal->triggered_level_selection = true;
+
+                focus_portal->emitter_vortex.reset();
+                focus_portal->emitter_vortex.active = true;
 
                 main_menu_state.stage_id_level_select = focus_portal->stage_id;
                 switch_ui(UI_STATE_STAGE_SELECT);

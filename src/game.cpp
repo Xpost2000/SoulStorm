@@ -523,20 +523,20 @@ void Game::init(Graphics_Driver* driver) {
         auto state = &this->state->mainmenu_data;
         auto resolution = driver->resolution();
 
-        state->particle_pool.init(arena, 5000);
-        {
-            auto& emitter = state->test_emitter;
-            emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
-            emitter.scale  = 16.0f;
-            emitter.shape = particle_emit_shape_circle(V2(resolution.x/2, resolution.y/2), 50.0f);
-            emitter.lifetime = 5.0f;
-            emitter.velocity_x_variance = V2(-100, 100);
-            emitter.velocity_y_variance = V2(-100, 100);
-            emitter.lifetime_variance   = V2(-0.5f, 1.0f);
+        state->particle_pool.init(arena, 2500);
+        // {
+        //     auto& emitter = state->test_emitter;
+        //     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
+        //     emitter.scale  = 16.0f;
+        //     emitter.shape = particle_emit_shape_circle(V2(resolution.x/2, resolution.y/2), 50.0f);
+        //     emitter.lifetime = 5.0f;
+        //     emitter.velocity_x_variance = V2(-100, 100);
+        //     emitter.velocity_y_variance = V2(-100, 100);
+        //     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
 
-            emitter.active = true;
-            emitter.emission_max_timer = 0.055f;
-        }
+        //     emitter.active = true;
+        //     emitter.emission_max_timer = 0.055f;
+        // }
 
         
         state->player.position      = V2(resolution.x / 2, resolution.y / 2);
@@ -564,6 +564,33 @@ void Game::init(Graphics_Driver* driver) {
                     portal.prerequisites[i] = -1;
                 }
                 portal.visible = true;
+
+                {
+                    auto& emitter = portal.emitter_main;
+                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
+                    emitter.scale  = 1.0f;
+                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
+                    emitter.lifetime = 1.0f;
+                    emitter.velocity_x_variance = V2(-100, 100);
+                    emitter.velocity_y_variance = V2(-100, 100);
+                    emitter.acceleration_x_variance = V2(-100, 100);
+                    emitter.acceleration_y_variance = V2(-100, 100);
+                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
+                    emitter.emission_max_timer = 0.025f;
+                }
+
+                {
+                    auto& emitter = portal.emitter_vortex;
+                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
+                    emitter.scale  = 0.5f;
+                    emitter.shape = particle_emit_shape_circle(portal.position, 100.0f);
+                    emitter.lifetime = 2.0f;
+                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
+                    emitter.use_attraction_point = true;
+                    emitter.attraction_point     = portal.position;
+                    emitter.attraction_force     = 100.0f;
+                    emitter.emission_max_timer = 0.025f;
+                }
             }
 
             {
@@ -576,6 +603,33 @@ void Game::init(Graphics_Driver* driver) {
                 }
                 portal.prerequisites[0] = 0;
                 portal.visible = true;
+
+                {
+                    auto& emitter = portal.emitter_main;
+                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
+                    emitter.scale  = 16.0f;
+                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
+                    emitter.lifetime = 1.0f;
+                    emitter.velocity_x_variance = V2(-100, 100);
+                    emitter.velocity_y_variance = V2(-100, 100);
+                    emitter.acceleration_x_variance = V2(-100, 100);
+                    emitter.acceleration_y_variance = V2(-100, 100);
+                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
+                    emitter.emission_max_timer = 0.025f;
+                }
+
+                {
+                    auto& emitter = portal.emitter_vortex;
+                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
+                    emitter.scale  = 8.0f;
+                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
+                    emitter.lifetime = 2.0f;
+                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
+                    emitter.use_attraction_point = true;
+                    emitter.attraction_point     = portal.position;
+                    emitter.attraction_force     = 100.0f;
+                    emitter.emission_max_timer = 0.025f;
+                }
             }
 
             {
@@ -589,6 +643,33 @@ void Game::init(Graphics_Driver* driver) {
                 portal.prerequisites[0] = 0;
                 portal.prerequisites[1] = 1;
                 portal.visible = true;
+
+                {
+                    auto& emitter = portal.emitter_main;
+                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
+                    emitter.scale  = 1.0f;
+                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
+                    emitter.lifetime = 1.0f;
+                    emitter.velocity_x_variance = V2(-100, 100);
+                    emitter.velocity_y_variance = V2(-100, 100);
+                    emitter.acceleration_x_variance = V2(-100, 100);
+                    emitter.acceleration_y_variance = V2(-100, 100);
+                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
+                    emitter.emission_max_timer = 0.025f;
+                }
+
+                {
+                    auto& emitter = portal.emitter_vortex;
+                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
+                    emitter.scale  = 0.5f;
+                    emitter.shape = particle_emit_shape_circle(portal.position, 50.0f);
+                    emitter.lifetime = 2.0f;
+                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
+                    emitter.use_attraction_point = true;
+                    emitter.attraction_point     = portal.position;
+                    emitter.attraction_force     = 100.0f;
+                    emitter.emission_max_timer = 0.025f;
+                }
             }
 
             // NOTE: postgame portal.
@@ -603,6 +684,33 @@ void Game::init(Graphics_Driver* driver) {
                 portal.prerequisites[0] = 0;
                 portal.prerequisites[1] = 1;
                 portal.prerequisites[2] = 2;
+
+                {
+                    auto& emitter = portal.emitter_main;
+                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
+                    emitter.scale  = 4.0f;
+                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
+                    emitter.lifetime = 1.0f;
+                    emitter.velocity_x_variance = V2(-100, 100);
+                    emitter.velocity_y_variance = V2(-100, 100);
+                    emitter.acceleration_x_variance = V2(-100, 100);
+                    emitter.acceleration_y_variance = V2(-100, 100);
+                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
+                    emitter.emission_max_timer = 0.025f;
+                }
+
+                {
+                    auto& emitter = portal.emitter_vortex;
+                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
+                    emitter.scale  = 8.0f;
+                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
+                    emitter.lifetime = 2.0f;
+                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
+                    emitter.use_attraction_point = true;
+                    emitter.attraction_point     = portal.position;
+                    emitter.attraction_force     = 100.0f;
+                    emitter.emission_max_timer = 0.025f;
+                }
             }
 
             state->portals.size = 4;

@@ -34,6 +34,9 @@ struct MainMenu_Stage_Portal {
     // runtime data
     bool triggered_level_selection;
 
+    Particle_Emitter emitter_main;
+    Particle_Emitter emitter_vortex;
+
     void draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources);
     rectangle_f32 get_rect();
 };
@@ -63,7 +66,6 @@ struct MainMenu_ScreenMessage {
 
 struct MainMenu_Data {
     Particle_Pool particle_pool;
-    Particle_Emitter test_emitter;
 
     MainMenu_Completed_MainGame_Cutscene_Data cutscene1;
     MainMenu_Introduction_Cutscene_Data       cutscene2;
