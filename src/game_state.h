@@ -49,7 +49,7 @@ enum menu_font_variation {
     MENU_FONT_COUNT,
 };
 
-#define PLAY_AREA_WIDTH_PX (375)
+#define PLAY_AREA_WIDTH_PX (370)
 
 // this is where the actual member variables of the game go
 // the class is just a small wrapper for this stuff

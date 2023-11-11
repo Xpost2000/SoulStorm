@@ -1536,7 +1536,8 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     }
 
     if (Action::is_pressed(ACTION_MENU)) {
-        if (this->state->ui_state != UI_STATE_PAUSED) {
+        if (this->state->ui_state != UI_STATE_PAUSED &&
+            this->state->ui_state != UI_STATE_DEAD_MAYBE_RETRY) {
             switch_ui(UI_STATE_PAUSED);
         } else {
             switch_ui(UI_STATE_INACTIVE);
