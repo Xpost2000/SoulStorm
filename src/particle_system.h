@@ -71,12 +71,16 @@ struct Particle_Emitter {
     color32f32      modulation;
     f32             lifetime;
 
-    V2 scale_variance; // particles are going to be "square/quads" only.
-    V2 velocity_x_variance;
-    V2 velocity_y_variance;
-    V2 acceleration_x_variance;
-    V2 acceleration_y_variance;
-    V2 lifetime_variance;
+    V2 scale_variance          = V2(0,0); // particles are going to be "square/quads" only.
+    V2 velocity_x_variance     = V2(0,0);
+    V2 velocity_y_variance     = V2(0,0);
+    V2 acceleration_x_variance = V2(0,0);
+    V2 acceleration_y_variance = V2(0,0);
+    V2 lifetime_variance       = V2(0,0);
+
+    bool use_attraction_point = false;
+    V2 attraction_point;
+    f32 attraction_force;
 
     bool active = false;
     s32 max_emissions = -1;
@@ -84,12 +88,10 @@ struct Particle_Emitter {
     s32 emit_per_emission = 1;
 
     f32 emission_timer = 0;
-    f32 emission_delay_timer = 0;
 
     f32 emission_max_timer = 0;
-    f32 emission_max_delay_timer = 0;
 
-    void update(Particle_Pool* pool, f32 dt);
+    void update(Particle_Pool* pool, random_state* prng, f32 dt);
     void reset();
 };
 

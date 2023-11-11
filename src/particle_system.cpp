@@ -2,6 +2,57 @@
 #include "particle_system.h"
 
 V2 Particle_Emit_Shape::emit_position(random_state* prng) {
+    switch (type) {
+        case PARTICLE_EMIT_SHAPE_POINT: {
+            return point.position;
+        } break;
+        case PARTICLE_EMIT_SHAPE_CIRCLE: {
+            // NOTE: apparently this doesn't distribute
+            // the points well enough, but I don't particularly mind.
+            if (filled_shape) {
+                V2 radial_point =
+                    V2_direction_from_degree(random_ranged_float(prng, 0.0f, 360.0f));
+                return (circle.center + radial_point * random_ranged_float(prng, -circle.radius, circle.radius));
+            } else {
+                V2 circumference_point =
+                    V2_direction_from_degree(random_ranged_float(prng, 0.0f, 360.0f));
+                return (circle.center + circumference_point * circle.radius);
+            }
+        } break;
+        case PARTICLE_EMIT_SHAPE_QUAD: {
+            if (filled_shape) {
+                f32 length_x = random_ranged_float(prng, -quad.half_dimensions.x, quad.half_dimensions.x);
+                f32 length_y = random_ranged_float(prng, -quad.half_dimensions.y, quad.half_dimensions.y);
+
+                return quad.center + V2(length_x, length_y);
+            } else {
+                s32 side = random_ranged_integer(prng, 0, 4);
+                f32 length_x = random_ranged_float(prng, -quad.half_dimensions.x, quad.half_dimensions.x);
+                f32 length_y = random_ranged_float(prng, -quad.half_dimensions.y, quad.half_dimensions.y);
+
+                switch (side) {
+                    case 0: {
+                        return quad.center + V2(-quad.half_dimensions.x, length_y);
+                    } break;
+                    case 1: {
+                        return quad.center + V2(quad.half_dimensions.x, length_y);
+                    } break;
+                    case 2: {
+                        return quad.center + V2(length_x, -quad.half_dimensions.x);
+                    } break;
+                    default:
+                    case 3: {
+                        return quad.center + V2(length_x,  quad.half_dimensions.x);
+                    } break;
+                }
+            }
+        } break;
+        case PARTICLE_EMIT_SHAPE_LINE: {
+            V2 line_delta = (line.end - line.start);
+            f32 t = random_ranged_float(prng, 0.0f, 1.0f);
+            return line.start + line_delta * t;
+        } break;
+    }
     return V2(0, 0);
 }
 
@@ -9,11 +60,47 @@ V2 Particle_Emit_Shape::emit_position(random_state* prng) {
 void Particle_Emitter::reset() {
     emissions = 0;
     emission_timer = 0;
-    emission_delay_timer = 0;
 }
 
-void Particle_Emitter::update(Particle_Pool* pool, f32 dt) {
-    
+void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
+    if (!active)
+        return;
+
+    if (max_emissions != -1 && emissions > max_emissions)
+        return;
+
+    if (emission_timer <= 0.0f) {
+        for (s32 index = 0; index < emit_per_emission; ++index) {
+            auto p = pool->particles.alloc();
+
+            p->position = shape.emit_position(prng);
+            {
+                p->sprite       = sprite;
+                p->scale        = scale + random_ranged_float(prng, scale_variance.x, scale_variance.y);
+                p->velocity     =
+                    velocity + V2(
+                        random_ranged_float(prng, velocity_x_variance.x, velocity_x_variance.y),
+                        random_ranged_float(prng, velocity_y_variance.x, velocity_y_variance.y)
+                    );
+                p->acceleration =
+                    acceleration + V2(
+                        random_ranged_float(prng, acceleration_x_variance.x, acceleration_x_variance.y),
+                        random_ranged_float(prng, acceleration_y_variance.x, acceleration_y_variance.y)
+                    );
+                p->modulation   = modulation;
+                p->lifetime     = p->lifetime_max = lifetime + random_ranged_float(prng, lifetime_variance.x, lifetime_variance.y);
+
+                p->use_attraction_point = use_attraction_point;
+                p->attraction_point = attraction_point;
+                p->attraction_force = attraction_force;
+            }
+        }
+
+        emissions += 1;
+        emission_timer = emission_max_timer;
+    } else {
+        emission_timer -= dt;
+    }
 }
 
 // Particle Pool
