@@ -1640,104 +1640,131 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 
     if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
         // Update Auto Score
-        {
-            if (state->auto_score_timer >= DEFAULT_AUTO_SCORE_INTERVAL) {
-                state->current_score    += 1;
-                state->auto_score_timer  = 0;
-            } else {
-                state->auto_score_timer += dt;
+
+        /*
+          NOTE:
+
+          The gameplay needs to be about as deterministic as possible, so I need this
+          to be a fixed update.
+
+          This is extremely sensitive
+          (
+          especially since the score relies on timing, and I need to ensure that framerate
+          has little effect on the actual game itself.
+
+          This is generally less important in other parts of the code, but is especially important here.
+          )
+
+          Also, I'm aware that I should be interpolating between the last and current frame with an accumulator, but
+          I don't think it's necessary for a bullet hell game like this.
+        */
+        const f32 TARGET_FRAMERATE = 1.0f / 300.0f;
+        static f32 accumulator = 0.0f;
+        accumulator += dt;
+
+        while (accumulator >= TARGET_FRAMERATE) {
+            f32 dt = TARGET_FRAMERATE;
+            {
+                if (state->auto_score_timer >= DEFAULT_AUTO_SCORE_INTERVAL) {
+                    state->current_score    += 1;
+                    state->auto_score_timer  = 0;
+                } else {
+                    state->auto_score_timer += dt;
+                }
+                state->current_stage_timer += dt;
             }
-            state->current_stage_timer += dt;
+
+            struct Entity_Loop_Update_Packet {
+                Game_State* game_state;
+                f32         dt;
+            };
+
+            auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
+            update_packet_data->dt = dt;
+            update_packet_data->game_state = this->state;
+
+            Thread_Pool::add_job(
+                [](void* ctx) {
+                    auto packet = (Entity_Loop_Update_Packet*) ctx;
+                    Game_State* game_state = packet->game_state;
+                    Gameplay_Data* state = &packet->game_state->gameplay_data;
+                    f32 dt = packet->dt;
+
+                    for (int i = 0; i < (int)state->bullets.size; ++i) {
+                        auto& b = state->bullets[i];
+                        b.update(packet->game_state, dt);
+                    }
+
+                    return 0;
+                },
+                (void*)update_packet_data
+            );
+
+            Thread_Pool::add_job(
+                [](void* ctx) {
+                    auto packet = (Entity_Loop_Update_Packet*) ctx;
+                    Game_State* game_state = packet->game_state;
+                    Gameplay_Data* state = &packet->game_state->gameplay_data;
+                    f32 dt = packet->dt;
+
+                    for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
+                        auto& h = state->explosion_hazards[i];
+                        h.update(game_state, dt);
+                    }
+
+                    return 0;
+                },
+                (void*)update_packet_data
+            );
+
+            Thread_Pool::add_job(
+                [](void* ctx) {
+                    auto packet = (Entity_Loop_Update_Packet*) ctx;
+                    Game_State* game_state = packet->game_state;
+                    Gameplay_Data* state = &packet->game_state->gameplay_data;
+                    f32 dt = packet->dt;
+
+                    for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
+                        auto& h = state->laser_hazards[i];
+                        h.update(game_state, dt);
+                    }
+
+                    return 0;
+                },
+                (void*)update_packet_data
+            );
+
+            Thread_Pool::add_job(
+                [](void* ctx) {
+                    auto packet = (Entity_Loop_Update_Packet*) ctx;
+                    Game_State* game_state = packet->game_state;
+                    Gameplay_Data* state = &packet->game_state->gameplay_data;
+                    f32 dt = packet->dt;
+
+                    for (int i = 0; i < (s32)state->enemies.size; ++i) {
+                        auto& e = state->enemies[i];
+                        e.update(game_state, dt);
+                    }
+
+                    return 0;
+                },
+                (void*)update_packet_data
+            );
+
+            Thread_Pool::add_job(
+                [](void* ctx) {
+                    auto packet = (Entity_Loop_Update_Packet*) ctx;
+                    Game_State* game_state = packet->game_state;
+                    Gameplay_Data* state = &packet->game_state->gameplay_data;
+                    f32 dt = packet->dt;
+                    state->player.update(game_state, dt);
+                    return 0;
+                },
+                (void*)update_packet_data
+            );
+
+            accumulator -= TARGET_FRAMERATE;
         }
-
-        struct Entity_Loop_Update_Packet {
-            Game_State* game_state;
-            f32         dt;
-        };
-
-        auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
-        update_packet_data->dt = dt;
-        update_packet_data->game_state = this->state;
-
-        Thread_Pool::add_job(
-            [](void* ctx) {
-                auto packet = (Entity_Loop_Update_Packet*) ctx;
-                Game_State* game_state = packet->game_state;
-                Gameplay_Data* state = &packet->game_state->gameplay_data;
-                f32 dt = packet->dt;
-
-                for (int i = 0; i < (int)state->bullets.size; ++i) {
-                    auto& b = state->bullets[i];
-                    b.update(packet->game_state, dt);
-                }
-
-                return 0;
-            },
-            (void*)update_packet_data
-        );
-
-        Thread_Pool::add_job(
-            [](void* ctx) {
-                auto packet = (Entity_Loop_Update_Packet*) ctx;
-                Game_State* game_state = packet->game_state;
-                Gameplay_Data* state = &packet->game_state->gameplay_data;
-                f32 dt = packet->dt;
-
-                for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
-                    auto& h = state->explosion_hazards[i];
-                    h.update(game_state, dt);
-                }
-
-                return 0;
-            },
-            (void*)update_packet_data
-        );
-
-        Thread_Pool::add_job(
-            [](void* ctx) {
-                auto packet = (Entity_Loop_Update_Packet*) ctx;
-                Game_State* game_state = packet->game_state;
-                Gameplay_Data* state = &packet->game_state->gameplay_data;
-                f32 dt = packet->dt;
-
-                for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
-                    auto& h = state->laser_hazards[i];
-                    h.update(game_state, dt);
-                }
-
-                return 0;
-            },
-            (void*)update_packet_data
-        );
-
-        Thread_Pool::add_job(
-            [](void* ctx) {
-                auto packet = (Entity_Loop_Update_Packet*) ctx;
-                Game_State* game_state = packet->game_state;
-                Gameplay_Data* state = &packet->game_state->gameplay_data;
-                f32 dt = packet->dt;
-
-                for (int i = 0; i < (s32)state->enemies.size; ++i) {
-                    auto& e = state->enemies[i];
-                    e.update(game_state, dt);
-                }
-
-                return 0;
-            },
-            (void*)update_packet_data
-        );
-
-        Thread_Pool::add_job(
-            [](void* ctx) {
-                auto packet = (Entity_Loop_Update_Packet*) ctx;
-                Game_State* game_state = packet->game_state;
-                Gameplay_Data* state = &packet->game_state->gameplay_data;
-                f32 dt = packet->dt;
-                state->player.update(game_state, dt);
-                return 0;
-            },
-            (void*)update_packet_data
-        );
 
         // these need to play sounds and a few other non-thread safe behaviors
         // and besides, might as well have these guys just burn some time while we wait
