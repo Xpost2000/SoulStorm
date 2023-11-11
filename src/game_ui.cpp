@@ -67,7 +67,7 @@ struct UI_State {
 //     u8 blend_mode
 // );
 
-local UI_State global_ui_state = {};
+UI_State global_ui_state = {};
 
 /*
   NOTE: this is sort of like a stateful IMGUI, which is an oxymoron!
