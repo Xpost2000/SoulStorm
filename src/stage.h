@@ -88,7 +88,7 @@ struct Stage_State {
      * So I'm just going to unsafely cast this into an appropriate stage
      * data structure within the level file implementations.
      */
-    char stage_memory_buffer[Kilobyte(128)];
+    char stage_memory_buffer[Kilobyte(32)];
 
     // TODO: post process drawing
     /*
@@ -100,9 +100,22 @@ struct Stage_State {
      */
     Stage_Draw_Function   draw;
     jdr_duffcoroutine_fn tick_task;
+
+    /*
+      Technically speaking, the stages are the "lua environment",
+      and not necessarily the task scheduler...
+
+      I'm heavily limiting game access from here anyway.
+     */
+    lua_State*           L = nullptr;
+
+    // Main stage coroutine task.
+    // Entities will maintain a lua thread handle
+    // if they're assigned a task.
+    lua_State*           C = nullptr;
 };
 
-Stage_State stage_load_from_lua(const char* lua_filename);
+Stage_State stage_load_from_lua(Game_State* state, const char* lua_filename);
 
 STAGE(1_1);
 STAGE(null);

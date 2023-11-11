@@ -258,6 +258,7 @@ struct Achievement_Menu_Data {
     s32 page;
 };
 
+struct lua_State;
 struct Game_State {
     s32 screen_mode      = GAME_SCREEN_TITLE_SCREEN;
     s32 last_screen_mode = GAME_SCREEN_TITLE_SCREEN;
@@ -271,6 +272,8 @@ struct Game_State {
 
     Game_Task_Scheduler coroutine_tasks;
     Game_Resources* resources;
+
+    lua_State* alloc_lua_bindings();
 };
 
 struct Game_Resources {

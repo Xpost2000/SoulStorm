@@ -1,5 +1,12 @@
 #include "game_state.h"
 #include "stage.h"
+
+extern "C" {
+    #include <lua.h>
+    #include <lauxlib.h>
+    #include <lualib.h>
+}
+
 #undef STAGE
 // using X-macros
 #define STAGE(name)                                     \
@@ -13,11 +20,29 @@
         return result;                                  \
     }
 
-Stage_State stage_load_from_lua(const char* lua_filename) {
+Stage_State stage_load_from_lua(Game_State* state, const char* lua_filename) {
     Stage_State result = {};
-    // NOTE: stages are going to be scheduled through the game_task_scheduler.
-    // so they will all have a generic tick task
-    unimplemented("No lua stages yet.");
+    result.L = state->alloc_lua_bindings();
+    s32 error = (luaL_dofile(result.L, lua_filename));
+    switch (error) {
+        case 0: { } break;
+        case LUA_ERRSYNTAX: {
+            _debugprintf("Syntax error found in script. Undefined behavior time!");
+        } break;
+        default: {
+            _debugprintf("Error in loading script. (%d)", error);
+        } break;
+    }
+    
+
+    if (error) {
+        lua_close(result.L);
+        _debugprintf("Loading NULL stage as fallback!");
+        return stage_null();
+    } else {
+        state->coroutine_tasks.add_lua_game_task(state, result.L, (char*)"stage_task");
+    }
+
     return result;
 }
 

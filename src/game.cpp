@@ -331,12 +331,21 @@ void Game::setup_stage_start() {
         s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
         // NOTE: check the ids later.
         game_register_stage_attempt(stage_id, level_id);
-        if (stage_id == 0 && level_id == 0) {
-            state->stage_state = STAGE(1_1);
-            // state->coroutine_tasks.add_task(state, state->stage_state.update);
-        } else {
-            state->stage_state = STAGE(null);
+
+        // clean up old lua state.
+        if (state->stage_state.L) {
+            _debugprintf("Clean up old lua stage.");
+            lua_close(state->stage_state.L);   
         }
+
+        // if (stage_id == 0 && level_id == 0) {
+            // state->stage_state = STAGE(1_1);
+            // state->coroutine_tasks.add_task(state, state->stage_state.update);
+        // } else {
+            // state->stage_state = STAGE(null);
+        state->stage_state = stage_load_from_lua(this->state,
+                                                 format_temp("stages/%d_%d.lua", stage_id+1, level_id+1));
+        // }
         state->current_stage_timer = 0.0f;
         this->state->coroutine_tasks.add_task(this->state, state->stage_state.tick_task);
     }
@@ -371,50 +380,6 @@ void Game::setup_stage_start() {
         state->complete_stage.stage                = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
     }
 }
-
-#if 0
-static int kfunction(lua_State* L, int status, lua_KContext ctx)
-{
-    static int x = 0;
-    
-    if (x < 3)
-    {
-        x++;
-        lua_pushfstring(L, "Wonderfull");
-        return lua_yieldk(L, 1, 0, kfunction);
-    }
-    lua_pushfstring(L, "End");
-    return 1;
-}
-
-static int iter(lua_State* L)
-{
-    lua_pushfstring(L, "Wonderfull");
-    return lua_yieldk(L, 1, 0, kfunction);
-}
-
-#endif
-
-// Lua doesn't take methods, so I do need this as global script state...
-#if 0
-static Game_State* _global_game_state = nullptr;
-int EngineWait(lua_State* L) {
-    f32 wait_time = luaL_checknumber(L, 1);
-    _debugprintf("Lua engine_wait requested (%3.3f)", wait_time);
-
-    s32 task = _global_game_state->coroutine_tasks.add_lua_thread(L);
-    _global_game_state->coroutine_tasks.force_task_wait(task, wait_time)
-    // _global_game_state->coroutine_tasks.add_task(
-    //     _global_game_state,
-    //     [](jdr_duffcoroutine_t* co) {
-    //         JDR_Coroutine_Start(co, Start);
-    //         TASK_WAIT(1.5);
-    //         JDR_Coroutine_End;
-    //     }
-    // );
-    return lua_yield(L, 0);
-}
-#endif
 
 void Game::init(Graphics_Driver* driver) {
     this->arena     = &Global_Engine()->main_arena;
@@ -477,19 +442,6 @@ void Game::init(Graphics_Driver* driver) {
     // Initialize coroutine scheduler
     {
         state->coroutine_tasks.tasks = Fixed_Array<Game_Task>(arena, MAX_BULLETS + MAX_ENEMIES + 512);
-        state->coroutine_tasks.primary_state = luaL_newstate();
-
-        // load game libraries...
-        {
-            lua_State* L = state->coroutine_tasks.primary_state;
-            luaL_openlibs(L);
-            luaL_dostring(L, "print(\"Hello world\")");
-        //    luaL_dostring(L, "print(\"Hello world\")\nEngineWait(1.5f)\nprint(\"did it work\")");
-        }
-
-     //  for (s32 index = 0; index < state->coroutine_tasks.tasks.capacity; ++index) {
-     //       state->coroutine_tasks.tasks[index].L = lua_newthread(state->coroutine_tasks.primary_state);
-     //   }
     }
 
     initialized = true;
@@ -2729,3 +2681,58 @@ u64 UID::enemy_uid() {
 #include "credits_mode.cpp"
 #include "title_screen_mode.cpp"
 #include "main_menu_mode.cpp"
+
+int _lua_bind_Task_Yield_Wait(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    _debugprintf("%p lua state", L);
+    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
+    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
+    f32         wait_time = luaL_checknumber(L, 1);
+
+    auto& task = state->coroutine_tasks.tasks[task_id];
+    task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_FOR_SECONDS;
+    task.userdata.yielded.timer     = 0.0f;
+    task.userdata.yielded.timer_max = wait_time;
+
+    return lua_yield(L, 0);
+}
+
+int _lua_bind_Task_Yield_Finish_Stage(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
+    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
+
+    auto& task = state->coroutine_tasks.tasks[task_id];
+    task.userdata.yielded.reason = TASK_YIELD_REASON_COMPLETE_STAGE;
+
+    return lua_yield(L, 0);
+}
+
+int _lua_bind_Task_Yield(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
+    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
+
+    // auto task = state->coroutine_tasks.tasks[task_id];
+    return lua_yield(L, 0);
+}
+
+lua_State* Game_State::alloc_lua_bindings() {
+    lua_State* L = luaL_newstate();
+    // NOTE: only allow IO in the future.
+    luaL_openlibs(L);
+    luaL_dostring(L, "print(\"Hello Lua\")");
+    {
+        lua_pushlightuserdata(L, this);
+        lua_setglobal(L, "_gamestate"); // we'll store this implicitly
+        lua_register(L, "t_wait", _lua_bind_Task_Yield_Wait);
+        lua_register(L, "t_yield", _lua_bind_Task_Yield);
+        lua_register(L, "t_complete_stage", _lua_bind_Task_Yield_Finish_Stage);
+    }
+    luaL_dostring(L, "print(\"Hopefully loaded everything. \")");
+    _debugprintf("Allocated new lua state.");
+    return L;
+}
