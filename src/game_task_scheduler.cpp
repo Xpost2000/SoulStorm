@@ -132,12 +132,19 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             (task.source == GAME_TASK_SOURCE_GAME && task.associated_state == current_screen_state)
         ) {
             /*
-             * special case for gameplay. Do not run any of the game coroutines while a stage is in the introduction
-             * stage
+             * special case for gameplay.
+             * This will tell me how legal it is to run the game.
              */
             if ((task.source == GAME_TASK_SOURCE_GAME &&
                  task.associated_state == GAME_SCREEN_INGAME &&
-                 state->gameplay_data.intro.stage != GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE)) {
+                 (
+                     state->gameplay_data.intro.stage != GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE ||
+                     state->gameplay_data.paused_from_death ||
+                     state->gameplay_data.triggered_stage_completion_cutscene ||
+                     current_ui_state != UI_STATE_INACTIVE
+                 )
+                )
+            ) {
                 continue;
             }
 

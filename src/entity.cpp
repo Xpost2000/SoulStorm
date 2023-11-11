@@ -268,13 +268,34 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         auto sprite_img = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
         V2 sprite_image_size = V2(sprite_img->width, sprite_img->height);
         sprite_image_size.x *= sprite.scale.x; sprite_image_size.y *= sprite.scale.y;
-        // _debugprintf("%p sprite img, %d sprite id", sprite_img, sprite_frame->img.index);
+
+
+        for (s32 trail_ghost_index = 0; trail_ghost_index < trail_ghost_count; ++trail_ghost_index) {
+            auto& ghost = trail_ghosts[trail_ghost_index];
+            V2 sprite_position = V2(
+                ghost.position.x - scale.x/2 + (sprite.offset.x - sprite_image_size.x/2),
+                ghost.position.y - scale.x/2 + (sprite.offset.y - sprite_image_size.y/2)
+            );
+
+            auto modulation = trail_ghost_modulation;
+            modulation.a *= (ghost.alpha/trail_ghost_max_alpha);
+
+            render_commands_push_image(
+                render_commands,
+                sprite_img,
+                rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+                // sprite_frame->source_rect,
+                sprite_frame->source_rect,
+                modulation,
+                0,
+                BLEND_MODE_ALPHA
+            );
+        }
 
         V2 sprite_position = V2(
             position.x - scale.x/2 + (sprite.offset.x - sprite_image_size.x/2),
             position.y - scale.x/2 + (sprite.offset.y - sprite_image_size.y/2)
         );
-
         render_commands_push_image(
             render_commands,
             sprite_img,
@@ -324,6 +345,28 @@ bool Entity::attack() {
 
 void Entity::update(Game_State* state, f32 dt) {
     const auto& play_area = state->gameplay_data.play_area;
+
+    // update ghost trails
+    {
+        if (trail_ghost_record_timer <= 0.0f && trail_ghost_count < trail_ghost_limit) {
+            auto& ghost = trail_ghosts[trail_ghost_count++];
+            ghost.position = position;
+            ghost.alpha    = trail_ghost_max_alpha;
+            trail_ghost_record_timer = trail_ghost_record_timer_max;
+        } else {
+            trail_ghost_record_timer -= dt;
+        }
+
+        for (s32 trail_ghost_index = 0; trail_ghost_index < trail_ghost_count; ++trail_ghost_index) {
+            auto& ghost = trail_ghosts[trail_ghost_index];
+            ghost.alpha -= dt;
+
+            if (ghost.alpha <= 0.0f) {
+                trail_ghosts[trail_ghost_index] = trail_ghosts[--trail_ghost_count];
+                continue;
+            }
+        }
+    }
 
     position           += velocity * dt;
     t_since_spawn      += dt;

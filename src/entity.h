@@ -49,6 +49,11 @@ struct Timer {
 #define DEFAULT_FIRING_COOLDOWN (0.125)
 #define DEFAULT_ENTITY_SCORE_VALUE_PER_HIT (30)
 #define DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER (5)
+#define MAX_PREVIOUS_POSITIONS_FOR_TRAIL (32)
+struct Position_Trail_Ghost {
+    V2 position;
+    f32 alpha = 1.0f; // this will always be hardcoded to take one second
+};
 
 // NOTE: no real system for a visual sprite quite yet.
 struct Entity {
@@ -67,6 +72,14 @@ struct Entity {
 
     f32   t_since_spawn = 0.0f;
     Sprite_Instance sprite;
+
+    // Cool visual effect for trailing.
+    color32f32           trail_ghost_modulation = color32f32(0.9, 0.9, 0.9, 1.0);
+    Position_Trail_Ghost trail_ghosts[MAX_PREVIOUS_POSITIONS_FOR_TRAIL];
+    s32                  trail_ghost_count = 0;
+    s32                  trail_ghost_limit = 0;
+    f32                  trail_ghost_record_timer = 0, trail_ghost_record_timer_max = 0.033f;
+    f32                  trail_ghost_max_alpha = 0.23f;
 
     Timer cleanup_time                    = Timer(ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION);
     Timer invincibility_time_flash_period = Timer(INVINCIBILITY_FLASH_TIME_PERIOD);

@@ -1892,7 +1892,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 #if 0
         const f32 TARGET_FRAMERATE = 0.0f; // use 0 for unlimited
 #else
-        const f32 TARGET_FRAMERATE = 1.0f / 300.0f; // use 0 for unlimited
+        const f32 TARGET_FRAMERATE = 1.0f / 240.0f; // use 0 for unlimited
 #endif
         static f32 accumulator = 0.0f;
         accumulator += dt;
