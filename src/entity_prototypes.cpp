@@ -1,6 +1,8 @@
 #include "entity.h"
 #include "game_state.h"
 
+#include "game_uid_generator.h"
+
 /*
   Here's a bunch of velocity functions that I compose together to make some interesting behaviors or patterns,
   with hopefully not much hassle. A lot of them are obvious, but it's just to make the
@@ -43,6 +45,7 @@ inline local V2 velocity_cyclic_cosine(f32 t, V2 direction) {
 
 Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bullet_Entity_Velocity_Fn velocity) {
     Bullet bullet;
+    bullet.uid = UID::bullet_uid();
     bullet.position    = position;
     bullet.scale       = scale;
     //bullet.lifetime    = Timer(3.0f);
@@ -116,6 +119,7 @@ Enemy_Entity enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 
 
 Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, Enemy_Entity_Velocity_Fn velocity) {
     Enemy_Entity enemy;
+    enemy.uid = UID::enemy_uid();
 
     enemy.position = position;
     enemy.scale    = scale;
@@ -171,4 +175,21 @@ void spawn_bullet_arc_pattern2(Game_State* state, V2 center, s32 how_many, s32 a
             bullet_upwards_linear(state, position, current_arc_direction, speed, source)
         );
     }
+}
+
+Enemy_Entity enemy_generic_with_task(Game_State* state, V2 position, V2 scale, jdr_duffcoroutine_fn task) {
+    auto result = enemy_generic(
+        state, position, scale, nullptr
+    );
+    state->coroutine_tasks.add_task(state, task, (void*)result.uid);
+    return result;
+}
+
+Bullet bullet_generic_with_task(Game_State* state, V2 position, V2 scale, s32 source, jdr_duffcoroutine_fn task) {
+    auto result = bullet_generic(
+        state, position, scale, source, nullptr
+    );
+
+    state->coroutine_tasks.add_task(state, task, (void*)result.uid);
+    return result;
 }

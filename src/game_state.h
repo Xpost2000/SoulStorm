@@ -168,23 +168,6 @@ struct Gameplay_UI_Hitmark_Score_Notification {
 };
 
 struct Gameplay_Data {
-    /*
-      NOTE: this is useful for the game level design functionalities,
-      and I'm aware of a generational counter, but I don't legitimately
-      need one.
-
-      This allows me to reference entities in a simple way, and I know
-      that there will always be less entities than bullets.
-
-      These are persistent references.
-
-      I... don't expect these ids to wrap over in the course of a gameplay
-      session...
-    */
-    u64 enemy_entity_uid = 0;
-    u64 bullet_entity_uid = 0;
-
-
     bool stage_completed;
     Stage_State stage_state;
 

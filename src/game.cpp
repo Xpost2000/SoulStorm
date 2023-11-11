@@ -11,6 +11,7 @@
 #include "fixed_array.h"
 #include "game_state.h"
 #include "achievements.h"
+#include "game_uid_generator.h"
 
 #include "file_buffer.h"
 #include "game_ui.h"
@@ -184,7 +185,7 @@ void Game::setup_stage_start() {
     }
 
     // reset UID to 0.
-    state->enemy_entity_uid = 0;
+    UID::reset();
 
     state->player.position = V2(state->play_area.width / 2, 300);
     state->player.hp       = 1;
@@ -401,7 +402,6 @@ void Game::deinit() {
 
 // Gameplay_Data
 void Gameplay_Data::add_bullet(Bullet b) {
-    b.uid = bullet_entity_uid++;
     switch (b.source_type) {
         case BULLET_SOURCE_PLAYER: {
             to_create_player_bullets.push(b);
@@ -421,7 +421,6 @@ void Gameplay_Data::add_explosion_hazard(Explosion_Hazard h) {
 }
 
 void Gameplay_Data::add_enemy_entity(Enemy_Entity e) {
-    e.uid = enemy_entity_uid++;
     to_create_enemies.push(e);
 }
 
@@ -2343,6 +2342,34 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
     
     // unimplemented("save mode");
     return save_data;
+}
+
+
+/*
+  NOTE: this is useful for the game level design functionalities,
+  and I'm aware of a generational counter, but I don't legitimately
+  need one.
+
+  This allows me to reference entities in a simple way, and I know
+  that there will always be less entities than bullets.
+
+  These are persistent references.
+
+  I... don't expect these ids to wrap over in the course of a gameplay
+  session...
+*/
+u64 _bullet_entity_uid = 0;
+u64 _enemy_entity_uid = 0;
+void UID::reset() {
+    _bullet_entity_uid = _enemy_entity_uid = 0;
+}
+
+u64 UID::bullet_uid() {
+    return _bullet_entity_uid++;
+}
+
+u64 UID::enemy_uid() {
+    return _enemy_entity_uid++;
 }
 
 

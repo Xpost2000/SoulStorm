@@ -68,6 +68,7 @@ Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, Enemy_Entit
   is preferred now, since tasks are more logical for game logic "pun-intended?".
 */
 Enemy_Entity enemy_generic_with_task(Game_State* state, V2 position, V2 scale, jdr_duffcoroutine_fn task);
+Bullet       bullet_generic_with_task(Game_State* state, V2 position, V2 scale, s32 source, jdr_duffcoroutine_fn task);
 
 // need to rethink how entities fire stuff.
 

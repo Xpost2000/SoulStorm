@@ -117,6 +117,11 @@ struct Game_Task_Scheduler {
     s32  add_task(struct Game_State* state, jdr_duffcoroutine_fn f, bool essential=false);
     s32  add_global_task(jdr_duffcoroutine_fn f);
     s32  add_ui_task(struct Game_State* state, jdr_duffcoroutine_fn f, bool essential=false);
+
+    s32  add_task(struct Game_State* state, jdr_duffcoroutine_fn f, void* userdata, bool essential=false);
+    s32  add_global_task(jdr_duffcoroutine_fn f, void* userdata);
+    s32  add_ui_task(struct Game_State* state, jdr_duffcoroutine_fn f, void* userdata, bool essential=false);
+
     bool kill_task(s32 index);
 
     void scheduler(struct Game_State* state, f32 dt);

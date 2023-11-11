@@ -16,6 +16,18 @@ s32 Game_Task_Scheduler::first_avaliable_task() {
 }
 
 s32 Game_Task_Scheduler::add_task(struct Game_State* state, jdr_duffcoroutine_fn f, bool essential) {
+    return add_task(state, f, nullptr, essential);
+}
+
+s32 Game_Task_Scheduler::add_ui_task(struct Game_State* state, jdr_duffcoroutine_fn f, bool essential) {
+    return add_ui_task(state, f, nullptr, essential);
+}
+
+s32 Game_Task_Scheduler::add_global_task(jdr_duffcoroutine_fn f) {
+   return add_global_task(f, nullptr);
+}
+
+s32 Game_Task_Scheduler::add_task(struct Game_State* state, jdr_duffcoroutine_fn f, void* userdata, bool essential) {
     s32 current_screen_state = state->screen_mode;
     s32 first_free           = first_avaliable_task();
 
@@ -26,13 +38,30 @@ s32 Game_Task_Scheduler::add_task(struct Game_State* state, jdr_duffcoroutine_fn
     task.associated_state    = current_screen_state;
     task.essential           = essential;
     task.userdata.game_state = state;
+    task.userdata.userdata = userdata;
     task.coroutine           = jdr_coroutine_new(f);
     task.coroutine.userdata = &task.userdata;
 
     return first_free;
 }
 
-s32 Game_Task_Scheduler::add_ui_task(struct Game_State* state, jdr_duffcoroutine_fn f, bool essential) {
+s32 Game_Task_Scheduler::add_global_task(jdr_duffcoroutine_fn f, void* userdata) {
+    s32 first_free       = first_avaliable_task();
+    if (first_free == -1) return false;
+
+    auto& task            = tasks[first_free];
+    task.source           = GAME_TASK_SOURCE_ALWAYS;
+    task.associated_state = -1;
+    task.essential        = true;
+    task.coroutine        = jdr_coroutine_new(f);
+    task.userdata.userdata = userdata;
+    // NOTE: need userdata info.
+    task.coroutine.userdata = &task.userdata;
+
+    return first_free;
+}
+
+s32 Game_Task_Scheduler::add_ui_task(struct Game_State* state, jdr_duffcoroutine_fn f, void* userdata, bool essential) {
     s32 current_ui_state = state->ui_state;
     s32 first_free       = first_avaliable_task();
 
@@ -44,21 +73,7 @@ s32 Game_Task_Scheduler::add_ui_task(struct Game_State* state, jdr_duffcoroutine
     task.essential        = essential;
     task.userdata.game_state = state;
     task.coroutine        = jdr_coroutine_new(f);
-    task.coroutine.userdata = &task.userdata;
-
-    return first_free;
-}
-
-s32 Game_Task_Scheduler::add_global_task(jdr_duffcoroutine_fn f) {
-    s32 first_free       = first_avaliable_task();
-    if (first_free == -1) return false;
-
-    auto& task            = tasks[first_free];
-    task.source           = GAME_TASK_SOURCE_ALWAYS;
-    task.associated_state = -1;
-    task.essential        = true;
-    task.coroutine        = jdr_coroutine_new(f);
-    // NOTE: need userdata info.
+    task.userdata.userdata = userdata;
     task.coroutine.userdata = &task.userdata;
 
     return first_free;
