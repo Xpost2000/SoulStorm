@@ -143,6 +143,20 @@ s32 Game_Task_Scheduler::search_for_lua_task(lua_State* L) {
     return -1;
 }
 
+void Game_Task_Scheduler::abort_all_lua_tasks() {
+    L = nullptr;
+    for (s32 index = 0; index < tasks.capacity; ++index) {
+        auto& task = tasks[index];
+        if (task.L_C) {
+            zero_memory(&task, sizeof(task));
+        } else {
+            if (jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED && task.source != GAME_TASK_AVALIABLE) {
+                zero_memory(&task, sizeof(task));
+            }
+        }
+    }
+}
+
 void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
     s32 current_ui_state     = state->ui_state;
     s32 current_screen_state = state->screen_mode;
@@ -153,7 +167,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
 
         if (task.L_C) {
             // NOTE: possible memory leak from lua. Need to invoke GC?
-            if (task.last_L_C_status == JDR_DUFFCOROUTINE_FINISHED && task.source != GAME_TASK_AVALIABLE) {
+            if (L == nullptr || task.last_L_C_status == JDR_DUFFCOROUTINE_FINISHED && task.source != GAME_TASK_AVALIABLE) {
                 zero_memory(&task, sizeof(task));
             }
         } else {
@@ -212,9 +226,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             // We either have lua powered tasks or native tasks.
             if (task.L_C) {
                 s32 _nres;
-                _debugprintf("Resumed lua task %p\n", task.L_C);
                 s32 status = lua_resume(task.L_C, L, task.nargs, &_nres);
-                _debugprintf("status: %d", status);
                 task.last_L_C_status                 = status;
                 if (status == LUA_YIELD)      status = JDR_DUFFCOROUTINE_SUSPENDED;
                 if (status == LUA_OK)         status = JDR_DUFFCOROUTINE_FINISHED;

@@ -336,16 +336,9 @@ void Game::setup_stage_start() {
         if (state->stage_state.L) {
             _debugprintf("Clean up old lua stage.");
             lua_close(state->stage_state.L);   
+            this->state->coroutine_tasks.abort_all_lua_tasks();
         }
-
-        // if (stage_id == 0 && level_id == 0) {
-            // state->stage_state = STAGE(1_1);
-            // state->coroutine_tasks.add_task(state, state->stage_state.update);
-        // } else {
-            // state->stage_state = STAGE(null);
-        state->stage_state = stage_load_from_lua(this->state,
-                                                 format_temp("stages/%d_%d.lua", stage_id+1, level_id+1));
-        // }
+        state->stage_state = stage_load_from_lua(this->state, format_temp("stages/%d_%d.lua", stage_id+1, level_id+1));
         state->current_stage_timer = 0.0f;
         this->state->coroutine_tasks.add_task(this->state, state->stage_state.tick_task);
     }
@@ -2841,6 +2834,51 @@ int _lua_bind_play_area_width(lua_State* L) {
     return 1;
 }
 
+int _lua_bind_enemy_position_x(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    lua_pushnumber(L, e->position.x);
+    return 1;
+}
+
+int _lua_bind_enemy_position_y(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    lua_pushnumber(L, e->position.y);
+    return 1;
+}
+
+int _lua_bind_enemy_velocity_x(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    lua_pushnumber(L, e->velocity.x);
+    return 1;
+}
+
+int _lua_bind_enemy_velocity_y(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    lua_pushnumber(L, e->velocity.y);
+    return 1;
+}
+
+int _lua_bind_enemy_hp(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    lua_pushnumber(L, e->hp);
+    return 1;
+}
+
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     // NOTE: only allow IO in the future.
@@ -2887,6 +2925,12 @@ BULLET_SOURCE_ENEMY = 2;
         lua_register(L, "enemy_reset_movement", _lua_bind_enemy_reset_movement);
         lua_register(L, "any_living_danger", _lua_bind_any_living_danger);
         lua_register(L, "play_area_width", _lua_bind_play_area_width);
+
+        lua_register(L, "enemy_position_x", _lua_bind_enemy_position_x);
+        lua_register(L, "enemy_position_y", _lua_bind_enemy_position_y);
+        lua_register(L, "enemy_velocity_x", _lua_bind_enemy_velocity_x);
+        lua_register(L, "enemy_velocity_y", _lua_bind_enemy_velocity_y);
+        lua_register(L, "enemy_hp", _lua_bind_enemy_hp);
     }
     luaL_dostring(L, "print(\"Hopefully loaded everything. \")");
     _debugprintf("Allocated new lua state.");
