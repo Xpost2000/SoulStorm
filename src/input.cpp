@@ -135,33 +135,31 @@ namespace Input {
         return false;
     }
 
-    f32 controller_left_axis(struct game_controller* controller, u8 axis_id) {
-        if (!controller) return 0.0f;
-
+    local f32 joystick_axis(struct game_controller_joystick* axes, u8 axis_id) {
         switch (axis_id) {
-            case GAMEPAD_AXIS_X: return controller->left_stick.axes[0];
-            case GAMEPAD_AXIS_Y: return controller->left_stick.axes[1];
+            case GAMEPAD_AXIS_X: return axes->axes[0];
+            case GAMEPAD_AXIS_Y: return axes->axes[1];
             case GAMEPAD_AXIS_POSITIVE_X: {
-                if (controller->left_stick.axes[0] > 0)
-                    return controller->left_stick.axes[0];
+                if (axes->axes[0] > 0)
+                    return axes->axes[0];
                 else
                     return 0.0f;
             } break;
             case GAMEPAD_AXIS_NEGATIVE_X: {
-                if (controller->left_stick.axes[0] < 0)
-                    return controller->left_stick.axes[0];
+                if (axes->axes[0] < 0)
+                    return axes->axes[0];
                 else
                     return 0.0f;
             } break;
             case GAMEPAD_AXIS_POSITIVE_Y: {
-                if (controller->left_stick.axes[1] > 0)
-                    return controller->left_stick.axes[1];
+                if (axes->axes[1] > 0)
+                    return axes->axes[1];
                 else
                     return 0.0f;
             } break;
             case GAMEPAD_AXIS_NEGATIVE_Y: {
-                if (controller->left_stick.axes[1] < 0)
-                    return controller->left_stick.axes[1];
+                if (axes->axes[1] < 0)
+                    return axes->axes[1];
                 else
                     return 0.0f;
             } break;
@@ -170,39 +168,14 @@ namespace Input {
         return 0.0f;
     }
 
+    f32 controller_left_axis(struct game_controller* controller, u8 axis_id) {
+        if (!controller) return 0.0f;
+        return joystick_axis(&controller->left_stick, axis_id);
+    }
+
     f32 controller_right_axis(struct game_controller* controller, u8 axis_id) {
         if (!controller) return 0.0f;
-
-        switch (axis_id) {
-            case GAMEPAD_AXIS_X: return controller->right_stick.axes[0];
-            case GAMEPAD_AXIS_Y: return controller->right_stick.axes[1];
-            case GAMEPAD_AXIS_POSITIVE_X: {
-                if (controller->right_stick.axes[0] > 0)
-                    return controller->right_stick.axes[0];
-                else
-                    return 0.0f;
-            } break;
-            case GAMEPAD_AXIS_NEGATIVE_X: {
-                if (controller->right_stick.axes[0] < 0)
-                    return controller->right_stick.axes[0];
-                else
-                    return 0.0f;
-            } break;
-            case GAMEPAD_AXIS_POSITIVE_Y: {
-                if (controller->right_stick.axes[1] > 0)
-                    return controller->right_stick.axes[1];
-                else
-                    return 0.0f;
-            } break;
-            case GAMEPAD_AXIS_NEGATIVE_Y: {
-                if (controller->right_stick.axes[1] < 0)
-                    return controller->right_stick.axes[1];
-                else
-                    return 0.0f;
-            } break;
-        }
-
-        return 0.0f;
+        return joystick_axis(&controller->right_stick, axis_id);
     }
 
     bool controller_button_pressed(struct game_controller* controller, u8 button_id) {
@@ -225,7 +198,7 @@ namespace Input {
             auto last    = controller->last_left_stick;
             auto current = controller->left_stick;
 
-            f32 difference = current.axes[axis_id] - last.axes[axis_id];
+            f32 difference = joystick_axis(&current, axis_id) - joystick_axis(&last, axis_id);
 
             return difference >= CONTROLLER_AXIS_FLICK_TOLERANCE;
         }
@@ -238,7 +211,7 @@ namespace Input {
             auto last    = controller->last_right_stick;
             auto current = controller->right_stick;
 
-            f32 difference = current.axes[axis_id] - last.axes[axis_id];
+            f32 difference = joystick_axis(&current, axis_id) - joystick_axis(&last, axis_id);
 
             return difference >= CONTROLLER_AXIS_FLICK_TOLERANCE;
         }

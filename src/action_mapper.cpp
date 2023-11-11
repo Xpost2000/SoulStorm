@@ -85,6 +85,8 @@ namespace Action {
             Input::is_key_pressed(action.key_id[0]) ||
             Input::is_key_pressed(action.key_id[1]);
 
+#if 0
+        // flicking is unreliable right now
         if (action.axis_id != -1) {
             switch (action.joystick_id) {
                 case CONTROLLER_JOYSTICK_LEFT: {
@@ -95,6 +97,7 @@ namespace Action {
                 } break;
             }
         }
+#endif
 
         return controller_response || keyboard_response;
     }

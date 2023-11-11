@@ -101,6 +101,6 @@ local int translate_sdl_scancode(int scancode) {
         
     }
 
-    return -1;
+    return KEY_UNKNOWN;
 }
 #endif

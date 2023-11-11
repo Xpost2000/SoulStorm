@@ -897,12 +897,15 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                 auto& level = stage.levels[display_level_icon];
                 color32f32 color = color32f32(1, 1, 1, 1);
                 if (level.boss_stage) color = color32f32(1, 0, 0, 1);
-                // TODO: figure out an okay layout later.
-                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2 - 200), string_from_cstring(format_temp("Best Score: %d", level.best_score)), color, 2);
-                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2 - 170), string_from_cstring(format_temp("Last Score: %d", level.last_score)), color, 2);
-                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2 - 140), string_from_cstring(format_temp("Attempts: %d", level.attempts)), color, 2);
-                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2 - 110), string_from_cstring(format_temp("Completions: %d", level.completions)), color, 2);
-                GameUI::label(V2(commands->screen_width - 250, commands->screen_height/2), level.subtitle, color, 2);
+                // Since the GameUI wasn't super designed with keyboard input in mind, it was sort of patched in
+                // and is somewhat buggy sometimes. So these are rendered as regular render objects.
+
+                // render_commands_push_text(commands, subtitle_font, 4, V2(rectangle.x+10, rectangle.y+10), text, color32f32(1, 1, 1, percentage_t), BLEND_MODE_ALPHA);
+                render_commands_push_text(commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2.0f, V2(commands->screen_width - 250, commands->screen_height/2 - 200), string_from_cstring(format_temp("Best Score: %d", level.best_score)), color, BLEND_MODE_ALPHA);
+                render_commands_push_text(commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2.0f, V2(commands->screen_width - 250, commands->screen_height/2 - 170), string_from_cstring(format_temp("Last Score: %d", level.last_score)), color, BLEND_MODE_ALPHA);
+                render_commands_push_text(commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2.0f, V2(commands->screen_width - 250, commands->screen_height/2 - 140), string_from_cstring(format_temp("Attempts: %d", level.attempts)), color, BLEND_MODE_ALPHA);
+                render_commands_push_text(commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2.0f, V2(commands->screen_width - 250, commands->screen_height/2 - 110), string_from_cstring(format_temp("Completions: %d", level.completions)), color, BLEND_MODE_ALPHA);
+                render_commands_push_text(commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2.0f, V2(commands->screen_width - 250, commands->screen_height/2), level.subtitle, color, BLEND_MODE_ALPHA);
             }
 
             if (enter_level != -1) {
