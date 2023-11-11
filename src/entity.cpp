@@ -418,12 +418,6 @@ void Bullet::update(Game_State* state, f32 dt) {
     }
 
     Entity::update(state, dt);
-
-    // NOTE: needs flags to determine whether it obeys play area restrictions.
-    // wrap_from_right_border(play_area);
-    // wrap_from_top_border(play_area);
-    // wrap_from_bottom_border(play_area);
-    // wrap_from_left_border(play_area);
 }
 
 // Enemy_Entity

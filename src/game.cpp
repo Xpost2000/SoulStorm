@@ -401,6 +401,7 @@ void Game::deinit() {
 
 // Gameplay_Data
 void Gameplay_Data::add_bullet(Bullet b) {
+    b.uid = bullet_entity_uid++;
     switch (b.source_type) {
         case BULLET_SOURCE_PLAYER: {
             to_create_player_bullets.push(b);
@@ -430,6 +431,19 @@ Enemy_Entity* Gameplay_Data::lookup_enemy(u64 uid) {
     }
     for (s32 index = 0; index < enemies.size; ++index) {
         if (enemies[index].uid == uid) return &enemies[index];
+    }
+    return nullptr;
+}
+
+Bullet* Gameplay_Data::lookup_bullet(u64 uid) {
+    for (s32 index = 0; index < to_create_enemy_bullets.size; ++index) {
+        if (to_create_enemy_bullets[index].uid == uid) return &to_create_enemy_bullets[index];
+    }
+    for (s32 index = 0; index < to_create_player_bullets.size; ++index) {
+        if (to_create_player_bullets[index].uid == uid) return &to_create_player_bullets[index];
+    }
+    for (s32 index = 0; index < bullets.size; ++index) {
+        if (bullets[index].uid == uid) return &bullets[index];
     }
     return nullptr;
 }

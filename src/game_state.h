@@ -177,8 +177,12 @@ struct Gameplay_Data {
       that there will always be less entities than bullets.
 
       These are persistent references.
+
+      I... don't expect these ids to wrap over in the course of a gameplay
+      session...
     */
     u64 enemy_entity_uid = 0;
+    u64 bullet_entity_uid = 0;
 
 
     bool stage_completed;
@@ -220,7 +224,8 @@ struct Gameplay_Data {
     void add_explosion_hazard(Explosion_Hazard h);
     void add_enemy_entity(Enemy_Entity e);
 
-    Enemy_Entity* lookup_enemy(u64 uid);
+    Enemy_Entity*  lookup_enemy(u64 uid);
+    Bullet* lookup_bullet(u64 uid);
 
     void reify_all_creation_queues();
 

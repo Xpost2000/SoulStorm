@@ -63,6 +63,12 @@ Enemy_Entity enemy_sine_movement(Game_State* state, V2 position, V2 scale, V2 di
 Enemy_Entity enemy_cosine_movement(Game_State* state, V2 position, V2 scale, V2 direction, f32 speed, f32 amp);
 Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, Enemy_Entity_Velocity_Fn velocity);
 
+/*
+  The above, are still left in as simple prototypes, but this
+  is preferred now, since tasks are more logical for game logic "pun-intended?".
+*/
+Enemy_Entity enemy_generic_with_task(Game_State* state, V2 position, V2 scale, jdr_duffcoroutine_fn task);
+
 // need to rethink how entities fire stuff.
 
 /*

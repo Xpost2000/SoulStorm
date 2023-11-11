@@ -77,8 +77,6 @@ struct Game_Task_Userdata {
       it should be completely appropriate to allow this. It also
       means I don't get any funny questions regarding allocation
       of the userdata pointer since I often just need one more pointer.
-
-      TODO: change the userdata coroutine pointer to look at this.
     */
     Game_State*            game_state;
     void*                  userdata;
