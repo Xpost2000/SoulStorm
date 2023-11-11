@@ -3,8 +3,7 @@
 
 #include "game_ui.h"
 #include "fixed_array.h"
-
-#define RELEASE
+#include "engine.h"
 
 /*
   NOTE:
@@ -80,7 +79,7 @@ namespace GameUI {
         widget->id         = global_ui_state->widgets.size;
         widget->where      = where;
         widget->modulation = modulation;
-        widget->text       = text;
+        widget->text       = string_clone(&Global_Engine()->scratch_arena, text);
         widget->scale      = scale;
 
         if (!global_ui_state->picked_first_index && is_selectable_widget_type(widget->type)) {
@@ -417,12 +416,13 @@ namespace GameUI {
             GameUI::move_selected_widget_id(-1);
         }
 
+#ifndef RELEASE
         auto font           = global_ui_state->default_font;
         render_commands_push_text(global_ui_state->commands, font, 1.0, V2(0,0),
                                   string_from_cstring(format_temp("(lastui_id: %s)\nselected_index: %d\n", global_ui_state->last_ui_id, global_ui_state->selected_index)), color32f32(1,1,1,1), BLEND_MODE_ALPHA);
+#endif
 
         global_ui_state->in_frame = false;
-        global_ui_state->commands = nullptr;
 
         if (!global_ui_state->ate_any_mouse_lefts) {
             global_ui_state->hot_index = -1;

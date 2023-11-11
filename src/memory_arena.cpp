@@ -66,6 +66,7 @@ void* Memory_Arena::push_unaligned(u64 amount) {
         return base_pointer;
     }
 
+    assertion(used+used_top <= capacity && "Over allocated memory");
     return nullptr;
 }
 
