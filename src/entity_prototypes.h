@@ -12,14 +12,18 @@ struct Game_State;
 
   Mostly for all the hard-coded C++ based entities.
 
-  NOTE: for things like Bosses or anything with substantial
-  code, they'll probably be implemented in separate files with their
-  construction files in here.
-
   NOTE:
      these are for enemy archetypes, but specific sprites and stuff requires more work,
      and might utilize more function pointers and such.
 */
+
+V2 velocity_linear(V2 direction, f32 magnitude); 
+V2 velocity_linear_with_accel(V2 direction, f32 magnitude, f32 t, f32 accel_magnitude);
+V2 velocity_linear_with_accel(V2 direction, f32 magnitude, f32 t, V2 accel_direction, f32 accel_magnitude); 
+V2 velocity_follow(Entity* entity); 
+V2 velocity_circle_orbit(f32 t, f32 spawn_theta, f32 r);
+V2 velocity_cyclic_sine(f32 t, V2 direction); 
+V2 velocity_cyclic_cosine(f32 t, V2 direction);
 
 
 // Bullet Types

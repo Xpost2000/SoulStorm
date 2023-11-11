@@ -26,6 +26,7 @@
 #define LEVEL_DATA(name, as) auto as = (struct Stage_##name##_Data*)(stage->stage_memory_buffer)
 #define STAGE_WAIT_CLEARED_WAVE() do { while (gameplay_state->any_living_danger()) {TASK_YIELD();} } while(0)
 #define WITH_ENTITY(e) for (Enemy_Entity* it = e; it; it = nullptr)
+#define WAIT_FOR_SPAWN(id) while (!gameplay_state->entity_spawned(id)) {JDR_Coroutine_YieldNR();}
 
 /*
  * Personally speaking, I think that function pointers are more

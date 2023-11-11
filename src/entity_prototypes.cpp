@@ -8,37 +8,37 @@
   with hopefully not much hassle. A lot of them are obvious, but it's just to make the
   pattern code more obvious to read.
 */
-inline local V2 velocity_linear(V2 direction, f32 magnitude) {
+V2 velocity_linear(V2 direction, f32 magnitude) {
     direction = direction.normalized();
     return direction * magnitude;
 }
 
-inline local V2 velocity_linear_with_accel(V2 direction, f32 magnitude, f32 t, f32 accel_magnitude) {
+V2 velocity_linear_with_accel(V2 direction, f32 magnitude, f32 t, f32 accel_magnitude) {
     direction = direction.normalized();
     return direction * magnitude + (direction * (accel_magnitude * t));
 }
 
-inline local V2 velocity_linear_with_accel(V2 direction, f32 magnitude, f32 t, V2 accel_direction, f32 accel_magnitude) {
+V2 velocity_linear_with_accel(V2 direction, f32 magnitude, f32 t, V2 accel_direction, f32 accel_magnitude) {
     direction = direction.normalized();
     return direction * magnitude + (accel_direction * (accel_magnitude * t));
 }
 
-inline local V2 velocity_follow(Entity* entity) {
+V2 velocity_follow(Entity* entity) {
     return entity->velocity;
 }
 
-inline local V2 velocity_circle_orbit(f32 t, f32 spawn_theta, f32 r) {
+V2 velocity_circle_orbit(f32 t, f32 spawn_theta, f32 r) {
     f32 point_in_cycle = t + spawn_theta;
     V2 result = V2(-sinf(point_in_cycle) * r, cos(point_in_cycle) * r);
     return result;
 }
 
-inline local V2 velocity_cyclic_sine(f32 t, V2 direction) {
+V2 velocity_cyclic_sine(f32 t, V2 direction) {
     direction = direction.normalized();
     return direction * sinf(t);
 }
 
-inline local V2 velocity_cyclic_cosine(f32 t, V2 direction) {
+V2 velocity_cyclic_cosine(f32 t, V2 direction) {
     direction = direction.normalized();
     return direction * cosf(t);
 }

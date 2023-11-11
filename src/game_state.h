@@ -210,6 +210,9 @@ struct Gameplay_Data {
     Enemy_Entity*  lookup_enemy(u64 uid);
     Bullet* lookup_bullet(u64 uid);
 
+    bool entity_spawned(u64 uid);
+    bool bullet_spawned(u64 uid);
+
     void reify_all_creation_queues();
 
     bool any_hazards() const;

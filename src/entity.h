@@ -136,8 +136,8 @@ using Enemy_Entity_Fire_Fn = std::function<void(Enemy_Entity*, Game_State*, f32)
 using Enemy_Entity_Velocity_Fn = std::function<void(Enemy_Entity*, Game_State* const, f32)>;
 struct Enemy_Entity : public Entity {
     Timer outside_boundaries_lifetime_timer = Timer(10.0f);
-    Enemy_Entity_Velocity_Fn velocity_function;
-    Enemy_Entity_Fire_Fn     on_fire_function;
+    Enemy_Entity_Velocity_Fn velocity_function = nullptr;
+    Enemy_Entity_Fire_Fn     on_fire_function  = nullptr;
 
     void update(Game_State* state, f32 dt);
 
@@ -263,12 +263,10 @@ struct Bullet : public Entity {
      */
     s32   source_type;
 
-    /* float lifetime; // if it's -1 the bullets will die on their own later... */
-    // bool dead;
     void update(Game_State* state, f32 dt);
 
     // want this to be handled via lua
-    Bullet_Entity_Velocity_Fn velocity_function;
+    Bullet_Entity_Velocity_Fn velocity_function = nullptr;
 };
 
 #include "entity_prototypes.h"

@@ -424,6 +424,20 @@ void Gameplay_Data::add_enemy_entity(Enemy_Entity e) {
     to_create_enemies.push(e);
 }
 
+bool Gameplay_Data::entity_spawned(u64 uid) {
+    for (s32 index = 0; index < enemies.size; ++index) {
+        if (enemies[index].uid == uid) return true;
+    }
+    return false;
+}
+
+bool Gameplay_Data::bullet_spawned(u64 uid) {
+    for (s32 index = 0; index < bullets.size; ++index) {
+        if (bullets[index].uid == uid) return true;
+    }
+    return false;
+}
+
 Enemy_Entity* Gameplay_Data::lookup_enemy(u64 uid) {
     for (s32 index = 0; index < to_create_enemies.size; ++index) {
         if (to_create_enemies[index].uid == uid) return &to_create_enemies[index];
@@ -462,8 +476,8 @@ void Gameplay_Data::reify_all_creation_queues() {
                 state->bullets.push(b);
             }
 
-            state->to_create_player_bullets.clear();
-            state->to_create_enemy_bullets.clear();
+            state->to_create_player_bullets.zero();
+            state->to_create_enemy_bullets.zero();
             return 0;
         },
         this
@@ -478,7 +492,7 @@ void Gameplay_Data::reify_all_creation_queues() {
                 state->enemies.push(e);
             }
 
-            state->to_create_enemies.clear();
+            state->to_create_enemies.zero();
             return 0;
         },
         this
@@ -2365,11 +2379,11 @@ void UID::reset() {
 }
 
 u64 UID::bullet_uid() {
-    return _bullet_entity_uid++;
+    return ++_bullet_entity_uid;
 }
 
 u64 UID::enemy_uid() {
-    return _enemy_entity_uid++;
+    return ++_enemy_entity_uid;
 }
 
 
