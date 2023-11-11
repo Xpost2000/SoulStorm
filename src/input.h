@@ -18,6 +18,7 @@ enum mouse_button {
 };
 
 enum gamepad_axis {
+    GAMEPAD_AXIS_UNKNOWN,
     GAMEPAD_AXIS_X,
     GAMEPAD_AXIS_Y,
 
@@ -27,6 +28,7 @@ enum gamepad_axis {
     GAMEPAD_AXIS_NEGATIVE_Y,
 };
 
+#define INVALID_INPUT (-1)
 enum keyboard_button {
     KEY_UNKNOWN,
     KEY_A, KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G,
@@ -63,7 +65,7 @@ enum keyboard_button {
 
     KEY_CTRL, KEY_ALT,
 
-    KEY_COUNT
+    KEY_COUNT,
 };
 
 enum controller_button {

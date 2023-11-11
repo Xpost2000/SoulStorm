@@ -7,8 +7,8 @@ extern "C" {
 #include "action_mapper.h"
 
 struct Action_Data {
-    s32 key_id[2] = {-1, -1};
-    s32 button_id = -1;
+    s32 key_id[2] = {0, 0};
+    s32 button_id = 0;
     s32 joystick_id = -1;
     s32 axis_id = -1;
 
@@ -85,13 +85,15 @@ namespace Action {
             Input::is_key_pressed(action.key_id[0]) ||
             Input::is_key_pressed(action.key_id[1]);
 
-        switch (action.joystick_id) {
-            case CONTROLLER_JOYSTICK_LEFT: {
-                controller_response |= Input::controller_left_axis_flicked(gamepad, action.axis_id);
-            } break;
-            case CONTROLLER_JOYSTICK_RIGHT: {
-                controller_response |= Input::controller_right_axis_flicked(gamepad, action.axis_id);
-            } break;
+        if (action.axis_id != -1) {
+            switch (action.joystick_id) {
+                case CONTROLLER_JOYSTICK_LEFT: {
+                    controller_response |= Input::controller_left_axis_flicked(gamepad, action.axis_id);
+                } break;
+                case CONTROLLER_JOYSTICK_RIGHT: {
+                    controller_response |= Input::controller_right_axis_flicked(gamepad, action.axis_id);
+                } break;
+            }
         }
 
         return controller_response || keyboard_response;

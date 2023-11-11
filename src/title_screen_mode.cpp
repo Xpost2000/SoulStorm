@@ -28,7 +28,7 @@ void Game::update_and_render_game_title_screen(Graphics_Driver* driver, f32 dt) 
         GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
         GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
-        GameUI::set_ui_id((char*)"ui_options_menu");
+        GameUI::set_ui_id((char*)"ui_titlescreen_menu");
         GameUI::begin_frame(commands);
         {
             f32 y = 100;

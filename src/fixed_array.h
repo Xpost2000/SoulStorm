@@ -105,6 +105,11 @@ struct Fixed_Array {
         size = 0;
     }
 
+    void zero() {
+        zero_memory(data, capacity * sizeof(*data));
+        clear();
+    }
+
     T*     data;
     size_t size;
     size_t capacity;

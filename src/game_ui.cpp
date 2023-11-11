@@ -439,15 +439,15 @@ namespace GameUI {
     }
 
     void set_ui_id(char* id_string) {
-        if (global_ui_state->last_ui_id != global_ui_state->ui_id) {
+        if (global_ui_state->last_ui_id != id_string) {
+            global_ui_state->widgets.zero();
             global_ui_state->picked_first_index = false;
             global_ui_state->selected_index     = -1;
 
             _debugprintf("This is a different UI id.");
+            global_ui_state->last_ui_id = global_ui_state->ui_id;
+            global_ui_state->ui_id = id_string;
         }
-
-        global_ui_state->last_ui_id = global_ui_state->ui_id;
-        global_ui_state->ui_id = id_string;
     }
 
     void move_selected_widget_id(s32 increments) {
