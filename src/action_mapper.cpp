@@ -119,6 +119,7 @@ SCREENSHOT= 8
         luaL_dostring(L, action_enums);
 
         /* for now the API will mirror the C one (which admittedly isn't perfect but whatever.) */
+        // I'll work on it, or provide documentation later.
         lua_register(L, "register_action_keys",
                      [](lua_State* L) {
                          int   action_id    = luaL_checkinteger(L, 1);

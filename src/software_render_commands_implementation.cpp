@@ -141,12 +141,17 @@ void software_framebuffer_render_commands(struct software_framebuffer* framebuff
     s32 JOB_H  = 4;
     s32 TILE_W = framebuffer->width / JOB_W;
     s32 TILE_H = framebuffer->height / JOB_H;
+    s32 TILE_W_remainder = framebuffer->width % TILE_W;
+    s32 TILE_H_remainder = framebuffer->height % TILE_H;
 
     struct render_commands_job_details* job_details = (render_commands_job_details*)Global_Engine()->scratch_arena.push_unaligned(sizeof(*job_details) * (JOB_W*JOB_H));
 
     for (s32 y = 0; y < JOB_H; ++y) {
         for (s32 x = 0; x < JOB_W; ++x) {
             struct rectangle_f32 clip_rect = rectangle_f32(x * TILE_W, y * TILE_H, TILE_W, TILE_H);
+
+            if (x == JOB_W) clip_rect.w += TILE_W_remainder;
+            if (y == JOB_H) clip_rect.h += TILE_H_remainder;
 
             struct render_commands_job_details* current_details = &job_details[y*JOB_W+x];
 
