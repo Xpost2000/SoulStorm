@@ -17,7 +17,7 @@ STAGE_TICK(1_1) {
     LEVEL_DATA(1_1, data);
 
     JDR_Coroutine_Start(co, Start);
-#if 0
+#if 1
     TASK_WAIT(0.5);
     {
         for (int i = 0; i < 3; ++i)  {

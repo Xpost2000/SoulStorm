@@ -64,7 +64,7 @@ inline static char* __shorten_path_length(char* original, int depth) {
     return ptr;
 }
 
-#ifndef _RELEASE
+#ifndef RELEASE
 #define _debugprintfhead()   fprintf(stderr, "[%s:%d:%s()]: " , __shorten_path_length((char*)__FILE__, 2), __LINE__, __func__)
 // #define _debugprintf1(...)  do { _debugprintfhead(); fprintf(stderr, __VA_ARGS__); } while(0)
 #define _debugprintf1(...)  do { DebugUI::print(format_temp("[%s:%d:%s()]: %s", __shorten_path_length((char*)__FILE__, 2), __LINE__, __func__,  format_temp(__VA_ARGS__))); _debugprintfhead(); fprintf(stderr, __VA_ARGS__); } while(0)

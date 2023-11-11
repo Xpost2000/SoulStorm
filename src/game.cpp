@@ -17,15 +17,6 @@
 
 #include "action_mapper.h"
 
-#define DEFAULT_AUTO_SCORE_INTERVAL (0.055f)
-
-// This will be hard-coded, since this is how my game design idea is.
-
-// TBH, I think some of the names are cool from other mythologies but I seem
-// to have middle-school level writing sometimes :)
-
-// You know, now that I look at this further. This sounds a lot like Dante's Inferno...
-
 // I kinda wanna draw a cute icon for each of the levels.
 local Stage stage_list[] = {
     #include "stage_list.h"
@@ -209,7 +200,6 @@ void Game::setup_stage_start() {
 
     state->tries = MAX_BASE_TRIES;
     state->current_score = 0;
-    state->auto_score_timer = 0;
 
     // setup introduction badge
     {
@@ -1664,16 +1654,8 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 
         while (accumulator >= TARGET_FRAMERATE) {
             f32 dt = TARGET_FRAMERATE;
-            {
-                if (state->auto_score_timer >= DEFAULT_AUTO_SCORE_INTERVAL) {
-                    state->current_score    += 1;
-                    state->auto_score_timer  = 0;
-                } else {
-                    state->auto_score_timer += dt;
-                }
-                state->current_stage_timer += dt;
-            }
-
+            state->current_stage_timer += dt;
+                
             struct Entity_Loop_Update_Packet {
                 Game_State* game_state;
                 f32         dt;
