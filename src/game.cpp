@@ -2709,7 +2709,6 @@ int _lua_bind_Task_Yield(lua_State* L) {
     s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
     assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
 
-    // auto task = state->coroutine_tasks.tasks[task_id];
     return lua_yield(L, 0);
 }
 
@@ -2756,8 +2755,10 @@ int _lua_bind_enemy_set_position(lua_State* L) {
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
-    e->position.x = luaL_checknumber(L, 2);
-    e->position.y = luaL_checknumber(L, 3);
+    if (e) {
+        e->position.x = luaL_checknumber(L, 2);
+        e->position.y = luaL_checknumber(L, 3);
+    }
     return 0;
 }
 
@@ -2766,8 +2767,10 @@ int _lua_bind_enemy_set_scale(lua_State* L) {
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
-    e->scale.x = luaL_checknumber(L, 2);
-    e->scale.y = luaL_checknumber(L, 3);
+    if (e) {
+        e->scale.x = luaL_checknumber(L, 2);
+        e->scale.y = luaL_checknumber(L, 3);
+    }
     return 0;
 }
 
@@ -2776,8 +2779,10 @@ int _lua_bind_enemy_set_velocity(lua_State* L) {
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
-    e->velocity.x = luaL_checknumber(L, 2);
-    e->velocity.y = luaL_checknumber(L, 3);
+    if (e) {
+        e->velocity.x = luaL_checknumber(L, 2);
+        e->velocity.y = luaL_checknumber(L, 3);
+    }
     return 0;
 }
 
@@ -2786,8 +2791,10 @@ int _lua_bind_enemy_set_acceleration(lua_State* L) {
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
-    e->acceleration.x = luaL_checknumber(L, 2);
-    e->acceleration.y = luaL_checknumber(L, 3);
+    if (e) {
+        e->acceleration.x = luaL_checknumber(L, 2);
+        e->acceleration.y = luaL_checknumber(L, 3);
+    }
     return 0;
 }
 
@@ -2796,7 +2803,9 @@ int _lua_bind_enemy_set_hp(lua_State* L) {
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
-    e->hp = luaL_checkinteger(L, 2);
+    if (e) {
+        e->hp = luaL_checkinteger(L, 2);
+    }
     return 0;
 }
 
@@ -2823,7 +2832,9 @@ int _lua_bind_enemy_reset_movement(lua_State* L) {
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
-    e->reset_movement();
+    if (e) {
+        e->reset_movement();
+    }
     return 0;
 }
 
@@ -2846,8 +2857,11 @@ int _lua_bind_enemy_position_x(lua_State* L) {
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
-    lua_pushnumber(L, e->position.x);
-    return 1;
+    if (e) {
+        lua_pushnumber(L, e->position.x);
+        return 1;
+    }
+    return 0;
 }
 
 int _lua_bind_enemy_position_y(lua_State* L) {
@@ -2855,8 +2869,11 @@ int _lua_bind_enemy_position_y(lua_State* L) {
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
-    lua_pushnumber(L, e->position.y);
-    return 1;
+    if (e) {
+        lua_pushnumber(L, e->position.y);
+        return 1;
+    }
+    return 0;
 }
 
 int _lua_bind_enemy_velocity_x(lua_State* L) {
@@ -2864,8 +2881,11 @@ int _lua_bind_enemy_velocity_x(lua_State* L) {
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
-    lua_pushnumber(L, e->velocity.x);
-    return 1;
+    if (e) {
+        lua_pushnumber(L, e->velocity.x);
+        return 1;
+    }
+    return 0;
 }
 
 int _lua_bind_enemy_velocity_y(lua_State* L) {
@@ -2873,8 +2893,11 @@ int _lua_bind_enemy_velocity_y(lua_State* L) {
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
-    lua_pushnumber(L, e->velocity.y);
-    return 1;
+    if (e) {
+        lua_pushnumber(L, e->velocity.y);
+        return 1;
+    }
+    return 0;
 }
 
 int _lua_bind_enemy_hp(lua_State* L) {
@@ -2882,8 +2905,11 @@ int _lua_bind_enemy_hp(lua_State* L) {
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
-    lua_pushnumber(L, e->hp);
-    return 1;
+    if (e) {
+        lua_pushnumber(L, e->hp);
+        return 1;
+    }
+    return 0;
 }
 
 lua_State* Game_State::alloc_lua_bindings() {
