@@ -123,7 +123,7 @@ struct Game_Task_Scheduler {
       all lua tasks are GAME_TASKS
     */
     Fixed_Array<Game_Task> tasks;
-    lua_State* L; // set this pointer to the currently owned lua task.
+    lua_State* L = nullptr; // set this pointer to the currently owned lua task.
 
     // NOTE: will override non-essential tasks.
     s32  add_task(struct Game_State* state, jdr_duffcoroutine_fn f, bool essential=false);

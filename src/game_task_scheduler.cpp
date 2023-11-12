@@ -235,9 +235,9 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             if (task.L_C) {
                 s32 _nres;
                 s32 status = lua_resume(task.L_C, L, task.nargs, &_nres);
-                task.last_L_C_status                 = status;
                 if (status == LUA_YIELD)      status = JDR_DUFFCOROUTINE_SUSPENDED;
-                if (status == LUA_OK)         status = JDR_DUFFCOROUTINE_FINISHED;
+                else if (status == LUA_OK)    { status = JDR_DUFFCOROUTINE_FINISHED; task.L_C = nullptr; }
+                task.last_L_C_status = status;
             } else {
                 if (task.coroutine.f) jdr_resume(&task.coroutine);
             }

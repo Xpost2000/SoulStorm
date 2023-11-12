@@ -27,6 +27,7 @@ struct Widget {
     color32f32 modulation;
     string     text;
     f32        scale;
+    bool       active;
 
     // for option_selector
     s32 current_selected_index;
@@ -200,6 +201,7 @@ namespace GameUI {
     void label(V2 where, string text, color32f32 modulation, f32 scale, bool active) {
         assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
         auto widget = push_label(where, text, scale, modulation);
+        widget->active = active;
         auto font = global_ui_state->default_font;
 
         if (!active) widget->modulation.a = 0.5 * modulation.a;
@@ -209,11 +211,12 @@ namespace GameUI {
 
     s32 button(V2 where, string text, color32f32 modulation, f32 scale, bool active) {
         assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
-        auto widget         = push_button(where, text, scale, modulation);
-        auto font           = global_ui_state->default_font;
-        auto text_width     = font_cache_text_width(font, widget->text, widget->scale);
-        auto text_height    = font_cache_text_height(font) * widget->scale;
-        auto button_rect    = rectangle_f32(widget->where.x, widget->where.y, text_width, text_height);
+        auto widget      = push_button(where, text, scale, modulation);
+        widget->active    = active;
+        auto font        = global_ui_state->default_font;
+        auto text_width  = font_cache_text_width(font, widget->text, widget->scale);
+        auto text_height = font_cache_text_height(font) * widget->scale;
+        auto button_rect = rectangle_f32(widget->where.x, widget->where.y, text_width, text_height);
 
         bool clicked        = false;
 
@@ -246,6 +249,7 @@ namespace GameUI {
     bool checkbox(V2 where, string text, color32f32 modulation, f32 scale, bool* ptr, bool active) {
         assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
         auto widget         = push_button(where, text, scale, modulation);
+        widget->active    = active;
         auto font           = global_ui_state->default_font;
         auto text_width     = font_cache_text_width(font, widget->text, widget->scale);
         auto text_height    = font_cache_text_height(font) * widget->scale;
@@ -296,6 +300,7 @@ namespace GameUI {
     void option_selector(V2 where, string text, color32f32 modulation, f32 scale, string* options, s32 options_count, s32* out_selected, bool active) {
         assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
         auto widget = push_option_selector(where, text, scale, modulation, out_selected);
+        widget->active    = active;
         auto font   = global_ui_state->default_font;
 
         label(where, text, modulation, scale, active);
@@ -328,7 +333,7 @@ namespace GameUI {
     void f32_slider(V2 where, string text, color32f32 modulation, f32 scale, f32* ptr, f32 min_value, f32 max_value, f32 slider_width_px, bool active) {
         assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
         auto widget         = push_f32_slider(where, text, scale, modulation);
-
+        widget->active    = active;
         auto font           = global_ui_state->default_font;
         auto text_width     = font_cache_text_width(font, widget->text, widget->scale);
         auto text_height    = font_cache_text_height(font) * widget->scale;
@@ -463,7 +468,7 @@ namespace GameUI {
 
         auto& next_widget = global_ui_state->widgets[global_ui_state->selected_index];
         _debugprintf("Next widget is id(%d)", global_ui_state->selected_index);
-        if (!is_selectable_widget_type(next_widget.type)) {
+        if (!is_selectable_widget_type(next_widget.type) && next_widget.active) {
             _debugprintf("I do not think (%d) is selectable.", global_ui_state->selected_index);
             move_selected_widget_id(sign_s32(increments));
         }
