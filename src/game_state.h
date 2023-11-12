@@ -276,6 +276,12 @@ struct Game_State {
     lua_State* alloc_lua_bindings();
 };
 
+inline static Game_State* lua_binding_get_gamestate(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    return state;
+}
+
 struct Game_Resources {
     struct graphics_assets graphics_assets;
     font_id         menu_fonts[MENU_FONT_COUNT];

@@ -24,7 +24,10 @@ V2 velocity_linear_with_accel(V2 direction, f32 magnitude, f32 t, V2 accel_direc
 }
 
 V2 velocity_follow(Entity* entity) {
-    return entity->velocity;
+    if (entity)
+        return entity->velocity;
+
+    return V2(0, 0);
 }
 
 V2 velocity_circle_orbit(f32 t, f32 spawn_theta, f32 r) {

@@ -753,11 +753,26 @@ void Laser_Hazard::draw(Game_State* state, struct render_commands* render_comman
     }
 }
 
-int _lua_bind_spawn_bullet_arc_pattern2(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+/*
+* 
+* Start of all the lua bindings. They're relatively
+* straight forward procedural bindings to lua.
+* 
+* They're generally formatted so as to provide a simple DSL
+* to make levels...
+* 
+* There's just a lot of typing here, and not many ways to avoid it
+* to be honest without dragging in a giant lua binding library.
+* 
+* NOTE: most, if not all of this is not actually error checked because that's
+* an obscene additional amount of code. If the level script is bad. I'm okay with it
+* crashing...
+* 
+*/
 
-    // if (lua_gettop(L) != 12) // ?
+int _lua_bind_spawn_bullet_arc_pattern2(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+
     spawn_bullet_arc_pattern2(
         state,
         V2(luaL_checknumber(L, 1), luaL_checknumber(L, 2)),
@@ -774,8 +789,7 @@ int _lua_bind_spawn_bullet_arc_pattern2(lua_State* L) {
 }
 
 int _lua_bind_enemy_new(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     auto e = enemy_generic( state, V2(0,0), V2(10,10), nullptr);
     state->gameplay_data.add_enemy_entity(e);
     lua_pushinteger(L, e.uid);
@@ -783,8 +797,7 @@ int _lua_bind_enemy_new(lua_State* L) {
 }
 
 int _lua_bind_enemy_valid(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     lua_pushboolean(L, e != nullptr);
@@ -792,8 +805,7 @@ int _lua_bind_enemy_valid(lua_State* L) {
 }
 
 int _lua_bind_enemy_set_position(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
@@ -804,8 +816,7 @@ int _lua_bind_enemy_set_position(lua_State* L) {
 }
 
 int _lua_bind_enemy_set_scale(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
@@ -816,8 +827,7 @@ int _lua_bind_enemy_set_scale(lua_State* L) {
 }
 
 int _lua_bind_enemy_set_velocity(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
@@ -828,8 +838,7 @@ int _lua_bind_enemy_set_velocity(lua_State* L) {
 }
 
 int _lua_bind_enemy_set_acceleration(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
@@ -840,8 +849,7 @@ int _lua_bind_enemy_set_acceleration(lua_State* L) {
 }
 
 int _lua_bind_enemy_set_hp(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
@@ -851,8 +859,7 @@ int _lua_bind_enemy_set_hp(lua_State* L) {
 }
 
 int _lua_bind_enemy_set_task(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     char* task_name = (char*)lua_tostring(L, 2);
@@ -862,15 +869,24 @@ int _lua_bind_enemy_set_task(lua_State* L) {
      * NOTE: not sure how to do this right now.
      * I would like to copy items between stacks.
      */
+    Lua_Task_Extra_Parameter_Variant extra_parameters[128] = {};
     s32 remaining = lua_gettop(L)-3;
     _debugprintf("%d remaining items in the stack?", remaining);
-    state->coroutine_tasks.add_enemy_lua_game_task(state, state->coroutine_tasks.L, task_name, uid, 0);
+
+    for (s32 index = 0; index < remaining; ++index) {
+        s32 stack_index = 3 + index;
+        if (lua_isnumber(L, stack_index)) extra_parameters[index] = ltep_variant_number(lua_tonumber(L, stack_index));
+        else if (lua_isstring(L, stack_index)) extra_parameters[index] = ltep_variant_string((char*)lua_tostring(L, stack_index));
+        else if (lua_isinteger(L, stack_index)) extra_parameters[index] = ltep_variant_integer(lua_tointeger(L, stack_index));
+        else if (lua_isboolean(L, stack_index)) extra_parameters[index] = ltep_variant_boolean(lua_toboolean(L, stack_index));
+    }
+
+    state->coroutine_tasks.add_enemy_lua_game_task(state, state->coroutine_tasks.L, task_name, uid, make_slice(extra_parameters, remaining));
     return 0;
 }
 
 int _lua_bind_enemy_reset_movement(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
@@ -880,8 +896,7 @@ int _lua_bind_enemy_reset_movement(lua_State* L) {
 }
 
 int _lua_bind_enemy_position_x(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
@@ -892,8 +907,7 @@ int _lua_bind_enemy_position_x(lua_State* L) {
 }
 
 int _lua_bind_enemy_position_y(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
@@ -904,8 +918,7 @@ int _lua_bind_enemy_position_y(lua_State* L) {
 }
 
 int _lua_bind_enemy_velocity_x(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
@@ -916,8 +929,29 @@ int _lua_bind_enemy_velocity_x(lua_State* L) {
 }
 
 int _lua_bind_enemy_velocity_y(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        lua_pushnumber(L, e->velocity.y);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_acceleration_x(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        lua_pushnumber(L, e->velocity.x);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_acceleration_y(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
@@ -928,8 +962,7 @@ int _lua_bind_enemy_velocity_y(lua_State* L) {
 }
 
 int _lua_bind_enemy_hp(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
@@ -939,23 +972,173 @@ int _lua_bind_enemy_hp(lua_State* L) {
     return 0;
 }
 
-void bind_entity_lualib(lua_State* L) {
-    {
-        lua_register(L, "enemy_new", _lua_bind_enemy_new);
-        lua_register(L, "enemy_valid", _lua_bind_enemy_valid);
-        lua_register(L, "enemy_set_position", _lua_bind_enemy_set_position);
-        lua_register(L, "enemy_set_scale", _lua_bind_enemy_set_scale);
-        lua_register(L, "enemy_set_velocity", _lua_bind_enemy_set_velocity);
-        lua_register(L, "enemy_set_acceleration", _lua_bind_enemy_set_acceleration);
-        lua_register(L, "enemy_set_hp", _lua_bind_enemy_set_hp);
-        lua_register(L, "enemy_set_task", _lua_bind_enemy_set_task);
-        lua_register(L, "enemy_reset_movement", _lua_bind_enemy_reset_movement);
+int _lua_bind_enemy_to_ptr(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    lua_pushlightuserdata(L, e);
+    return 1;
+}
 
+int _lua_bind_enemy_kill(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->kill();
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_hurt(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->damage(luaL_checkinteger(L, 2));
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_start_trail(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->trail_ghost_limit = luaL_checkinteger(L, 2);
+    }
+    return 0;
+}
+int _lua_bind_enemy_set_trail_modulation(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->trail_ghost_modulation = color32f32(luaL_checknumber(L, 2), luaL_checknumber(L, 3), luaL_checknumber(L, 4), 1);
+        e->trail_ghost_max_alpha = luaL_checknumber(L, 5);
+    }
+    return 0;
+}
+int _lua_bind_enemy_set_trail_record_speed(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->trail_ghost_record_timer_max = luaL_checknumber(L, 2);
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_stop_trail(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->trail_ghost_limit = 0;
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_begin_invincibility(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->begin_invincibility(lua_toboolean(L, 2), luaL_checknumber(L, 3));
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_end_invincibility(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->end_invincibility();
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_set_oob_deletion(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+
+    if (e) {
+        e->allow_out_of_bounds_survival = lua_toboolean(L, 2);
+    }
+
+    return 0;
+}
+
+void bind_entity_lualib(lua_State* L) {
+    /*
+        NOTE: the lib is only in scalar values which isn't very good, but it's
+            simple and flexible enough to play with.
+
+        Everything will probably remain as individual parameters since it requires less library/parsing
+        work, but there are bindings to the math functions inside this engine...
+     */
+    {
+        // behavior setting
+        lua_register(L, "_enemy_to_ptr",             _lua_bind_enemy_to_ptr);
+        lua_register(L, "enemy_new",                 _lua_bind_enemy_new);
+        lua_register(L, "enemy_valid",               _lua_bind_enemy_valid);
+        lua_register(L, "enemy_set_position",        _lua_bind_enemy_set_position);
+        lua_register(L, "enemy_set_scale",           _lua_bind_enemy_set_scale);
+        lua_register(L, "enemy_set_velocity",        _lua_bind_enemy_set_velocity);
+        lua_register(L, "enemy_set_acceleration",    _lua_bind_enemy_set_acceleration);
+        lua_register(L, "enemy_set_hp",              _lua_bind_enemy_set_hp);
+        lua_register(L, "enemy_set_task",            _lua_bind_enemy_set_task);
+        lua_register(L, "enemy_reset_movement",      _lua_bind_enemy_reset_movement);
+        lua_register(L, "enemy_kill",                _lua_bind_enemy_kill);
+        lua_register(L, "enemy_hurt",                _lua_bind_enemy_hurt);
+        lua_register(L, "enemy_start_trail",         _lua_bind_enemy_start_trail);
+        lua_register(L, "enemy_set_trail_modulation",         _lua_bind_enemy_set_trail_modulation);
+        lua_register(L, "enemy_set_trail_record_speed",          _lua_bind_enemy_set_trail_record_speed);
+        lua_register(L, "enemy_stop_trail",             _lua_bind_enemy_stop_trail);
+        lua_register(L, "enemy_begin_invincibility", _lua_bind_enemy_begin_invincibility);
+        lua_register(L, "enemy_end_invincibility",   _lua_bind_enemy_end_invincibility);
+        lua_register(L, "enemy_set_oob_deletion",    _lua_bind_enemy_set_oob_deletion);
+
+        // reading
         lua_register(L, "enemy_position_x", _lua_bind_enemy_position_x);
         lua_register(L, "enemy_position_y", _lua_bind_enemy_position_y);
         lua_register(L, "enemy_velocity_x", _lua_bind_enemy_velocity_x);
         lua_register(L, "enemy_velocity_y", _lua_bind_enemy_velocity_y);
-        lua_register(L, "enemy_hp", _lua_bind_enemy_hp);
+        lua_register(L, "enemy_acceleration_x", _lua_bind_enemy_acceleration_x);
+        lua_register(L, "enemy_acceleration_y", _lua_bind_enemy_acceleration_y);
+        lua_register(L, "enemy_hp",         _lua_bind_enemy_hp);
+
+        // bullet behavior setting. (there is no reason to read from a bullet)
+        lua_register(L, "_bullet_ptr",                _lua_bind_bullet_to_ptr);
+        lua_register(L, "bullet_new",                 _lua_bind_bullet_new);
+        lua_register(L, "bullet_valid",               _lua_bind_bullet_valid);
+        lua_register(L, "bullet_set_position",        _lua_bind_bullet_set_position);
+        lua_register(L, "bullet_set_scale",           _lua_bind_bullet_set_scale);
+        lua_register(L, "bullet_set_velocity",        _lua_bind_bullet_set_velocity);
+        lua_register(L, "bullet_set_acceleration",    _lua_bind_bullet_set_acceleration);
+        lua_register(L, "bullet_start_trail",         _lua_bind_bullet_start_trail);
+        lua_register(L, "bullet_stop_trail",          _lua_bind_bullet_stop_trail);
+        lua_register(L, "bullet_set_hp",              _lua_bind_bullet_set_hp);
+        lua_register(L, "bullet_set_visual",          _lua_bind_bullet_set_visual);
+        lua_register(L, "bullet_set_task",            _lua_bind_bullet_set_task);
+        lua_register(L, "bullet_reset_movement",      _lua_bind_bullet_reset_movement);
+        lua_register(L, "bullet_kill",                _lua_bind_bullet_kill);
+
+        // Player is READONLY. All things done to the player are only through the engine code.
+        lua_register(L, "_player_ptr",       _lua_bind_player_to_ptr);
+        lua_register(L, "player_position_x", _lua_bind_player_position_x);
+        lua_register(L, "player_position_y", _lua_bind_player_position_y);
+        lua_register(L, "player_velocity_x", _lua_bind_player_velocity_x);
+        lua_register(L, "player_velocity_y", _lua_bind_player_velocity_y);
+        lua_register(L, "player_hp",         _lua_bind_player_hp);
+
+        lua_register(L, "explosion_hazard_new", _lua_bind_explosion_hazard_new);
+        lua_register(L, "laser_hazard_new",     _lua_bind_laser_hazard_new);
+
+
+        // temporary. I should have a lua variation to work with.
         lua_register(L, "spawn_bullet_arc_pattern2", _lua_bind_spawn_bullet_arc_pattern2);
     }
 }
