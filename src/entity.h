@@ -294,9 +294,13 @@ struct Bullet : public Entity {
     s32   source_type;
 
     void update(Game_State* state, f32 dt);
+    void reset_movement();
 
     // want this to be handled via lua
     Bullet_Entity_Velocity_Fn velocity_function = nullptr;
+private:
+    void handle_lifetime(f32 dt);
+    void handle_movement(Game_State* state, f32 dt);
 };
 
 struct lua_State;

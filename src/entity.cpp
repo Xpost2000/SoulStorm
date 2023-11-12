@@ -481,9 +481,7 @@ void Player::update(Game_State* state, f32 dt) {
 }
 
 // BulletEntity
-void Bullet::update(Game_State* state, f32 dt) {
-    const auto& play_area = state->gameplay_data.play_area;
-
+void Bullet::handle_lifetime(f32 dt) {
     if (lifetime.t == -1) {
         // live until killed by something else
     } else {
@@ -496,13 +494,20 @@ void Bullet::update(Game_State* state, f32 dt) {
             die = true;
         }
     }
+}
 
+void Bullet::handle_movement(Game_State* state, f32 dt) {
     if (velocity_function) {
         velocity = V2(0, 0);
         velocity_function(this, state, dt);
     } else {
         velocity += acceleration * dt;
     }
+}
+
+void Bullet::update(Game_State* state, f32 dt) {
+    handle_lifetime(dt);
+    handle_movement(state, dt);
 
     sprite.animate(
         &state->resources->graphics_assets,
@@ -511,6 +516,12 @@ void Bullet::update(Game_State* state, f32 dt) {
     );
 
     Entity::update(state, dt);
+}
+
+void Bullet::reset_movement() {
+    velocity_function = nullptr;
+    velocity          = V2(0, 0);
+    acceleration      = V2(0, 0);
 }
 
 // Enemy_Entity
@@ -788,6 +799,8 @@ int _lua_bind_spawn_bullet_arc_pattern2(lua_State* L) {
     return 0;
 }
 
+// ENEMY ENTITY
+
 int _lua_bind_enemy_new(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     auto e = enemy_generic( state, V2(0,0), V2(10,10), nullptr);
@@ -980,26 +993,6 @@ int _lua_bind_enemy_to_ptr(lua_State* L) {
     return 1;
 }
 
-int _lua_bind_enemy_kill(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    u64 uid = luaL_checkinteger(L, 1);
-    auto e = state->gameplay_data.lookup_enemy(uid);
-    if (e) {
-        e->kill();
-    }
-    return 0;
-}
-
-int _lua_bind_enemy_hurt(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    u64 uid = luaL_checkinteger(L, 1);
-    auto e = state->gameplay_data.lookup_enemy(uid);
-    if (e) {
-        e->damage(luaL_checkinteger(L, 2));
-    }
-    return 0;
-}
-
 int _lua_bind_enemy_start_trail(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
@@ -1039,6 +1032,26 @@ int _lua_bind_enemy_stop_trail(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_enemy_kill(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->kill();
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_hurt(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->damage(luaL_checkinteger(L, 2));
+    }
+    return 0;
+}
+
 int _lua_bind_enemy_begin_invincibility(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
@@ -1070,6 +1083,323 @@ int _lua_bind_enemy_set_oob_deletion(lua_State* L) {
 
     return 0;
 }
+// BULLET ENTITY
+int _lua_bind_bullet_new(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto e = bullet_generic( state, V2(0,0), V2(10,10), luaL_checkinteger(L, 1), nullptr, PROJECTILE_SPRITE_BLUE);
+    state->gameplay_data.add_bullet(e);
+    lua_pushinteger(L, e.uid);
+    return 1;
+}
+
+int _lua_bind_bullet_valid(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    lua_pushboolean(L, e != nullptr);
+    return 1;
+}
+
+int _lua_bind_bullet_set_position(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->position.x = luaL_checknumber(L, 2);
+        e->position.y = luaL_checknumber(L, 3);
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_set_scale(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->scale.x = luaL_checknumber(L, 2);
+        e->scale.y = luaL_checknumber(L, 3);
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_set_velocity(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->velocity.x = luaL_checknumber(L, 2);
+        e->velocity.y = luaL_checknumber(L, 3);
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_set_acceleration(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->acceleration.x = luaL_checknumber(L, 2);
+        e->acceleration.y = luaL_checknumber(L, 3);
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_set_task(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    char* task_name = (char*)lua_tostring(L, 2);
+    _debugprintf("set task?");
+
+    Lua_Task_Extra_Parameter_Variant extra_parameters[128] = {};
+    s32 remaining = lua_gettop(L)-3;
+    _debugprintf("%d remaining items in the stack?", remaining);
+
+    for (s32 index = 0; index < remaining; ++index) {
+        s32 stack_index = 3 + index;
+        if (lua_isnumber(L, stack_index)) extra_parameters[index] = ltep_variant_number(lua_tonumber(L, stack_index));
+        else if (lua_isstring(L, stack_index)) extra_parameters[index] = ltep_variant_string((char*)lua_tostring(L, stack_index));
+        else if (lua_isinteger(L, stack_index)) extra_parameters[index] = ltep_variant_integer(lua_tointeger(L, stack_index));
+        else if (lua_isboolean(L, stack_index)) extra_parameters[index] = ltep_variant_boolean(lua_toboolean(L, stack_index));
+    }
+
+    state->coroutine_tasks.add_bullet_lua_game_task(state, state->coroutine_tasks.L, task_name, uid, make_slice(extra_parameters, remaining));
+    return 0;
+}
+
+int _lua_bind_bullet_reset_movement(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->reset_movement();
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_position_x(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushnumber(L, e->position.x);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_position_y(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushnumber(L, e->position.y);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_velocity_x(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushnumber(L, e->velocity.x);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_velocity_y(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushnumber(L, e->velocity.y);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_acceleration_x(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushnumber(L, e->velocity.x);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_acceleration_y(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushnumber(L, e->velocity.y);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_to_ptr(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    lua_pushlightuserdata(L, e);
+    return 1;
+}
+
+int _lua_bind_bullet_start_trail(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->trail_ghost_limit = luaL_checkinteger(L, 2);
+    }
+    return 0;
+}
+int _lua_bind_bullet_set_trail_modulation(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->trail_ghost_modulation = color32f32(luaL_checknumber(L, 2), luaL_checknumber(L, 3), luaL_checknumber(L, 4), 1);
+        e->trail_ghost_max_alpha = luaL_checknumber(L, 5);
+    }
+    return 0;
+}
+int _lua_bind_bullet_set_trail_record_speed(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->trail_ghost_record_timer_max = luaL_checknumber(L, 2);
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_stop_trail(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->trail_ghost_limit = 0;
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_set_visual(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->sprite = sprite_instance(
+            state->resources->projectile_sprites[
+                luaL_checkinteger(L, 2)
+            ]
+        );
+    }
+    return 0; 
+}
+
+// Misc entities
+int _lua_bind_explosion_hazard_new(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+
+    V2 position = V2(luaL_checknumber(L, 1), luaL_checknumber(L, 2));
+    f32 radius = luaL_checknumber(L, 3);
+    f32 warning_time = luaL_checknumber(L, 4);
+    f32 time_until_explosion = luaL_checknumber(L, 5);
+
+    state->gameplay_data.add_explosion_hazard(
+        Explosion_Hazard(
+            position,
+            radius,
+            warning_time,
+            time_until_explosion
+        )
+    );
+    return 0;
+}
+
+int _lua_bind_laser_hazard_new(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+
+    f32 position = luaL_checknumber(L, 1);
+    f32 radius = luaL_checknumber(L, 2);
+    s32 direction = luaL_checkinteger(L, 3);
+    f32 warning_time = luaL_checknumber(L, 4);
+    f32 lifetime = luaL_checknumber(L, 5);
+
+    state->gameplay_data.add_laser_hazard(
+        Laser_Hazard(
+            position,
+            radius,
+            direction,
+            warning_time,
+            lifetime
+        )
+    );
+    return 0;
+}
+
+// Player bindings
+int _lua_bind_player_to_ptr(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto e = &state->gameplay_data.player;
+    lua_pushlightuserdata(L, e);
+    return 1;
+}
+int _lua_bind_player_hp(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto e = &state->gameplay_data.player;
+    if (e) {
+        lua_pushnumber(L, e->hp);
+        return 1;
+    }
+    return 0;
+}
+int _lua_bind_player_position_x(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto e = &state->gameplay_data.player;
+    if (e) {
+        lua_pushnumber(L, e->position.x);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_player_position_y(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto e = &state->gameplay_data.player;
+    if (e) {
+        lua_pushnumber(L, e->position.y);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_player_velocity_x(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto e = &state->gameplay_data.player;
+    if (e) {
+        lua_pushnumber(L, e->velocity.x);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_player_velocity_y(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto e = &state->gameplay_data.player;
+    if (e) {
+        lua_pushnumber(L, e->velocity.y);
+        return 1;
+    }
+    return 0;
+}
 
 void bind_entity_lualib(lua_State* L) {
     /*
@@ -1078,6 +1408,11 @@ void bind_entity_lualib(lua_State* L) {
 
         Everything will probably remain as individual parameters since it requires less library/parsing
         work, but there are bindings to the math functions inside this engine...
+
+        NOTE: I am distinctly aware that I could make these functions more generic if I just "buff" the uid,
+        but I like being more explicit for stuff.
+
+        Technically speaking bullets and enemies are actually extremely similar...
      */
     {
         // behavior setting
@@ -1111,20 +1446,20 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "enemy_hp",         _lua_bind_enemy_hp);
 
         // bullet behavior setting. (there is no reason to read from a bullet)
-        lua_register(L, "_bullet_ptr",                _lua_bind_bullet_to_ptr);
-        lua_register(L, "bullet_new",                 _lua_bind_bullet_new);
-        lua_register(L, "bullet_valid",               _lua_bind_bullet_valid);
-        lua_register(L, "bullet_set_position",        _lua_bind_bullet_set_position);
-        lua_register(L, "bullet_set_scale",           _lua_bind_bullet_set_scale);
-        lua_register(L, "bullet_set_velocity",        _lua_bind_bullet_set_velocity);
-        lua_register(L, "bullet_set_acceleration",    _lua_bind_bullet_set_acceleration);
-        lua_register(L, "bullet_start_trail",         _lua_bind_bullet_start_trail);
-        lua_register(L, "bullet_stop_trail",          _lua_bind_bullet_stop_trail);
-        lua_register(L, "bullet_set_hp",              _lua_bind_bullet_set_hp);
-        lua_register(L, "bullet_set_visual",          _lua_bind_bullet_set_visual);
-        lua_register(L, "bullet_set_task",            _lua_bind_bullet_set_task);
-        lua_register(L, "bullet_reset_movement",      _lua_bind_bullet_reset_movement);
-        lua_register(L, "bullet_kill",                _lua_bind_bullet_kill);
+        lua_register(L, "_bullet_ptr",                   _lua_bind_bullet_to_ptr);
+        lua_register(L, "bullet_new",                    _lua_bind_bullet_new);
+        lua_register(L, "bullet_valid",                  _lua_bind_bullet_valid);
+        lua_register(L, "bullet_set_position",           _lua_bind_bullet_set_position);
+        lua_register(L, "bullet_set_scale",              _lua_bind_bullet_set_scale);
+        lua_register(L, "bullet_set_velocity",           _lua_bind_bullet_set_velocity);
+        lua_register(L, "bullet_set_acceleration",       _lua_bind_bullet_set_acceleration);
+        lua_register(L, "bullet_start_trail",            _lua_bind_bullet_start_trail);
+        lua_register(L, "bullet_set_trail_modulation",   _lua_bind_bullet_set_trail_modulation);
+        lua_register(L, "bullet_set_trail_record_speed", _lua_bind_bullet_set_trail_record_speed);
+        lua_register(L, "bullet_stop_trail",             _lua_bind_bullet_stop_trail);
+        lua_register(L, "bullet_set_visual",             _lua_bind_bullet_set_visual);
+        lua_register(L, "bullet_set_task",               _lua_bind_bullet_set_task);
+        lua_register(L, "bullet_reset_movement",         _lua_bind_bullet_reset_movement);
 
         // Player is READONLY. All things done to the player are only through the engine code.
         lua_register(L, "_player_ptr",       _lua_bind_player_to_ptr);
