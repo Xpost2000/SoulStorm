@@ -1300,7 +1300,7 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
                 state->gameplay_data.paused_from_death  = false;
                 state->gameplay_data.tries             -= 1;
 
-                state->gameplay_data.player.invincibility_time.start();
+                state->gameplay_data.player.begin_invincibility();
                 state->gameplay_data.player.heal(1);
                 // resurrect the player with iframes.
 

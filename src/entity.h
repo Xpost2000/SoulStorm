@@ -84,9 +84,14 @@ struct Entity {
     Timer cleanup_time                    = Timer(ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION);
     Timer invincibility_time_flash_period = Timer(INVINCIBILITY_FLASH_TIME_PERIOD);
     Timer invincibility_time              = Timer(PLAYER_INVINICIBILITY_TIME);
-    int   hp            = 1;
-    bool  die           = false; // force dead flag
-    bool  flashing      = false; // flicker on or off
+    int   hp                              = 1;
+    bool  die                             = false; // force dead flag
+    bool  flashing                        = false; // flicker on or off
+    bool  invincibility_show_flashing     = true;
+
+    // if timer == -1, be invincible forever.
+    void end_invincibility();
+    void begin_invincibility(bool visual_flash=true, f32 timer=PLAYER_INVINICIBILITY_TIME);
 
     f32   firing_t      = 0;
     f32   firing_cooldown = DEFAULT_FIRING_COOLDOWN;

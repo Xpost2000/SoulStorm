@@ -174,6 +174,18 @@ bool Entity::heal(s32 hp) {
     return true;
 }
 
+void Entity::begin_invincibility(bool visual_flash, f32 timer) {
+    invincibility_show_flashing = visual_flash;
+    invincibility_time          = Timer(timer);
+    invincibility_time.start();
+    flashing = false;
+    invincibility_time_flash_period.reset();
+}
+void Entity::end_invincibility() {
+    flashing = false;
+    invincibility_time.stop();
+}
+
 bool Entity::kill() {
     _debugprintf("trying to die");
     return damage(9999999); // lol
@@ -283,7 +295,6 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
                 render_commands,
                 sprite_img,
                 rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-                // sprite_frame->source_rect,
                 sprite_frame->source_rect,
                 modulation,
                 0,
@@ -299,12 +310,26 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
             render_commands,
             sprite_img,
             rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-            // sprite_frame->source_rect,
             sprite_frame->source_rect,
             color32f32(1.0, 1.0, 1.0, 1.0),
             0,
             BLEND_MODE_ALPHA
         );
+
+        // This would hurt in hardware because I'm not planning
+        // to optimize the hardware renderers that much, which means I'm incuring
+        // the wrath of a state change...
+        if (flashing) {
+            render_commands_push_image(
+                render_commands,
+                sprite_img,
+                rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+                sprite_frame->source_rect,
+                color32f32(1.0, 1.0, 1.0, 1.0),
+                0,
+                BLEND_MODE_ADDITIVE
+            );
+        }
     } else {
         render_commands_push_quad_ext(
             render_commands,
@@ -388,7 +413,7 @@ void Entity::update(Game_State* state, f32 dt) {
 
     if (invincibility_time.running) {
         invincibility_time_flash_period.start();
-        if (invincibility_time_flash_period.triggered()) {
+        if (invincibility_show_flashing && invincibility_time_flash_period.triggered()) {
             _debugprintf("flash");
             flashing ^= true;
             invincibility_time_flash_period.reset();
