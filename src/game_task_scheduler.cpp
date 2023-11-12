@@ -100,7 +100,7 @@ s32  Game_Task_Scheduler::add_lua_game_task(Game_State* state, lua_State* L, cha
     return first_free;
 }
 
-s32 Game_Task_Scheduler::add_enemy_lua_game_task(struct Game_State* state, lua_State* L, char* fn_name, u64 uid, bool essential) {
+s32 Game_Task_Scheduler::add_enemy_lua_game_task(struct Game_State* state, lua_State* L, char* fn_name, u64 uid, s32 n) {
     s32 current_screen_state = state->screen_mode;
     s32 first_free           = first_avaliable_task();
 
@@ -110,13 +110,21 @@ s32 Game_Task_Scheduler::add_enemy_lua_game_task(struct Game_State* state, lua_S
     auto& task               = tasks[first_free];
     task.source              = GAME_TASK_SOURCE_GAME;
     task.associated_state    = current_screen_state;
-    task.essential           = essential;
+    task.essential           = false;
     task.userdata.game_state = state;
     task.L_C                 = lua_newthread(L);
 
-    task.nargs = 1;
     lua_getglobal(task.L_C, fn_name);
     lua_pushinteger(task.L_C, uid);
+
+    // ?
+    // lua_xmove(L, task.L_C, n);
+    // for (s32 i = 0; i < n; ++i) {
+    //     lua_pushvalue(task.L, i+1);
+        // lua_pushobject(task.L_C, extra_params[i]);
+    // }
+
+    task.nargs = 1 + n;
     _debugprintf("Lua task (%p) assigned to coroutine on : %s", task.L_C, fn_name);
     return first_free;
 }

@@ -2807,7 +2807,14 @@ int _lua_bind_enemy_set_task(lua_State* L) {
     auto e = state->gameplay_data.lookup_enemy(uid);
     char* task_name = (char*)lua_tostring(L, 2);
     _debugprintf("set task?");
-    state->coroutine_tasks.add_enemy_lua_game_task(state, state->coroutine_tasks.L, task_name, uid);
+
+    /*
+     * NOTE: not sure how to do this right now.
+     * I would like to copy items between stacks.
+     */
+    s32 remaining = lua_gettop(L)-3;
+    _debugprintf("%d remaining items in the stack?", remaining);
+    state->coroutine_tasks.add_enemy_lua_game_task(state, state->coroutine_tasks.L, task_name, uid, 0);
     return 0;
 }
 
