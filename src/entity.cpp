@@ -191,80 +191,68 @@ bool Entity::kill() {
     return damage(9999999); // lol
 }
 
+bool Entity::wrap_border(s32 edge, const Play_Area& play_area) {
+    switch (edge) {
+        case 0: return wrap_from_top_border(play_area); break;
+        case 1: return wrap_from_bottom_border(play_area); break;
+        case 2: return wrap_from_left_border(play_area); break;
+        case 3: return wrap_from_right_border(play_area); break;
+    }
+
+    return false;
+}
+
+bool Entity::clamp_border(s32 edge, const Play_Area& play_area) {
+    switch (edge) {
+        case 0: return clamp_to_top_border(play_area); break;
+        case 1: return clamp_to_bottom_border(play_area); break;
+        case 2: return clamp_to_left_border(play_area); break;
+        case 3: return clamp_to_right_border(play_area); break;
+    }
+
+    return false;
+}
+
+bool Entity::touching_border(s32 edge, const Play_Area& play_area, bool as_point) {
+    switch (edge) {
+        case 0: return touching_top_border(play_area, as_point); break;
+        case 1: return touching_bottom_border(play_area, as_point); break;
+        case 2: return touching_left_border(play_area, as_point); break;
+        case 3: return touching_right_border(play_area, as_point); break;
+    }
+
+    return false;
+}
+
 void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
     s32 edge_behavior_top    = edge_top_behavior_override;
     s32 edge_behavior_bottom = edge_bottom_behavior_override;
     s32 edge_behavior_left   = edge_left_behavior_override;
     s32 edge_behavior_right  = edge_right_behavior_override;
 
-    if (edge_behavior_top == -1) edge_behavior_top       = play_area.edge_behaviors[0];
+    if (edge_behavior_top == -1)    edge_behavior_top    = play_area.edge_behaviors[0];
     if (edge_behavior_bottom == -1) edge_behavior_bottom = play_area.edge_behaviors[1];
-    if (edge_behavior_left == -1) edge_behavior_left     = play_area.edge_behaviors[2];
-    if (edge_behavior_right == -1) edge_behavior_right   = play_area.edge_behaviors[3];
+    if (edge_behavior_left == -1)   edge_behavior_left   = play_area.edge_behaviors[2];
+    if (edge_behavior_right == -1)  edge_behavior_right  = play_area.edge_behaviors[3];
 
-    // NOTE: these behaviors are mostly for the players... Enemies will just act
-    // as if it was "wrapping" behavior by default.
+    const s32 edges[4] = { edge_behavior_top, edge_behavior_bottom, edge_behavior_left, edge_behavior_right };
 
-    // refactor this to maybe be a little less unwieldy, but it's not too big of a deal
-    // since this will not change much afterwards anyways...
-    switch (edge_behavior_top) {
-        case PLAY_AREA_EDGE_DEADLY:
-        case PLAY_AREA_EDGE_BLOCKING: {
-            if (clamp_to_top_border(play_area))
-                if (play_area.edge_behaviors[0] == PLAY_AREA_EDGE_DEADLY) {
-                    // extra killing code.
-                    kill();
-                }
-        } break;
-        case PLAY_AREA_EDGE_WRAPPING: {
-            wrap_from_top_border(play_area);
-        } break;
-        case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
-    }
+    for (s32 edge_index = 0; edge_index < 4; ++edge_index) {
+        s32 edge = edges[edge_index];
 
-    switch (edge_behavior_bottom) {
-        case PLAY_AREA_EDGE_DEADLY:
-        case PLAY_AREA_EDGE_BLOCKING: {
-            if (clamp_to_bottom_border(play_area))
-                if (play_area.edge_behaviors[1] == PLAY_AREA_EDGE_DEADLY) {
-                    // extra killing code.
-                    kill();
-                }
-        } break;
-        case PLAY_AREA_EDGE_WRAPPING: {
-            wrap_from_bottom_border(play_area);
-        } break;
-        case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
-    }
-
-    switch (edge_behavior_left) {
-        case PLAY_AREA_EDGE_DEADLY:
-        case PLAY_AREA_EDGE_BLOCKING: {
-            if (clamp_to_left_border(play_area))
-                if (play_area.edge_behaviors[2] == PLAY_AREA_EDGE_DEADLY) {
-                    // extra killing code.
-                    kill();
-                }
-        } break;
-        case PLAY_AREA_EDGE_WRAPPING: {
-            wrap_from_left_border(play_area);
-        } break;
-        case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
-    }
-
-    switch (edge_behavior_right) {
-        case PLAY_AREA_EDGE_DEADLY:
-        case PLAY_AREA_EDGE_BLOCKING: {
-            if (clamp_to_right_border(play_area))
-                if (play_area.edge_behaviors[3] == PLAY_AREA_EDGE_DEADLY) {
-                    // extra killing code.
-                    die = true;
-                }
-        } break;
-        case PLAY_AREA_EDGE_WRAPPING: {
-            wrap_from_right_border(play_area);
-        } break;
-        case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
+        switch (edge) {
+            case PLAY_AREA_EDGE_DEADLY:
+            case PLAY_AREA_EDGE_BLOCKING: {
+                if (clamp_border(edge_index, play_area))
+                    if (edge == PLAY_AREA_EDGE_DEADLY) {
+                        kill();
+                    }
+            } break;
+            case PLAY_AREA_EDGE_WRAPPING: {
+                wrap_border(edge_index, play_area);
+            } break;
+            case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
+        }
     }
 }
 
@@ -367,50 +355,43 @@ bool Entity::attack() {
     return firing_t <= 0.0f;
 }
 
-void Entity::update(Game_State* state, f32 dt) {
-    const auto& play_area = state->gameplay_data.play_area;
-
-    // update ghost trails
-    {
-        if (trail_ghost_record_timer <= 0.0f && trail_ghost_count < trail_ghost_limit) {
-            auto& ghost = trail_ghosts[trail_ghost_count++];
-            ghost.position = position;
-            ghost.alpha    = trail_ghost_max_alpha;
-            trail_ghost_record_timer = trail_ghost_record_timer_max;
-        } else {
-            trail_ghost_record_timer -= dt;
-        }
-
-        for (s32 trail_ghost_index = 0; trail_ghost_index < trail_ghost_count; ++trail_ghost_index) {
-            auto& ghost = trail_ghosts[trail_ghost_index];
-            ghost.alpha -= dt;
-
-            if (ghost.alpha <= 0.0f) {
-                trail_ghosts[trail_ghost_index] = trail_ghosts[--trail_ghost_count];
-                continue;
-            }
-        }
+void Entity::update_ghost_trails(f32 dt) {
+    if (trail_ghost_record_timer <= 0.0f && trail_ghost_count < trail_ghost_limit) {
+        auto& ghost = trail_ghosts[trail_ghost_count++];
+        ghost.position = position;
+        ghost.alpha    = trail_ghost_max_alpha;
+        trail_ghost_record_timer = trail_ghost_record_timer_max;
+    } else {
+        trail_ghost_record_timer -= dt;
     }
 
-    position           += velocity * dt;
-    t_since_spawn      += dt;
+    for (s32 trail_ghost_index = 0; trail_ghost_index < trail_ghost_count; ++trail_ghost_index) {
+        auto& ghost = trail_ghosts[trail_ghost_index];
+        ghost.alpha -= dt;
 
-    {
-        auto rect = get_rect();
-        if (!play_area.is_inside_logical(rect)) {
-            cleanup_time.start();
-            cleanup_time.update(dt);
-
-            if (cleanup_time.triggered()) {
-                // mark for deletion / death
-                die = true;
-            }
-        } else {
-            cleanup_time.stop();
-            cleanup_time.reset();
+        if (ghost.alpha <= 0.0f) {
+            trail_ghosts[trail_ghost_index] = trail_ghosts[--trail_ghost_count];
+            continue;
         }
     }
+}
 
+void Entity::handle_out_of_bounds_behavior(const Play_Area& play_area, f32 dt) {
+    if (!allow_out_of_bounds_survival && !play_area.is_inside_logical(get_rect())) {
+        cleanup_time.start();
+        cleanup_time.update(dt);
+
+        if (cleanup_time.triggered()) {
+            // mark for deletion / death
+            die = true;
+        }
+    } else {
+        cleanup_time.stop();
+        cleanup_time.reset();
+    }
+}
+
+void Entity::handle_invincibility_behavior(f32 dt) {
     if (invincibility_time.running) {
         invincibility_time_flash_period.start();
         if (invincibility_show_flashing && invincibility_time_flash_period.triggered()) {
@@ -422,8 +403,11 @@ void Entity::update(Game_State* state, f32 dt) {
     } else {
         flashing = false;
     }
+    invincibility_time_flash_period.update(dt);
+    invincibility_time.update(dt);
+}
 
-    // firing timing logic
+void Entity::update_firing_behavior(f32 dt) {
     if (firing) {
         if (firing_t <= 0.0f) {
             firing_t = firing_cooldown;
@@ -433,11 +417,18 @@ void Entity::update(Game_State* state, f32 dt) {
     } else {
         firing_t = 0;
     }
+}
 
-    invincibility_time_flash_period.update(dt);
-    invincibility_time.update(dt);
-    // NOTE: until I have more time to implement sub behaviors on the play area
-    // for now the default behavior is clamping
+void Entity::update(Game_State* state, f32 dt) {
+    const auto& play_area = state->gameplay_data.play_area;
+
+    update_ghost_trails(dt);
+    handle_out_of_bounds_behavior(play_area, dt);
+    handle_invincibility_behavior(dt);
+    update_firing_behavior(dt);
+
+    position           += velocity * dt;
+    t_since_spawn      += dt;
 }
 
 rectangle_f32 Entity::get_rect() {
@@ -463,7 +454,7 @@ void Player::update(Game_State* state, f32 dt) {
     V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
     if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
 
-    float UNIT_SPEED = (under_focus) ? 225 : 550;
+    float UNIT_SPEED = (under_focus) ? 325 : 475;
 
     velocity.x = axes[0] * UNIT_SPEED;
     velocity.y = axes[1] * UNIT_SPEED;

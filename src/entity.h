@@ -49,7 +49,8 @@ struct Timer {
 #define DEFAULT_FIRING_COOLDOWN (0.125)
 #define DEFAULT_ENTITY_SCORE_VALUE_PER_HIT (30)
 #define DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER (5)
-#define MAX_PREVIOUS_POSITIONS_FOR_TRAIL (32)
+#define MAX_PREVIOUS_POSITIONS_FOR_TRAIL (64)
+
 struct Position_Trail_Ghost {
     V2 position;
     f32 alpha = 1.0f; // this will always be hardcoded to take one second
@@ -76,18 +77,22 @@ struct Entity {
     // Cool visual effect for trailing.
     color32f32           trail_ghost_modulation = color32f32(0.9, 0.9, 0.9, 1.0);
     Position_Trail_Ghost trail_ghosts[MAX_PREVIOUS_POSITIONS_FOR_TRAIL];
-    s32                  trail_ghost_count = 0;
-    s32                  trail_ghost_limit = 0;
+    s16                  trail_ghost_count = 0;
+    s16                  trail_ghost_limit = 0;
     f32                  trail_ghost_record_timer = 0, trail_ghost_record_timer_max = 0.033f;
     f32                  trail_ghost_max_alpha = 0.23f;
 
     Timer cleanup_time                    = Timer(ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION);
     Timer invincibility_time_flash_period = Timer(INVINCIBILITY_FLASH_TIME_PERIOD);
     Timer invincibility_time              = Timer(PLAYER_INVINICIBILITY_TIME);
-    int   hp                              = 1;
+    s32   hp                              = 1;
+
+    // NOTE: this should become a bit field in the future.
+    //like... now.
     bool  die                             = false; // force dead flag
     bool  flashing                        = false; // flicker on or off
     bool  invincibility_show_flashing     = true;
+    bool  allow_out_of_bounds_survival    = false;
 
     // if timer == -1, be invincible forever.
     void end_invincibility();
@@ -112,12 +117,21 @@ struct Entity {
     // entities will be centered on themselves
     rectangle_f32 get_rect();
 
-    /*
-      These are helpers that are used to allow for the play area border to
-      do certain things.
-     */
+    // but that's more of a polish thing
+    // damage could spawn a particle or something
+    bool damage(s32 dmg); // NOTE: player should have a bit of invulnerability after respawning.
+    // TODO: need to track hp max, but this is mostly for the player
+    //       who should basically die in one hit as per normal bullet hell rules...
+    bool heal(s32 hp);
+    bool kill();
 
-    // If I need some more specific behaviors...
+    // -1 means we'll follow the stage area
+    s32 edge_top_behavior_override = -1;
+    s32 edge_bottom_behavior_override = -1;
+    s32 edge_left_behavior_override = -1;
+    s32 edge_right_behavior_override = -1;
+
+protected:
     bool touching_left_border(const Play_Area& play_area, bool as_point=false);
     bool touching_right_border(const Play_Area& play_area, bool as_point=false);
     bool touching_top_border(const Play_Area& play_area, bool as_point=false);
@@ -133,26 +147,23 @@ struct Entity {
     bool wrap_from_top_border(const Play_Area& play_area);
     bool wrap_from_bottom_border(const Play_Area& play_area);
 
+    bool wrap_border(s32 edge, const Play_Area& play_area);
+    bool clamp_border(s32 edge, const Play_Area& play_area);
+    bool touching_border(s32 edge, const Play_Area& play_area, bool as_point=false);
+
     void handle_play_area_edge_behavior(const Play_Area& play_area);
 
-    // but that's more of a polish thing
-    // damage could spawn a particle or something
-    bool damage(s32 dmg); // NOTE: player should have a bit of invulnerability after respawning.
-    // TODO: need to track hp max, but this is mostly for the player
-    //       who should basically die in one hit as per normal bullet hell rules...
-    bool heal(s32 hp);
-    bool kill();
-
-    // -1 means we'll follow the stage area
-    s32 edge_top_behavior_override = -1;
-    s32 edge_bottom_behavior_override = -1;
-    s32 edge_left_behavior_override = -1;
-    s32 edge_right_behavior_override = -1;
+private:
+    inline void update_ghost_trails(f32 dt);
+    inline void handle_out_of_bounds_behavior(const Play_Area& play_area, f32 dt);
+    inline void handle_invincibility_behavior(f32 dt);
+    inline void update_firing_behavior(f32 dt);
 };
 
 struct Enemy_Entity;
 using Enemy_Entity_Fire_Fn = std::function<void(Enemy_Entity*, Game_State*, f32)>;
 using Enemy_Entity_Velocity_Fn = std::function<void(Enemy_Entity*, Game_State* const, f32)>;
+
 struct Enemy_Entity : public Entity {
     Timer outside_boundaries_lifetime_timer = Timer(10.0f);
     Enemy_Entity_Velocity_Fn velocity_function = nullptr;
