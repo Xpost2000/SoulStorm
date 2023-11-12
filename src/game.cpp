@@ -2373,6 +2373,9 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                     e.damage(1);
                     if (e.die) {
                         state->notify_score_with_hitmarker(e.score_value * e.death_multiplier, e.position);   
+                        Achievements::get(ACHIEVEMENT_ID_KILLER)->report((s32)1);
+                        Achievements::get(ACHIEVEMENT_ID_MURDERER)->report((s32)1);
+                        Achievements::get(ACHIEVEMENT_ID_SLAYER)->report((s32)1);
                     } else {
                         state->notify_score_with_hitmarker(e.score_value, e.position);
                     }

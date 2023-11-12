@@ -372,20 +372,6 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
     }
 
     if (state->ui_state == UI_STATE_INACTIVE && !main_menu_state.cutscene_active()) {
-
-        // debug achievement testing.
-        if (Input::is_key_pressed(KEY_C)) {
-            // Laser_Hazard h = Laser_Hazard(state->player.position.y, 30.0f, LASER_HAZARD_DIRECTION_HORIZONTAL, 1.0f, 15.0f);
-            // state->laser_hazards.push(h);
-
-            // NOTE: these could just act as subscribers in the future.
-            //       to death events but it's not too big of a deal for now.
-            Achievements::get(ACHIEVEMENT_ID_KILLER)->report((s32)999999);
-            Achievements::get(ACHIEVEMENT_ID_MURDERER)->report((s32)999999);
-            Achievements::get(ACHIEVEMENT_ID_SLAYER)->report((s32)9999999);
-        }
-
-
         main_menu_state.player.update(&main_menu_state, dt);
     }
 
