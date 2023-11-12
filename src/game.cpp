@@ -2733,9 +2733,21 @@ int _lua_bind_play_area_width(lua_State* L) {
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     // NOTE: only allow IO in the future.
-    luaL_openlibs(L);
+    //luaL_openlibs(L);
+    luaopen_math(L);
+    luaopen_base(L);
+    luaopen_table(L);
+
+#ifndef RELEASE
+    // Only in debug builds I care about logged messages
+    luaopen_io(L);
+#else
+    // This is a security hole anyway...
+    lua_register(L, "print", [](lua_State*){});
+#endif
     {
         // constants to share.
+        // Try to keep this up to date in the future...
         const char* lua_code = R"(
 PROJECTILE_SPRITE_BLUE = 0;
 PROJECTILE_SPRITE_BLUE_STROBING = 1;
@@ -2750,6 +2762,9 @@ PROJECTILE_SPRITE_NEGATIVE_ELECTRIC = 8;
 BULLET_SOURCE_NEUTRAL = 0;
 BULLET_SOURCE_PLAYER = 1;
 BULLET_SOURCE_ENEMY = 2;
+
+LASER_HAZARD_DIRECTION_HORIZONTAL = 0;
+LASER_HAZARD_DIRECTION_VERTICAL = 1;
 )";
         luaL_dostring(L, lua_code);
     }
@@ -2764,10 +2779,17 @@ BULLET_SOURCE_ENEMY = 2;
         lua_register(L, "any_living_danger", _lua_bind_any_living_danger);
         lua_register(L, "play_area_width", _lua_bind_play_area_width);
     }
-    {
-        bind_entity_lualib(L);
-    }
-    luaL_dostring(L, "print(\"Hopefully loaded everything. \")");
+
+    {bind_v2_lualib(L);}
+    {bind_entity_lualib(L);}
+
+#ifndef RELEASE
+    // just need to see if I did the table thing
+    // correctly...
+    luaL_dostring(L, "print(v2(1.0, 2.0)[2])");
+    luaL_dostring(L, "print(v2_add(v2(1.0, 2.0), v2(1.0, 2.0))[1])");
+#endif
+
     _debugprintf("Allocated new lua state.");
     return L;
 }

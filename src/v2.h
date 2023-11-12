@@ -53,5 +53,8 @@ V2 V2_direction(V2 a, V2 b);
 V2 V2_direction_from_degree(f32 x);
 V2 V2_perpendicular(V2 x);
 
+struct lua_State;
+void bind_v2_lualib(lua_State* L);
+
 
 #endif
