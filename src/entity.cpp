@@ -736,3 +736,210 @@ void Laser_Hazard::draw(Game_State* state, struct render_commands* render_comman
         render_commands_push_quad(render_commands, rectangle, color32u8(255, 0, 0, 255), BLEND_MODE_ALPHA);
     }
 }
+
+int _lua_bind_spawn_bullet_arc_pattern2(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+
+    // if (lua_gettop(L) != 12) // ?
+    spawn_bullet_arc_pattern2(
+        state,
+        V2(luaL_checknumber(L, 1), luaL_checknumber(L, 2)),
+        luaL_checkinteger(L, 3),
+        luaL_checkinteger(L, 4),
+        V2(luaL_checknumber(L, 5), luaL_checknumber(L, 6)),
+        V2(luaL_checknumber(L, 7), luaL_checknumber(L, 8)),
+        luaL_checknumber(L, 9),
+        luaL_checknumber(L, 10),
+        luaL_checkinteger(L, 11),
+        luaL_checkinteger(L, 12)
+    );
+    return 0;
+}
+
+int _lua_bind_enemy_new(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    auto e = enemy_generic( state, V2(0,0), V2(10,10), nullptr);
+    state->gameplay_data.add_enemy_entity(e);
+    lua_pushinteger(L, e.uid);
+    return 1;
+}
+
+int _lua_bind_enemy_valid(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    lua_pushboolean(L, e != nullptr);
+    return 1;
+}
+
+int _lua_bind_enemy_set_position(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->position.x = luaL_checknumber(L, 2);
+        e->position.y = luaL_checknumber(L, 3);
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_set_scale(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->scale.x = luaL_checknumber(L, 2);
+        e->scale.y = luaL_checknumber(L, 3);
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_set_velocity(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->velocity.x = luaL_checknumber(L, 2);
+        e->velocity.y = luaL_checknumber(L, 3);
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_set_acceleration(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->acceleration.x = luaL_checknumber(L, 2);
+        e->acceleration.y = luaL_checknumber(L, 3);
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_set_hp(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->hp = luaL_checkinteger(L, 2);
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_set_task(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    char* task_name = (char*)lua_tostring(L, 2);
+    _debugprintf("set task?");
+
+    /*
+     * NOTE: not sure how to do this right now.
+     * I would like to copy items between stacks.
+     */
+    s32 remaining = lua_gettop(L)-3;
+    _debugprintf("%d remaining items in the stack?", remaining);
+    state->coroutine_tasks.add_enemy_lua_game_task(state, state->coroutine_tasks.L, task_name, uid, 0);
+    return 0;
+}
+
+int _lua_bind_enemy_reset_movement(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->reset_movement();
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_position_x(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        lua_pushnumber(L, e->position.x);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_position_y(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        lua_pushnumber(L, e->position.y);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_velocity_x(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        lua_pushnumber(L, e->velocity.x);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_velocity_y(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        lua_pushnumber(L, e->velocity.y);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_hp(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        lua_pushnumber(L, e->hp);
+        return 1;
+    }
+    return 0;
+}
+
+void bind_entity_lualib(lua_State* L) {
+    {
+        lua_register(L, "enemy_new", _lua_bind_enemy_new);
+        lua_register(L, "enemy_valid", _lua_bind_enemy_valid);
+        lua_register(L, "enemy_set_position", _lua_bind_enemy_set_position);
+        lua_register(L, "enemy_set_scale", _lua_bind_enemy_set_scale);
+        lua_register(L, "enemy_set_velocity", _lua_bind_enemy_set_velocity);
+        lua_register(L, "enemy_set_acceleration", _lua_bind_enemy_set_acceleration);
+        lua_register(L, "enemy_set_hp", _lua_bind_enemy_set_hp);
+        lua_register(L, "enemy_set_task", _lua_bind_enemy_set_task);
+        lua_register(L, "enemy_reset_movement", _lua_bind_enemy_reset_movement);
+
+        lua_register(L, "enemy_position_x", _lua_bind_enemy_position_x);
+        lua_register(L, "enemy_position_y", _lua_bind_enemy_position_y);
+        lua_register(L, "enemy_velocity_x", _lua_bind_enemy_velocity_x);
+        lua_register(L, "enemy_velocity_y", _lua_bind_enemy_velocity_y);
+        lua_register(L, "enemy_hp", _lua_bind_enemy_hp);
+        lua_register(L, "spawn_bullet_arc_pattern2", _lua_bind_spawn_bullet_arc_pattern2);
+    }
+}

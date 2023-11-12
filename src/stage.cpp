@@ -26,11 +26,8 @@ Stage_State stage_load_from_lua(Game_State* state, const char* lua_filename) {
     s32 error = (luaL_dofile(result.L, lua_filename));
     switch (error) {
         case 0: { } break;
-        case LUA_ERRSYNTAX: {
-            _debugprintf("Syntax error found in script. Undefined behavior time!");
-        } break;
         default: {
-            _debugprintf("Error in loading script. (%d)", error);
+            _debugprintf("Error in loading script. (%d)[ %s ]", error, lua_tostring(result.L, -1));
         } break;
     }
     

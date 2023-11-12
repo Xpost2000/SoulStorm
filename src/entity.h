@@ -283,6 +283,9 @@ struct Bullet : public Entity {
     Bullet_Entity_Velocity_Fn velocity_function = nullptr;
 };
 
+struct lua_State;
+void bind_entity_lualib(lua_State* L);
+
 #include "entity_prototypes.h"
 
 #endif

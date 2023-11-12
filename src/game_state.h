@@ -14,10 +14,10 @@
 
 #include "game_task_scheduler.h"
 
-#define MAX_BULLETS           (10000)
+#define MAX_BULLETS           (5000)
 #define MAX_EXPLOSION_HAZARDS (1024)
 #define MAX_LASER_HAZARDS     (1024)
-#define MAX_ENEMIES           (255)
+#define MAX_ENEMIES           (128)
 #define MAX_SCORE_NOTIFICATIONS (4096)
 
 static string menu_font_variation_string_names[] = {
