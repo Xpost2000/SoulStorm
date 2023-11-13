@@ -50,6 +50,15 @@ void push_all_variants_to_lua_stack(lua_State* L, Slice<Lua_Task_Extra_Parameter
     }
 }
 
+Game_Task_Scheduler::Game_Task_Scheduler() {
+
+}
+
+Game_Task_Scheduler::Game_Task_Scheduler(Memory_Arena* arena, s32 task_count) {
+    tasks           = Fixed_Array<Game_Task>(arena, task_count);
+    active_task_ids = Fixed_Array<s32>(arena, task_count);
+}
+
 // Game_Task_Scheduler
 s32 Game_Task_Scheduler::first_avaliable_task() {
     for (s32 index = 0; index < tasks.capacity; ++index) {
@@ -80,7 +89,7 @@ s32 Game_Task_Scheduler::add_task(struct Game_State* state, jdr_duffcoroutine_fn
     s32 current_screen_state = state->screen_mode;
     s32 first_free           = first_avaliable_task();
 
-    if (first_free == -1) return false;
+    if (first_free == -1) return -1;
 
     auto& task               = tasks[first_free];
     task.source              = GAME_TASK_SOURCE_GAME;
@@ -91,12 +100,14 @@ s32 Game_Task_Scheduler::add_task(struct Game_State* state, jdr_duffcoroutine_fn
     task.coroutine           = jdr_coroutine_new(f);
     task.coroutine.userdata = &task.userdata;
 
+    active_task_ids.push(first_free);
+    _debugprintf("add task (%d active tasks)", active_task_ids.size);
     return first_free;
 }
 
 s32 Game_Task_Scheduler::add_global_task(jdr_duffcoroutine_fn f, void* userdata) {
     s32 first_free       = first_avaliable_task();
-    if (first_free == -1) return false;
+    if (first_free == -1) return -1;
 
     auto& task            = tasks[first_free];
     task.source           = GAME_TASK_SOURCE_ALWAYS;
@@ -107,6 +118,7 @@ s32 Game_Task_Scheduler::add_global_task(jdr_duffcoroutine_fn f, void* userdata)
     // NOTE: need userdata info.
     task.coroutine.userdata = &task.userdata;
 
+    active_task_ids.push(first_free);
     return first_free;
 }
 
@@ -114,7 +126,7 @@ s32 Game_Task_Scheduler::add_ui_task(struct Game_State* state, jdr_duffcoroutine
     s32 current_ui_state = state->ui_state;
     s32 first_free       = first_avaliable_task();
 
-    if (first_free == -1) return false;
+    if (first_free == -1) return -1;
 
     auto& task            = tasks[first_free];
     task.source           = GAME_TASK_SOURCE_UI;
@@ -125,6 +137,7 @@ s32 Game_Task_Scheduler::add_ui_task(struct Game_State* state, jdr_duffcoroutine
     task.userdata.userdata = userdata;
     task.coroutine.userdata = &task.userdata;
 
+    active_task_ids.push(first_free);
     return first_free;
 }
 
@@ -133,7 +146,7 @@ s32 Game_Task_Scheduler::add_lua_game_task(struct Game_State* state, lua_State* 
     s32 current_screen_state = state->screen_mode;
     s32 first_free           = first_avaliable_task();
 
-    if (first_free == -1) return false;
+    if (first_free == -1) return -1;
     this->L = L;
 
     auto& task               = tasks[first_free];
@@ -149,6 +162,7 @@ s32 Game_Task_Scheduler::add_lua_game_task(struct Game_State* state, lua_State* 
     task.nargs = parameters.length;
 
     _debugprintf("Lua task (%p) assigned to coroutine on : %s", task.L_C, fn_name);
+    active_task_ids.push(first_free);
     return first_free;
 }
 
@@ -156,7 +170,7 @@ s32 Game_Task_Scheduler::add_lua_entity_game_task(struct Game_State* state, lua_
     s32 current_screen_state = state->screen_mode;
     s32 first_free           = first_avaliable_task();
 
-    if (first_free == -1) return false;
+    if (first_free == -1) return -1;
     this->L = L;
 
     auto& task               = tasks[first_free];
@@ -172,6 +186,7 @@ s32 Game_Task_Scheduler::add_lua_entity_game_task(struct Game_State* state, lua_
     task.nargs = 1 + parameters.length;
 
     _debugprintf("Lua task (%p) assigned to coroutine on : %s", task.L_C, fn_name);
+    active_task_ids.push(first_free);
     return first_free;
 }
 
@@ -194,10 +209,10 @@ bool Game_Task_Scheduler::kill_task(s32 index) {
 }
 
 s32 Game_Task_Scheduler::search_for_lua_task(lua_State* L) {
-    for (s32 index = 0; index < tasks.capacity; ++index) {
-        auto& task = tasks[index];
+    for (s32 index = 0; index < active_task_ids.size; ++index) {
+        auto& task = tasks[active_task_ids[index]];
         if (task.L_C && task.L_C == L) {
-            return index;
+            return active_task_ids[index];
         } else {
             continue;
         }
@@ -207,14 +222,10 @@ s32 Game_Task_Scheduler::search_for_lua_task(lua_State* L) {
 
 void Game_Task_Scheduler::abort_all_lua_tasks() {
     L = nullptr;
-    for (s32 index = 0; index < tasks.capacity; ++index) {
-        auto& task = tasks[index];
+    for (s32 index = 0; index < active_task_ids.size; ++index) {
+        auto& task = tasks[active_task_ids[index]];
         if (task.L_C) {
-            zero_memory(&task, sizeof(task));
-        } else {
-            if (jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED && task.source != GAME_TASK_AVALIABLE) {
-                zero_memory(&task, sizeof(task));
-            }
+            kill_task(active_task_ids[index]);
         }
     }
 }
@@ -223,20 +234,29 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
     s32 current_ui_state     = state->ui_state;
     s32 current_screen_state = state->screen_mode;
 
-    for (s32 index = 0; index < tasks.capacity; ++index) {
-        auto& task = tasks[index];
-        task.userdata.dt = dt;
-
+    // cleanup dead tasks
+    for (s32 index = 0; index < active_task_ids.size; ++index) {
+        auto& task = tasks[active_task_ids[index]];
+        bool delete_task = false;
         if (task.L_C) {
-            // NOTE: possible memory leak from lua. Need to invoke GC?
             if (L == nullptr || task.last_L_C_status == JDR_DUFFCOROUTINE_FINISHED && task.source != GAME_TASK_AVALIABLE) {
-                zero_memory(&task, sizeof(task));
+                delete_task = true;
             }
         } else {
             if (jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED && task.source != GAME_TASK_AVALIABLE) {
-                zero_memory(&task, sizeof(task));
+                delete_task = true;
             }
         }
+
+        if (delete_task) {
+            zero_memory(&task, sizeof(task));
+            active_task_ids.pop_and_swap(index);   
+        }
+    }
+
+    for (s32 index = 0; index < active_task_ids.size; ++index) {
+        auto& task = tasks[active_task_ids[index]];
+        task.userdata.dt = dt;
 
         {
             switch (task.userdata.yielded.reason) {

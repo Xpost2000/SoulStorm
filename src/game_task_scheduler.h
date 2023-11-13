@@ -142,7 +142,10 @@ struct Game_Task_Scheduler {
       Also for simplicity, since they're only for levels in that case,
       all lua tasks are GAME_TASKS
     */
+    Game_Task_Scheduler();
+    Game_Task_Scheduler(Memory_Arena* arena, s32 tasks);
     Fixed_Array<Game_Task> tasks;
+    Fixed_Array<s32>       active_task_ids;
     lua_State* L = nullptr; // set this pointer to the currently owned lua task.
 
     // NOTE: will override non-essential tasks.

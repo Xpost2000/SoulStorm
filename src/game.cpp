@@ -434,7 +434,8 @@ void Game::init(Graphics_Driver* driver) {
 
     // Initialize coroutine scheduler
     {
-        state->coroutine_tasks.tasks = Fixed_Array<Game_Task>(arena, MAX_BULLETS + MAX_ENEMIES + 512);
+        s32 task_max_count = MAX_BULLETS + MAX_ENEMIES + 512;
+        state->coroutine_tasks = Game_Task_Scheduler(arena, task_max_count);
     }
 
     initialized = true;
@@ -2743,7 +2744,7 @@ lua_State* Game_State::alloc_lua_bindings() {
     luaopen_io(L);
 #else
     // This is a security hole anyway...
-    lua_register(L, "print", [](lua_State*){});
+    lua_register(L, "print", [](lua_State*) {return 0; });
 #endif
     {
         // constants to share.
