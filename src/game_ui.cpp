@@ -468,7 +468,7 @@ namespace GameUI {
 
         auto& next_widget = global_ui_state->widgets[global_ui_state->selected_index];
         _debugprintf("Next widget is id(%d)", global_ui_state->selected_index);
-        if (!is_selectable_widget_type(next_widget.type) && next_widget.active) {
+        if (!is_selectable_widget_type(next_widget.type) || !next_widget.active) {
             _debugprintf("I do not think (%d) is selectable.", global_ui_state->selected_index);
             move_selected_widget_id(sign_s32(increments));
         }
