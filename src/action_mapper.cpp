@@ -113,7 +113,8 @@ ACTION = 4,
 FOCUS = 5,
 CANCEL = 6,
 MENU = 7,
-SCREENSHOT= 8
+SCREENSHOT= 8,
+USE_BOMB = 9 
 }
 )";
         luaL_dostring(L, action_enums);

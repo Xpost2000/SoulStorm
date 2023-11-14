@@ -21,6 +21,7 @@ enum Action_ID {
     ACTION_CANCEL,
     ACTION_MENU,
     ACTION_SCREENSHOT,
+    ACTION_USE_BOMB,
     ACTION_COUNT,
 };
 

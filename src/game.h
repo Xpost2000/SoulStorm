@@ -98,6 +98,7 @@ private:
     void handle_all_explosions(f32 dt);
     void handle_all_lasers(f32 dt);
     void handle_all_dead_entities(f32 dt);
+    void handle_bomb_usage(f32 dt);
 
     void switch_screen(s32 screen);
     void switch_ui(s32 ui);

@@ -17,6 +17,7 @@
 // grazing to rapidly gain score.
 #define GRAZING_SCORE_FIRE_RADIUS        (150.0f)  
 #define GRAZING_SCORE_AWARD_PICKUP_DELAY (0.100f)
+#define PICKUP_ENTITY_AUTO_ATTRACT_DELAY (0.15f)
 #define PLAYER_DEFAULT_GRAZING_DELAY (0.075f)
 #define GRAZING_SCORE_AWARD_DELAY    (0.050f)
 #define GRAZING_DEFAULT_SCORE_AWARD  (100)
@@ -348,16 +349,26 @@ struct Pickup_Entity : public Entity {
 
     // TODO: custom drawing override.
     //       for the slightly different fading!
+    void chase_player_update(Game_State* state, f32 dt);
+    void default_behavior_update(Game_State* state, f32 dt);
     void update(Game_State* state, f32 dt);
     void on_picked_up(Game_State* state);
 
     Timer lifetime = Timer(PICKUP_ENTITY_DEFAULT_LIFETIME);
 
-    bool awarded    = false;
+    // NOTE:
+    // this is "purely visual"
+    // and is an overriding behavior.
+    // a pickup entity that seeks towards the player
+    // will ignore every other flag here because they
+    // don't have to animate, and effectively are "guaranteed points"
+    bool seek_towards_player = false;
 
-    f32  fading_t   = 0.0f;
-    s32  fade_phase = 0; // even is visible, odd is invisible.
-    s32  value      = 0;
+    bool awarded             = false;
+    f32  fading_t            = 0.0f;
+    s32  fade_phase          = 0; // even is visible, odd is invisible.
+    s32  value               = 0;
+
 
     // NOTE: timing is hard coded, and non-adjustable.
     f32 animation_t = 0.0f;

@@ -531,6 +531,7 @@ void Player::update(Game_State* state, f32 dt) {
     // and gamepad power.
     bool firing   = Action::is_down(ACTION_ACTION);
     bool focusing = Action::is_down(ACTION_FOCUS);
+    bool use_bomb = Action::is_pressed(ACTION_USE_BOMB);
 
     under_focus = focusing;
 
@@ -560,6 +561,11 @@ void Player::update(Game_State* state, f32 dt) {
                 spawn_bullet_arc_pattern1(state, position, 3, 45, V2(5, 5), V2(0, -1), 650.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_ELECTRIC);
             }
         }
+    }
+
+    if (use_bomb) {
+        _debugprintf("Use bomb!");
+        state->gameplay_data.queue_bomb_use = true;
     }
 }
 
@@ -887,12 +893,17 @@ Pickup_Entity pickup_life_entity(Game_State* state, V2 start, V2 end) {
     return life_entity;
 }
 
-void Pickup_Entity::update(Game_State* state, f32 dt) {
-    if (awarded || lifetime.triggered()) {
-        die = true;  
-        return;
-    }
+void Pickup_Entity::chase_player_update(Game_State* state, f32 dt) {
+    Player* p                   = &state->gameplay_data.player;
+    auto    direction_to_player = V2_direction(position, p->position);
 
+    if (t_since_spawn >= PICKUP_ENTITY_AUTO_ATTRACT_DELAY) {
+        velocity =
+            direction_to_player * 100 + ((t_since_spawn - PICKUP_ENTITY_AUTO_ATTRACT_DELAY) * 105);
+    }
+}
+
+void Pickup_Entity::default_behavior_update(Game_State* state, f32 dt) {
     if (animation_t < PICKUP_ENTITY_ANIMATION_T_LENGTH) {
         f32 t = clamp<f32>(animation_t/PICKUP_ENTITY_ANIMATION_T_LENGTH, 0.0f, 1.0f);
         position.x = lerp_f32(animation_start_position.x, animation_end_position.x, t);
@@ -922,14 +933,30 @@ void Pickup_Entity::update(Game_State* state, f32 dt) {
         position.y = animation_end_position.y + sinf(t_since_spawn) * (scale.y);
         lifetime.update(dt);
     }
+}
+
+void Pickup_Entity::update(Game_State* state, f32 dt) {
+    if (awarded || (!seek_towards_player && lifetime.triggered())) {
+        die = true;  
+        return;
+    }
+
+    if (!seek_towards_player) {
+        default_behavior_update(state, dt);
+    } else {
+        chase_player_update(state, dt);
+    }
+
     Entity::update(state, dt);
 }
 
 void Pickup_Entity::on_picked_up(Game_State* state) {
-    if (awarded || die)
-        return;
-    if (animation_t < PICKUP_ENTITY_ANIMATION_T_LENGTH)
-        return;
+    if (!seek_towards_player) {
+        if (awarded || die)
+            return;
+        if (animation_t < PICKUP_ENTITY_ANIMATION_T_LENGTH)
+            return;
+    }
 
     awarded = true;
 

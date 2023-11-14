@@ -343,6 +343,8 @@ void Game::setup_stage_start() {
         this->state->coroutine_tasks.add_task(this->state, state->stage_state.tick_task);
     }
 
+    state->queue_bomb_use = false;
+
     // reset UID to 0.
     UID::reset();
 
@@ -420,6 +422,9 @@ void Game::init(Graphics_Driver* driver) {
 
             Action::register_action_keys(ACTION_MENU, KEY_ESCAPE, KEY_UNKNOWN, 1.0f);
             Action::register_action_button(ACTION_MENU, BUTTON_START, 1.0f);
+
+            Action::register_action_keys(ACTION_USE_BOMB, KEY_Z, KEY_UNKNOWN, 1.0f);
+            Action::register_action_button(ACTION_USE_BOMB, BUTTON_Y, 1.0f);
 
             Action::register_action_keys(ACTION_SCREENSHOT, KEY_F12, KEY_UNKNOWN, 1.0f);
         }
@@ -2130,6 +2135,8 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 
         // Actually spawn the stuff we wanted to make...
         state->reify_all_creation_queues();
+
+        handle_bomb_usage(dt);
     }
 
     handle_ui_update_and_render(&ui_render_commands, dt);
@@ -2302,6 +2309,50 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     }
 
     total_playtime += dt;
+}
+
+void Game::handle_bomb_usage(f32 dt) {
+    auto state = &this->state->gameplay_data;
+    if (!state->queue_bomb_use) {
+        return;
+    }
+
+    {
+        for (s32 bullet_index = 0; bullet_index < state->bullets.size; ++bullet_index) {
+            auto& b = state->bullets[bullet_index];
+
+            if (b.source_type == BULLET_SOURCE_PLAYER)
+                continue;
+
+            b.kill();
+
+            auto pe = pickup_score_entity(
+                this->state,
+                b.position,
+                b.position,
+                50
+            );
+            pe.seek_towards_player = true;
+            state->add_pickup_entity(pe);
+        }
+
+        for (s32 enemy_index = 0; enemy_index < state->enemies.size; ++enemy_index) {
+            auto& e = state->enemies[enemy_index];
+            e.kill();
+
+            auto pe = pickup_score_entity(
+                this->state,
+                e.position,
+                e.position,
+                e.score_value/2
+            );
+            pe.seek_towards_player = true;
+            state->add_pickup_entity(pe);
+        }
+    }
+
+    state->notify_score(5000, true);
+    state->queue_bomb_use = false;
 }
 
 void Game::handle_all_dead_entities(f32 dt) {

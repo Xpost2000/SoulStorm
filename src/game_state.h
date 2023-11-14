@@ -211,6 +211,7 @@ struct Gameplay_Data {
 
     bool paused_from_death = false;
     bool triggered_stage_completion_cutscene = false;
+    bool queue_bomb_use = false;
 
     Gameplay_Stage_Introduction_Sequence   intro;
     Gameplay_Stage_Complete_Stage_Sequence complete_stage;
