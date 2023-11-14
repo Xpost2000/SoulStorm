@@ -1858,6 +1858,85 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
     timer.update(dt);
 }
 
+// This is a big parameter list, but that's alright
+// this is not meant to be reusable.
+local void render_boss_health_bar(
+    struct render_commands* ui_render_commands,
+    f32 dt,
+    V2 position,
+    f32 percentage,
+    string text,
+    string text2,
+    f32 alpha,
+    f32 r,
+    f32 text_scale,
+    Game_Resources* resources
+) {
+    {
+        // The only time I'm rendering any lines.
+        {
+            auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
+
+#if 0
+            // f32 percentage = 0.75f;
+            f32 percentage = normalized_sinf(Global_Engine()->global_elapsed_time * 0.75);
+            //f32 percentage = 0.5;
+            f32 r          = 80.0f;
+            //V2  position   = V2(play_area_x + play_area_width + r*1.2, 200);
+            V2 position = V2(100, 100);
+#endif
+
+            s32 arc_max    = 360 * percentage;
+            // Uh... Yeah. This is uh. Performant. I don't have shaders, and
+            // don't have complex gradients. Or triangle strips. Or anything in the software
+            // renderer that can make this faster!
+            local color32u8 gradient_colors[] = {
+                color32u8(255, 0, 0, 255),color32u8(255, 0, 0, 255),color32u8(255, 0, 0, 255),
+                color32u8(255, 255, 51, 255),
+                color32u8(255, 255, 51, 255),
+                color32u8(255, 255, 51, 255),
+                color32u8(255, 255, 51, 255),
+                color32u8(255, 255, 51, 255),
+                color32u8(255, 255, 51, 255),
+                color32u8(0, 255, 0, 255),
+            };
+            auto color_choice = multi_linear_gradient_blend(
+                make_slice<color32u8>(gradient_colors, array_count(gradient_colors)),
+                percentage
+            );
+            color_choice.a = 255 * alpha;
+            for (f32 degree = 0; degree < arc_max; degree += 0.125) {
+                V2 d = V2_direction_from_degree(degree);
+                V2 start = position;
+                V2 end   = start + (d * -r);
+
+                render_commands_push_line(ui_render_commands, start, end, color_choice, BLEND_MODE_ALPHA);
+            }
+
+            f32 sub_r = (r * 0.75);
+            render_commands_push_image(ui_render_commands,
+                                       graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
+                                       rectangle_f32(position.x - sub_r, position.y - sub_r, sub_r*2, sub_r*2),
+                                       RECTANGLE_F32_NULL,
+                                       color32f32(0.0, 0, 0.0, alpha),
+                                       0,
+                                       BLEND_MODE_ALPHA);
+
+            string text = string_literal("100/100");
+            string text2 = string_literal("BOSS NAME");
+            render_commands_push_text(ui_render_commands,
+                                      font,
+                                      text_scale,
+                                      position + V2(-font_cache_text_width(font, text, text_scale)/2, -font_cache_text_height(font) * text_scale),
+                                      text, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA); 
+            render_commands_push_text(ui_render_commands,
+                                      font,
+                                      text_scale,
+                                      position + V2(-font_cache_text_width(font, text2, text_scale)/2, 0),
+                                      text2, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA); 
+        }
+    }
+}
 
 void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     auto state = &this->state->gameplay_data;

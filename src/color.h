@@ -28,6 +28,7 @@ color32f32 color32u8_to_color32f32(color32u8 source);
 color32s32 color32u8_to_color32s32(color32u8 source);
 color32s32 color32f32_to_color32s32(color32f32 source);
 color32u8 color32f32_to_color32u8(color32f32 source);
+color32u8 multi_linear_gradient_blend(Slice<color32u8> gradients, f32 normalized_t);
 
 #define color32u8_WHITE  color32u8(255,255,255,255)
 #define color32u8_BLACK  color32u8(0,0,0,255)
