@@ -39,7 +39,7 @@
  */
 
 #define JDR_COROUTINE_STACK_MAX_SIZE (1) // NOTE for SoulStorm: I store state manually. So it's not needed...
-#define JDR_COROUTINE_MAX_DEPTH      (8)
+#define JDR_COROUTINE_MAX_DEPTH      (1)
 #define JDR_ARRAYCOUNT(x)            sizeof(x)/sizeof(*x)
 
 #ifndef JDR_ASSERT

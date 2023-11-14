@@ -173,6 +173,7 @@
     <ClCompile Include="..\src\graphics_driver.cpp" />
     <ClCompile Include="..\src\graphics_driver_null.cpp" />
     <ClCompile Include="..\src\graphics_driver_software.cpp" />
+    <ClCompile Include="..\src\particle_system.cpp" />
     <ClCompile Include="..\src\software_renderer.cpp" />
     <ClCompile Include="..\src\graphics_assets.cpp" />
     <ClCompile Include="..\src\input.cpp" />
@@ -214,6 +215,7 @@
     <ClInclude Include="..\src\graphics_driver_null.h" />
     <ClInclude Include="..\src\graphics_driver_software.h" />
     <ClInclude Include="..\src\main_menu_mode.h" />
+    <ClInclude Include="..\src\particle_system.h" />
     <ClInclude Include="..\src\save_data.h" />
     <ClInclude Include="..\src\shader_effect_types.h" />
     <ClInclude Include="..\src\software_renderer.h" />

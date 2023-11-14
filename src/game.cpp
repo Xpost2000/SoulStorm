@@ -351,7 +351,7 @@ void Game::setup_stage_start() {
     state->player.position = V2(state->play_area.width / 2, 300);
     state->player.hp       = 1;
     state->player.die      = false;
-    state->player.scale    = V2(5, 5);
+    state->player.scale    = V2(2, 2);
 
     state->pickups.clear();
     state->enemies.clear();
@@ -2301,6 +2301,8 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
                                           s.where + V2(-text_width/2, normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
                                           text, color32f32(1,1,1, 1 - s.lifetime.percentage()), BLEND_MODE_ALPHA); 
             }
+
+            // render_boss_health_bar(&ui_render_commands, dt, V2(300, 200), normalized_sinf(Global_Engine()->global_elapsed_time), string_literal("HP"), string_literal("Name"), 1.0f, 50.0f, 2.0f, resources);
         }
 
         state->player.draw(this->state, &game_render_commands, resources);

@@ -538,7 +538,7 @@ void Player::update(Game_State* state, f32 dt) {
     V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
     if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
 
-    float UNIT_SPEED = (under_focus) ? 260 : 475;
+    float UNIT_SPEED = (under_focus) ? 225 : 325;
 
     velocity.x = axes[0] * UNIT_SPEED;
     velocity.y = axes[1] * UNIT_SPEED;
@@ -899,7 +899,7 @@ void Pickup_Entity::chase_player_update(Game_State* state, f32 dt) {
 
     if (t_since_spawn >= PICKUP_ENTITY_AUTO_ATTRACT_DELAY) {
         velocity =
-            direction_to_player * 100 + ((t_since_spawn - PICKUP_ENTITY_AUTO_ATTRACT_DELAY) * 105);
+            direction_to_player * (100 + ((t_since_spawn - PICKUP_ENTITY_AUTO_ATTRACT_DELAY) * 150));
     }
 }
 
