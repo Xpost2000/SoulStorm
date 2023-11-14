@@ -334,6 +334,16 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
                                    color32f32(1.0, 0, 1.0, 0.5f),
                                    0,
                                    BLEND_MODE_ALPHA);
+#if 0
+        // graze visual
+        render_commands_push_image(render_commands,
+                                   graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
+                                   rectangle_f32(position.x - PLAYER_GRAZE_RADIUS, position.y - PLAYER_GRAZE_RADIUS, PLAYER_GRAZE_RADIUS*2, PLAYER_GRAZE_RADIUS*2),
+                                   RECTANGLE_F32_NULL,
+                                   color32f32(0.0, 1.0f, 1.0, 0.2f),
+                                   0,
+                                   BLEND_MODE_ALPHA);
+#endif
 
 
         // center point
@@ -441,6 +451,79 @@ rectangle_f32 Entity::get_rect() {
 }
 
 // PlayerActor
+s32 Player::currently_grazing(Game_State* state) {
+    s32 grazed_bullets = 0;
+    for (s32 bullet_index = 0; bullet_index < state->gameplay_data.bullets.size; ++bullet_index) {
+        auto& b = state->gameplay_data.bullets[bullet_index];
+
+        if (b.source_type == BULLET_SOURCE_PLAYER) {
+            continue;
+        }
+
+        auto distance = V2_distance_sq(b.position, position);
+        if (distance <= (PLAYER_GRAZE_RADIUS*PLAYER_GRAZE_RADIUS)) {
+            grazed_bullets += 1;
+        }
+    }
+
+    return grazed_bullets;
+}
+
+void Player::handle_grazing_behavior(Game_State* state, f32 dt) {
+    s32 grazing = currently_grazing(state);
+
+    if (grazing) {
+        if (grazing_delay <= 0.0f) {
+            f32 score_modifier = get_grazing_score_modifier(grazing);
+
+            if (grazing_award_timer <= 0.0f) {
+                // award score to the game
+                state->gameplay_data.notify_score(
+                    score_modifier * GRAZING_DEFAULT_SCORE_AWARD,
+                    true
+                );
+                // sound?
+                grazing_award_timer = GRAZING_SCORE_AWARD_DELAY;
+            } else{
+                grazing_award_timer -= dt;
+            }
+
+            if (grazing_award_score_pickup_timer <= 0.0f) {
+                f32 angle_degrees   = random_ranged_float(&state->gameplay_data.prng, 0.0f, 360.0f); 
+                f32 radius_variance = random_ranged_float(&state->gameplay_data.prng, 0.78f, 1.125f);
+
+                V2 pickup_position_target = position + (V2_direction_from_degree(angle_degrees) * GRAZING_SCORE_FIRE_RADIUS * radius_variance);
+
+                Pickup_Entity pickup = pickup_score_entity(
+                    state,
+                    position,
+                    pickup_position_target,
+                    (GRAZING_DEFAULT_SCORE_AWARD + 20) * score_modifier
+                );
+
+                state->gameplay_data.add_pickup_entity(pickup);
+                grazing_award_score_pickup_timer = GRAZING_SCORE_AWARD_PICKUP_DELAY;
+            } else {
+                grazing_award_score_pickup_timer -= dt;
+            }
+
+            time_spent_grazing += dt;
+        } else{
+            grazing_delay -= dt;
+        }
+    } else {
+        grazing_award_timer = 0.0f;
+        grazing_delay       = PLAYER_DEFAULT_GRAZING_DELAY;
+        time_spent_grazing  = 0.0f;
+    }
+}
+
+f32 Player::get_grazing_score_modifier(s32 amount) {
+    f32 base = 1.0f + clamp<f32>(time_spent_grazing / 3.5f, 0.0f, 2.5f);
+    base += clamp<f32>(amount / 10.0f, 0.0f, 1.5f);
+    return base;
+}
+
 void Player::update(Game_State* state, f32 dt) {
     const auto& play_area = state->gameplay_data.play_area;
     // unfortunately the action mapper system doesn't exist
@@ -454,7 +537,7 @@ void Player::update(Game_State* state, f32 dt) {
     V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
     if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
 
-    float UNIT_SPEED = (under_focus) ? 325 : 475;
+    float UNIT_SPEED = (under_focus) ? 260 : 475;
 
     velocity.x = axes[0] * UNIT_SPEED;
     velocity.y = axes[1] * UNIT_SPEED;
@@ -470,7 +553,7 @@ void Player::update(Game_State* state, f32 dt) {
         if (attack()) {
             controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
             if (under_focus) {
-                spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 1000.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_NEGATIVE_STROBING);
+                spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 1000.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_STROBING);
             } else {
                 // spawn_bullet_line_pattern1(state, position, 1, 20.0f, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
                 
@@ -764,6 +847,115 @@ void Laser_Hazard::draw(Game_State* state, struct render_commands* render_comman
     }
 }
 
+// pickup entity
+Pickup_Entity pickup_entity_generic(Game_State* state, s32 type, V2 start, V2 end, s32 value) {
+    // clamp all pickups to be within game boundaries
+    {
+        auto& play_area = state->gameplay_data.play_area;
+        start.x = clamp<f32>(start.x, 0.0f, play_area.width);
+        end.x   = clamp<f32>(end.x, 0.0f, play_area.width);
+        start.y = clamp<f32>(start.y, 0.0f, play_area.height);
+        end.y   = clamp<f32>(end.y, 0.0f, play_area.height);
+    }
+
+    Pickup_Entity result;
+    result.position = start;
+    result.scale    = V2(5, 10);
+    result.type = type;
+    result.value = value;
+    result.animation_start_position = start;
+    result.animation_end_position = end;
+    result.animation_t = 0.0f;
+    return result;
+}
+
+Pickup_Entity pickup_score_entity(Game_State* state, V2 start, V2 end, s32 value) {
+    Pickup_Entity score_entity = pickup_entity_generic(state, PICKUP_SCORE, start, end, value);
+    // unimplemented("pick_score_entity not needed yet?");
+    return score_entity;
+}
+
+Pickup_Entity pickup_attack_power_entity(Game_State* state, V2 start, V2 end, s32 value) {
+    Pickup_Entity attack_power_entity = pickup_entity_generic(state, PICKUP_ATTACKPOWER, start, end, value);
+    unimplemented("pick_attack_power_entity not needed yet?");
+    return attack_power_entity;
+}
+
+Pickup_Entity pickup_life_entity(Game_State* state, V2 start, V2 end) {
+    Pickup_Entity life_entity = pickup_entity_generic(state, PICKUP_LIFE, start, end, 1);
+    unimplemented("pick_life_entity not needed yet?");
+    return life_entity;
+}
+
+void Pickup_Entity::update(Game_State* state, f32 dt) {
+    if (awarded || lifetime.triggered()) {
+        die = true;  
+        return;
+    }
+
+    if (animation_t < PICKUP_ENTITY_ANIMATION_T_LENGTH) {
+        f32 t = clamp<f32>(animation_t/PICKUP_ENTITY_ANIMATION_T_LENGTH, 0.0f, 1.0f);
+        position.x = lerp_f32(animation_start_position.x, animation_end_position.x, t);
+        position.y = lerp_f32(animation_start_position.y, animation_end_position.y, t);
+
+        animation_t += 2*dt*dt + dt;
+    } else {
+        lifetime.start();
+
+        f32 t_p = lifetime.percentage();
+
+        if (t_p <= 0.325f) {
+            if (fading_t <= 0.0f) {
+                fading_t = PICKUP_ENTITY_FADE_T_LENGTH;
+                fade_phase += 1;
+            } else {
+                fading_t -= dt;
+            }
+        } else {
+            fade_phase = 0;
+        }
+
+        // This shouldn't affect the actual hitbox, however the base entities
+        // don't have a concept of "visual and logical separation" outside of their
+        // sprite, which I'm not rendering right now b/c I don't have sprites for these yet.
+        // I'll draw them later!
+        position.y = animation_end_position.y + sinf(t_since_spawn) * (scale.y);
+        lifetime.update(dt);
+    }
+    Entity::update(state, dt);
+}
+
+void Pickup_Entity::on_picked_up(Game_State* state) {
+    if (awarded || die)
+        return;
+    if (animation_t < PICKUP_ENTITY_ANIMATION_T_LENGTH)
+        return;
+
+    awarded = true;
+
+    // POLISH/TODO: would like polish animation.
+    // but I haven't thought of the look too much right now so it's fine.
+    // Try this after checkpoint 1 or something.
+
+    switch (type) {
+        case PICKUP_SCORE: {
+            // unimplemented("pick_score_entity not needed yet?");
+            state->gameplay_data.notify_score(value, true);
+        } break;
+        case PICKUP_ATTACKPOWER: {
+            unimplemented("pick_attack_power_entity not needed yet?");
+        } break;
+        case PICKUP_LIFE: {
+            unimplemented("pick_life_entity not needed yet?");
+            // Need to notify tries as well.
+            // TODO: rename the notify score system to be a UI notifier
+            // whenever values change.
+            state->gameplay_data.tries += 1;
+        } break;
+    }
+}
+
+// BEGIN_LUA_BINDINGS
 /*
 * 
 * Start of all the lua bindings. They're relatively

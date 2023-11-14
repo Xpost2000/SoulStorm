@@ -1,23 +1,40 @@
-#ifndef ENTITY_H
-#define ENTITY_H
-
-// should vary by "difficulty"
-#define DEFAULT_SHOW_FLASH_WARNING_TIMER (0.125)
-#define DEFAULT_SHOW_FLASH_WARNING_TIMES (5)
-
-#include "render_commands.h"
-
-#include <functional>
 /*
  * This is a "mega-header" which will include all the other entity
  * related header files.
  */
 
+#ifndef ENTITY_H
+#define ENTITY_H
+
+#include "render_commands.h"
+#include <functional>
+
+#define DEFAULT_SHOW_FLASH_WARNING_TIMER (0.125)
+#define DEFAULT_SHOW_FLASH_WARNING_TIMES (5)
+#define PLAYER_INVINICIBILITY_TIME   (1.35)
+#define PLAYER_GRAZE_RADIUS          (45.0f)
+// this needs to be applied in order to avoid abusing
+// grazing to rapidly gain score.
+#define GRAZING_SCORE_FIRE_RADIUS        (150.0f)  
+#define GRAZING_SCORE_AWARD_PICKUP_DELAY (0.100f)
+#define PLAYER_DEFAULT_GRAZING_DELAY (0.075f)
+#define GRAZING_SCORE_AWARD_DELAY    (0.050f)
+#define GRAZING_DEFAULT_SCORE_AWARD  (100)
+#define PICKUP_ENTITY_DEFAULT_LIFETIME (7.4f)
+
+#define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
+#define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.0f)
+#define DEFAULT_FIRING_COOLDOWN (0.125)
+#define DEFAULT_ENTITY_SCORE_VALUE_PER_HIT (30)
+#define DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER (5)
+#define MAX_PREVIOUS_POSITIONS_FOR_TRAIL (64)
+#define PICKUP_ENTITY_ANIMATION_T_LENGTH (0.75f)
+#define PICKUP_ENTITY_FADE_T_LENGTH      (0.10f)
+
 // This is a basic timer intended to do native timing related
 // things. Although the "game-plan" is to use Lua Coroutines to do
 // most of the nasty timing business.
 
-// I also don't want to implement another lisp interpreter...
 struct Game_State; // forward decl. Entities will need to be able to look at game_state
 struct Play_Area;
 struct Game_Resources;
@@ -43,20 +60,15 @@ struct Timer {
     f32 t, hit_t, max_t;
 };
 
-#define PLAYER_INVINICIBILITY_TIME (1.35)
-#define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
-#define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.0f)
-#define DEFAULT_FIRING_COOLDOWN (0.125)
-#define DEFAULT_ENTITY_SCORE_VALUE_PER_HIT (30)
-#define DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER (5)
-#define MAX_PREVIOUS_POSITIONS_FOR_TRAIL (64)
-
 struct Position_Trail_Ghost {
     V2 position;
     f32 alpha = 1.0f; // this will always be hardcoded to take one second
 };
 
-// NOTE: no real system for a visual sprite quite yet.
+// Need to start removing some redundant fields or fields
+// that some smaller entities don't really need.
+// since I inherit from this for shared behavior regarding kinematics,
+// and automatic timer tracking (t_since_spawn).
 struct Entity {
     u64 uid;
     // primarily for collision purposes
@@ -90,6 +102,8 @@ struct Entity {
     // NOTE: this should become a bit field in the future.
     //like... now.
     bool  die                             = false; // force dead flag
+
+    // TODO: allow flashing color adjustment
     bool  flashing                        = false; // flicker on or off
     bool  invincibility_show_flashing     = true;
     bool  allow_out_of_bounds_survival    = false;
@@ -267,6 +281,20 @@ struct Player : public Entity {
     // but I'll see about that later.
     void update(Game_State* state, f32 dt);
 
+    /*
+     NOTE:
+     visually, I'd like to make grazing look more interesting,
+     maybe changing the UI?
+    */
+    s32  currently_grazing(Game_State* state);
+    void handle_grazing_behavior(Game_State* state, f32 dt);
+    f32  get_grazing_score_modifier(s32 amount);
+
+    f32 grazing_award_timer = 0.0f;
+    f32 grazing_award_score_pickup_timer = 0.0f;
+    f32 grazing_delay       = PLAYER_DEFAULT_GRAZING_DELAY;
+    f32 time_spent_grazing  = 0.0f;
+
     // a focused character will be slower and shoot 'harder' and faster.
     bool under_focus = false;
 };
@@ -302,6 +330,44 @@ private:
     void handle_lifetime(f32 dt);
     void handle_movement(Game_State* state, f32 dt);
 };
+
+// TODO: score entities need lua bindings!
+enum Pickup_Entity_Type {
+    PICKUP_SCORE,
+    PICKUP_ATTACKPOWER, // NOTE: not sure if I want this.
+    // NOTE: a direct life pickup should be relatively uncommon.
+    PICKUP_LIFE, 
+};
+
+/*
+ * These entities will always animate to their final position before
+ * settling down.
+ */
+struct Pickup_Entity : public Entity {
+    s32 type = PICKUP_SCORE;
+
+    // TODO: custom drawing override.
+    //       for the slightly different fading!
+    void update(Game_State* state, f32 dt);
+    void on_picked_up(Game_State* state);
+
+    Timer lifetime = Timer(PICKUP_ENTITY_DEFAULT_LIFETIME);
+
+    bool awarded    = false;
+
+    f32  fading_t   = 0.0f;
+    s32  fade_phase = 0; // even is visible, odd is invisible.
+    s32  value      = 0;
+
+    // NOTE: timing is hard coded, and non-adjustable.
+    f32 animation_t = 0.0f;
+    V2  animation_start_position;
+    V2  animation_end_position;
+};
+
+Pickup_Entity pickup_score_entity(Game_State* state,        V2 start, V2 end, s32 value);
+Pickup_Entity pickup_attack_power_entity(Game_State* state, V2 start, V2 end, s32 value);
+Pickup_Entity pickup_life_entity(Game_State* state,         V2 start, V2 end);
 
 struct lua_State;
 void bind_entity_lualib(lua_State* L);

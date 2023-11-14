@@ -261,6 +261,11 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
         {
             switch (task.userdata.yielded.reason) {
                 case TASK_YIELD_REASON_NONE: {} break;
+                case TASK_YIELD_REASON_WAIT_FOR_NO_DANGER_ON_STAGE: {
+                    if (!state->gameplay_data.any_hazards())
+                        task.userdata.yielded.reason = TASK_YIELD_REASON_NONE;
+                    continue;
+                } break;
                 case TASK_YIELD_REASON_COMPLETE_STAGE: {
                     state->gameplay_data.stage_completed = true;
                     task.userdata.yielded.reason = TASK_YIELD_REASON_NONE;

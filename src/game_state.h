@@ -14,11 +14,12 @@
 
 #include "game_task_scheduler.h"
 
-#define MAX_BULLETS           (5000)
-#define MAX_EXPLOSION_HAZARDS (1024)
-#define MAX_LASER_HAZARDS     (1024)
-#define MAX_ENEMIES           (128)
-#define MAX_SCORE_NOTIFICATIONS (4096)
+#define MAX_PICKUP_ENTITIES     (10000)
+#define MAX_BULLETS             (5000)
+#define MAX_SCORE_NOTIFICATIONS (5000)
+#define MAX_ENEMIES             (128)
+#define MAX_EXPLOSION_HAZARDS   (16)
+#define MAX_LASER_HAZARDS       (16)
 
 static string menu_font_variation_string_names[] = {
     string_literal("res/fonts/gnsh-bitmapfont-colour1.png"),
@@ -191,7 +192,9 @@ struct Gameplay_Data {
     Fixed_Array<Bullet>           to_create_player_bullets;
     Fixed_Array<Bullet>           to_create_enemy_bullets;
     Fixed_Array<Enemy_Entity>     to_create_enemies;
+    Fixed_Array<Pickup_Entity>    to_create_pickups;
 
+    Fixed_Array<Pickup_Entity>    pickups;
     Fixed_Array<Bullet>           bullets;
     Fixed_Array<Enemy_Entity>     enemies;
     Fixed_Array<Laser_Hazard>     laser_hazards;
@@ -220,9 +223,11 @@ struct Gameplay_Data {
     // Bullets and enemy entities are queued up because
     // they are multithreaded.
     void add_bullet(Bullet b);
+    void add_pickup(Pickup_Entity pe);
     void add_laser_hazard(Laser_Hazard h);
     void add_explosion_hazard(Explosion_Hazard h);
     void add_enemy_entity(Enemy_Entity e);
+    void add_pickup_entity(Pickup_Entity s);
 
     Enemy_Entity*  lookup_enemy(u64 uid);
     Bullet* lookup_bullet(u64 uid);

@@ -351,6 +351,7 @@ void Game::setup_stage_start() {
     state->player.die      = false;
     state->player.scale    = V2(5, 5);
 
+    state->pickups.clear();
     state->enemies.clear();
     state->bullets.clear();
     state->explosion_hazards.clear();
@@ -449,6 +450,7 @@ void Game::init(Graphics_Driver* driver) {
         state->explosion_hazards       = Fixed_Array<Explosion_Hazard>(arena, MAX_EXPLOSION_HAZARDS);
         state->laser_hazards           = Fixed_Array<Laser_Hazard>(arena, MAX_LASER_HAZARDS);
         state->enemies                 = Fixed_Array<Enemy_Entity>(arena, MAX_ENEMIES);
+        state->pickups                 = Fixed_Array<Pickup_Entity>(arena, MAX_PICKUP_ENTITIES);
         state->score_notifications     = Fixed_Array<Gameplay_UI_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
         state->hit_score_notifications = Fixed_Array<Gameplay_UI_Hitmark_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
         state->prng                    = random_state();
@@ -461,6 +463,7 @@ void Game::init(Graphics_Driver* driver) {
             state->to_create_player_bullets = Fixed_Array<Bullet>(arena, MAX_BULLETS);
             state->to_create_enemy_bullets  = Fixed_Array<Bullet>(arena, MAX_BULLETS);
             state->to_create_enemies        = Fixed_Array<Enemy_Entity>(arena, MAX_ENEMIES);
+            state->to_create_pickups        = Fixed_Array<Pickup_Entity>(arena, MAX_PICKUP_ENTITIES);
         }
     }
 
@@ -709,6 +712,10 @@ void Gameplay_Data::add_enemy_entity(Enemy_Entity e) {
     to_create_enemies.push(e);
 }
 
+void Gameplay_Data::add_pickup_entity(Pickup_Entity s) {
+    to_create_pickups.push(s);
+}
+
 bool Gameplay_Data::entity_spawned(u64 uid) {
     for (s32 index = 0; index < enemies.size; ++index) {
         if (enemies[index].uid == uid) return true;
@@ -763,6 +770,21 @@ void Gameplay_Data::reify_all_creation_queues() {
 
             state->to_create_player_bullets.zero();
             state->to_create_enemy_bullets.zero();
+            return 0;
+        },
+        this
+    );
+
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            Gameplay_Data* state = (Gameplay_Data*)ctx;
+
+            for (int i = 0; i < (int)state->to_create_pickups.size; ++i) {
+                auto& e = state->to_create_pickups[i];
+                state->pickups.push(e);
+            }
+
+            state->to_create_pickups.zero();
             return 0;
         },
         this
@@ -1957,6 +1979,8 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 
           Also, I'm aware that I should be interpolating between the last and current frame with an accumulator, but
           I don't think it's necessary for a bullet hell game like this.
+
+          TODO: add a way to dilate the time scale.
         */
 #if 0
         const f32 TARGET_FRAMERATE = 0.0f; // use 0 for unlimited
@@ -2053,7 +2077,33 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
                     Game_State* game_state = packet->game_state;
                     Gameplay_Data* state = &packet->game_state->gameplay_data;
                     f32 dt = packet->dt;
+
+                    for (int i = 0; i < (s32)state->pickups.size; ++i) {
+                        auto& e = state->pickups[i];
+                        e.update(game_state, dt);
+                    }
+
+                    return 0;
+                },
+                (void*)update_packet_data
+            );
+
+            Thread_Pool::add_job(
+                [](void* ctx) {
+                    auto packet = (Entity_Loop_Update_Packet*) ctx;
+                    Game_State* game_state = packet->game_state;
+                    Gameplay_Data* state = &packet->game_state->gameplay_data;
+                    f32 dt = packet->dt;
                     state->player.update(game_state, dt);
+                    // NOTE:
+                    // I am aware that the bullets may not be done updating
+                    // when this is called.
+                    //
+                    // However, I am only reading, and the bullets shouldn't be
+                    // going fast enough for this to be inaccurate...
+                    //
+                    // If It some how is, I'll just make this happen after all the updates...
+                    state->player.handle_grazing_behavior(game_state, dt);
                     return 0;
                 },
                 (void*)update_packet_data
@@ -2073,6 +2123,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         // NOTE: these deliberately have to be after,
         // because I need clean up to happen at the end exactly. 
 
+        handle_player_pickup_collisions(dt);
         handle_player_enemy_collisions(dt);
         handle_all_bullet_collisions(dt);
         handle_all_dead_entities(dt);
@@ -2132,6 +2183,11 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         for (int i = 0; i < (s32)state->enemies.size; ++i) {
             auto& e = state->enemies[i];
             e.draw(this->state, &game_render_commands, resources);
+        }
+
+        for (int i = 0; i < (s32)state->pickups.size; ++i) {
+            auto& pe = state->pickups[i];
+            pe.draw(this->state, &game_render_commands, resources);
         }
 
         {
@@ -2257,6 +2313,16 @@ void Game::handle_all_dead_entities(f32 dt) {
             for (int i = 0; i < state->laser_hazards.size; ++i) {
                 auto& h = state->laser_hazards[i];
                 if (h.die) {state->laser_hazards.pop_and_swap(i);}
+            }
+            return 0;
+        }, state);
+
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            Gameplay_Data* state = (Gameplay_Data*) ctx;
+            for (int i = 0; i < state->pickups.size; ++i) {
+                auto& pe = state->pickups[i];
+                if (pe.die) {state->pickups.pop_and_swap(i);}
             }
             return 0;
         }, state);
@@ -2411,6 +2477,20 @@ void Game::handle_player_enemy_collisions(f32 dt) {
 
         if (rectangle_f32_intersect(player_rect, enemy_rect)) {
             p.kill();
+        }
+    }
+}
+
+void Game::handle_player_pickup_collisions(f32 dt) {
+    auto& p = state->gameplay_data.player;
+    auto player_rect = p.get_rect();
+
+    for (s32 pickup_index = 0; pickup_index < state->gameplay_data.pickups.size; ++pickup_index) {
+        auto& pe          = state->gameplay_data.pickups[pickup_index];
+        auto  pickup_rect = pe.get_rect();
+
+        if (rectangle_f32_intersect(player_rect, pickup_rect)) {
+            pe.on_picked_up(state);
         }
     }
 }
@@ -2707,6 +2787,18 @@ int _lua_bind_Task_Yield_Finish_Stage(lua_State* L) {
     return lua_yield(L, 0);
 }
 
+int _lua_bind_Task_Yield_Until_No_Danger(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
+    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
+
+    auto& task = state->coroutine_tasks.tasks[task_id];
+    task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_FOR_NO_DANGER_ON_STAGE;
+
+    return lua_yield(L, 0);
+}
+
 int _lua_bind_Task_Yield(lua_State* L) {
     lua_getglobal(L, "_gamestate");
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
@@ -2775,6 +2867,7 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
         lua_setglobal(L, "_gamestate"); // we'll store this implicitly
         lua_register(L, "t_wait", _lua_bind_Task_Yield_Wait);
         lua_register(L, "t_yield", _lua_bind_Task_Yield);
+        lua_register(L, "t_wait_for_no_danger", _lua_bind_Task_Yield_Until_No_Danger);
         lua_register(L, "t_complete_stage", _lua_bind_Task_Yield_Finish_Stage);
 
         lua_register(L, "any_living_danger", _lua_bind_any_living_danger);
