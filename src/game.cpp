@@ -1890,15 +1890,19 @@ local void render_boss_health_bar(
             // Uh... Yeah. This is uh. Performant. I don't have shaders, and
             // don't have complex gradients. Or triangle strips. Or anything in the software
             // renderer that can make this faster!
+
+            local auto red = color32u8(220, 20, 60, 255);
+            local auto yellow = color32u8(255, 250, 205, 255);
+            local auto green = color32u8(0, 255, 127, 255);
+            /*
+                NOTE: multi_linear_gradient_blend doesn't have "curve control",
+                so I'm manually controlling the curve by padding out the gradient color with more
+                points.
+            */
             local color32u8 gradient_colors[] = {
-                color32u8(255, 0, 0, 255),color32u8(255, 0, 0, 255),color32u8(255, 0, 0, 255),
-                color32u8(255, 255, 51, 255),
-                color32u8(255, 255, 51, 255),
-                color32u8(255, 255, 51, 255),
-                color32u8(255, 255, 51, 255),
-                color32u8(255, 255, 51, 255),
-                color32u8(255, 255, 51, 255),
-                color32u8(0, 255, 0, 255),
+                red, red, red, red,
+                yellow, yellow, yellow, yellow, yellow, yellow,
+                green, green
             };
             auto color_choice = multi_linear_gradient_blend(
                 make_slice<color32u8>(gradient_colors, array_count(gradient_colors)),
