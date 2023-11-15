@@ -494,6 +494,36 @@ struct string{
 #define string_literal(x) string { sizeof(x)-1, (char*)x }
 #define string_null       string { 0, (char*) 0 }
 
+
+/*
+ * For the intents that I often need, I find that I usually don't need these
+ * too frequently, as most stuff looks accurate enough to me (oddly enough even on
+ * the collisions which seem to pass my look-test).
+ *
+ * 90% sure the only floating point comparisons I do are from things that I directly pass in
+ * and I can always rely on immediate values to generally be correct, which is probably why
+ * I never really noticed.
+ *
+ * But a common.h library wouldn't really be complete without one.
+ */
+#define DEFAULT_EPSILON (0.000001f)
+inline bool f32_close_enough(f32 a,     f32 b, f32 tolerance=DEFAULT_EPSILON) {
+    f32 d = fabs(a - b);
+    return d <= tolerance;
+}
+inline bool f32_close_enough_lt(f32 a,  f32 b, f32 tolerance=DEFAULT_EPSILON) {
+    return (!f32_close_enough(a, b, tolerance)) && (a < b);
+}
+inline bool f32_close_enough_gt(f32 a,  f32 b, f32 tolerance=DEFAULT_EPSILON) {
+    return (!f32_close_enough(a, b, tolerance)) && (a > b);
+}
+inline bool f32_close_enough_lte(f32 a, f32 b, f32 tolerance=DEFAULT_EPSILON) {
+    return (f32_close_enough(a, b, tolerance)) || (a < b);
+}
+inline bool f32_close_enough_gte(f32 a, f32 b, f32 tolerance=DEFAULT_EPSILON) {
+    return (f32_close_enough(a, b, tolerance)) || (a > b);
+}
+
 #include "debug_ui.h"
 #include "duffcoroutine.h"
 
