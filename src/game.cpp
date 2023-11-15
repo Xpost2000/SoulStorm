@@ -2925,7 +2925,6 @@ void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
 
     auto display = Boss_Healthbar_Display{
         .entity_uid = entity_uid,
-        .boss_name = name,
     };
     _debugprintf("(%d)%.*s\n", name.length, name.length, name.data);
     for (int i = 0; i < name.length; ++i) display.bossnamebuffer[i] = name.data[i];
@@ -2933,7 +2932,6 @@ void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
     display.start_position_target = element_position + V2(BOSS_HEALTHBAR_DISPLAY_OFFSET_X, 0);
     display.end_position_target   = element_position;
     display.animation_t = 0.0f;
-    display.boss_name             = string_from_cstring((char*)display.bossnamebuffer);
     displays.push(display);
 }
 
@@ -3031,7 +3029,7 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
 
         Enemy_Entity* e = state->gameplay_data.lookup_enemy(display.entity_uid);
         f32 percentage = 0.0f;
-        string name = display.boss_name;
+        string name = string_from_cstring(display.bossnamebuffer);
         string hp   = string_literal("???");
         if (e) {
             percentage = e->hp_percentage();
