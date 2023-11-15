@@ -1031,6 +1031,17 @@ int _lua_bind_enemy_new(lua_State* L) {
     return 1;
 }
 
+int _lua_bind_enemy_time_since_spawn(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        lua_pushnumber(L, e->t_since_spawn);
+        return 1;
+    }
+    return 0;
+}
+
 int _lua_bind_enemy_valid(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
@@ -1201,7 +1212,18 @@ int _lua_bind_enemy_hp(lua_State* L) {
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
-        lua_pushnumber(L, e->hp);
+        lua_pushinteger(L, e->hp);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_hp_percent(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        lua_pushnumber(L, e->hp_percentage());
         return 1;
     }
     return 0;
@@ -1305,6 +1327,33 @@ int _lua_bind_enemy_set_oob_deletion(lua_State* L) {
 
     return 0;
 }
+
+int _lua_bind_enemy_show_boss_hp(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+
+    if (e) {
+        state->gameplay_data.boss_health_displays.add(
+            uid,
+            string_literal("TODO")
+        );
+    }
+
+    return 0;
+}
+
+int _lua_bind_enemy_hide_boss_hp(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+
+    if (e) {
+        state->gameplay_data.boss_health_displays.remove(uid);
+    }
+
+    return 0;
+}
 // BULLET ENTITY
 int _lua_bind_bullet_new(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
@@ -1312,6 +1361,17 @@ int _lua_bind_bullet_new(lua_State* L) {
     state->gameplay_data.add_bullet(e);
     lua_pushinteger(L, e.uid);
     return 1;
+}
+
+int _lua_bind_bullet_time_since_spawn(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushnumber(L, e->t_since_spawn);
+        return 1;
+    }
+    return 0;
 }
 
 int _lua_bind_bullet_valid(lua_State* L) {
@@ -1526,6 +1586,46 @@ int _lua_bind_bullet_set_visual(lua_State* L) {
     return 0; 
 }
 
+int _lua_bind_bullet_set_lifetime(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->lifetime = Timer(luaL_checkinteger(L, 2));
+    }
+    return 0; 
+}
+int _lua_bind_bullet_lifetime(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushnumber(L, e->lifetime.t);
+        return 1;
+    }
+    return 0; 
+}
+int _lua_bind_bullet_lifetime_max(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushnumber(L, e->lifetime.max_t);
+        return 1;
+    }
+    return 0; 
+}
+int _lua_bind_bullet_lifetime_percent(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushnumber(L, e->lifetime.percentage());
+        return 1;
+    }
+    return 0; 
+}
+
 // Misc entities
 int _lua_bind_explosion_hazard_new(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
@@ -1658,7 +1758,11 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "enemy_end_invincibility",   _lua_bind_enemy_end_invincibility);
         lua_register(L, "enemy_set_oob_deletion",    _lua_bind_enemy_set_oob_deletion);
 
+        lua_register(L, "enemy_show_boss_hp",    _lua_bind_enemy_show_boss_hp);
+        lua_register(L, "enemy_hide_boss_hp",    _lua_bind_enemy_hide_boss_hp);
+
         // reading
+        lua_register(L, "enemy_time_since_spawn",       _lua_bind_enemy_time_since_spawn);
         lua_register(L, "enemy_position_x", _lua_bind_enemy_position_x);
         lua_register(L, "enemy_position_y", _lua_bind_enemy_position_y);
         lua_register(L, "enemy_velocity_x", _lua_bind_enemy_velocity_x);
@@ -1666,10 +1770,12 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "enemy_acceleration_x", _lua_bind_enemy_acceleration_x);
         lua_register(L, "enemy_acceleration_y", _lua_bind_enemy_acceleration_y);
         lua_register(L, "enemy_hp",         _lua_bind_enemy_hp);
+        lua_register(L, "enemy_hp_percent", _lua_bind_enemy_hp_percent);
 
         // bullet behavior setting. (there is no reason to read from a bullet)
         lua_register(L, "_bullet_ptr",                   _lua_bind_bullet_to_ptr);
         lua_register(L, "bullet_new",                    _lua_bind_bullet_new);
+        lua_register(L, "bullet_time_since_spawn",       _lua_bind_bullet_time_since_spawn);
         lua_register(L, "bullet_valid",                  _lua_bind_bullet_valid);
         lua_register(L, "bullet_set_position",           _lua_bind_bullet_set_position);
         lua_register(L, "bullet_set_scale",              _lua_bind_bullet_set_scale);
@@ -1682,6 +1788,12 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "bullet_set_visual",             _lua_bind_bullet_set_visual);
         lua_register(L, "bullet_set_task",               _lua_bind_bullet_set_task);
         lua_register(L, "bullet_reset_movement",         _lua_bind_bullet_reset_movement);
+        lua_register(L, "bullet_set_lifetime",   _lua_bind_bullet_set_lifetime);
+
+        // These might be okay to read for a bullet.
+        lua_register(L, "bullet_lifetime",   _lua_bind_bullet_lifetime);
+        lua_register(L, "bullet_lifetime_max",   _lua_bind_bullet_lifetime_max);
+        lua_register(L, "bullet_lifetime_percent",   _lua_bind_bullet_lifetime_percent);
 
         // Player is READONLY. All things done to the player are only through the engine code.
         lua_register(L, "_player_ptr",       _lua_bind_player_to_ptr);

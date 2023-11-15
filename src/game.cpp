@@ -2918,6 +2918,13 @@ V2 Boss_Healthbar_Displays::element_position_for(s32 idx) {
     return V2(0, idx * BOSS_HEALTHBAR_DISPLAY_RADIUS * 2 * 1.15);
 }
 void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
+    for (s32 healthbar_index = 0; healthbar_index < displays.size; ++healthbar_index) {
+        auto& display = displays[healthbar_index];
+
+        if (display.entity_uid == entity_uid)
+            return;
+    }
+
     auto display = Boss_Healthbar_Display{
         .entity_uid = entity_uid,
         .boss_name = name,
@@ -2926,6 +2933,7 @@ void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
     V2 element_position           = element_position_for(displays.size);
     display.start_position_target = element_position + V2(BOSS_HEALTHBAR_DISPLAY_OFFSET_X, 0);
     display.end_position_target   = element_position;
+    display.boss_name             = name;
     displays.push(display);
 }
 
