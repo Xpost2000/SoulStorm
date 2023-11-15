@@ -1816,9 +1816,5 @@ void bind_entity_lualib(lua_State* L) {
 
         lua_register(L, "explosion_hazard_new", _lua_bind_explosion_hazard_new);
         lua_register(L, "laser_hazard_new",     _lua_bind_laser_hazard_new);
-
-
-        // temporary. I should have a lua variation to work with.
-        lua_register(L, "spawn_bullet_arc_pattern2", _lua_bind_spawn_bullet_arc_pattern2);
     }
 }

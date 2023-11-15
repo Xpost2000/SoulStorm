@@ -182,7 +182,7 @@ s32 Game_Task_Scheduler::add_lua_entity_game_task(struct Game_State* state, lua_
 
     lua_getglobal(task.L_C, fn_name);
     lua_pushinteger(task.L_C, uid);
-    push_all_variants_to_lua_stack(L, parameters);
+    push_all_variants_to_lua_stack(task.L_C, parameters);
     task.nargs = 1 + parameters.length;
 
     _debugprintf("Lua task (%p) assigned to coroutine on : %s", task.L_C, fn_name);
