@@ -353,6 +353,8 @@ void Game::setup_stage_start() {
     state->player.die      = false;
     state->player.scale    = V2(2, 2);
 
+    state->boss_health_displays.displays.zero();
+
     state->pickups.clear();
     state->enemies.clear();
     state->bullets.clear();
