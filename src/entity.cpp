@@ -1336,7 +1336,7 @@ int _lua_bind_enemy_show_boss_hp(lua_State* L) {
     if (e) {
         state->gameplay_data.boss_health_displays.add(
             uid,
-            string_literal("TODO")
+            string_from_cstring((char*)lua_tostring(L, 1))
         );
     }
 

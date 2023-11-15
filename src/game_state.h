@@ -196,7 +196,8 @@ enum Boss_Healthbar_Animation_Display {
 struct Boss_Healthbar_Display {
     s32    animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_SPAWN;
     u64    entity_uid      = 0;
-    string boss_name       = string_literal("?");
+    char  bossnamebuffer[64];
+    string boss_name;
     // NOTE: position is relative to the Boss_Healthbar_Displays
     V2     position        = V2(0, 0);
     f32    alpha           = 0.0f;

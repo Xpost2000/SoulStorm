@@ -2929,11 +2929,11 @@ void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
         .entity_uid = entity_uid,
         .boss_name = name,
     };
-
+    for (int i = 0; i < name.length; ++i) display.bossnamebuffer[i] = name.data[i];
     V2 element_position           = element_position_for(displays.size);
     display.start_position_target = element_position + V2(BOSS_HEALTHBAR_DISPLAY_OFFSET_X, 0);
     display.end_position_target   = element_position;
-    display.boss_name             = name;
+    display.boss_name             = string_from_cstring((char*)display.bossnamebuffer);
     displays.push(display);
 }
 
