@@ -3093,10 +3093,42 @@ int _lua_bind_any_living_danger(lua_State* L) {
     return 1;
 }
 
+int _lua_bind_prng_ranged_float(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    f32 a = luaL_checknumber(L, 1);
+    f32 b = luaL_checknumber(L, 2);
+    lua_pushnumber(L, random_ranged_float(&state->gameplay_data.prng, a, b));
+    return 1;
+}
+
+int _lua_bind_prng_ranged_integer(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    s32 a = luaL_checkinteger(L, 1);
+    s32 b = luaL_checkinteger(L, 2);
+    lua_pushnumber(L, random_ranged_integer(&state->gameplay_data.prng, a, b));
+    return 1;
+}
+
+int _lua_bind_prng_normalized_float(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    lua_pushnumber(L, random_float(&state->gameplay_data.prng));
+    return 1;
+}
+
 int _lua_bind_play_area_width(lua_State* L) {
     lua_getglobal(L, "_gamestate");
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     lua_pushinteger(L, state->gameplay_data.play_area.width);
+    return 1;
+}
+
+int _lua_bind_play_area_height(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    lua_pushinteger(L, state->gameplay_data.play_area.height);
     return 1;
 }
 
@@ -3142,13 +3174,19 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
     {
         lua_pushlightuserdata(L, this);
         lua_setglobal(L, "_gamestate"); // we'll store this implicitly
-        lua_register(L, "t_wait", _lua_bind_Task_Yield_Wait);
-        lua_register(L, "t_yield", _lua_bind_Task_Yield);
-        lua_register(L, "t_wait_for_no_danger", _lua_bind_Task_Yield_Until_No_Danger);
-        lua_register(L, "t_complete_stage", _lua_bind_Task_Yield_Finish_Stage);
 
-        lua_register(L, "any_living_danger", _lua_bind_any_living_danger);
-        lua_register(L, "play_area_width", _lua_bind_play_area_width);
+        lua_register(L, "t_wait",               _lua_bind_Task_Yield_Wait);
+        lua_register(L, "t_yield",              _lua_bind_Task_Yield);
+        lua_register(L, "t_wait_for_no_danger", _lua_bind_Task_Yield_Until_No_Danger);
+        lua_register(L, "t_complete_stage",     _lua_bind_Task_Yield_Finish_Stage);
+
+        lua_register(L, "any_living_danger",   _lua_bind_any_living_danger);
+        lua_register(L, "play_area_width",     _lua_bind_play_area_width);
+        lua_register(L, "play_area_height",     _lua_bind_play_area_height);
+
+        lua_register(L, "prng_ranged_float",   _lua_bind_prng_ranged_float);
+        lua_register(L, "prng_ranged_integer", _lua_bind_prng_ranged_integer);
+        lua_register(L, "prng_normalized_float",      _lua_bind_prng_normalized_float);
     }
 
     {bind_v2_lualib(L);}
