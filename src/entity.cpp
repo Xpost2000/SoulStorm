@@ -1357,10 +1357,20 @@ int _lua_bind_enemy_hide_boss_hp(lua_State* L) {
 // BULLET ENTITY
 int _lua_bind_bullet_new(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
-    auto e = bullet_generic( state, V2(0,0), V2(10,10), luaL_checkinteger(L, 1), nullptr, PROJECTILE_SPRITE_BLUE);
+    auto e = bullet_generic( state, V2(0,0), V2(10,10), BULLET_SOURCE_NEUTRAL, nullptr, PROJECTILE_SPRITE_BLUE);
     state->gameplay_data.add_bullet(e);
     lua_pushinteger(L, e.uid);
     return 1;
+}
+
+int _lua_bind_bullet_set_source(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->source_type = luaL_checkinteger(L, 2);
+    }
+    return 0;
 }
 
 int _lua_bind_bullet_time_since_spawn(lua_State* L) {
@@ -1591,7 +1601,7 @@ int _lua_bind_bullet_set_lifetime(lua_State* L) {
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_bullet(uid);
     if (e) {
-        e->lifetime = Timer(luaL_checkinteger(L, 2));
+        e->lifetime = Timer(luaL_checknumber(L, 2));
     }
     return 0; 
 }
@@ -1775,6 +1785,7 @@ void bind_entity_lualib(lua_State* L) {
         // bullet behavior setting. (there is no reason to read from a bullet)
         lua_register(L, "_bullet_ptr",                   _lua_bind_bullet_to_ptr);
         lua_register(L, "bullet_new",                    _lua_bind_bullet_new);
+        lua_register(L, "bullet_set_source",             _lua_bind_bullet_set_source);
         lua_register(L, "bullet_time_since_spawn",       _lua_bind_bullet_time_since_spawn);
         lua_register(L, "bullet_valid",                  _lua_bind_bullet_valid);
         lua_register(L, "bullet_set_position",           _lua_bind_bullet_set_position);

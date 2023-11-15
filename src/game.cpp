@@ -3171,13 +3171,9 @@ lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     // NOTE: only allow IO in the future.
     //luaL_openlibs(L);
-    luaopen_math(L);
-    luaopen_base(L);
-    luaopen_table(L);
+    luaL_openlibs(L);
 
 #ifndef RELEASE
-    // Only in debug builds I care about logged messages
-    luaopen_io(L);
 #else
     // This is a security hole anyway...
     lua_register(L, "print", [](lua_State*) {return 0; });
