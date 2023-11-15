@@ -58,6 +58,9 @@ float Timer::percentage() {
 }
 
 // Entity Base
+f32 Entity::hp_percentage() {
+    return (f32)hp / max_hp;
+}
 bool Entity::touching_left_border(const Play_Area& play_area, bool as_point) {
     if (as_point)
         return (position.x < 0);
@@ -1085,7 +1088,7 @@ int _lua_bind_enemy_set_hp(lua_State* L) {
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
-        e->hp = luaL_checkinteger(L, 2);
+        e->max_hp = e->hp = luaL_checkinteger(L, 2);
     }
     return 0;
 }

@@ -185,6 +185,39 @@ struct Gameplay_UI_Hitmark_Score_Notification {
     Timer lifetime = Timer(GAMEPLAY_UI_SCORE_NOTIFICATION_DEFAULT_LIFETIME);
 };
 
+enum Boss_Healthbar_Animation_Display {
+    BOSS_HEALTHBAR_ANIMATION_DISPLAY_SPAWN,
+    BOSS_HEALTHBAR_ANIMATION_DISPLAY_IDLE,
+    BOSS_HEALTHBAR_ANIMATION_DISPLAY_FALL_INTO_ORDER,
+    BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN,
+    BOSS_HEALTHBAR_ANIMATION_DISPLAY_COUNT,
+};
+
+struct Boss_Healthbar_Display {
+    s32    animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_SPAWN;
+    u64    entity_uid      = 0;
+    string boss_name       = string_literal("?");
+    // NOTE: position is relative to the Boss_Healthbar_Displays
+    V2     position        = V2(0, 0);
+    f32    alpha           = 0.0f;
+    f32    animation_t     = 0.0f; // used when spawning in, or removal.
+    V2     start_position_target;
+    V2     end_position_target;
+};
+
+struct Boss_Healthbar_Displays {
+    V2 position;
+    Fixed_Array<Boss_Healthbar_Display> displays;
+
+    void add(u64 entity_uid, string name);
+    void remove(u64 entity_uid);
+
+    void update(Game_State* state, f32 dt);
+    void render(struct render_commands* ui_commands, Game_State* state);
+
+    V2 element_position_for(s32 idx);
+};
+
 struct Gameplay_Data {
     bool stage_completed;
     Stage_State stage_state;
@@ -200,10 +233,12 @@ struct Gameplay_Data {
     Fixed_Array<Laser_Hazard>     laser_hazards;
     Fixed_Array<Explosion_Hazard> explosion_hazards;
 
+    // TODO: adjust the position of these items.
     Fixed_Array<Gameplay_UI_Score_Notification> score_notifications;
     Fixed_Array<Gameplay_UI_Hitmark_Score_Notification> hit_score_notifications;
     Player              player;
 
+    Boss_Healthbar_Displays boss_health_displays;
     Play_Area play_area;
 
     random_state prng;

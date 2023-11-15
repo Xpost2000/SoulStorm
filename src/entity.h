@@ -98,7 +98,13 @@ struct Entity {
     Timer cleanup_time                    = Timer(ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION);
     Timer invincibility_time_flash_period = Timer(INVINCIBILITY_FLASH_TIME_PERIOD);
     Timer invincibility_time              = Timer(PLAYER_INVINICIBILITY_TIME);
+
+    // TODO: enforce this later.
+    //       After checkpoint 1 when I clean most of this up
     s32   hp                              = 1;
+    s32   max_hp                          = 1;
+
+    f32  hp_percentage();
 
     // NOTE: this should become a bit field in the future.
     //like... now.

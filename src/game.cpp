@@ -470,6 +470,8 @@ void Game::init(Graphics_Driver* driver) {
             state->to_create_enemies        = Fixed_Array<Enemy_Entity>(arena, MAX_ENEMIES);
             state->to_create_pickups        = Fixed_Array<Pickup_Entity>(arena, MAX_PICKUP_ENTITIES);
         }
+
+        state->boss_health_displays.displays = Fixed_Array<Boss_Healthbar_Display>(arena, 16);
     }
 
     // mainmenu_data initialize
@@ -1858,90 +1860,6 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
     timer.update(dt);
 }
 
-// This is a big parameter list, but that's alright
-// this is not meant to be reusable.
-local void render_boss_health_bar(
-    struct render_commands* ui_render_commands,
-    f32 dt,
-    V2 position,
-    f32 percentage,
-    string text,
-    string text2,
-    f32 alpha,
-    f32 r,
-    f32 text_scale,
-    Game_Resources* resources
-) {
-    {
-        // The only time I'm rendering any lines.
-        {
-            auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
-
-#if 0
-            // f32 percentage = 0.75f;
-            f32 percentage = normalized_sinf(Global_Engine()->global_elapsed_time * 0.75);
-            //f32 percentage = 0.5;
-            f32 r          = 80.0f;
-            //V2  position   = V2(play_area_x + play_area_width + r*1.2, 200);
-            V2 position = V2(100, 100);
-#endif
-
-            s32 arc_max    = 360 * percentage;
-            // Uh... Yeah. This is uh. Performant. I don't have shaders, and
-            // don't have complex gradients. Or triangle strips. Or anything in the software
-            // renderer that can make this faster!
-
-            local auto red = color32u8(220, 20, 60, 255);
-            local auto yellow = color32u8(255, 250, 205, 255);
-            local auto green = color32u8(0, 255, 127, 255);
-            /*
-                NOTE: multi_linear_gradient_blend doesn't have "curve control",
-                so I'm manually controlling the curve by padding out the gradient color with more
-                points.
-            */
-            local color32u8 gradient_colors[] = {
-                red, red, red, red,
-                yellow, yellow, yellow, yellow, yellow, yellow,
-                green, green
-            };
-            auto color_choice = multi_linear_gradient_blend(
-                make_slice<color32u8>(gradient_colors, array_count(gradient_colors)),
-                percentage
-            );
-            color_choice.a = 255 * alpha;
-            for (f32 degree = 0; degree < arc_max; degree += 0.125) {
-                V2 d = V2_direction_from_degree(degree);
-                V2 start = position;
-                V2 end   = start + (d * -r);
-
-                render_commands_push_line(ui_render_commands, start, end, color_choice, BLEND_MODE_ALPHA);
-            }
-
-            f32 sub_r = (r * 0.75);
-            render_commands_push_image(ui_render_commands,
-                                       graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
-                                       rectangle_f32(position.x - sub_r, position.y - sub_r, sub_r*2, sub_r*2),
-                                       RECTANGLE_F32_NULL,
-                                       color32f32(0.0, 0, 0.0, alpha),
-                                       0,
-                                       BLEND_MODE_ALPHA);
-
-            string text = string_literal("100/100");
-            string text2 = string_literal("BOSS NAME");
-            render_commands_push_text(ui_render_commands,
-                                      font,
-                                      text_scale,
-                                      position + V2(-font_cache_text_width(font, text, text_scale)/2, -font_cache_text_height(font) * text_scale),
-                                      text, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA); 
-            render_commands_push_text(ui_render_commands,
-                                      font,
-                                      text_scale,
-                                      position + V2(-font_cache_text_width(font, text2, text_scale)/2, 0),
-                                      text2, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA); 
-        }
-    }
-}
-
 void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     auto state = &this->state->gameplay_data;
     V2 resolution = driver->resolution();
@@ -1998,6 +1916,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
                                                 resolution.y),
                                   border_color, BLEND_MODE_ALPHA);
 
+        // NOTE: really need to adjust the layout
         // Render_Score
         // Draw score and other stats like attack power or speed or something
         {
@@ -2045,6 +1964,13 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             }
             auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("Time %02d:%02d:%02d", hours, minutes, seconds)));
             render_commands_push_text(&ui_render_commands, font, 2, V2(play_area_x+play_area_width, 130), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+        }
+
+        // Render Boss HP
+        {
+            state->boss_health_displays.position = V2(play_area_x + play_area_width + 30, 200);
+            state->boss_health_displays.update(this->state, dt);
+            state->boss_health_displays.render(&ui_render_commands, this->state);
         }
     }
 
@@ -2894,6 +2820,221 @@ u64 UID::enemy_uid() {
 #include "credits_mode.cpp"
 #include "title_screen_mode.cpp"
 #include "main_menu_mode.cpp"
+
+// Boss_Healthbar_Displays
+// This is a big parameter list, but that's alright
+// this is not meant to be reusable.
+local void render_boss_health_bar(
+    struct render_commands* ui_render_commands,
+    V2 position,
+    f32 percentage,
+    string text,
+    string text2,
+    f32 alpha,
+    f32 r,
+    f32 text_scale,
+    Game_Resources* resources
+) {
+    {
+        // The only time I'm rendering any lines.
+        {
+            auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
+
+#if 0
+            // f32 percentage = 0.75f;
+            f32 percentage = normalized_sinf(Global_Engine()->global_elapsed_time * 0.75);
+            //f32 percentage = 0.5;
+            f32 r          = 80.0f;
+            //V2  position   = V2(play_area_x + play_area_width + r*1.2, 200);
+            V2 position = V2(100, 100);
+#endif
+
+            s32 arc_max    = 360 * percentage;
+            // Uh... Yeah. This is uh. Performant. I don't have shaders, and
+            // don't have complex gradients. Or triangle strips. Or anything in the software
+            // renderer that can make this faster!
+
+            local auto red = color32u8(220, 20, 60, 255);
+            local auto yellow = color32u8(255, 250, 205, 255);
+            local auto green = color32u8(0, 255, 127, 255);
+            /*
+                NOTE: multi_linear_gradient_blend doesn't have "curve control",
+                so I'm manually controlling the curve by padding out the gradient color with more
+                points.
+            */
+            local color32u8 gradient_colors[] = {
+                red, red, red, red,
+                yellow, yellow, yellow, yellow, yellow, yellow,
+                green, green
+            };
+            auto color_choice = multi_linear_gradient_blend(
+                make_slice<color32u8>(gradient_colors, array_count(gradient_colors)),
+                percentage
+            );
+            color_choice.a = 255 * alpha;
+            for (f32 degree = 0; degree < arc_max; degree += 0.125) {
+                V2 d = V2_direction_from_degree(degree);
+                V2 start = position;
+                V2 end   = start + (d * -r);
+
+                render_commands_push_line(ui_render_commands, start, end, color_choice, BLEND_MODE_ALPHA);
+            }
+
+            f32 sub_r = (r * 0.75);
+            render_commands_push_image(ui_render_commands,
+                                       graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
+                                       rectangle_f32(position.x - sub_r, position.y - sub_r, sub_r*2, sub_r*2),
+                                       RECTANGLE_F32_NULL,
+                                       color32f32(0.0, 0, 0.0, alpha),
+                                       0,
+                                       BLEND_MODE_ALPHA);
+
+            string text = string_literal("100/100");
+            string text2 = string_literal("BOSS NAME");
+            render_commands_push_text(ui_render_commands,
+                                      font,
+                                      text_scale,
+                                      position + V2(-font_cache_text_width(font, text, text_scale)/2, -font_cache_text_height(font) * text_scale),
+                                      text, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA); 
+            render_commands_push_text(ui_render_commands,
+                                      font,
+                                      text_scale,
+                                      position + V2(-font_cache_text_width(font, text2, text_scale)/2, 0),
+                                      text2, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA); 
+        }
+    }
+}
+
+// NOTE: these times are selected to reduce the possibility
+// of being stuck in weird "inbetween" positions in normal play.
+// Also to mostly be non-intrusive.
+#define BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME   (0.125f)
+#define BOSS_HEALTHBAR_DISPLAY_READJUST_TIME (0.075f)
+#define BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME (0.125f)
+#define BOSS_HEALTHBAR_DISPLAY_OFFSET_X     (250)
+#define BOSS_HEALTHBAR_DISPLAY_RADIUS       (50)
+
+V2 Boss_Healthbar_Displays::element_position_for(s32 idx) {
+    return V2(0, idx * BOSS_HEALTHBAR_DISPLAY_RADIUS * 2 * 1.15);
+}
+void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
+    auto display = Boss_Healthbar_Display{
+        .entity_uid = entity_uid,
+        .boss_name = name,
+    };
+
+    V2 element_position           = element_position_for(displays.size);
+    display.start_position_target = element_position + V2(BOSS_HEALTHBAR_DISPLAY_OFFSET_X, 0);
+    display.end_position_target   = element_position;
+    displays.push(display);
+}
+
+void Boss_Healthbar_Displays::remove(u64 entity_uid) {
+    // queue for removal.
+    for (s32 healthbar_index = 0; healthbar_index < displays.size; ++healthbar_index) {
+        auto& display = displays[healthbar_index];
+
+        if (display.entity_uid == entity_uid) {
+            // This position doesn't really matter too much... Just hope it looks fine
+            // to me.
+            display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN;
+            display.start_position_target = display.position;
+            display.end_position_target   = display.position + V2(BOSS_HEALTHBAR_DISPLAY_OFFSET_X, 0);
+            break;
+        }
+    }
+}
+
+void Boss_Healthbar_Displays::update(Game_State* state, f32 dt) {
+    bool any_removed           = false;
+    s32 earliest_removed_index = displays.size+1;
+
+    for (s32 healthbar_index = 0; healthbar_index < displays.size; ++healthbar_index) {
+        auto& display = displays[healthbar_index];
+
+        if (state->gameplay_data.lookup_enemy(display.entity_uid) == nullptr) {
+            display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN;
+        }
+
+        // need the hp bars to fall in order.
+        switch (display.animation_state) {
+            case BOSS_HEALTHBAR_ANIMATION_DISPLAY_SPAWN: {
+                f32 effective_t = (display.animation_t / BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME);
+                display.alpha = clamp<f32>(effective_t, 0.0f, 1.0f);
+                display.position.x = lerp_f32(display.start_position_target.x, display.end_position_target.x, effective_t);
+                display.position.y = lerp_f32(display.start_position_target.y, display.end_position_target.y, effective_t);
+                display.animation_t += dt;
+
+                if (display.animation_t >= BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME) {
+                    display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_IDLE;
+                }
+            } break;
+            case BOSS_HEALTHBAR_ANIMATION_DISPLAY_IDLE: {/* do nothing. */} break;
+            case BOSS_HEALTHBAR_ANIMATION_DISPLAY_FALL_INTO_ORDER: {
+                f32 effective_t = (display.animation_t / BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME);
+                display.position.x = lerp_f32(display.start_position_target.x, display.end_position_target.x, effective_t);
+                display.position.y = lerp_f32(display.start_position_target.y, display.end_position_target.y, effective_t);
+                display.animation_t += dt;
+
+                if (display.animation_t >= BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME) {
+                    display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_IDLE;
+                }
+            } break;
+            case BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN: {
+                f32 effective_t = (display.animation_t / BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME);
+                display.alpha = clamp<f32>(1.0 - (display.animation_t / BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME), 0.0f, 1.0f);
+                display.position.x = lerp_f32(display.start_position_target.x, display.end_position_target.x, effective_t);
+                display.position.y = lerp_f32(display.start_position_target.y, display.end_position_target.y, effective_t);
+
+                if (display.animation_t >= BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME+0.15f) {
+                    displays.pop_and_swap(healthbar_index);
+                    if (healthbar_index < earliest_removed_index) {
+                        earliest_removed_index = healthbar_index;
+                        any_removed = true;
+                    }
+
+                    break;
+                }
+
+                display.animation_t += dt;
+            } break;
+        }
+    }
+
+    // Start_Shifting_All_Remaining_Bars
+    if (any_removed) {
+        for (s32 healthbar_index = earliest_removed_index; healthbar_index < displays.size; ++healthbar_index) {
+            auto& display = displays[healthbar_index];
+            display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_FALL_INTO_ORDER;
+            display.animation_t     = 0.0f;
+            display.start_position_target = display.position;
+            display.end_position_target   = element_position_for(healthbar_index);
+        }
+    }
+}
+
+void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_State* state) {
+    for (s32 healthbar_index = 0; healthbar_index < displays.size; ++healthbar_index) {
+        auto& display = displays[healthbar_index];
+
+        Enemy_Entity* e = state->gameplay_data.lookup_enemy(display.entity_uid);
+        f32 percentage = e->hp_percentage();
+
+        render_boss_health_bar(
+            ui_commands,
+            position + display.position,
+            percentage,
+            string_from_cstring(format_temp("%d/%d", e->hp, e->max_hp)),
+            display.boss_name,
+            display.alpha,
+            BOSS_HEALTHBAR_DISPLAY_RADIUS,
+            2,
+            state->resources
+        );
+    }
+}
+
+// Lua bindings
 
 int _lua_bind_Task_Yield_Wait(lua_State* L) {
     lua_getglobal(L, "_gamestate");
