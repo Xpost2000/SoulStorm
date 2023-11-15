@@ -1968,7 +1968,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 
         // Render Boss HP
         {
-            state->boss_health_displays.position = V2(play_area_x + play_area_width + 30, 200);
+            state->boss_health_displays.position = V2(play_area_x + play_area_width + 55, 200);
             state->boss_health_displays.update(this->state, dt);
             state->boss_health_displays.render(&ui_render_commands, this->state);
         }
@@ -2889,8 +2889,6 @@ local void render_boss_health_bar(
                                        0,
                                        BLEND_MODE_ALPHA);
 
-            string text = string_literal("100/100");
-            string text2 = string_literal("BOSS NAME");
             render_commands_push_text(ui_render_commands,
                                       font,
                                       text_scale,
@@ -2908,11 +2906,11 @@ local void render_boss_health_bar(
 // NOTE: these times are selected to reduce the possibility
 // of being stuck in weird "inbetween" positions in normal play.
 // Also to mostly be non-intrusive.
-#define BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME   (0.125f)
-#define BOSS_HEALTHBAR_DISPLAY_READJUST_TIME (0.075f)
-#define BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME (0.125f)
-#define BOSS_HEALTHBAR_DISPLAY_OFFSET_X     (250)
-#define BOSS_HEALTHBAR_DISPLAY_RADIUS       (50)
+#define BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME    (0.255f)
+#define BOSS_HEALTHBAR_DISPLAY_READJUST_TIME (0.185f)
+#define BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME  (0.225f)
+#define BOSS_HEALTHBAR_DISPLAY_OFFSET_X      (50)
+#define BOSS_HEALTHBAR_DISPLAY_RADIUS        (50)
 
 V2 Boss_Healthbar_Displays::element_position_for(s32 idx) {
     return V2(0, idx * BOSS_HEALTHBAR_DISPLAY_RADIUS * 2 * 1.15);
@@ -2929,10 +2927,12 @@ void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
         .entity_uid = entity_uid,
         .boss_name = name,
     };
+    _debugprintf("(%d)%.*s\n", name.length, name.length, name.data);
     for (int i = 0; i < name.length; ++i) display.bossnamebuffer[i] = name.data[i];
     V2 element_position           = element_position_for(displays.size);
     display.start_position_target = element_position + V2(BOSS_HEALTHBAR_DISPLAY_OFFSET_X, 0);
     display.end_position_target   = element_position;
+    display.animation_t = 0.0f;
     display.boss_name             = string_from_cstring((char*)display.bossnamebuffer);
     displays.push(display);
 }
@@ -2946,6 +2946,7 @@ void Boss_Healthbar_Displays::remove(u64 entity_uid) {
             // This position doesn't really matter too much... Just hope it looks fine
             // to me.
             display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN;
+            display.animation_t     = 0.0f;
             display.start_position_target = display.position;
             display.end_position_target   = display.position + V2(BOSS_HEALTHBAR_DISPLAY_OFFSET_X, 0);
             break;
@@ -2961,6 +2962,7 @@ void Boss_Healthbar_Displays::update(Game_State* state, f32 dt) {
         auto& display = displays[healthbar_index];
 
         if (state->gameplay_data.lookup_enemy(display.entity_uid) == nullptr) {
+            display.animation_t = 0.0f;
             display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN;
         }
 
@@ -2971,22 +2973,24 @@ void Boss_Healthbar_Displays::update(Game_State* state, f32 dt) {
                 display.alpha = clamp<f32>(effective_t, 0.0f, 1.0f);
                 display.position.x = lerp_f32(display.start_position_target.x, display.end_position_target.x, effective_t);
                 display.position.y = lerp_f32(display.start_position_target.y, display.end_position_target.y, effective_t);
-                display.animation_t += dt;
 
                 if (display.animation_t >= BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME) {
                     display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_IDLE;
+                    display.animation_t = 0.0f;
                 }
+                display.animation_t += dt;
             } break;
             case BOSS_HEALTHBAR_ANIMATION_DISPLAY_IDLE: {/* do nothing. */} break;
             case BOSS_HEALTHBAR_ANIMATION_DISPLAY_FALL_INTO_ORDER: {
                 f32 effective_t = (display.animation_t / BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME);
                 display.position.x = lerp_f32(display.start_position_target.x, display.end_position_target.x, effective_t);
                 display.position.y = lerp_f32(display.start_position_target.y, display.end_position_target.y, effective_t);
-                display.animation_t += dt;
 
                 if (display.animation_t >= BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME) {
                     display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_IDLE;
+                    display.animation_t = 0.0f;
                 }
+                display.animation_t += dt;
             } break;
             case BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN: {
                 f32 effective_t = (display.animation_t / BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME);
@@ -3026,14 +3030,23 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
         auto& display = displays[healthbar_index];
 
         Enemy_Entity* e = state->gameplay_data.lookup_enemy(display.entity_uid);
-        f32 percentage = e->hp_percentage();
+        f32 percentage = 0.0f;
+        string name = display.boss_name;
+        string hp   = string_literal("???");
+        if (e) {
+            percentage = e->hp_percentage();
+            hp = memory_arena_push_string(
+                &Global_Engine()->scratch_arena,
+                string_from_cstring(format_temp("%d/%d", e->hp, e->max_hp))
+            );
+        } ;
 
         render_boss_health_bar(
             ui_commands,
             position + display.position,
             percentage,
-            string_from_cstring(format_temp("%d/%d", e->hp, e->max_hp)),
-            display.boss_name,
+            hp,
+            name,
             display.alpha,
             BOSS_HEALTHBAR_DISPLAY_RADIUS,
             2,
