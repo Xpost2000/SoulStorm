@@ -3132,6 +3132,20 @@ int _lua_bind_play_area_height(lua_State* L) {
     return 1;
 }
 
+int _lua_bind_camera_traumatize(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    camera_traumatize(&state->gameplay_data.main_camera, luaL_checknumber(L, 1));
+    return 0;
+}
+
+int _lua_bind_camera_set_trauma(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    camera_set_trauma(&state->gameplay_data.main_camera, luaL_checknumber(L, 1));
+    return 0;
+}
+
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     // NOTE: only allow IO in the future.
@@ -3187,6 +3201,9 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
         lua_register(L, "prng_ranged_float",   _lua_bind_prng_ranged_float);
         lua_register(L, "prng_ranged_integer", _lua_bind_prng_ranged_integer);
         lua_register(L, "prng_normalized_float",      _lua_bind_prng_normalized_float);
+
+        lua_register(L, "camera_traumatize", _lua_bind_camera_traumatize);
+        lua_register(L, "camera_set_trauma", _lua_bind_camera_set_trauma);
     }
 
     {bind_v2_lualib(L);}
