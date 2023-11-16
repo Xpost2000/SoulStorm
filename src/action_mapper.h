@@ -9,6 +9,8 @@
 
   NOTE: I haven't really needed an input layering system yet, so it also doesn't
   exist, but I might consider one in the future I suppose.
+
+  NOTE: keys do not have modifiers
 */
 
 enum Action_ID {
@@ -24,6 +26,33 @@ enum Action_ID {
     ACTION_USE_BOMB,
     ACTION_COUNT,
 };
+
+local const char* action_id_strings_lua(s32 action_id) {
+    switch (action_id) {
+        case ACTION_MOVE_UP:
+            return "Actions.MOVE_UP";
+        case ACTION_MOVE_DOWN:
+            return "Actions.MOVE_DOWN";
+        case ACTION_MOVE_LEFT:
+            return "Actions.MOVE_LEFT";
+        case ACTION_MOVE_RIGHT:
+            return "Actions.MOVE_RIGHT";
+        case ACTION_ACTION:
+            return "Actions.ACTION";
+        case ACTION_FOCUS:
+            return "Actions.FOCUS";
+        case ACTION_CANCEL:
+            return "Actions.CANCEL";
+        case ACTION_MENU:
+            return "Actions.MENU";
+        case ACTION_SCREENSHOT:
+            return "Actions.SCREENSHOT";
+        case ACTION_USE_BOMB: 
+            return "Actions.USE_BOMB";
+    }
+
+    return "?";
+}
 
 struct lua_State;
 namespace Action {

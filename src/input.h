@@ -48,6 +48,26 @@ static const char* gamepad_axis_strings(int key) {
     return "?";
 }
 
+static const char* gamepad_axis_strings_lua(int key) {
+    switch (key) {
+        case GAMEPAD_AXIS_UNKNOWN:
+            return "GamepadAxis.UNKNOWN";
+        case GAMEPAD_AXIS_X:
+            return "GamepadAxis.AXIS_X";
+        case GAMEPAD_AXIS_Y:
+            return "GamepadAxis.AXIS_Y";
+        case GAMEPAD_AXIS_POSITIVE_X:
+            return "GamepadAxis.AXIS_POSITIVE_X";
+        case GAMEPAD_AXIS_NEGATIVE_X:
+            return "GamepadAxis.AXIS_NEGATIVE_X";
+        case GAMEPAD_AXIS_POSITIVE_Y:
+            return "GamepadAxis.AXIS_POSITIVE_Y";
+        case GAMEPAD_AXIS_NEGATIVE_Y:
+            return "GamepadAxis.AXIS_NEGATIVE_Y";
+    }
+    return "?";
+}
+
 #define INVALID_INPUT (-1)
 enum keyboard_button {
     KEY_UNKNOWN,
@@ -115,6 +135,27 @@ static const char* controller_button_strings(int button) {
         case DPAD_DOWN:      return "GAMEPAD_DPAD_DOWN";
         case DPAD_LEFT:      return "GAMEPAD_DPAD_LEFT";
         case DPAD_RIGHT:     return "GAMEPAD_DPAD_RIGHT";
+    }
+    return "?";
+}
+
+static const char* controller_button_strings_lua(int button) {
+    switch (button) {
+        case BUTTON_UNKNOWN: return "Buttons.UNKNOWN";
+        case BUTTON_A:       return "Buttons.A";
+        case BUTTON_B:       return "Buttons.B";
+        case BUTTON_X:       return "Buttons.X";
+        case BUTTON_Y:       return "Buttons.Y";
+        case BUTTON_RS:      return "Buttons.RS";
+        case BUTTON_LS:      return "Buttons.LS";
+        case BUTTON_RB:      return "Buttons.RB";
+        case BUTTON_LB:      return "Buttons.LB";
+        case BUTTON_START:   return "Buttons.START";
+        case BUTTON_BACK:    return "Buttons.BACK";
+        case DPAD_UP:        return "Buttons.DPAD_UP";
+        case DPAD_DOWN:      return "Buttons.DPAD_DOWN";
+        case DPAD_LEFT:      return "Buttons.DPAD_LEFT";
+        case DPAD_RIGHT:     return "Buttons.DPAD_RIGHT";
     }
     return "?";
 }
@@ -209,6 +250,96 @@ static const char* keyboard_key_strings(int key) {
     return "?";
 }
 
+static const char* keyboard_key_strings_lua(int key) {
+    switch (key) {
+        case KEY_UNKNOWN: return "Keys.UNKNOWN";
+        case KEY_A: return "Keys.A";
+        case KEY_B: return "Keys.B";
+        case KEY_C: return "Keys.C";
+        case KEY_D: return "Keys.D";
+        case KEY_E: return "Keys.E";
+        case KEY_F: return "Keys.F";
+        case KEY_G: return "Keys.G";
+        case KEY_H: return "Keys.H";
+        case KEY_I: return "Keys.I";
+        case KEY_J: return "Keys.J";
+        case KEY_K: return "Keys.K";
+        case KEY_L: return "Keys.L";
+        case KEY_M: return "Keys.M";
+        case KEY_N: return "Keys.N";
+        case KEY_O: return "Keys.O";
+        case KEY_P: return "Keys.P";
+        case KEY_Q: return "Keys.Q";
+        case KEY_R: return "Keys.R";
+        case KEY_S: return "Keys.S";
+        case KEY_T: return "Keys.T";
+        case KEY_U: return "Keys.U";
+        case KEY_V: return "Keys.V";
+        case KEY_W: return "Keys.W";
+        case KEY_X: return "Keys.X";
+        case KEY_Y: return "Keys.Y";
+        case KEY_Z: return "Keys.Z";
+
+        case KEY_F1:  return "Keys.F1";
+        case KEY_F2:  return "Keys.F2";
+        case KEY_F3:  return "Keys.F3";
+        case KEY_F4:  return "Keys.F4";
+        case KEY_F5:  return "Keys.F5";
+        case KEY_F6:  return "Keys.F6";
+        case KEY_F7:  return "Keys.F7";
+        case KEY_F8:  return "Keys.F8";
+        case KEY_F9:  return "Keys.F9";
+        case KEY_F10: return "Keys.F10";
+        case KEY_F11: return "Keys.F11";
+        case KEY_F12: return "Keys.F12";
+
+        case KEY_UP: return "Keys.UP";
+        case KEY_DOWN: return "Keys.DOWN";
+        case KEY_RIGHT: return "Keys.RIGHT";
+        case KEY_LEFT: return "Keys.LEFT";
+        case KEY_0:  return "Keys.KEY_0";
+        case KEY_1:  return "Keys.KEY_1";
+        case KEY_2:  return "Keys.KEY_2";
+        case KEY_3:  return "Keys.KEY_3";
+        case KEY_4:  return "Keys.KEY_4";
+        case KEY_5:  return "Keys.KEY_5";
+        case KEY_6:  return "Keys.KEY_6";
+        case KEY_7:  return "Keys.KEY_7";
+        case KEY_8:  return "Keys.KEY_8";
+        case KEY_9:  return "Keys.KEY_9";
+        case KEY_MINUS:     return "Keys.MINUS";
+        case KEY_BACKQUOTE: return "Keys.BACKQUOTE";
+        case KEY_EQUALS:    return "Keys.EQUALS";
+        case KEY_SEMICOLON: return "Keys.SEMICOLON";
+        case KEY_QUOTE:     return "Keys.QUOTE";
+        case KEY_COMMA:     return "Keys.COMMA";
+        case KEY_PERIOD:    return "Keys.PERIOD";
+        case KEY_RETURN:    return "Keys.RETURN";
+        case KEY_BACKSPACE: return "Keys.BACKSPACE";
+        case KEY_ESCAPE:    return "Keys.ESCAPE";
+        case KEY_INSERT:   return  "Keys.INSERT";
+        case KEY_HOME:     return "Keys.HOME";
+        case KEY_PAGEUP:   return "Keys.PAGEUP";
+        case KEY_PAGEDOWN: return "Keys.PAGEDOWN";
+        case KEY_DELETE:   return "Keys.DELETE";
+        case KEY_END:      return "Keys.END";
+        case KEY_PRINTSCREEN: return "Keys.PRINTSCREEN";
+        case KEY_PAUSE:       return "Keys.PAUSE";
+        case KEY_SCROLL_LOCK: return "Keys.SCROLL_LOCK";
+        case KEY_NUMBER_LOCK: return "Keys.NUMBER_LOCK";
+        case KEY_LEFT_BRACKET:  return "Keys.LEFT_BRACKET";
+        case KEY_RIGHT_BRACKET: return "Keys.RIGHT_BRACKET";
+        case KEY_FORWARDSLASH:  return "Keys.FORWARDSLASH";
+        case KEY_BACKSLASH:     return "Keys.BACKSPACE";
+        case KEY_TAB:   return "Keys.TAB";
+        case KEY_SHIFT: return "Keys.SHIFT";
+        case KEY_SPACE: return "Keys.SPACE";
+        case KEY_CTRL:  return "Keys.CTRL";
+        case KEY_ALT:   return "Keys.ALT";
+    }
+    return "?";
+}
+
 enum {
     CONTROLLER_JOYSTICK_LEFT,
     CONTROLLER_JOYSTICK_RIGHT,
@@ -223,6 +354,19 @@ static const char* controller_joystick_strings(int joystick) {
             return "CONTROLLER_JOYSTICK_RIGHT";
         case CONTROLLER_JOYSTICK_UNKNOWN:
             return "CONTROLLER_JOYSTICK_UNKNOWN";
+    }
+
+    return 0;
+}
+
+static const char* controller_joystick_strings_lua(int joystick) {
+    switch (joystick) {
+        case CONTROLLER_JOYSTICK_LEFT:
+            return "Joystick.LEFT";
+        case CONTROLLER_JOYSTICK_RIGHT:
+            return "Joystick.RIGHT";
+        case CONTROLLER_JOYSTICK_UNKNOWN:
+            return "Joystick.UNKNOWN";
     }
 
     return 0;

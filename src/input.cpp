@@ -454,13 +454,14 @@ namespace Input {
          */
         const char* lua_code = R"(
 GamepadAxis = {
-AXIS_X = 0,
-AXIS_Y = 1,
+UNKNOWN = 0
+AXIS_X = 1,
+AXIS_Y = 2,
 
-AXIS_POSITIVE_X = 2,
-AXIS_NEGATIVE_X = 3,
-AXIS_POSITIVE_Y = 4,
-AXIS_NEGATIVE_Y = 5
+AXIS_POSITIVE_X = 3,
+AXIS_NEGATIVE_X = 4,
+AXIS_POSITIVE_Y = 5,
+AXIS_NEGATIVE_Y = 6,
 }
 
 Joystick = {

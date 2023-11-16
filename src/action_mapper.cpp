@@ -178,15 +178,27 @@ USE_BOMB = 9
 
                 /* I need a way to reverse all the amppings. */
                 if (!(action.key_id[0] == -1 && action.key_id[1] == -1)) {
-                    fprintf(f,  "register_action_keys(%d, %d, %d, %3.3f)\n", i, action.key_id[0], action.key_id[1], action.analog_value);
+                    fprintf(f,  "register_action_keys(%s, %s, %s, %3.3f)\n",
+                            action_id_strings_lua(i),
+                            keyboard_key_strings_lua(action.key_id[0]),
+                            keyboard_key_strings_lua(action.key_id[1]),
+                            action.analog_value);
                 }
 
                 if (action.button_id != -1) {
-                    fprintf(f, "register_action_button(%d, %d, %3.3f)\n", i, action.button_id, action.analog_value);
+                    fprintf(f,
+                            "register_action_button(%s, %s, %3.3f)\n",
+                            action_id_strings_lua(i),
+                            controller_button_strings_lua(action.button_id),
+                            action.analog_value);
                 }
 
                 if (!(action.joystick_id == -1 && action.axis_id == -1)) {
-                    fprintf(f, "register_action_joystick_axis(%d, %d, %d)\n", i, action.joystick_id, action.axis_id);
+                    fprintf(f,
+                            "register_action_joystick_axis(%s, %s, %s)\n",
+                            action_id_strings_lua(i),
+                            controller_joystick_strings_lua(action.joystick_id),
+                            gamepad_axis_strings_lua(action.axis_id));
                 }
             }
         }
