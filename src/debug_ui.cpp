@@ -12,7 +12,11 @@
 local s32  line_count                                                      = 0;
 local s32  line_cursor                                                     = 0;
 local char lines[DEBUG_UI_MAX_STORED_LINES][DEBUG_UI_MAX_CHARACTER_LENGTH] = {};
-local bool show = false;
+
+// 0 - do not show
+// 1 - show low opacity
+// 2 - show full
+local int show = 0;
 #ifndef RELEASE
 
 namespace DebugUI {
@@ -33,12 +37,15 @@ namespace DebugUI {
     }
 
     void render(struct render_commands* commands, struct font_cache* font) {
-        show ^= Input::is_key_pressed(KEY_F1);
+        show += Input::is_key_pressed(KEY_F1);
+        if (show > 2) show = 0;
         if (!show) return;
+
         const f32 scale = 1.0f;
         f32 font_height = font_cache_text_height(font) * scale;
 
-        render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, 250), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+        f32 opacity_modifier = 0.5 * show;
+        render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, 250), color32u8(0, 0, 0, 128 * opacity_modifier), BLEND_MODE_ALPHA);
         for (int i = 0; i < line_count; ++i) {
             char* line = lines[i];
             V2 xy = (V2(0, i) * font_height);
@@ -47,7 +54,7 @@ namespace DebugUI {
             if (i > line_cursor) {
                 a = 0.5;
             }
-            render_commands_push_text(commands, font, scale, xy, string_from_cstring(line), color32f32(a, a, a, 1.0f), BLEND_MODE_ALPHA);
+            render_commands_push_text(commands, font, scale, xy, string_from_cstring(line), color32f32(a, a, a, 1.0f * opacity_modifier), BLEND_MODE_ALPHA);
         }
 
         // I realize this is mildy dumb because I await all the jobs, so they should all be finished.

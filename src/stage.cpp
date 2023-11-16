@@ -33,6 +33,7 @@ Stage_State stage_load_from_lua(Game_State* state, const char* lua_filename) {
     
 
     if (error) {
+        result.L = nullptr;
         lua_close(result.L);
         _debugprintf("Loading NULL stage as fallback!");
         return stage_null();

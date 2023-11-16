@@ -336,6 +336,7 @@ void Game::setup_stage_start() {
         if (state->stage_state.L) {
             _debugprintf("Clean up old lua stage.");
             lua_close(state->stage_state.L);   
+            state->stage_state.L = nullptr;
             this->state->coroutine_tasks.abort_all_lua_tasks();
         }
         state->stage_state = stage_load_from_lua(this->state, format_temp("stages/%d_%d.lua", stage_id+1, level_id+1));

@@ -28,6 +28,26 @@ enum gamepad_axis {
     GAMEPAD_AXIS_NEGATIVE_Y,
 };
 
+static const char* gamepad_axis_strings(int key) {
+    switch (key) {
+        case GAMEPAD_AXIS_UNKNOWN:
+            return "GAMEPAD_AXIS_UNKNOWN";
+        case GAMEPAD_AXIS_X:
+            return "GAMEPAD_AXIS_X";
+        case GAMEPAD_AXIS_Y:
+            return "GAMEPAD_AXIS_Y";
+        case GAMEPAD_AXIS_POSITIVE_X:
+            return "GAMEPAD_AXIS_POSITIVE_X";
+        case GAMEPAD_AXIS_NEGATIVE_X:
+            return "GAMEPAD_AXIS_NEGATIVE_X";
+        case GAMEPAD_AXIS_POSITIVE_Y:
+            return "GAMEPAD_AXIS_POSITIVE_Y";
+        case GAMEPAD_AXIS_NEGATIVE_Y:
+            return "GAMEPAD_AXIS_NEGATIVE_Y";
+    }
+    return "?";
+}
+
 #define INVALID_INPUT (-1)
 enum keyboard_button {
     KEY_UNKNOWN,
@@ -194,6 +214,19 @@ enum {
     CONTROLLER_JOYSTICK_RIGHT,
     CONTROLLER_JOYSTICK_UNKNOWN,
 };
+
+static const char* controller_joystick_strings(int joystick) {
+    switch (joystick) {
+        case CONTROLLER_JOYSTICK_LEFT:
+            return "CONTROLLER_JOYSTICK_LEFT";
+        case CONTROLLER_JOYSTICK_RIGHT:
+            return "CONTROLLER_JOYSTICK_RIGHT";
+        case CONTROLLER_JOYSTICK_UNKNOWN:
+            return "CONTROLLER_JOYSTICK_UNKNOWN";
+    }
+
+    return 0;
+}
 
 struct game_controller_triggers {
     f32 left;

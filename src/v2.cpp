@@ -196,4 +196,10 @@ void bind_v2_lualib(lua_State* L) {
                      push_v2_as_lua(L, V2_perpendicular(v));
                      return 1;
                  });
+    lua_register(L, "v2_normalized",
+        [](lua_State* L) {
+            auto v = v2_from_lua(L, 1);
+            push_v2_as_lua(L, v.normalized());
+            return 1;
+        });
 }
