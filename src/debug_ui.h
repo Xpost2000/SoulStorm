@@ -20,6 +20,7 @@ namespace DebugUI {
     void print(char*);
     void print(string what);
     void render(struct render_commands* commands, struct font_cache* font);
+    bool enabled();
 }
 
 #endif

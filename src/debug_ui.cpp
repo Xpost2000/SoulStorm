@@ -20,6 +20,13 @@ local int show = 0;
 #ifndef RELEASE
 
 namespace DebugUI {
+    bool enabled() {
+#ifndef RELEASE
+        return show;
+#else
+        return false;
+#endif
+    }
 
     void print(char* s) {
         print(string_from_cstring(s));

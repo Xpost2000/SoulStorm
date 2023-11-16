@@ -60,7 +60,7 @@ Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bull
         // state->resources->projectile_sprites[PROJECTILE_SPRITE_NEGATIVE_ELECTRIC]
     );
     // bullet.trail_ghost_limit = 8;
-    bullet.sprite.scale = V2(0.5, 0.5);
+    bullet.sprite.scale = V2(1, 1);
     bullet.velocity_function = velocity;
     state->gameplay_data.add_bullet(bullet);
     return bullet;

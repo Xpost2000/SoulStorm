@@ -269,8 +269,9 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         auto sprite_frame    = sprite_get_frame(sprite_object, sprite.frame);
         auto sprite_img = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
         V2 sprite_image_size = V2(sprite_img->width, sprite_img->height);
-        sprite_image_size.x *= sprite.scale.x; sprite_image_size.y *= sprite.scale.y;
 
+        // NOTE: provided sprites are 32x32
+        sprite_image_size.x *= sprite.scale.x; sprite_image_size.y *= sprite.scale.y;
 
         for (s32 trail_ghost_index = 0; trail_ghost_index < trail_ghost_count; ++trail_ghost_index) {
             auto& ghost = trail_ghosts[trail_ghost_index];
@@ -337,19 +338,38 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
                                    color32f32(1.0, 0, 1.0, 0.5f),
                                    0,
                                    BLEND_MODE_ALPHA);
+
+
+        // center point
+        render_commands_push_quad(
+            render_commands,
+            rectangle_f32(position.x - 1, position.y-1, 2, 2),
+            color32u8(255, 0, 0, 255),
+            BLEND_MODE_ALPHA
+        );
+    }
+
+    if (DebugUI::enabled()) {
+        // grazing "volume"
 #if 0
-        // graze visual
         render_commands_push_image(render_commands,
                                    graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
                                    rectangle_f32(position.x - PLAYER_GRAZE_RADIUS, position.y - PLAYER_GRAZE_RADIUS, PLAYER_GRAZE_RADIUS*2, PLAYER_GRAZE_RADIUS*2),
                                    RECTANGLE_F32_NULL,
-                                   color32f32(0.0, 1.0f, 1.0, 0.2f),
+                                   color32f32(0.0, 1.0f, 0.0, 0.1f),
                                    0,
                                    BLEND_MODE_ALPHA);
 #endif
 
+        // hitbox
+        render_commands_push_quad_ext(
+            render_commands,
+            rectangle_f32(r.x, r.y, r.w, r.h),
+            color32u8(0, 0, 255, 100),
+            V2(0.5, 0.5), 0,
+            BLEND_MODE_ALPHA
+        );
 
-        // center point
         render_commands_push_quad(
             render_commands,
             rectangle_f32(position.x - 1, position.y-1, 2, 2),
@@ -1414,6 +1434,17 @@ int _lua_bind_bullet_set_scale(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_bullet_set_visual_scale(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->sprite.scale.x = luaL_checknumber(L, 2);
+        e->sprite.scale.y = luaL_checknumber(L, 3);
+    }
+    return 0;
+}
+
 int _lua_bind_bullet_set_velocity(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
@@ -1790,6 +1821,7 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "bullet_valid",                  _lua_bind_bullet_valid);
         lua_register(L, "bullet_set_position",           _lua_bind_bullet_set_position);
         lua_register(L, "bullet_set_scale",              _lua_bind_bullet_set_scale);
+        lua_register(L, "bullet_set_visual_scale",       _lua_bind_bullet_set_visual_scale);
         lua_register(L, "bullet_set_velocity",           _lua_bind_bullet_set_velocity);
         lua_register(L, "bullet_set_acceleration",       _lua_bind_bullet_set_acceleration);
         lua_register(L, "bullet_start_trail",            _lua_bind_bullet_start_trail);
