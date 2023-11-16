@@ -160,161 +160,50 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
     driver->upload_texture(&resources->graphics_assets, resources->circle);
 
-    /*
-        PROJECTILE_SPRITE_BLUE,
-        PROJECTILE_SPRITE_BLUE_STROBING,
-        PROJECTILE_SPRITE_BLUE_ELECTRIC,
+    // Sprites have their timings automatically done, so
+    // so they don't store auto timing information.
+    // also yes these projectiles are going to be hard coded.
+    local int projectile_sprite_frame_count[] = {
+        1, 2, 4,
 
-        PROJECTILE_SPRITE_RED,
-        PROJECTILE_SPRITE_RED_STROBING,
-        PROJECTILE_SPRITE_RED_ELECTRIC,
+        1, 2, 4,
 
-        PROJECTILE_SPRITE_NEGATIVE,
-        PROJECTILE_SPRITE_NEGATIVE_STROBING,
-        PROJECTILE_SPRITE_NEGATIVE_ELECTRIC,
-    */
-    {
-        // Compress later? Or not.
-        {
-            auto& sprite = resources->projectile_sprites[PROJECTILE_SPRITE_BLUE];
-            sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 1);
-            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 0);
-            frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1.png"));
+        1, 2, 4,
+
+        1, 2, 4
+    };
+
+    // NOTE: I would like these to become sprite atlases at some point.
+    local string projectile_sprite_locations[PROJECTILE_SPRITE_TYPES][8] = {
+        {string_literal("projectiles/projectile1.png")},
+        {string_literal("projectiles/projectile1.png"), string_literal("projectiles/projectile1_1.png"),},
+        {string_literal("projectiles/projectile1.png"), string_literal("projectiles/projectile1_1.png"), string_literal("projectiles/projectile1_1_2.png"), string_literal("projectiles/projectile1_2.png")},
+
+        {string_literal("projectiles/projectile1_r.png")},
+        {string_literal("projectiles/projectile1_r.png"), string_literal("projectiles/projectile1_1_r.png"),},
+        {string_literal("projectiles/projectile1_r.png"), string_literal("projectiles/projectile1_1_r.png"), string_literal("projectiles/projectile1_1_2_r.png"), string_literal("projectiles/projectile1_2_r.png")},
+
+        {string_literal("projectiles/projectile1_inv.png")},
+        {string_literal("projectiles/projectile1_inv.png"), string_literal("projectiles/projectile1_1_inv.png"),},
+        {string_literal("projectiles/projectile1_inv.png"), string_literal("projectiles/projectile1_1_inv.png"), string_literal("projectiles/projectile1_1_2_inv.png"), string_literal("projectiles/projectile1_2_inv.png")},
+
+        {string_literal("projectiles/projectile1_hp.png")},
+        {string_literal("projectiles/projectile1_hp.png"), string_literal("projectiles/projectile1_1_hp.png"),},
+        {string_literal("projectiles/projectile1_hp.png"), string_literal("projectiles/projectile1_1_hp.png"), string_literal("projectiles/projectile1_1_2_hp.png"), string_literal("projectiles/projectile1_2_hp.png")},
+    };
+
+    for (int projectile_sprite_id = 0; projectile_sprite_id < PROJECTILE_SPRITE_TYPES; ++projectile_sprite_id) {
+        int   frames_to_alloc = projectile_sprite_frame_count[projectile_sprite_id];
+        auto& sprite          = resources->projectile_sprites[projectile_sprite_id];
+        sprite                = graphics_assets_alloc_sprite(&resources->graphics_assets, frames_to_alloc);
+
+        for (int frame_index = 0; frame_index < frames_to_alloc; ++frame_index) {
+            string frame_img_name     = projectile_sprite_locations[projectile_sprite_id][frame_index];
+            string frame_img_location = string_from_cstring(format_temp("res/img/%.*s", frame_img_name.length, frame_img_name.data));
+            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), frame_index);
+            frame->img = graphics_assets_load_image(&resources->graphics_assets, frame_img_location);
             frame->source_rect = RECTANGLE_F32_NULL;
         }
-        {
-            auto& sprite = resources->projectile_sprites[PROJECTILE_SPRITE_BLUE_STROBING];
-            sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 2);
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 0);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 1);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_1.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-        }
-        {
-            auto& sprite = resources->projectile_sprites[PROJECTILE_SPRITE_BLUE_ELECTRIC];
-            sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 4);
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 0);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-                _debugprintf("%d\n", frame->img.index);
-            }
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 1);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_1_1.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 2);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_1_2.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 3);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_2.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-        }
-
-        {
-            auto& sprite = resources->projectile_sprites[PROJECTILE_SPRITE_RED];
-            sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 1);
-            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 0);
-            frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_r.png"));
-            frame->source_rect = RECTANGLE_F32_NULL;
-        }
-        {
-            auto& sprite = resources->projectile_sprites[PROJECTILE_SPRITE_RED_STROBING];
-            sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 2);
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 0);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_r.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 1);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_1_r.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-        }
-        {
-            auto& sprite = resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC];
-            sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 4);
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 0);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_r.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 1);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_1_1_r.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 2);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_1_2_r.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 3);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_2_r.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-        }
-
-        {
-            auto& sprite = resources->projectile_sprites[PROJECTILE_SPRITE_NEGATIVE];
-            sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 1);
-            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 0);
-            frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_inv.png"));
-            frame->source_rect = RECTANGLE_F32_NULL;
-        }
-        {
-            auto& sprite = resources->projectile_sprites[PROJECTILE_SPRITE_NEGATIVE_STROBING];
-            sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 2);
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 0);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_inv.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-                _debugprintf("%d\n", frame->img.index);
-            }
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 1);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_1_inv.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-        }
-        {
-            auto& sprite = resources->projectile_sprites[PROJECTILE_SPRITE_NEGATIVE_ELECTRIC];
-            sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 4);
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 0);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_inv.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 1);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_1_1_inv.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 2);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_1_2_inv.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-            {
-                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), 3);
-                frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/projectiles/projectile1_2_inv.png"));
-                frame->source_rect = RECTANGLE_F32_NULL;
-            }
-        }
-
     }
 }
 
@@ -3192,6 +3081,9 @@ PROJECTILE_SPRITE_RED_ELECTRIC = 5;
 PROJECTILE_SPRITE_NEGATIVE = 6;
 PROJECTILE_SPRITE_NEGATIVE_STROBING = 7;
 PROJECTILE_SPRITE_NEGATIVE_ELECTRIC = 8;
+PROJECTILE_SPRITE_HOT_PINK = 9;
+PROJECTILE_SPRITE_HOT_PINK_STROBING = 10;
+PROJECTILE_SPRITE_HOT_PINK_ELECTRIC = 11;
 
 BULLET_SOURCE_NEUTRAL = 0;
 BULLET_SOURCE_PLAYER = 1;
