@@ -347,8 +347,10 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
             if ((flags & DRAW_IMAGE_FLIP_VERTICALLY))
                 image_sample_y = (s32)(((unclamped_end_y - y_cursor) * scale_ratio_h) + src.y);
 
-            image_sample_x %= image->width;
-            image_sample_y %= image->height;
+            while (image_sample_x < 0) image_sample_x              += image->width;
+            while (image_sample_x >= image->width) image_sample_x  -= image->width;
+            while (image_sample_y < 0) image_sample_y              += image->height;
+            while (image_sample_y >= image->height) image_sample_y -= image->height;
 
             union color32f32 sampled_pixel = color32f32(image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 0] / 255.0f,
                                                         image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 1] / 255.0f,
@@ -376,6 +378,13 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
                 s32 adjy  = y_cursor - (unclamped_start_y + origin_off_y);
                 f32 dx    = floor(c * adjx - s * adjy);
                 f32 dy    = floor(s * adjx + c * adjy);
+#if 0
+                // NOTE: placeholder for "z-axis rotation"
+                //     : specifically for "3Dish" effects in backgrounds for instance.
+                f32 dx    = floor(c * adjx  + s * adjy);
+                f32 dy    = floor(-s * adjx + c * adjy);
+#endif
+
                 dx       += (unclamped_start_x + origin_off_x);
                 dy       += (unclamped_start_y + origin_off_y);
 
