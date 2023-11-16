@@ -3116,6 +3116,41 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
         lua_register(L, "camera_set_trauma", _lua_bind_camera_set_trauma);
     }
 
+    /*
+     * NOTE:
+     *
+     * While I was originally planning to hardcode the stage backgrounds in C++,
+     * I don't really want to spend too much time in using my low-level APIs to build
+     * stuff.
+     *
+     * Also, I do not have a hotloading solution so this is literally the next best thing.
+     *
+     */
+    {
+        // Some really basic engine bindings.
+        lua_register(L, "load_image",          _lua_bind_load_image);
+        lua_register(L, "async_task",          _lua_bind_async_task);
+
+        /* These are per frame objects */
+        lua_register(L, "render_sprite_object_create",        _lua_bind_create_render_sprite_object);
+        lua_register(L, "render_sprite_object_set_position",  _lua_bind_render_sprite_object_set_position);
+        lua_register(L, "render_sprite_object_set_scale",     _lua_bind_render_sprite_object_set_scale);
+        lua_register(L, "render_sprite_object_set_src_rect",  _lua_bind_render_sprite_object_set_src_rect);
+        lua_register(L, "render_sprite_object_set_img_id",    _lua_bind_render_sprite_object_set_img_id);
+        lua_register(L, "render_sprite_object_set_modulation",_lua_bind_render_sprite_object_set_modulation);
+        lua_register(L, "render_sprite_object_set_x_angle",   _lua_bind_render_sprite_object_set_x_angle);
+        lua_register(L, "render_sprite_object_set_y_angle",   _lua_bind_render_sprite_object_set_y_angle);
+        lua_register(L, "render_sprite_object_set_z_angle",   _lua_bind_render_sprite_object_set_z_angle);
+
+        lua_register(L, "render_quad_object_create",         _lua_bind_create_render_quad_object);
+        lua_register(L, "render_quad_object_set_position",   _lua_bind_render_quad_object_set_position);
+        lua_register(L, "render_quad_object_set_scale",      _lua_bind_render_quad_object_set_scale);
+        lua_register(L, "render_quad_object_set_modulation", _lua_bind_render_quad_object_set_modulation);
+        lua_register(L, "render_quad_object_set_x_angle",    _lua_bind_render_quad_object_set_x_angle);
+        lua_register(L, "render_quad_object_set_y_angle",    _lua_bind_render_quad_object_set_y_angle);
+        lua_register(L, "render_quad_object_set_z_angle",    _lua_bind_render_quad_object_set_z_angle);
+    }
+
     {bind_v2_lualib(L);}
     {bind_entity_lualib(L);}
 

@@ -3,6 +3,12 @@
 
 #include <SDL2/SDL_mixer.h>
 
+extern "C" {
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
+
 namespace Audio {
     local Mix_Chunk* loaded_samples[MAX_LOADED_SAMPLES]       = {};
     local u32        loaded_sample_hashes[MAX_LOADED_SAMPLES] = {};
@@ -126,5 +132,41 @@ namespace Audio {
 
     void set_volume_music(f32 v) {
         Mix_VolumeMusic((s32)(v * MIX_MAX_VOLUME));
+    }
+
+    int _lua_bind_load_sound(lua_State* L) {
+        
+    }
+    int _lua_bind_load_music(lua_State* L) {
+        
+    }
+
+    int _lua_bind_play_sound(lua_State* L) {
+        
+    }
+
+    int _lua_bind_play_sound_fadein(lua_State* L) {
+        
+    }
+
+    int _lua_bind_play_music_fadeout(lua_State* L) {
+        
+    }
+    int _lua_bind_play_music(lua_State* L) {
+        
+    }
+
+    int _lua_bind_music_playing(lua_State* L) {
+        
+    }
+
+    void bind_audio_lualib(lua_State* L) {
+        lua_register(L, "load_sound",          _lua_bind_load_sound);
+        lua_register(L, "load_music",          _lua_bind_load_music);
+        lua_register(L, "play_sound",          _lua_bind_play_sound);
+        lua_register(L, "play_sound_fadein",   _lua_bind_play_sound_fadein);
+        lua_register(L, "stop_music_fadeout",  _lua_bind_play_music_fadeout);
+        lua_register(L, "stop_music",          _lua_bind_play_music);
+        lua_register(L, "music_playing",       _lua_bind_music_playing);
     }
 }

@@ -29,6 +29,9 @@ namespace Audio {
     void set_volume_music(f32 v);
 
     bool music_playing();
+
+    struct lua_State;
+    void bind_audio_lualib(lua_State* L);
 }
 
 #endif
