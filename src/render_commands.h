@@ -63,6 +63,7 @@ struct render_command {
     f32 scale;
 
     s32 angle_degrees;
+    s32 angle_y_degrees;
     u32 flags;
     union {
         union color32u8  modulation_u8;
@@ -95,8 +96,12 @@ struct render_commands render_commands(Memory_Arena* arena, s32 capacity, struct
 
 void render_commands_push_quad(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode);
 void render_commands_push_quad_ext(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, V2 rotation_origin, s32 angle, u8 blend_mode);
+void render_commands_push_quad_ext2(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, V2 rotation_origin, s32 angle, s32 angle_y, u8 blend_mode);
+
 void render_commands_push_image(struct render_commands* commands, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 source, union color32f32 rgba, u32 flags, u8 blend_mode);
 void render_commands_push_image_ext(struct render_commands* commands, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 source, union color32f32 rgba, V2 rotation_origin, s32 angle, u32 flags, u8 blend_mode);
+void render_commands_push_image_ext2(struct render_commands* commands, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 source, union color32f32 rgba, V2 rotation_origin, s32 angle, s32 angle_y, u32 flags, u8 blend_mode);
+
 void render_commands_push_line(struct render_commands* commands, V2 start, V2 end, union color32u8 rgba, u8 blend_mode);
 void render_commands_push_text(struct render_commands* commands, struct font_cache* font, f32 scale, V2 xy, string cstring, union color32f32 rgba, u8 blend_mode);
 void render_commands_push_shader_application(struct render_commands* commands, s32 shader_id, void* context);

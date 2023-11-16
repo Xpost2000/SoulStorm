@@ -20,6 +20,7 @@ struct software_framebuffer : public image_buffer {
 };
 
 // NOTE: CPU shaders and GPU shaders are too different to share the same API, so I'll have to think carefully about how the API boundary is expressed...
+// NOTE: do not directly use any of these
 struct software_framebuffer software_framebuffer_create(u32 width, u32 height);
 struct software_framebuffer software_framebuffer_create_from_arena(Memory_Arena* arena, u32 width, u32 height);
 void                        software_framebuffer_finish(struct software_framebuffer* framebuffer);
@@ -29,11 +30,11 @@ void                        software_framebuffer_set_scissor(struct software_fra
 void                        software_framebuffer_clear_buffer(struct software_framebuffer* framebuffer, union color32u8 rgba);
 void                        software_framebuffer_draw_quad(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode);
 void                        software_framebuffer_draw_quad_clipped(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode, struct rectangle_f32 clip_rect);
-void                        software_framebuffer_draw_quad_ext_clipped(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle);
+void                        software_framebuffer_draw_quad_ext_clipped(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, s32 angle_y);
 void                        software_framebuffer_draw_image_ex(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode);
 void                        software_framebuffer_draw_image_ex_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, shader_fn shader, void* shader_ctx);
 // NOTE: origin is supposed to be ([0.0,  1.0], [0.0, 1.0])
-void                        software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, shader_fn shader, void* shader_ctx);
+void                        software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, s32 angle_y, shader_fn shader, void* shader_ctx);
 void                        software_framebuffer_draw_glyph(struct software_framebuffer* framebuffer, struct font_cache* font, f32 scale, V2 xy, char glyph, union color32f32 modulation, u8 blend_mode);
 void                        software_framebuffer_draw_line(struct software_framebuffer* framebuffer, V2 start, V2 end, union color32u8 rgba, u8 blend_mode);
 void                        software_framebuffer_draw_text(struct software_framebuffer* framebuffer, struct font_cache* font, f32 scale, V2 xy, string text, union color32f32 modulation, u8 blend_mode);

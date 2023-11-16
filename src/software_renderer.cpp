@@ -5,6 +5,15 @@
 #include "thread_pool.h"
 #include "engine.h"
 
+inline local void _rotate_f32_xy_as_pseudo_zy(f32* x, f32* y, f32 c, f32 s, f32 c1, f32 s2) {
+    // z rot
+    *x = floor(c * (*x) - s * (*y));
+    *y = floor(s * (*x) + c * (*y));
+
+    // y rot
+    *y = floor(c1 * (*y));
+}
+
 // The main software renderer code
 struct software_framebuffer software_framebuffer_create(u32 width, u32 height) {
     u8* pixels = (u8*)malloc(width * height * sizeof(u32)+64);
@@ -229,10 +238,10 @@ void software_framebuffer_draw_quad_clipped(struct software_framebuffer* framebu
 }
 #else
 void software_framebuffer_draw_quad_clipped(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode, struct rectangle_f32 clip_rect) {
-    software_framebuffer_draw_quad_ext_clipped(framebuffer, destination, rgba, blend_mode, clip_rect, V2(0, 0), 0);
+    software_framebuffer_draw_quad_ext_clipped(framebuffer, destination, rgba, blend_mode, clip_rect, V2(0, 0), 0, 0);
 }
 #endif
-void software_framebuffer_draw_quad_ext_clipped(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle) {
+void software_framebuffer_draw_quad_ext_clipped(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, s32 angle_y) {
     s32 start_x           = clamp<s32>((s32)destination.x, clip_rect.x, clip_rect.x+clip_rect.w);
     s32 start_y           = clamp<s32>((s32)destination.y, clip_rect.y, clip_rect.y+clip_rect.h);
     s32 end_x             = clamp<s32>((s32)(destination.x + destination.w), clip_rect.x, clip_rect.x+clip_rect.w);
@@ -248,6 +257,8 @@ void software_framebuffer_draw_quad_ext_clipped(struct software_framebuffer* fra
 
     f32 c = cosf(degree_to_radians(angle));
     f32 s = sinf(degree_to_radians(angle));
+    f32 c1 = cosf(degree_to_radians(angle_y));
+    f32 s1 = sinf(degree_to_radians(angle_y));
 
     s32 origin_off_x = (s32)(destination.w * origin.x);
     s32 origin_off_y = (s32)(destination.h * origin.y);
@@ -255,14 +266,16 @@ void software_framebuffer_draw_quad_ext_clipped(struct software_framebuffer* fra
     for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
         for (s32 x_cursor = start_x; x_cursor < end_x; ++x_cursor) {
 
-            if (angle == 0) {
+            if (angle == 0 && angle_y == 0) {
                 if (_framebuffer_scissor_cull(framebuffer, x_cursor, y_cursor)) continue;
                 _BlendPixel_Scalar(framebuffer, x_cursor, y_cursor, rgba, blend_mode);
             } else {
                 s32 adjx  = x_cursor - (unclamped_start_x + origin_off_x);
                 s32 adjy  = y_cursor - (unclamped_start_y + origin_off_y);
-                f32 dx    = floor(c * adjx - s * adjy);
-                f32 dy    = floor(s * adjx + c * adjy);
+                f32 dx    = adjx;
+                f32 dy    = adjy;
+                _rotate_f32_xy_as_pseudo_zy(&dx, &dy, c, s, c1, s1);
+
                 dx       += (unclamped_start_x + origin_off_x);
                 dy       += (unclamped_start_y + origin_off_y);
 
@@ -291,11 +304,11 @@ void software_framebuffer_draw_image_ex(struct software_framebuffer* framebuffer
 }
 
 void software_framebuffer_draw_image_ex_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, shader_fn shader, void* shader_ctx) {
-    software_framebuffer_draw_image_ext_clipped(framebuffer, image, destination, src, modulation, flags, blend_mode, clip_rect, V2(0, 0), 0, shader, shader_ctx);
+    software_framebuffer_draw_image_ext_clipped(framebuffer, image, destination, src, modulation, flags, blend_mode, clip_rect, V2(0, 0), 0, 0, shader, shader_ctx);
 }
 
 #ifndef USE_SIMD_OPTIMIZATIONS
-void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, shader_fn shader, void* shader_ctx) {
+void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, s32 angle_y, shader_fn shader, void* shader_ctx) {
     if ((destination.x == 0) && (destination.y == 0) && (destination.w == 0) && (destination.h == 0)) {
         destination.w = framebuffer->width;
         destination.h = framebuffer->height;
@@ -335,6 +348,8 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
 
     f32 c = cosf(degree_to_radians(angle));
     f32 s = sinf(degree_to_radians(angle));
+    f32 c1 = cosf(degree_to_radians(angle_y));
+    f32 s1 = sinf(degree_to_radians(angle_y));
     
     for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
         for (s32 x_cursor = start_x; x_cursor < end_x; ++x_cursor) {
@@ -370,21 +385,15 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
             sampled_pixel.b *= modulation.b;
             sampled_pixel.a *= modulation.a;
 
-            if (angle == 0) {
+            if (angle == 0 && angle_y == 0) {
                 if (_framebuffer_scissor_cull(framebuffer, x_cursor, y_cursor)) continue;
                 _BlendPixel_Scalar(framebuffer, x_cursor, y_cursor, sampled_pixel, blend_mode);
             } else {
                 s32 adjx  = x_cursor - (unclamped_start_x + origin_off_x);
                 s32 adjy  = y_cursor - (unclamped_start_y + origin_off_y);
-                f32 dx    = floor(c * adjx - s * adjy);
-                f32 dy    = floor(s * adjx + c * adjy);
-#if 0
-                // NOTE: placeholder for "z-axis rotation"
-                //     : specifically for "3Dish" effects in backgrounds for instance.
-                f32 dx    = floor(c * adjx  + s * adjy);
-                f32 dy    = floor(-s * adjx + c * adjy);
-#endif
-
+                f32 dx    = adjx;
+                f32 dy    = adjy;
+                _rotate_f32_xy_as_pseudo_zy(&dx, &dy, c, s, c1, s1);
                 dx       += (unclamped_start_x + origin_off_x);
                 dy       += (unclamped_start_y + origin_off_y);
 
@@ -408,7 +417,7 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
 }
 #else
 // NOTE: has no rotation right now.
-void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, shader_fn shader, void* shader_ctx) {
+void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, s32 angle_y, shader_fn shader, void* shader_ctx) {
     if ((destination.x == 0) && (destination.y == 0) && (destination.w == 0) && (destination.h == 0)) {
         destination.w = clip_rect.w;
         destination.h = clip_rect.h;

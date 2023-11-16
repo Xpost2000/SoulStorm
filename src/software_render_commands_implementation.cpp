@@ -63,7 +63,8 @@ void software_framebuffer_render_commands_tiled(struct software_framebuffer* fra
                     command->blend_mode,
                     clip_rect,
                     command->rotation_center,
-                    command->angle_degrees
+                    command->angle_degrees,
+                    command->angle_y_degrees
                 );
             } break;
             case RENDER_COMMAND_DRAW_IMAGE: {
@@ -78,6 +79,7 @@ void software_framebuffer_render_commands_tiled(struct software_framebuffer* fra
                     clip_rect,
                     command->rotation_center,
                     command->angle_degrees,
+                    command->angle_y_degrees,
                     shader_to_select,
                     command->shader_context
                 );

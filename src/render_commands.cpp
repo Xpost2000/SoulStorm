@@ -28,6 +28,10 @@ void render_commands_set_shader(struct render_commands* commands, s32 shader_id,
 }
 
 void render_commands_push_quad_ext(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, V2 rotation_origin, s32 angle, u8 blend_mode) {
+    render_commands_push_quad_ext2(commands, destination, rgba, rotation_origin, angle, 0, blend_mode);
+}
+
+void render_commands_push_quad_ext2(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, V2 rotation_origin, s32 angle, s32 angle_y, u8 blend_mode) {
     struct render_command* command = render_commands_new_command(commands, RENDER_COMMAND_DRAW_QUAD);
     command->destination           = destination;
     command->flags                 = 0;
@@ -35,6 +39,7 @@ void render_commands_push_quad_ext(struct render_commands* commands, struct rect
     command->blend_mode            = blend_mode;
     command->rotation_center       = rotation_origin;
     command->angle_degrees         = angle;
+    command->angle_y_degrees         = angle_y;
 }
 
 void render_commands_push_quad(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode) {
@@ -42,6 +47,10 @@ void render_commands_push_quad(struct render_commands* commands, struct rectangl
 }
 
 void render_commands_push_image_ext(struct render_commands* commands, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 source, union color32f32 rgba, V2 rotation_origin, s32 angle, u32 flags, u8 blend_mode) {
+    render_commands_push_image_ext2(commands, image, destination, source, rgba, rotation_origin, angle, 0, flags, blend_mode);
+}
+
+void render_commands_push_image_ext2(struct render_commands* commands, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 source, union color32f32 rgba, V2 rotation_origin, s32 angle, s32 angle_y, u32 flags, u8 blend_mode) {
     struct render_command* command = render_commands_new_command(commands, RENDER_COMMAND_DRAW_IMAGE);
     command->destination           = destination;
     command->image                 = image;
@@ -51,6 +60,7 @@ void render_commands_push_image_ext(struct render_commands* commands, struct ima
     command->blend_mode            = blend_mode;
     command->rotation_center       = rotation_origin;
     command->angle_degrees         = angle;
+    command->angle_y_degrees         = angle_y;
 }
 
 void render_commands_push_image(struct render_commands* commands, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 source, union color32f32 rgba, u32 flags, u8 blend_mode){
