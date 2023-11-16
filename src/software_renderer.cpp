@@ -5,13 +5,14 @@
 #include "thread_pool.h"
 #include "engine.h"
 
-inline local void _rotate_f32_xy_as_pseudo_zy(f32* x, f32* y, f32 c, f32 s, f32 c1, f32 s2) {
+inline local void _rotate_f32_xy_as_pseudo_zyx(f32* x, f32* y, f32 c=0, f32 s=0, f32 c1=0, f32 s1=0, f32 c2=0, f32 s2=0) {
     // z rot
     *x = floor(c * (*x) - s * (*y));
     *y = floor(s * (*x) + c * (*y));
-
     // y rot
     *y = floor(c1 * (*y));
+    // x rot
+    *x = floor(s2 * (*x));
 }
 
 // The main software renderer code
@@ -274,7 +275,7 @@ void software_framebuffer_draw_quad_ext_clipped(struct software_framebuffer* fra
                 s32 adjy  = y_cursor - (unclamped_start_y + origin_off_y);
                 f32 dx    = adjx;
                 f32 dy    = adjy;
-                _rotate_f32_xy_as_pseudo_zy(&dx, &dy, c, s, c1, s1);
+                _rotate_f32_xy_as_pseudo_zyx(&dx, &dy, c, s, c1, s1);
 
                 dx       += (unclamped_start_x + origin_off_x);
                 dy       += (unclamped_start_y + origin_off_y);
@@ -393,7 +394,7 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
                 s32 adjy  = y_cursor - (unclamped_start_y + origin_off_y);
                 f32 dx    = adjx;
                 f32 dy    = adjy;
-                _rotate_f32_xy_as_pseudo_zy(&dx, &dy, c, s, c1, s1);
+                _rotate_f32_xy_as_pseudo_zyx(&dx, &dy, c, s, c1, s1);
                 dx       += (unclamped_start_x + origin_off_x);
                 dy       += (unclamped_start_y + origin_off_y);
 
