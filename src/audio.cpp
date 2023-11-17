@@ -150,28 +150,28 @@ const         char* filepath = lua_tostring(L, 1);
 
     local int _lua_bind_play_sound(lua_State* L) {
         s32 sound_index = luaL_checkinteger(L, 1);
-        auto sound_id   = Sound_ID { false, sound_index+1 };
+        auto sound_id   = Sound_ID { false, sound_index };
         play(sound_id);
         return 0;
     }
 
     local int _lua_bind_play_music(lua_State* L) {
         s32 sound_index = luaL_checkinteger(L, 1);
-        auto sound_id   = Sound_ID { true, sound_index+1 };
+        auto sound_id   = Sound_ID { true, sound_index };
         play(sound_id);
         return 0;
     }
 
     local int _lua_bind_play_music_fadein(lua_State* L) {
         s32 sound_index = luaL_checkinteger(L, 1);
-        auto sound_id   = Sound_ID { true, sound_index+1 };
+        auto sound_id   = Sound_ID { true, sound_index };
         play_fadein(sound_id, luaL_checkinteger(L, 2));
         return 0;
     }
 
     local int _lua_bind_play_sound_fadein(lua_State* L) {
         s32 sound_index = luaL_checkinteger(L, 1);
-        auto sound_id   = Sound_ID { false, sound_index+1 };
+        auto sound_id   = Sound_ID { false, sound_index };
         play_fadein(sound_id, luaL_checkinteger(L, 2));
         return 0;
     }

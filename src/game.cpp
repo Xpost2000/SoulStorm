@@ -3057,6 +3057,39 @@ int _lua_bind_camera_set_trauma(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_async_task(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    char* task_name = (char*)lua_tostring(L, 1);
+
+    Lua_Task_Extra_Parameter_Variant extra_parameters[128] = {};
+    s32 remaining = lua_gettop(L)-2;
+
+    for (s32 index = 0; index < remaining; ++index) {
+        s32 stack_index = 2 + index;
+        if (lua_isnumber(L, stack_index)) extra_parameters[index] = ltep_variant_number(lua_tonumber(L, stack_index));
+        else if (lua_isstring(L, stack_index)) extra_parameters[index] = ltep_variant_string((char*)lua_tostring(L, stack_index));
+        else if (lua_isinteger(L, stack_index)) extra_parameters[index] = ltep_variant_integer(lua_tointeger(L, stack_index));
+        else if (lua_isboolean(L, stack_index)) extra_parameters[index] = ltep_variant_boolean(lua_toboolean(L, stack_index));
+    }
+
+    state->coroutine_tasks.add_lua_game_task(state, state->coroutine_tasks.L, task_name,  make_slice(extra_parameters, remaining));
+    return 0;
+}
+
+int _lua_bind_load_image(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state     = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    auto        resources = state->resources;
+
+    auto img_id = graphics_assets_load_image(
+        &resources->graphics_assets,
+        string_from_cstring((char*)lua_tostring(L, 1))
+    );
+
+    lua_pushinteger(L, img_id.index);
+    return 1;
+}
+
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     // NOTE: only allow IO in the future.
@@ -3131,6 +3164,7 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
         lua_register(L, "load_image",          _lua_bind_load_image);
         lua_register(L, "async_task",          _lua_bind_async_task);
 
+#if 0
         /* These are per frame objects */
         lua_register(L, "render_sprite_object_create",        _lua_bind_create_render_sprite_object);
         lua_register(L, "render_sprite_object_set_position",  _lua_bind_render_sprite_object_set_position);
@@ -3149,6 +3183,7 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
         lua_register(L, "render_quad_object_set_x_angle",    _lua_bind_render_quad_object_set_x_angle);
         lua_register(L, "render_quad_object_set_y_angle",    _lua_bind_render_quad_object_set_y_angle);
         lua_register(L, "render_quad_object_set_z_angle",    _lua_bind_render_quad_object_set_z_angle);
+#endif
     }
 
     {bind_v2_lualib(L);}
