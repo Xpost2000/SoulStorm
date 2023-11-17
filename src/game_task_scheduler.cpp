@@ -2,28 +2,28 @@
 #include "game_state.h"
 
 Lua_Task_Extra_Parameter_Variant ltep_variant_boolean(bool v) {
-    Lua_Task_Extra_Parameter_Variant result;
+    Lua_Task_Extra_Parameter_Variant result = {};
     result.type = VARIANT_BOOLEAN;
     result.i = (s32)v;
     return result;
 }
 
 Lua_Task_Extra_Parameter_Variant ltep_variant_integer(s32 i) {
-    Lua_Task_Extra_Parameter_Variant result;
+    Lua_Task_Extra_Parameter_Variant result = {};
     result.type = VARIANT_INT;
     result.i = i;
     return result;
 }
 
 Lua_Task_Extra_Parameter_Variant ltep_variant_number(f32 f) {
-    Lua_Task_Extra_Parameter_Variant result;
+    Lua_Task_Extra_Parameter_Variant result = {};
     result.type = VARIANT_NUMBER;
     result.n = f;
     return result;
 }
 
 Lua_Task_Extra_Parameter_Variant ltep_variant_string(char* s) {
-    Lua_Task_Extra_Parameter_Variant result;
+    Lua_Task_Extra_Parameter_Variant result = {};
     result.type = VARIANT_STRING;
     result.s = s;
     return result;
@@ -31,7 +31,7 @@ Lua_Task_Extra_Parameter_Variant ltep_variant_string(char* s) {
 
 void push_all_variants_to_lua_stack(lua_State* L, Slice<Lua_Task_Extra_Parameter_Variant> parameters) {
     for (s32 index = 0; index < parameters.length; ++index) {
-        auto v = parameters[index];
+        const auto& v = parameters[index];
 
         switch (v.type) {
             case VARIANT_INT: {
@@ -101,7 +101,7 @@ s32 Game_Task_Scheduler::add_task(struct Game_State* state, jdr_duffcoroutine_fn
     task.coroutine.userdata = &task.userdata;
 
     active_task_ids.push(first_free);
-    _debugprintf("add task (%d active tasks)", active_task_ids.size);
+    _debugprintf("add task (%d active tasks)", (int)active_task_ids.size);
     return first_free;
 }
 

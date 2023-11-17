@@ -77,6 +77,8 @@ struct render_commands {
     render_commands() {
         clear_buffer_color = color32u8_BLACK;
         should_clear_buffer = command_count = command_capacity = 0;
+        screen_width = screen_height = 0;
+        commands = nullptr;
     }
     struct camera          camera;
     u8                     should_clear_buffer;

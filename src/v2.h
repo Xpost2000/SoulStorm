@@ -12,7 +12,7 @@ union V2 {
     // NOTE:
     // I dislike how basic constructors like this discount it from being a POD.
     // I'll change this and hope it doesn't break anything in a bit.
-    V2() {}
+    V2() { xy[0] = xy[1] = 0.0f; }
     V2(f32 x, f32 y);
 
     V2 operator+(const V2& other);

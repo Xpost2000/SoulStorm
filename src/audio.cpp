@@ -134,30 +134,61 @@ namespace Audio {
         Mix_VolumeMusic((s32)(v * MIX_MAX_VOLUME));
     }
 
-    int _lua_bind_load_sound(lua_State* L) {
-        
-    }
-    int _lua_bind_load_music(lua_State* L) {
-        
-    }
-
-    int _lua_bind_play_sound(lua_State* L) {
-        
+    local int _lua_bind_load_sound(lua_State* L) {
+const         char* filepath = lua_tostring(L, 1);
+        auto sound_id = load(filepath, false);
+        lua_pushinteger(L, sound_id.index);
+        return 1;
     }
 
-    int _lua_bind_play_sound_fadein(lua_State* L) {
-        
+    local int _lua_bind_load_music(lua_State* L) {
+        const char* filepath = lua_tostring(L, 1);
+        auto sound_id = load(filepath, true);
+        lua_pushinteger(L, sound_id.index);
+        return 1;
     }
 
-    int _lua_bind_play_music_fadeout(lua_State* L) {
-        
-    }
-    int _lua_bind_play_music(lua_State* L) {
-        
+    local int _lua_bind_play_sound(lua_State* L) {
+        s32 sound_index = luaL_checkinteger(L, 1);
+        auto sound_id   = Sound_ID { false, sound_index+1 };
+        play(sound_id);
+        return 0;
     }
 
-    int _lua_bind_music_playing(lua_State* L) {
-        
+    local int _lua_bind_play_music(lua_State* L) {
+        s32 sound_index = luaL_checkinteger(L, 1);
+        auto sound_id   = Sound_ID { true, sound_index+1 };
+        play(sound_id);
+        return 0;
+    }
+
+    local int _lua_bind_play_music_fadein(lua_State* L) {
+        s32 sound_index = luaL_checkinteger(L, 1);
+        auto sound_id   = Sound_ID { true, sound_index+1 };
+        play_fadein(sound_id, luaL_checkinteger(L, 2));
+        return 0;
+    }
+
+    local int _lua_bind_play_sound_fadein(lua_State* L) {
+        s32 sound_index = luaL_checkinteger(L, 1);
+        auto sound_id   = Sound_ID { false, sound_index+1 };
+        play_fadein(sound_id, luaL_checkinteger(L, 2));
+        return 0;
+    }
+
+    local int _lua_bind_stop_music_fadeout(lua_State* L) {
+        stop_music_fadeout(luaL_checkinteger(L, 1));
+        return 0;
+    }
+
+    local int _lua_bind_stop_music(lua_State* L) {
+        stop_music_fadeout(luaL_checkinteger(L, 1));
+        return 0;
+    }
+
+    local int _lua_bind_music_playing(lua_State* L) {
+        lua_pushboolean(L, music_playing());
+        return 1;
     }
 
     void bind_audio_lualib(lua_State* L) {
@@ -165,8 +196,10 @@ namespace Audio {
         lua_register(L, "load_music",          _lua_bind_load_music);
         lua_register(L, "play_sound",          _lua_bind_play_sound);
         lua_register(L, "play_sound_fadein",   _lua_bind_play_sound_fadein);
-        lua_register(L, "stop_music_fadeout",  _lua_bind_play_music_fadeout);
-        lua_register(L, "stop_music",          _lua_bind_play_music);
+        lua_register(L, "play_music",          _lua_bind_play_music);
+        lua_register(L, "play_music_fadein",   _lua_bind_play_sound_fadein);
+        lua_register(L, "stop_music_fadeout",  _lua_bind_stop_music_fadeout);
+        lua_register(L, "stop_music",          _lua_bind_stop_music);
         lua_register(L, "music_playing",       _lua_bind_music_playing);
     }
 }

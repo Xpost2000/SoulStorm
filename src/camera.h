@@ -15,10 +15,10 @@
 
 struct random_state;
 struct camera {
-    random_state* rng;
-    V2            xy;
-    f32           zoom;
-    u8            centered;
+    random_state* rng = nullptr;
+    V2            xy = V2(0,0);
+    f32           zoom = 1.0f;
+    u8            centered = false;
 
     /*
       NOTE:
@@ -33,16 +33,16 @@ struct camera {
       
       Would technically be a struct game_camera or something.
     */
-    rectangle_f32 travel_bounds;
-    V2                tracking_xy;
-    f32               tracking_zoom;
+    rectangle_f32 travel_bounds = RECTANGLE_F32_NULL;
+    V2                tracking_xy = V2(0,0);
+    f32               tracking_zoom = 0.0f;
 
     /* NOTE x/y/zoom */
-    f32                  interpolation_t[3];
-    f32                  start_interpolation_values[3];
-    bool                 try_interpolation[3];
+    f32                  interpolation_t[3] = { 0,0,0 };
+    f32                  start_interpolation_values[3] = { 0,0,0 };
+    bool                 try_interpolation[3] = { false, false, false };
 
-    f32 trauma;
+    f32 trauma = 0.0f;
 };
 
 void camera_set_trauma(struct camera* camera, f32 trauma);

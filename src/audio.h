@@ -8,6 +8,7 @@
 #define ANY_CHANNEL (-1)
 
 // TODO: does not have a way to change volume!
+struct lua_State;
 namespace Audio {
     struct Sound_ID {
         u8  streaming;
@@ -30,7 +31,6 @@ namespace Audio {
 
     bool music_playing();
 
-    struct lua_State;
     void bind_audio_lualib(lua_State* L);
 }
 
