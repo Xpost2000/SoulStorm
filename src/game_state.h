@@ -20,6 +20,7 @@
 #define MAX_ENEMIES             (128)
 #define MAX_EXPLOSION_HAZARDS   (16)
 #define MAX_LASER_HAZARDS       (16)
+#define MAX_SCRIPTABLE_RENDER_OBJECTS (1024)
 
 static string menu_font_variation_string_names[] = {
     string_literal("res/fonts/gnsh-bitmapfont-colour1.png"),
@@ -222,20 +223,44 @@ struct Boss_Healthbar_Displays {
     V2 element_position_for(s32 idx);
 };
 
+/*
+  These are only used by the ingame background drawing task to
+  generate background visuals.
+*/
+enum Scriptable_Render_Object_Layer {
+    SCRIPTABLE_RENDER_OBJECT_LAYER_BACKGROUND = 0,
+    SCRIPTABLE_RENDER_OBJECT_LAYER_FOREGROUND = 1,
+    
+};
+
+// NOTE: these are updated entirely through
+//       lua
+struct Scriptable_Render_Object {
+    image_id      image_id;
+    V2            position;
+    V2            scale;
+    rectangle_f32 src_rect;
+    color32u8     modulation;
+    s32           x_angle;
+    s32           y_angle;
+    s32           z_angle;
+};
+
 struct Gameplay_Data {
     bool stage_completed;
     Stage_State stage_state;
 
-    Fixed_Array<Bullet>           to_create_player_bullets;
-    Fixed_Array<Bullet>           to_create_enemy_bullets;
-    Fixed_Array<Enemy_Entity>     to_create_enemies;
-    Fixed_Array<Pickup_Entity>    to_create_pickups;
+    Fixed_Array<Bullet>                   to_create_player_bullets;
+    Fixed_Array<Bullet>                   to_create_enemy_bullets;
+    Fixed_Array<Enemy_Entity>             to_create_enemies;
+    Fixed_Array<Pickup_Entity>            to_create_pickups;
 
     Fixed_Array<Pickup_Entity>    pickups;
     Fixed_Array<Bullet>           bullets;
     Fixed_Array<Enemy_Entity>     enemies;
     Fixed_Array<Laser_Hazard>     laser_hazards;
     Fixed_Array<Explosion_Hazard> explosion_hazards;
+    Fixed_Array<Scriptable_Render_Object> scriptable_render_objects;
 
     // TODO: adjust the position of these items.
     Fixed_Array<Gameplay_UI_Score_Notification> score_notifications;

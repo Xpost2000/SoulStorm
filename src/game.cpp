@@ -251,6 +251,7 @@ void Game::setup_stage_start() {
     state->explosion_hazards.clear();
     state->laser_hazards.clear();
     state->score_notifications.clear();
+    state->scriptable_render_objects.clear();
     state->hit_score_notifications.clear();
 
     state->tries = MAX_BASE_TRIES;
@@ -364,6 +365,7 @@ void Game::init(Graphics_Driver* driver) {
         }
 
         state->boss_health_displays.displays = Fixed_Array<Boss_Healthbar_Display>(arena, 16);
+        state->scriptable_render_objects     = Fixed_Array<Scriptable_Render_Object>(arena, MAX_SCRIPTABLE_RENDER_OBJECTS);
     }
 
     // mainmenu_data initialize
@@ -2141,6 +2143,16 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         driver->screenshot((char*)"screenshot.png");
     }
 
+    /*
+     * NOTE: this is rescheduled here so that way the background script can
+     *       add objects to the render queue at the appropriate time,
+     *       this doesn't affect game behavior in a noticable way regarding the
+     *       scripts since they're only meant to spawn things.
+     *
+     *       At worst, maybe there's a frame of latency difference or something.
+     */
+    state->coroutine_tasks.scheduler(state, dt);
+
     switch (state->screen_mode) {
         case GAME_SCREEN_TITLE_SCREEN: {
             update_and_render_game_title_screen(driver, dt);
@@ -2158,8 +2170,6 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
             update_and_render_game_credits(driver, dt);
         } break;
     }
-
-    state->coroutine_tasks.scheduler(state, dt);
 
     // Achievement related updates.
     {
@@ -3166,23 +3176,41 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
 
 #if 0
         /* These are per frame objects */
-        lua_register(L, "render_sprite_object_create",        _lua_bind_create_render_sprite_object);
-        lua_register(L, "render_sprite_object_set_position",  _lua_bind_render_sprite_object_set_position);
-        lua_register(L, "render_sprite_object_set_scale",     _lua_bind_render_sprite_object_set_scale);
-        lua_register(L, "render_sprite_object_set_src_rect",  _lua_bind_render_sprite_object_set_src_rect);
-        lua_register(L, "render_sprite_object_set_img_id",    _lua_bind_render_sprite_object_set_img_id);
-        lua_register(L, "render_sprite_object_set_modulation",_lua_bind_render_sprite_object_set_modulation);
-        lua_register(L, "render_sprite_object_set_x_angle",   _lua_bind_render_sprite_object_set_x_angle);
-        lua_register(L, "render_sprite_object_set_y_angle",   _lua_bind_render_sprite_object_set_y_angle);
-        lua_register(L, "render_sprite_object_set_z_angle",   _lua_bind_render_sprite_object_set_z_angle);
+        /*
+         * NOTE: I'm not a fan of doing per scalar things
+         *       but I also don't think it's a big deal as well...
+         */
+        lua_register(L, "render_object_create",         _lua_bind_create_render_object);
+        lua_register(L, "render_object_set_layer",      _lua_bind_render_object_set_layer);
+        lua_register(L, "render_object_set_position",   _lua_bind_render_object_set_position);
+        lua_register(L, "render_object_set_src_rect",   _lua_bind_render_object_set_src_rect);
+        lua_register(L, "render_object_set_img_id",     _lua_bind_render_object_set_img_id);
+        lua_register(L, "render_object_set_scale",      _lua_bind_render_object_set_scale);
+        lua_register(L, "render_object_set_modulation", _lua_bind_render_object_set_modulation);
+        lua_register(L, "render_object_set_x_angle",    _lua_bind_render_object_set_x_angle);
+        lua_register(L, "render_object_set_y_angle",    _lua_bind_render_object_set_y_angle);
+        lua_register(L, "render_object_set_z_angle",    _lua_bind_render_object_set_z_angle);
 
-        lua_register(L, "render_quad_object_create",         _lua_bind_create_render_quad_object);
-        lua_register(L, "render_quad_object_set_position",   _lua_bind_render_quad_object_set_position);
-        lua_register(L, "render_quad_object_set_scale",      _lua_bind_render_quad_object_set_scale);
-        lua_register(L, "render_quad_object_set_modulation", _lua_bind_render_quad_object_set_modulation);
-        lua_register(L, "render_quad_object_set_x_angle",    _lua_bind_render_quad_object_set_x_angle);
-        lua_register(L, "render_quad_object_set_y_angle",    _lua_bind_render_quad_object_set_y_angle);
-        lua_register(L, "render_quad_object_set_z_angle",    _lua_bind_render_quad_object_set_z_angle);
+        lua_register(L, "render_object_get_layer",      _lua_bind_render_object_get_layer);
+        lua_register(L, "render_object_get_position_x",   _lua_bind_render_object_get_position_x);
+        lua_register(L, "render_object_get_position_y",   _lua_bind_render_object_get_position_y);
+
+        lua_register(L, "render_object_get_src_rect_x",   _lua_bind_render_object_get_src_rect_x);
+        lua_register(L, "render_object_get_src_rect_y",   _lua_bind_render_object_get_src_rect_y);
+        lua_register(L, "render_object_get_src_rect_w",   _lua_bind_render_object_get_src_rect_w);
+        lua_register(L, "render_object_get_src_rect_h",   _lua_bind_render_object_get_src_rect_h);
+
+        lua_register(L, "render_object_get_scale_x",      _lua_bind_render_object_get_scale_x);
+        lua_register(L, "render_object_get_scale_y",      _lua_bind_render_object_get_scale_y);
+
+        lua_register(L, "render_object_get_modulation_r", _lua_bind_render_object_get_modulation_r);
+        lua_register(L, "render_object_get_modulation_g", _lua_bind_render_object_get_modulation_g);
+        lua_register(L, "render_object_get_modulation_b", _lua_bind_render_object_get_modulation_b);
+        lua_register(L, "render_object_get_modulation_a", _lua_bind_render_object_get_modulation_a);
+
+        lua_register(L, "render_object_get_x_angle",    _lua_bind_render_object_get_x_angle);
+        lua_register(L, "render_object_get_y_angle",    _lua_bind_render_object_get_y_angle);
+        lua_register(L, "render_object_get_z_angle",    _lua_bind_render_object_get_z_angle);
 #endif
     }
 
