@@ -2861,7 +2861,7 @@ void Boss_Healthbar_Displays::update(Game_State* state, f32 dt) {
     for (s32 healthbar_index = 0; healthbar_index < displays.size; ++healthbar_index) {
         auto& display = displays[healthbar_index];
 
-        if (state->gameplay_data.lookup_enemy(display.entity_uid) == nullptr) {
+        if (state->gameplay_data.lookup_enemy(display.entity_uid) == nullptr && display.animation_state != BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN) {
             display.animation_t = 0.0f;
             display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN;
         }
