@@ -276,8 +276,8 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         for (s32 trail_ghost_index = 0; trail_ghost_index < trail_ghost_count; ++trail_ghost_index) {
             auto& ghost = trail_ghosts[trail_ghost_index];
             V2 sprite_position = V2(
-                ghost.position.x - scale.x/2 + (sprite.offset.x - sprite_image_size.x/2),
-                ghost.position.y - scale.x/2 + (sprite.offset.y - sprite_image_size.y/2)
+                ghost.position.x + (sprite.offset.x - sprite_image_size.x/2),
+                ghost.position.y + (sprite.offset.y - sprite_image_size.y/2)
             );
 
             auto modulation = trail_ghost_modulation;
@@ -295,8 +295,8 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         }
 
         V2 sprite_position = V2(
-            position.x - scale.x/2 + (sprite.offset.x - sprite_image_size.x/2),
-            position.y - scale.x/2 + (sprite.offset.y - sprite_image_size.y/2)
+            position.x + (sprite.offset.x - sprite_image_size.x/2),
+            position.y + (sprite.offset.y - sprite_image_size.y/2)
         );
         render_commands_push_image(
             render_commands,
