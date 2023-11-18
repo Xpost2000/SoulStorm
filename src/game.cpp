@@ -585,8 +585,40 @@ void Game::init(Graphics_Driver* driver) {
 
 }
 
-void Game::deinit() {
-    
+void Game::deinit() {}
+
+// Scriptable_Render_Object 
+void Scriptable_Render_Object::render(Game_Resources* resources, struct render_commands* render_commands) {
+    auto destination_rect = rectangle_f32(position.x, position.y, scale.x, scale.y);
+
+    if (image_id.index == 0) {
+        render_commands_push_quad_ext2(
+            render_commands,
+            destination_rect,
+            modulation,
+            rotation_center,
+            z_angle,
+            y_angle,
+            // unused angle_x
+            // blend mode param not used
+            BLEND_MODE_ALPHA
+        );
+    } else {
+        render_commands_push_image_ext2(
+            render_commands,
+            graphics_assets_get_image_by_id(&resources->graphics_assets, image_id),
+            destination_rect,
+            src_rect,
+            color32u8_to_color32f32(modulation),
+            rotation_center,
+            z_angle,
+            y_angle,
+            // unused angle_x
+            0, // flags param not used
+            // blend mode param not used
+            BLEND_MODE_ALPHA
+        );
+    }
 }
 
 // Gameplay_Data
@@ -746,6 +778,26 @@ void Gameplay_Data::notify_score_with_hitmarker(s32 amount, V2 where) {
     notification.additional_score = amount;
     notification.lifetime.start();
     hit_score_notifications.push(notification);
+}
+
+void Gameplay_Data::add_scriptable_render_object(Scriptable_Render_Object ro) {
+    scriptable_render_objects.push(ro);
+}
+
+void Gameplay_Data::update_and_render_all_background_scriptable_render_objects(Game_Resources* resources, struct render_commands* render_commands, f32 dt) {
+    for (s32 index = 0; index < scriptable_render_objects.size; ++index) {
+        auto& render_object = scriptable_render_objects[index];
+        if (render_object.layer != SCRIPTABLE_RENDER_OBJECT_LAYER_BACKGROUND) continue;
+        render_object.render(resources, render_commands);
+    }
+}
+
+void Gameplay_Data::update_and_render_all_foreground_scriptable_render_objects(Game_Resources* resources, struct render_commands* render_commands, f32 dt) {
+    for (s32 index = 0; index < scriptable_render_objects.size; ++index) {
+        auto& render_object = scriptable_render_objects[index];
+        if (render_object.layer != SCRIPTABLE_RENDER_OBJECT_LAYER_BACKGROUND) continue;
+        render_object.render(resources, render_commands);
+    }
 }
 
 // End of Gameplay_Data
@@ -2162,7 +2214,10 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
             update_and_render_game_main_menu(&game_render_commands, &ui_render_commands, dt);
         } break;
         case GAME_SCREEN_INGAME: {
+            state->gameplay_data.update_and_render_all_background_scriptable_render_objects(state->resources, &game_render_commands, dt);
             update_and_render_game_ingame(&game_render_commands, &ui_render_commands, dt);
+            state->gameplay_data.update_and_render_all_foreground_scriptable_render_objects(state->resources, &game_render_commands, dt);
+            state->gameplay_data.scriptable_render_objects.clear();
         } break;
         case GAME_SCREEN_CREDITS: {
             update_and_render_game_credits(&game_render_commands, &ui_render_commands, dt);

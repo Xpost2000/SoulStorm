@@ -236,14 +236,19 @@ enum Scriptable_Render_Object_Layer {
 // NOTE: these are updated entirely through
 //       lua
 struct Scriptable_Render_Object {
-    image_id      image_id;
-    V2            position;
-    V2            scale;
-    rectangle_f32 src_rect;
-    color32u8     modulation;
-    s32           x_angle;
-    s32           y_angle;
-    s32           z_angle;
+    s32           layer           = SCRIPTABLE_RENDER_OBJECT_LAYER_BACKGROUND;
+
+    image_id      image_id        = {0};
+    V2            position        = V2(0, 0);
+    V2            scale           = V2(1, 1);
+    V2            rotation_center = V2(0,0);
+    rectangle_f32 src_rect        = RECTANGLE_F32_NULL;
+    color32u8     modulation      = color32u8(0,0,0,255);
+    s32           z_angle         = 0;
+    s32           y_angle         = 0;
+    s32           x_angle         = 0;
+
+    void render(Game_Resources* resources, struct render_commands* render_commands);
 };
 
 struct Gameplay_Data {
@@ -260,6 +265,8 @@ struct Gameplay_Data {
     Fixed_Array<Enemy_Entity>     enemies;
     Fixed_Array<Laser_Hazard>     laser_hazards;
     Fixed_Array<Explosion_Hazard> explosion_hazards;
+
+    // NOTE: these are per frame.
     Fixed_Array<Scriptable_Render_Object> scriptable_render_objects;
 
     // TODO: adjust the position of these items.
@@ -293,6 +300,10 @@ struct Gameplay_Data {
     void add_explosion_hazard(Explosion_Hazard h);
     void add_enemy_entity(Enemy_Entity e);
     void add_pickup_entity(Pickup_Entity s);
+
+    void add_scriptable_render_object(Scriptable_Render_Object ro);
+    void update_and_render_all_background_scriptable_render_objects(Game_Resources* resources, struct render_commands* render_commands, f32 dt);
+    void update_and_render_all_foreground_scriptable_render_objects(Game_Resources* resources, struct render_commands* render_commands, f32 dt);
 
     Enemy_Entity*  lookup_enemy(u64 uid);
     Bullet* lookup_bullet(u64 uid);
