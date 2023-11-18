@@ -21,11 +21,7 @@ local int show = 0;
 
 namespace DebugUI {
     bool enabled() {
-#ifndef RELEASE
         return show;
-#else
-        return false;
-#endif
     }
 
     void print(char* s) {
@@ -74,6 +70,7 @@ namespace DebugUI {
 namespace DebugUI {
     void print(char* s) {}
     void print(string what) {}
+    bool enabled(){ return false; }
     void render(struct render_commands* commands, struct font_cache* font) {}
 }
 #endif
