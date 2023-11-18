@@ -635,8 +635,11 @@ void Gameplay_Data::unload_all_script_loaded_resources(Game_Resources* resources
     for (s32 image_index = 0; image_index < script_loaded_images.size; ++image_index) {
         auto img_id = script_loaded_images[image_index];
         graphics_assets_unload_image(&resources->graphics_assets, img_id);
+        // TODO: free graphics driver resources
     }
 
+    Audio::stop_sounds();
+    Audio::stop_music(); // should stop all audio
     for (s32 sound_index = 0; sound_index < script_loaded_sounds.size; ++sound_index) {
         auto snd_id = script_loaded_sounds[sound_index];
         Audio::unload(snd_id);

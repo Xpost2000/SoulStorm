@@ -174,7 +174,11 @@
     <ClCompile Include="..\src\graphics_driver_null.cpp" />
     <ClCompile Include="..\src\graphics_driver_software.cpp" />
     <ClCompile Include="..\src\particle_system.cpp" />
-    <ClCompile Include="..\src\software_renderer.cpp" />
+    <ClCompile Include="..\src\software_renderer.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MaxSpeed</Optimization>
+      <IntrinsicFunctions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</IntrinsicFunctions>
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</BasicRuntimeChecks>
+    </ClCompile>
     <ClCompile Include="..\src\graphics_assets.cpp" />
     <ClCompile Include="..\src\input.cpp" />
     <ClCompile Include="..\src\lightmask_buffer.cpp" />
@@ -185,7 +189,10 @@
     <ClCompile Include="..\src\serializer.cpp" />
     <ClCompile Include="..\src\stage.cpp" />
     <ClCompile Include="..\src\string.cpp" />
-    <ClCompile Include="..\src\thread_pool.cpp" />
+    <ClCompile Include="..\src\thread_pool.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Full</Optimization>
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</BasicRuntimeChecks>
+    </ClCompile>
     <ClCompile Include="..\src\v2.cpp" />
   </ItemGroup>
   <ItemGroup>

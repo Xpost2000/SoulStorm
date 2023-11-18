@@ -118,6 +118,10 @@ namespace Audio {
         }
     }
 
+    void stop_sounds(void) {
+        Mix_HaltChannel(-1);
+    }
+
     void stop_music(void) {
         Mix_HaltMusic();
     }

@@ -22,6 +22,7 @@ namespace Audio {
 
     void play(const Sound_ID sound);
 
+    void stop_sounds();
     void stop_music();
     void stop_music_fadeout(const s32 fadeout_ms);
     void play_fadein(const Sound_ID sound, const s32 fadein_ms);

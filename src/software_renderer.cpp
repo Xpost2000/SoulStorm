@@ -354,6 +354,9 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
     
     for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
         for (s32 x_cursor = start_x; x_cursor < end_x; ++x_cursor) {
+            // Can't really tell how badly it's hitting the framerate since this should be unlikely
+            if (image->pixels == nullptr) return;
+
             s32 image_sample_x = (s32)fmodf((src.x + src.w) - ((unclamped_end_x - x_cursor) * scale_ratio_w), image->width);
             s32 image_sample_y = (s32)fmodf((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h), image->height);
 
