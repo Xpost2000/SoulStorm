@@ -2987,6 +2987,18 @@ int _lua_bind_Task_Yield_Until_No_Danger(lua_State* L) {
     return lua_yield(L, 0);
 }
 
+int _lua_bind_Task_Yield_Wait_For_Stage_Intro(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
+    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
+
+    auto& task = state->coroutine_tasks.tasks[task_id];
+    task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_FOR_INTRODUCTION_SEQUENCE_TO_COMPLETE;
+
+    return lua_yield(L, 0);
+}
+
 int _lua_bind_Task_Yield(lua_State* L) {
     lua_getglobal(L, "_gamestate");
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
@@ -3135,6 +3147,7 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
         lua_register(L, "t_wait",               _lua_bind_Task_Yield_Wait);
         lua_register(L, "t_yield",              _lua_bind_Task_Yield);
         lua_register(L, "t_wait_for_no_danger", _lua_bind_Task_Yield_Until_No_Danger);
+        lua_register(L, "t_wait_for_stage_intro", _lua_bind_Task_Yield_Wait_For_Stage_Intro);
         lua_register(L, "t_complete_stage",     _lua_bind_Task_Yield_Finish_Stage);
 
         lua_register(L, "any_living_danger",   _lua_bind_any_living_danger);

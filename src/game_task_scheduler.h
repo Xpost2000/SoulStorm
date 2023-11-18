@@ -36,6 +36,12 @@ enum {
     TASK_YIELD_REASON_NONE,
     TASK_YIELD_REASON_WAIT_FOR_SECONDS,
     TASK_YIELD_REASON_WAIT_FOR_NO_DANGER_ON_STAGE,
+    // I want more fine grained control, and also so I can fire off "setup level" tasks
+    // such as background rendering tasks.
+
+    // Yes. This implies that every level needs to add a t_wait_for_stage_intro, but
+    // that's fine.
+    TASK_YIELD_REASON_WAIT_FOR_INTRODUCTION_SEQUENCE_TO_COMPLETE,
     TASK_YIELD_REASON_COMPLETE_STAGE,
 };
 struct Game_Task_Yield_Result {

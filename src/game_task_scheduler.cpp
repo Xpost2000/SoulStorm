@@ -270,6 +270,11 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
                     state->gameplay_data.stage_completed = true;
                     task.userdata.yielded.reason = TASK_YIELD_REASON_NONE;
                 } break;
+                case TASK_YIELD_REASON_WAIT_FOR_INTRODUCTION_SEQUENCE_TO_COMPLETE: {
+                    if (state->gameplay_data.intro.stage != GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE) {
+                        continue;
+                    }
+                } break;
                 case TASK_YIELD_REASON_WAIT_FOR_SECONDS: {
                     if (task.userdata.yielded.timer < task.userdata.yielded.timer_max) {
                         /*
@@ -300,7 +305,6 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             if ((task.source == GAME_TASK_SOURCE_GAME &&
                  task.associated_state == GAME_SCREEN_INGAME &&
                  (
-                     state->gameplay_data.intro.stage != GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE ||
                      state->gameplay_data.paused_from_death ||
                      state->gameplay_data.triggered_stage_completion_cutscene ||
                      current_ui_state != UI_STATE_INACTIVE
