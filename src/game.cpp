@@ -652,8 +652,8 @@ void Gameplay_Data::unload_all_script_loaded_resources(Game_Resources* resources
         Audio::unload(snd_id);
     }
 
-    script_loaded_images.clear();
-    script_loaded_sounds.clear();
+    script_loaded_images.zero();
+    script_loaded_sounds.zero();
 }
 
 void Gameplay_Data::add_bullet(Bullet b) {

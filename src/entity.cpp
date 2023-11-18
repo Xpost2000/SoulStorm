@@ -1833,6 +1833,10 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "bullet_set_lifetime",   _lua_bind_bullet_set_lifetime);
 
         // These might be okay to read for a bullet.
+        lua_register(L, "bullet_position_x", _lua_bind_bullet_position_x);
+        lua_register(L, "bullet_position_y", _lua_bind_bullet_position_y);
+        lua_register(L, "bullet_velocity_x", _lua_bind_bullet_velocity_x);
+        lua_register(L, "bullet_velocity_y", _lua_bind_bullet_velocity_y);
         lua_register(L, "bullet_lifetime",   _lua_bind_bullet_lifetime);
         lua_register(L, "bullet_lifetime_max",   _lua_bind_bullet_lifetime_max);
         lua_register(L, "bullet_lifetime_percent",   _lua_bind_bullet_lifetime_percent);
