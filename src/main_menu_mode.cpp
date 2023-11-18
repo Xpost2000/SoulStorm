@@ -143,9 +143,8 @@ void cutscene_introduction_firsttime_task(jdr_duffcoroutine_t* co) {
     camera_traumatize(&camera, 0.47f);
 
     main_menu_state->player.visible = true;
-    main_menu_state->screen_message_add(string_literal("Can you absolve yourself?"));
-    main_menu_state->screen_message_add(string_literal("Take the trials"));
-    main_menu_state->screen_message_add(string_literal("Prove your worthiness"));
+    main_menu_state->screen_message_add(string_literal("Now the adventure begins."));
+    main_menu_state->screen_message_add(string_literal("Prove your worthiness!"));
 
     while (!main_menu_state->screen_messages_finished()) {
         JDR_Coroutine_YieldNR();
@@ -284,23 +283,20 @@ void MainMenu_Data::screen_message_add(string message) {
     screen_messages.push(new_message);
 }
 
-void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
+void Game::update_and_render_game_main_menu(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
     auto& main_menu_state = state->mainmenu_data;
+    game_render_commands->camera = main_menu_state.main_camera;
 
-    auto game_render_commands = render_commands(&Global_Engine()->scratch_arena, 12000, main_menu_state.main_camera);
-    auto ui_render_commands   = render_commands(&Global_Engine()->scratch_arena, 8192, camera(V2(0, 0), 1));
-    {
-        V2 resolution = driver->resolution();
-        game_render_commands.screen_width  = ui_render_commands.screen_width = resolution.x;
-        game_render_commands.screen_height = ui_render_commands.screen_height = resolution.y;
-    }
-
-    // Draw main menu stars...
+    // TODO: Fix Draw_Main_Menu_Stars
+    //       this looks bad sometimes when the resolution is adjusted or something similar
+    //       so I need to be careful!
+    //
+    //       However it should mostly be okay!
     {
         f32 brightness = normalized_sinf(Global_Engine()->global_elapsed_time)/2;
         render_commands_push_quad_ext(
-            &game_render_commands,
-            rectangle_f32(-300, -300, game_render_commands.screen_width*2, game_render_commands.screen_height*2),
+            game_render_commands,
+            rectangle_f32(-300, -300, game_render_commands->screen_width*2, game_render_commands->screen_height*2),
             color32u8(brightness, brightness, brightness, 255),
             V2(0, 0), 0,
             BLEND_MODE_ALPHA);
@@ -319,10 +315,10 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
                 bkg_faster_stars[i].x += dt * 250.0f * (normalized_sinf(i*25)+0.15);
                 bkg_faster_stars[i].y += dt * 250.0f * (sinf(Global_Engine()->global_elapsed_time)/4+0.25);
 
-                if (bkg_faster_stars[i].x > game_render_commands.screen_width*1.5f)  bkg_faster_stars[i].x = -150;
-                if (bkg_faster_stars[i].y > game_render_commands.screen_height*1.5f) bkg_faster_stars[i].y = -150;
-                if (bkg_slow_stars[i].x > game_render_commands.screen_width*1.5f)  bkg_slow_stars[i].x     = -150;
-                if (bkg_slow_stars[i].y > game_render_commands.screen_height*1.5f) bkg_slow_stars[i].y     = -150;
+                if (bkg_faster_stars[i].x > game_render_commands->screen_width*1.5f)  bkg_faster_stars[i].x = -150;
+                if (bkg_faster_stars[i].y > game_render_commands->screen_height*1.5f) bkg_faster_stars[i].y = -150;
+                if (bkg_slow_stars[i].x > game_render_commands->screen_width*1.5f)  bkg_slow_stars[i].x     = -150;
+                if (bkg_slow_stars[i].y > game_render_commands->screen_height*1.5f) bkg_slow_stars[i].y     = -150;
             }
 
             // Need to make these have different sizes.
@@ -332,7 +328,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
                 auto r2 = rectangle_f32(bkg_faster_stars[i].x-45, bkg_faster_stars[i].y-45, 0.5, 0.5);
 
                 render_commands_push_quad_ext(
-                    &game_render_commands,
+                    game_render_commands,
                     r,
                     color32u8(230, 230, 255, 255),
                     V2(0, 0), 0,
@@ -340,7 +336,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
                 );
 
                 render_commands_push_quad_ext(
-                    &game_render_commands,
+                    game_render_commands,
                     r2,
                     color32u8(200, 245, 200, 255),
                     V2(0, 0), 0,
@@ -348,7 +344,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
                 );
 
                 render_commands_push_quad_ext(
-                    &game_render_commands,
+                    game_render_commands,
                     r1,
                     color32u8(200, 200, 245, 255),
                     V2(0, 0), 0,
@@ -386,21 +382,21 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
 
     for (int i = 0; i < main_menu_state.portals.size; ++i) {
         auto& p = main_menu_state.portals[i];
-        p.draw(&main_menu_state, &game_render_commands, resources);
+        p.draw(&main_menu_state, game_render_commands, resources);
     }
 
-    main_menu_state.particle_pool.draw(&game_render_commands, resources);
-    main_menu_state.player.draw(&main_menu_state, &game_render_commands, resources);
-    handle_ui_update_and_render(&ui_render_commands, dt);
+    main_menu_state.particle_pool.draw(game_render_commands, resources);
+    main_menu_state.player.draw(&main_menu_state, game_render_commands, resources);
+    handle_ui_update_and_render(ui_render_commands, dt);
 
     // Wrap player to edges
     {
-        V2   resolution = driver->resolution();
-
-        if ((main_menu_state.player.position.x) < 0)                 main_menu_state.player.position.x = resolution.x;
-        if ((main_menu_state.player.position.x) > (s32)resolution.x) main_menu_state.player.position.x = 0;
-        if ((main_menu_state.player.position.y) < 0)                 main_menu_state.player.position.y = resolution.y;
-        if ((main_menu_state.player.position.y) > (s32)resolution.y) main_menu_state.player.position.y = 0;
+        s32 screen_width = game_render_commands->screen_width;
+        s32 screen_height = game_render_commands->screen_height;
+        if ((main_menu_state.player.position.x) < 0)                 main_menu_state.player.position.x = screen_width;
+        if ((main_menu_state.player.position.x) > screen_width) main_menu_state.player.position.x = 0;
+        if ((main_menu_state.player.position.y) < 0)                 main_menu_state.player.position.y = screen_height;
+        if ((main_menu_state.player.position.y) > screen_height) main_menu_state.player.position.y = 0;
     }
 
     // do a fancy camera zoom in effect
@@ -439,7 +435,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
             }
         } else {
             if (main_menu_state.last_focus_portal != nullptr) {
-                V2 resolution = driver->resolution();
+                V2 resolution = V2(game_render_commands->screen_width, game_render_commands->screen_height);
                 if (!camera_already_interpolating_for(&main_menu_state.main_camera, V2(resolution.x/2, resolution.y/2), 1.0f)) {
                     camera_set_point_to_interpolate(
                         &main_menu_state.main_camera,
@@ -467,8 +463,8 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
         f32 text_scale = 4.0f;
 
         render_commands_push_quad_ext(
-            &ui_render_commands,
-            rectangle_f32(0, 0, ui_render_commands.screen_width, ui_render_commands.screen_height),
+            ui_render_commands,
+            rectangle_f32(0, 0, ui_render_commands->screen_width, ui_render_commands->screen_height),
             color32u8(0, 0, 0, main_menu_state.screen_message_fade_t * 150),
             V2(0, 0), 0,
             BLEND_MODE_ALPHA
@@ -481,7 +477,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
 
             f32 text_width       = font_cache_text_width(font, message.text, text_scale);
             f32 text_height      = font_cache_text_height(font) * text_scale;
-            V2  message_position = V2(ui_render_commands.screen_width/2 - text_width/2.0f, ui_render_commands.screen_height/2 - text_height/2);
+            V2  message_position = V2(ui_render_commands->screen_width/2 - text_width/2.0f, ui_render_commands->screen_height/2 - text_height/2);
 
             // TODO: fix alignment and visual look.
             switch (message.phase) {
@@ -490,14 +486,14 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
                     message.timer += dt;
                     f32 alpha = clamp<f32>(message.timer/PHASE_MAX, 0.0f, 1.0f);
 
-                    render_commands_push_text(&ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1, alpha), BLEND_MODE_ALPHA);
+                    render_commands_push_text(ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1, alpha), BLEND_MODE_ALPHA);
                     if (message.timer >= PHASE_MAX) {
                         message.phase = MAIN_MENU_SCREEN_MESSAGE_WAIT_FOR_CONTINUE;
                         message.timer = 0.0f;
                     }
                 } break;
                 case MAIN_MENU_SCREEN_MESSAGE_WAIT_FOR_CONTINUE: {
-                    render_commands_push_text(&ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1,1), BLEND_MODE_ALPHA);
+                    render_commands_push_text(ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1,1), BLEND_MODE_ALPHA);
                     if (Input::any_key_down() || Input::controller_any_button_down(Input::get_gamepad(0))) {
                         message.phase = MAIN_MENU_SCREEN_MESSAGE_DISAPPEAR;
                     }
@@ -506,7 +502,7 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
                     const f32 PHASE_MAX = 0.25f;
                     message.timer += dt;
                     f32 alpha = clamp<f32>(1 - message.timer/PHASE_MAX, 0.0f, 1.0f);
-                    render_commands_push_text(&ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA);
+                    render_commands_push_text(ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA);
 
                     if (message.timer >= PHASE_MAX) {
                         message.timer = 0.0f;
@@ -518,12 +514,10 @@ void Game::update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt) {
         }
     }
 
-    Transitions::update_and_render(&ui_render_commands, dt);
+    Transitions::update_and_render(ui_render_commands, dt);
 
-    driver->clear_color_buffer(color32u8(32, 45, 80, 255));
-    driver->consume_render_commands(&game_render_commands);
-    driver->consume_render_commands(&ui_render_commands);
-
+    game_render_commands->should_clear_buffer = true;
+    game_render_commands->clear_buffer_color = color32u8(32, 45, 80, 255);
     camera_update(&main_menu_state.main_camera, dt);
 }
 

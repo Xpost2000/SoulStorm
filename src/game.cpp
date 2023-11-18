@@ -1460,10 +1460,6 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
     DebugUI::render(commands, resources->get_font(MENU_FONT_COLOR_WHITE));
 }
 
-void Game::update_and_render_game_opening(Graphics_Driver* driver, f32 dt) {
-    unimplemented("No opening yet.");
-}
-
 void Game::ingame_update_introduction_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt) {
     auto& intro_state = state->gameplay_data.intro;
     auto& timer       = intro_state.stage_timer;
@@ -1483,6 +1479,8 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
      * I understand this code pattern for writing UI tends to duplicate a lot,
      * but personally I like doing this for animated UI since it's simple and pretty easy to write
      * yet also allowing me to do somewhat interesting UI things.
+     *
+     * TODO: make this a bit different looking, but the general stuff here is still fine
      */
     switch (intro_state.stage) {
         case GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN: {
@@ -1754,9 +1752,9 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
     timer.update(dt);
 }
 
-void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
+void Game::update_and_render_game_ingame(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
     auto state = &this->state->gameplay_data;
-    V2 resolution = driver->resolution();
+    V2 resolution = V2(game_render_commands->screen_width, game_render_commands->screen_height);
     {
         state->play_area.x      = resolution.x / 2 - state->play_area.width * 0.75;
         state->play_area.height = resolution.y;
@@ -1777,14 +1775,8 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
             switch_ui(UI_STATE_INACTIVE);
         }
     }
-    // for all of our entities and stuff.
-    // will have a separate one for the UI.
-    auto game_render_commands = render_commands(&Global_Engine()->scratch_arena, 12000, state->main_camera);
-    auto ui_render_commands   = render_commands(&Global_Engine()->scratch_arena, 8192, camera(V2(0, 0), 1));
-    {
-        game_render_commands.screen_width  = ui_render_commands.screen_width = resolution.x;
-        game_render_commands.screen_height = ui_render_commands.screen_height = resolution.y;
-    }
+
+    game_render_commands->camera = state->main_camera;
 
     // draw play area borders / Game UI
     // I'd like to have the UI fade in / animate all fancy like when I can
@@ -1796,14 +1788,14 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 
         // These should also be nice images in the future.
         // left border
-        render_commands_push_quad(&ui_render_commands,
+        render_commands_push_quad(ui_render_commands,
                                   rectangle_f32(0,
                                                 0,
                                                 play_area_x,
                                                 resolution.y),
                                   border_color, BLEND_MODE_ALPHA);
         // right border
-        render_commands_push_quad(&ui_render_commands,
+        render_commands_push_quad(ui_render_commands,
                                   rectangle_f32(play_area_x + play_area_width,
                                                 0,
                                                 resolution.x - play_area_width,
@@ -1833,7 +1825,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
                         continue;
                     }
 
-                    render_commands_push_text(&ui_render_commands,
+                    render_commands_push_text(ui_render_commands,
                                               font1,
                                               2,
                                               V2(play_area_x+play_area_width + 10,
@@ -1842,7 +1834,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
                 }
             }
 
-            render_commands_push_text(&ui_render_commands, font, 2, V2(play_area_x+play_area_width + 10, 100), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+            render_commands_push_text(ui_render_commands, font, 2, V2(play_area_x+play_area_width + 10, 100), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
         }
         // Render_Time
         {
@@ -1857,14 +1849,14 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
                 hours   = minutes / 60;
             }
             auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("Time %02d:%02d:%02d", hours, minutes, seconds)));
-            render_commands_push_text(&ui_render_commands, font, 2, V2(play_area_x+play_area_width, 130), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+            render_commands_push_text(ui_render_commands, font, 2, V2(play_area_x+play_area_width, 130), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
         }
 
         // Render Boss HP
         {
             state->boss_health_displays.position = V2(play_area_x + play_area_width + 55, 200);
             state->boss_health_displays.update(this->state, dt);
-            state->boss_health_displays.render(&ui_render_commands, this->state);
+            state->boss_health_displays.render(ui_render_commands, this->state);
         }
     }
 
@@ -2042,14 +2034,14 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
         handle_bomb_usage(dt);
     }
 
-    handle_ui_update_and_render(&ui_render_commands, dt);
+    handle_ui_update_and_render(ui_render_commands, dt);
 
     // Handle transitions or stage specific data
     // so like cutscene/coroutine required sort of behaviors...
     if (this->state->ui_state == UI_STATE_INACTIVE) {
         if (!Transitions::fading()) {
             if (state->intro.stage != GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE) {
-                ingame_update_introduction_sequence(&ui_render_commands, resources, dt);
+                ingame_update_introduction_sequence(ui_render_commands, resources, dt);
             } else {
                 bool can_finish_stage = state->stage_completed;
 
@@ -2063,7 +2055,7 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
                 }
 
                 if (state->triggered_stage_completion_cutscene) {
-                    ingame_update_complete_stage_sequence(&ui_render_commands, resources, dt);
+                    ingame_update_complete_stage_sequence(ui_render_commands, resources, dt);
                 }
             }
         }
@@ -2072,32 +2064,32 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
     // main game rendering
     // draw stage specific things if I need to.
     { 
-        stage_draw(&state->stage_state, dt, &game_render_commands, this->state);
+        stage_draw(&state->stage_state, dt, game_render_commands, this->state);
     }
     {
         for (int i = 0; i < (int)state->bullets.size; ++i) {
             auto& b = state->bullets[i];
-            b.draw(this->state, &game_render_commands, resources);
+            b.draw(this->state, game_render_commands, resources);
         }
 
         for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
             auto& h = state->explosion_hazards[i];
-            h.draw(this->state, &game_render_commands, resources);
+            h.draw(this->state, game_render_commands, resources);
         }
 
         for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
             auto& h = state->laser_hazards[i];
-            h.draw(this->state, &game_render_commands, resources);
+            h.draw(this->state, game_render_commands, resources);
         }
 
         for (int i = 0; i < (s32)state->enemies.size; ++i) {
             auto& e = state->enemies[i];
-            e.draw(this->state, &game_render_commands, resources);
+            e.draw(this->state, game_render_commands, resources);
         }
 
         for (int i = 0; i < (s32)state->pickups.size; ++i) {
             auto& pe = state->pickups[i];
-            pe.draw(this->state, &game_render_commands, resources);
+            pe.draw(this->state, game_render_commands, resources);
         }
 
         {
@@ -2115,29 +2107,35 @@ void Game::update_and_render_game_ingame(Graphics_Driver* driver, f32 dt) {
 
                 f32 text_size  = 2 + s.lifetime.percentage();
                 f32 text_width = font_cache_text_width(font1, text, text_size);
-                render_commands_push_text(&game_render_commands,
+                render_commands_push_text(game_render_commands,
                                           font1,
                                           text_size,
                                           s.where + V2(-text_width/2, normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
                                           text, color32f32(1,1,1, 1 - s.lifetime.percentage()), BLEND_MODE_ALPHA); 
             }
-
-            // render_boss_health_bar(&ui_render_commands, dt, V2(300, 200), normalized_sinf(Global_Engine()->global_elapsed_time), string_literal("HP"), string_literal("Name"), 1.0f, 50.0f, 2.0f, resources);
         }
 
-        state->player.draw(this->state, &game_render_commands, resources);
+        state->player.draw(this->state, game_render_commands, resources);
 
-        Transitions::update_and_render(&ui_render_commands, dt);
+        Transitions::update_and_render(ui_render_commands, dt);
     }
 
-    driver->clear_color_buffer(color32u8(255, 255, 255, 255));
-    driver->consume_render_commands(&game_render_commands);
-    driver->consume_render_commands(&ui_render_commands);
-
+    game_render_commands->clear_buffer_color = color32u8(32 * 2, 45 * 2, 80 * 2, 255);
+    game_render_commands->should_clear_buffer = true;
     camera_update(&state->main_camera, dt);
 }
 
 void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
+    V2 resolution = driver->resolution();
+
+    auto game_render_commands = render_commands(&Global_Engine()->scratch_arena, 12000, camera(V2(0, 0), 1));
+    auto ui_render_commands   = render_commands(&Global_Engine()->scratch_arena, 8192,  camera(V2(0, 0), 1));
+
+    {
+        ui_render_commands.screen_width  = game_render_commands.screen_width  = resolution.x;
+        ui_render_commands.screen_height = game_render_commands.screen_height = resolution.y;
+    }
+
     if (Action::is_pressed(ACTION_SCREENSHOT)) {
         _debugprintf("Saved a screenshot!"); // picture sound?
         driver->screenshot((char*)"screenshot.png");
@@ -2155,19 +2153,19 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
 
     switch (state->screen_mode) {
         case GAME_SCREEN_TITLE_SCREEN: {
-            update_and_render_game_title_screen(driver, dt);
+            update_and_render_game_title_screen(&game_render_commands, &ui_render_commands, dt);
         } break;
         case GAME_SCREEN_OPENING: {
-            update_and_render_game_opening(driver, dt);
+            update_and_render_game_opening(&game_render_commands, &ui_render_commands, dt);
         } break;
         case GAME_SCREEN_MAIN_MENU: {
-            update_and_render_game_main_menu(driver, dt);
+            update_and_render_game_main_menu(&game_render_commands, &ui_render_commands, dt);
         } break;
         case GAME_SCREEN_INGAME: {
-            update_and_render_game_ingame(driver, dt);
+            update_and_render_game_ingame(&game_render_commands, &ui_render_commands, dt);
         } break;
         case GAME_SCREEN_CREDITS: {
-            update_and_render_game_credits(driver, dt);
+            update_and_render_game_credits(&game_render_commands, &ui_render_commands, dt);
         } break;
     }
 
@@ -2208,19 +2206,10 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
             }
         }
     }
+    update_and_render_achievement_notifications(&ui_render_commands, dt);
 
-    // Achievement notifications are omnipresent.
-    // I want them to render on top of the transitions.
-    {
-        auto resolution                  = driver->resolution();
-        auto ui_render_commands          = render_commands(&Global_Engine()->scratch_arena, 512, camera(V2(0, 0), 1));
-        ui_render_commands.screen_width  = resolution.x;
-        ui_render_commands.screen_height = resolution.y;
-
-        update_and_render_achievement_notifications(&ui_render_commands, dt);
-        driver->consume_render_commands(&ui_render_commands);
-    }
-
+    driver->consume_render_commands(&game_render_commands);
+    driver->consume_render_commands(&ui_render_commands);
     total_playtime += dt;
 }
 
@@ -2722,6 +2711,7 @@ u64 UID::enemy_uid() {
 #include "credits_mode.cpp"
 #include "title_screen_mode.cpp"
 #include "main_menu_mode.cpp"
+#include "opening_mode.cpp"
 
 // Boss_Healthbar_Displays
 // This is a big parameter list, but that's alright

@@ -82,11 +82,11 @@ private:
     void update_and_render_confirm_exit_to_windows(struct render_commands* commands, f32 dt);
 
     // Game Modes
-    void update_and_render_game_opening(Graphics_Driver* driver, f32 dt);
-    void update_and_render_game_main_menu(Graphics_Driver* driver, f32 dt);
-    void update_and_render_game_ingame(Graphics_Driver* driver, f32 dt);
-    void update_and_render_game_credits(Graphics_Driver* driver, f32 dt);
-    void update_and_render_game_title_screen(Graphics_Driver* driver, f32 dt);
+    void update_and_render_game_opening(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt);
+    void update_and_render_game_main_menu(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt);
+    void update_and_render_game_ingame(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt);
+    void update_and_render_game_credits(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt);
+    void update_and_render_game_title_screen(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt);
 
     void ingame_update_introduction_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);
     void ingame_update_complete_stage_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);

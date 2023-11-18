@@ -11,15 +11,9 @@
   Although I do want to make this more elaborate, for now I'll just
   use the pause menu code as place holder.
 */
-void Game::update_and_render_game_title_screen(Graphics_Driver* driver, f32 dt) {
-    auto ui_render_commands = render_commands(&Global_Engine()->scratch_arena, 8192, camera(V2(0, 0), 1));
-    {
-        auto resolution = driver->resolution();
-        ui_render_commands.screen_width =  resolution.x;
-        ui_render_commands.screen_height = resolution.y;
-    }
+void Game::update_and_render_game_title_screen(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
+    auto commands = ui_render_commands;
 
-    auto commands = &ui_render_commands;
     if (state->ui_state != UI_STATE_INACTIVE) {
         handle_ui_update_and_render(commands, dt);
     } else {
@@ -108,6 +102,5 @@ void Game::update_and_render_game_title_screen(Graphics_Driver* driver, f32 dt) 
         GameUI::end_frame();
     }
 
-    Transitions::update_and_render(&ui_render_commands, dt);
-    driver->consume_render_commands(commands);
+    Transitions::update_and_render(ui_render_commands, dt);
 }

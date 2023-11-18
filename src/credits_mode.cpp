@@ -21,16 +21,9 @@ local void open_web_browser(const char* url) {
 #endif
 }
 
-void Game::update_and_render_game_credits(Graphics_Driver* driver, f32 dt) {
-    auto ui_render_commands = render_commands(&Global_Engine()->scratch_arena, 8192, camera(V2(0, 0), 1));
-    {
-        auto resolution = driver->resolution();
-        ui_render_commands.screen_width =  resolution.x;
-        ui_render_commands.screen_height = resolution.y;
-    }
-
+void Game::update_and_render_game_credits(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
     GameUI::set_ui_id((char*)"ui_game_credits");
-    GameUI::begin_frame(&ui_render_commands);
+    GameUI::begin_frame(ui_render_commands);
     {
         f32 y = 30;
         {
@@ -88,7 +81,7 @@ void Game::update_and_render_game_credits(Graphics_Driver* driver, f32 dt) {
         }
     }
 
-    if (GameUI::button(V2(50, driver->resolution().y - 35), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+    if (GameUI::button(V2(50, ui_render_commands->screen_height - 35), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
         Transitions::do_color_transition_in(
             color32f32(0, 0, 0, 1),
             0.15f,
@@ -117,7 +110,7 @@ void Game::update_and_render_game_credits(Graphics_Driver* driver, f32 dt) {
     GameUI::end_frame();
     GameUI::update(dt);
 
-    Transitions::update_and_render(&ui_render_commands, dt);
-    driver->clear_color_buffer(color32u8(0, 0, 0, 255));
-    driver->consume_render_commands(&ui_render_commands);
+    Transitions::update_and_render(ui_render_commands, dt);
+    game_render_commands->clear_buffer_color = color32u8(0, 0, 0, 255);
+    game_render_commands->should_clear_buffer = true;
 }

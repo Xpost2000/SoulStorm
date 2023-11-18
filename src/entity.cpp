@@ -159,10 +159,8 @@ bool Entity::wrap_from_bottom_border(const Play_Area& play_area) {
 
 bool Entity::damage(s32 dmg) {
     if (invincibility_time.running) {
-        _debugprintf("I am invincible. You cannot hurt me.");
         return false;
     }
-    _debugprintf("ouchie (%d dmg)", dmg);
     hp -= dmg;
     if (hp <= 0) die = true;
 
@@ -170,7 +168,6 @@ bool Entity::damage(s32 dmg) {
 }
 
 bool Entity::heal(s32 hp) {
-    _debugprintf("healed (%d hp)", hp);
     hp += hp;
     if (hp > 0) die = false;
 
@@ -428,7 +425,6 @@ void Entity::handle_invincibility_behavior(f32 dt) {
     if (invincibility_time.running) {
         invincibility_time_flash_period.start();
         if (invincibility_show_flashing && invincibility_time_flash_period.triggered()) {
-            _debugprintf("flash");
             flashing ^= true;
             invincibility_time_flash_period.reset();
         }
@@ -1129,7 +1125,6 @@ int _lua_bind_enemy_set_task(lua_State* L) {
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
     char* task_name = (char*)lua_tostring(L, 2);
-    _debugprintf("set task?");
 
     /*
      * NOTE: not sure how to do this right now.
@@ -1137,7 +1132,6 @@ int _lua_bind_enemy_set_task(lua_State* L) {
      */
     Lua_Task_Extra_Parameter_Variant extra_parameters[128] = {};
     s32 remaining = lua_gettop(L)-3;
-    _debugprintf("%d remaining items in the stack?", remaining);
 
     for (s32 index = 0; index < remaining; ++index) {
         s32 stack_index = 3 + index;
@@ -1472,11 +1466,9 @@ int _lua_bind_bullet_set_task(lua_State* L) {
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_bullet(uid);
     char* task_name = (char*)lua_tostring(L, 2);
-    _debugprintf("set task?");
 
     Lua_Task_Extra_Parameter_Variant extra_parameters[128] = {};
     s32 remaining = lua_gettop(L)-3;
-    _debugprintf("%d remaining items in the stack?", remaining);
 
     for (s32 index = 0; index < remaining; ++index) {
         s32 stack_index = 3 + index;
