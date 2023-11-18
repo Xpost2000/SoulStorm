@@ -404,8 +404,8 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
                 };
 
                 for (auto& sample : subsamples) {
-                    f32 sample_approx_x = dx + sample.x;
-                    f32 sample_approx_y = dy + sample.y;
+                    f32 sample_approx_x = ceilf(dx + sample.x);
+                    f32 sample_approx_y = ceilf(dy + sample.y);
                     if (_framebuffer_scissor_cull(framebuffer, sample_approx_x, sample_approx_y)) continue;
                     _BlendPixel_Scalar(framebuffer, (s32)(sample_approx_x), (s32)(sample_approx_y), sampled_pixel, blend_mode);
                 }
