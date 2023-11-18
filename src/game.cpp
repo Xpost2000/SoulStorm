@@ -159,6 +159,10 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
     resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
     resources->ui_marquee_bkrnd = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee1.png"));
+
+    resources->ui_vignette_borders[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_left.png"));
+    resources->ui_vignette_borders[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_bottom.png"));
+
     driver->upload_texture(&resources->graphics_assets, resources->circle);
 
     // Sprites have their timings automatically done, so
@@ -1846,7 +1850,10 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
             auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd);
             // NOTE: playing with colors
             //auto modulation = color32f32(0.1, 0.35, 0.8, 1);
-            auto modulation = color32u8_to_color32f32(color32u8(105, 138, 232, 255));
+            auto modulation        = color32u8_to_color32f32(color32u8(115, 148, 240, 255));
+            auto modulation_shadow = color32u8_to_color32f32(color32u8(0, 0, 0, 255));
+
+            f32 shadow_width = 64 + normalized_sinf(Global_Engine()->global_elapsed_time) * 48;
             // left border
             render_commands_push_image(
                 ui_render_commands,
@@ -1854,6 +1861,15 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 rectangle_f32(0, 0, play_area_x, resolution.y),
                 rectangle_f32(0, 0, play_area_x, marquee_bkg->height),
                 modulation,
+                0,
+                BLEND_MODE_ALPHA
+            );
+            render_commands_push_image(
+                ui_render_commands,
+                graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
+                rectangle_f32(play_area_x-shadow_width, 0, shadow_width, resolution.y),
+                RECTANGLE_F32_NULL,
+                modulation_shadow,
                 0,
                 BLEND_MODE_ALPHA
             );
@@ -1867,6 +1883,16 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 0,
                 BLEND_MODE_ALPHA
             );
+            render_commands_push_image(
+                ui_render_commands,
+                graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
+                rectangle_f32(play_area_x+play_area_width, 0, shadow_width, resolution.y),
+                RECTANGLE_F32_NULL,
+                modulation_shadow,
+                DRAW_IMAGE_FLIP_HORIZONTALLY,
+                BLEND_MODE_ALPHA
+            );
+
         }
 
         // NOTE: really need to adjust the layout
@@ -3009,6 +3035,13 @@ void Boss_Healthbar_Displays::update(Game_State* state, f32 dt) {
 }
 
 void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_State* state) {
+    // I need to see where the UI starts here so I can reposition stuff..
+    if (DebugUI::enabled()) {
+        render_commands_push_quad(
+            ui_commands,
+            rectangle_f32(position.x, position.y, 30, 30), color32u8(0, 0, 255, 128), BLEND_MODE_ALPHA);
+    }
+
     for (s32 healthbar_index = 0; healthbar_index < displays.size; ++healthbar_index) {
         auto& display = displays[healthbar_index];
 
