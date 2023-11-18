@@ -14,6 +14,8 @@ enum render_command_type{
     RENDER_COMMAND_DRAW_IMAGE,
     RENDER_COMMAND_DRAW_TEXT,
     RENDER_COMMAND_DRAW_LINE,
+    RENDER_COMMAND_SET_SCISSOR,
+    RENDER_COMMAND_CLEAR_SCISSOR,
     // NOTE: this may or may not be dirty in a hardware implementation
     RENDER_COMMAND_POSTPROCESS_APPLY_SHADER,
 };
@@ -23,6 +25,8 @@ static string render_command_type_strings[] = {
     string_literal("RENDER_COMMAND_DRAW_IMAGE"),
     string_literal("RENDER_COMMAND_DRAW_TEXT"),
     string_literal("RENDER_COMMAND_DRAW_LINE"),
+    string_literal("RENDER_COMMAND_SET_SCISSOR"),
+    string_literal("RENDER_COMMAND_CLEAR_SCISSOR"),
     string_literal("RENDER_COMMAND_DRAW_APPLY_SHADER"),
 };
 
@@ -107,6 +111,9 @@ void render_commands_push_image_ext2(struct render_commands* commands, struct im
 void render_commands_push_line(struct render_commands* commands, V2 start, V2 end, union color32u8 rgba, u8 blend_mode);
 void render_commands_push_text(struct render_commands* commands, struct font_cache* font, f32 scale, V2 xy, string cstring, union color32f32 rgba, u8 blend_mode);
 void render_commands_push_shader_application(struct render_commands* commands, s32 shader_id, void* context);
+
+void render_commands_push_set_scissor(struct render_commands* commands, struct rectangle_f32 scissor);
+void render_commands_push_clear_scissor(struct render_commands* commands);
 // TODO: rotated text. This is more of a novelty that I don't think I need yet so I won't do it quite yet
 // void render_commands_push_text_ext(struct render_commands* commands, struct font_cache* font, f32 scale, V2 xy, V2 rotation_origin, s32 angle, string cstring, union color32f32 rgba, u8 blend_mode);
 

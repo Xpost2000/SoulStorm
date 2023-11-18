@@ -158,6 +158,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     }
 
     resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
+    resources->ui_marquee_bkrnd = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee1.png"));
     driver->upload_texture(&resources->graphics_assets, resources->circle);
 
     // Sprites have their timings automatically done, so
@@ -1836,29 +1837,43 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         auto border_color = color32u8(0, 15, 18, 255);
  
         int play_area_width = state->play_area.width;
+        int play_area_height = state->play_area.height;
         int play_area_x     = state->play_area.x;
 
         // These should also be nice images in the future.
-        // left border
-        render_commands_push_quad(ui_render_commands,
-                                  rectangle_f32(0,
-                                                0,
-                                                play_area_x,
-                                                resolution.y),
-                                  border_color, BLEND_MODE_ALPHA);
-        // right border
-        render_commands_push_quad(ui_render_commands,
-                                  rectangle_f32(play_area_x + play_area_width,
-                                                0,
-                                                resolution.x - play_area_width,
-                                                resolution.y),
-                                  border_color, BLEND_MODE_ALPHA);
+
+        {
+            auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd);
+            // NOTE: playing with colors
+            //auto modulation = color32f32(0.1, 0.35, 0.8, 1);
+            auto modulation = color32u8_to_color32f32(color32u8(105, 138, 232, 255));
+            // left border
+            render_commands_push_image(
+                ui_render_commands,
+                marquee_bkg,
+                rectangle_f32(0, 0, play_area_x, resolution.y),
+                rectangle_f32(0, 0, play_area_x, marquee_bkg->height),
+                modulation,
+                0,
+                BLEND_MODE_ALPHA
+            );
+            // right border
+            render_commands_push_image(
+                ui_render_commands,
+                marquee_bkg,
+                rectangle_f32(play_area_x+play_area_width, 0, resolution.x - play_area_width, resolution.y),
+                rectangle_f32(play_area_width+play_area_x, 0, marquee_bkg->width, marquee_bkg->height),
+                modulation,
+                0,
+                BLEND_MODE_ALPHA
+            );
+        }
 
         // NOTE: really need to adjust the layout
         // Render_Score
         // Draw score and other stats like attack power or speed or something
         {
-            auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
+            auto font = resources->get_font(MENU_FONT_COLOR_WHITE);
             auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
             auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("Score: %d", state->current_score)));
 
@@ -2116,8 +2131,20 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
     // main game rendering
     // draw stage specific things if I need to.
     { 
+        int play_area_width = state->play_area.width;
+        int play_area_height = state->play_area.height;
+        auto bkg_color = color32u8(32 * 2, 45 * 2, 80 * 2, 255);
+        render_commands_push_quad(game_render_commands,
+                                  rectangle_f32(0,
+                                                0,
+                                                play_area_width,
+                                                play_area_height),
+                                  bkg_color, BLEND_MODE_ALPHA);
+
         stage_draw(&state->stage_state, dt, game_render_commands, this->state);
     }
+
+
     state->update_and_render_all_background_scriptable_render_objects(this->state->resources, game_render_commands, dt);
     {
         for (int i = 0; i < (int)state->bullets.size; ++i) {
@@ -2184,8 +2211,6 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         state->scriptable_render_objects.zero();
     }
 
-    game_render_commands->clear_buffer_color = color32u8(32 * 2, 45 * 2, 80 * 2, 255);
-    game_render_commands->should_clear_buffer = true;
     camera_update(&state->main_camera, dt);
 }
 

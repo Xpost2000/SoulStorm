@@ -55,6 +55,27 @@ void software_framebuffer_render_commands_tiled(struct software_framebuffer* fra
         }
 
         switch (command->type) {
+            /*
+              NOTE:
+              The scissor rectangle is a sync point, which means I cannot draw with it
+              safely... Although I think in practice... This might be fine in the
+              situations I'm using it...
+
+              Thankfully a hardware accelerated renderer will not have this problem,
+              however I am relying on the fact that all tiles will draw the same amount
+              of pixels and reject the same amount of pixels so that they'll approximately
+              be "close enough" in the command chain....
+
+              Thankfully, I don't have massive UI where the scissor rectagle would matter
+              much more.
+            */
+            case RENDER_COMMAND_SET_SCISSOR: {
+                rectangle_f32 rectangle = command->destination;
+                software_framebuffer_set_scissor(framebuffer, rectangle.x, rectangle.y, rectangle.w, rectangle.h);
+            } break;
+            case RENDER_COMMAND_CLEAR_SCISSOR: {
+                software_framebuffer_clear_scissor(framebuffer);
+            } break;
             case RENDER_COMMAND_DRAW_QUAD: {
                 software_framebuffer_draw_quad_ext_clipped(
                     framebuffer,
@@ -148,6 +169,7 @@ void software_framebuffer_render_commands(struct software_framebuffer* framebuff
 
     struct render_commands_job_details* job_details = (render_commands_job_details*)Global_Engine()->scratch_arena.push_unaligned(sizeof(*job_details) * (JOB_W*JOB_H));
 
+    software_framebuffer_clear_scissor(framebuffer);
     for (s32 y = 0; y < JOB_H; ++y) {
         for (s32 x = 0; x < JOB_W; ++x) {
             struct rectangle_f32 clip_rect = rectangle_f32(x * TILE_W, y * TILE_H, TILE_W, TILE_H);

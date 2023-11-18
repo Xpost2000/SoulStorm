@@ -93,6 +93,15 @@ void render_commands_push_shader_application(struct render_commands* commands, s
     command->shader_context = context;
 }
 
+void render_commands_push_set_scissor(struct render_commands* commands, struct rectangle_f32 scissor) {
+    struct render_command* command = render_commands_new_command(commands, RENDER_COMMAND_SET_SCISSOR);
+    command->destination = scissor;
+}
+
+void render_commands_push_clear_scissor(struct render_commands* commands) {
+    struct render_command* command = render_commands_new_command(commands, RENDER_COMMAND_CLEAR_SCISSOR);
+}
+
 void render_commands_clear(struct render_commands* commands) {
     commands->command_count = 0;
 }

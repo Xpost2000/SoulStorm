@@ -369,6 +369,7 @@ struct Game_Resources {
     image_id        circle;
 
     sprite_id       projectile_sprites[PROJECTILE_SPRITE_TYPES];
+    image_id        ui_marquee_bkrnd;
 
     inline font_cache* get_font(s32 variation) {
         struct font_cache* font = graphics_assets_get_font_by_id(&graphics_assets, menu_fonts[variation]);
