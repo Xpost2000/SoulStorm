@@ -202,6 +202,7 @@ bool Game_Task_Scheduler::kill_task(s32 index) {
     auto& task            = tasks[index];
     if (task.source != GAME_TASK_AVALIABLE) {
         task.source = GAME_TASK_AVALIABLE;
+        task.L_C = 0;
     } else {
         return false; // already dead.
     }
@@ -221,13 +222,15 @@ s32 Game_Task_Scheduler::search_for_lua_task(lua_State* L) {
 }
 
 void Game_Task_Scheduler::abort_all_lua_tasks() {
-    L = nullptr;
     for (s32 index = 0; index < active_task_ids.size; ++index) {
         auto& task = tasks[active_task_ids[index]];
         if (task.L_C) {
+            //lua_yield(task.L_C, 0);
             kill_task(active_task_ids[index]);
+            task.L_C = nullptr;
         }
     }
+    L = nullptr;
 }
 
 void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {

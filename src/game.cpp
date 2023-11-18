@@ -223,10 +223,10 @@ void Game::setup_stage_start() {
 
         // clean up old lua state.
         if (state->stage_state.L) {
-            _debugprintf("Clean up old lua stage.");
-            lua_close(state->stage_state.L);   
-            state->stage_state.L = nullptr;
             this->state->coroutine_tasks.abort_all_lua_tasks();
+            this->state->coroutine_tasks.tasks.zero();
+            this->state->coroutine_tasks.active_task_ids.zero();
+            lua_close(state->stage_state.L);   
         }
         state->stage_state = stage_load_from_lua(this->state, format_temp("stages/%d_%d.lua", stage_id+1, level_id+1));
         state->current_stage_timer = 0.0f;
@@ -795,7 +795,7 @@ void Gameplay_Data::update_and_render_all_background_scriptable_render_objects(G
 void Gameplay_Data::update_and_render_all_foreground_scriptable_render_objects(Game_Resources* resources, struct render_commands* render_commands, f32 dt) {
     for (s32 index = 0; index < scriptable_render_objects.size; ++index) {
         auto& render_object = scriptable_render_objects[index];
-        if (render_object.layer != SCRIPTABLE_RENDER_OBJECT_LAYER_BACKGROUND) continue;
+        if (render_object.layer != SCRIPTABLE_RENDER_OBJECT_LAYER_FOREGROUND) continue;
         render_object.render(resources, render_commands);
     }
 }
@@ -2525,6 +2525,10 @@ void Game::switch_screen(s32 screen) {
     // special case setup code will be here
 
     switch (screen) {
+        case GAME_SCREEN_TITLE_SCREEN: 
+        case GAME_SCREEN_OPENING: 
+        case GAME_SCREEN_MAIN_MENU: {
+        } break;
         case GAME_SCREEN_INGAME: {
             setup_stage_start();
         } break;
@@ -3114,6 +3118,7 @@ int _lua_bind_camera_set_trauma(lua_State* L) {
 int _lua_bind_async_task(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     char* task_name = (char*)lua_tostring(L, 1);
+    _debugprintf("Assign async task %s", task_name);
 
     Lua_Task_Extra_Parameter_Variant extra_parameters[128] = {};
     s32 remaining = lua_gettop(L)-2;
@@ -3320,6 +3325,12 @@ int _lua_bind_render_object_get_z_angle(lua_State* L) {
     return 1;
 }
 
+int _lua_bind_global_elapsed_time(lua_State* L) {
+    auto engine = Global_Engine();
+    lua_pushnumber(L, engine->global_elapsed_time);
+    return 1;
+}
+
 int _lua_bind_load_image(lua_State* L) {
     lua_getglobal(L, "_gamestate");
     Game_State* state     = (Game_State*)lua_touserdata(L, lua_gettop(L));
@@ -3442,6 +3453,8 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
         lua_register(L, "render_object_get_x_angle",      _lua_bind_render_object_get_x_angle);
         lua_register(L, "render_object_get_y_angle",      _lua_bind_render_object_get_y_angle);
         lua_register(L, "render_object_get_z_angle",      _lua_bind_render_object_get_z_angle);
+
+        lua_register(L, "global_elapsed_time",      _lua_bind_global_elapsed_time);
 #endif
     }
 
