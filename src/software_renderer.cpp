@@ -5,7 +5,7 @@
 #include "thread_pool.h"
 #include "engine.h"
 
-inline local void _rotate_f32_xy_as_pseudo_zyx(f32* x, f32* y, f32 c=0, f32 s=0, f32 c1=0, f32 s1=0, f32 c2=0, f32 s2=0) {
+inline local void _rotate_f32_xy_as_pseudo_zyx(f32* x, f32* y, f32 c=0, f32 s=0, f32 c1=0, f32 s1=0, f32 c2=0, f32 s2=1) {
     // z rot
     *x = floor(c * (*x) - s * (*y));
     *y = floor(s * (*x) + c * (*y));
@@ -354,19 +354,14 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
     
     for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
         for (s32 x_cursor = start_x; x_cursor < end_x; ++x_cursor) {
-            s32 image_sample_x = (s32)((src.x + src.w) - ((unclamped_end_x - x_cursor) * scale_ratio_w));
-            s32 image_sample_y = (s32)((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h));
+            s32 image_sample_x = (s32)fmodf((src.x + src.w) - ((unclamped_end_x - x_cursor) * scale_ratio_w), image->width);
+            s32 image_sample_y = (s32)fmodf((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h), image->height);
 
             if ((flags & DRAW_IMAGE_FLIP_HORIZONTALLY))
                 image_sample_x = (s32)(((unclamped_end_x - x_cursor) * scale_ratio_w) + src.x);
 
             if ((flags & DRAW_IMAGE_FLIP_VERTICALLY))
                 image_sample_y = (s32)(((unclamped_end_y - y_cursor) * scale_ratio_h) + src.y);
-
-            while (image_sample_x < 0) image_sample_x              += image->width;
-            while (image_sample_x >= image->width) image_sample_x  -= image->width;
-            while (image_sample_y < 0) image_sample_y              += image->height;
-            while (image_sample_y >= image->height) image_sample_y -= image->height;
 
             union color32f32 sampled_pixel = color32f32(image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 0] / 255.0f,
                                                         image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 1] / 255.0f,

@@ -2217,7 +2217,7 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
             state->gameplay_data.update_and_render_all_background_scriptable_render_objects(state->resources, &game_render_commands, dt);
             update_and_render_game_ingame(&game_render_commands, &ui_render_commands, dt);
             state->gameplay_data.update_and_render_all_foreground_scriptable_render_objects(state->resources, &game_render_commands, dt);
-            state->gameplay_data.scriptable_render_objects.clear();
+            state->gameplay_data.scriptable_render_objects.zero();
         } break;
         case GAME_SCREEN_CREDITS: {
             update_and_render_game_credits(&game_render_commands, &ui_render_commands, dt);
@@ -3186,9 +3186,9 @@ int _lua_bind_render_object_set_modulation(lua_State* L){
     Game_State* state = lua_binding_get_gamestate(L);
     auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
     scriptable_render_object.modulation.r = luaL_checknumber(L, 2) * 255;
-    scriptable_render_object.modulation.g = luaL_checknumber(L, 4) * 255;
-    scriptable_render_object.modulation.b = luaL_checknumber(L, 5) * 255;
-    scriptable_render_object.modulation.a = luaL_checknumber(L, 6) * 255;
+    scriptable_render_object.modulation.g = luaL_checknumber(L, 3) * 255;
+    scriptable_render_object.modulation.b = luaL_checknumber(L, 4) * 255;
+    scriptable_render_object.modulation.a = luaL_checknumber(L, 5) * 255;
     return 0;
 }
 
