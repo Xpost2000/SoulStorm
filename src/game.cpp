@@ -3003,8 +3003,7 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
 // Lua bindings
 
 int _lua_bind_Task_Yield_Wait(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     _debugprintf("%p lua state", L);
     s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
     assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
@@ -3019,8 +3018,7 @@ int _lua_bind_Task_Yield_Wait(lua_State* L) {
 }
 
 int _lua_bind_Task_Yield_Finish_Stage(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
     assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
 
@@ -3031,8 +3029,7 @@ int _lua_bind_Task_Yield_Finish_Stage(lua_State* L) {
 }
 
 int _lua_bind_Task_Yield_Until_No_Danger(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
     assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
 
@@ -3043,8 +3040,7 @@ int _lua_bind_Task_Yield_Until_No_Danger(lua_State* L) {
 }
 
 int _lua_bind_Task_Yield_Wait_For_Stage_Intro(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
     assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
 
@@ -3055,8 +3051,7 @@ int _lua_bind_Task_Yield_Wait_For_Stage_Intro(lua_State* L) {
 }
 
 int _lua_bind_Task_Yield(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
     assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
 
@@ -3065,15 +3060,13 @@ int _lua_bind_Task_Yield(lua_State* L) {
 
 
 int _lua_bind_any_living_danger(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     lua_pushboolean(L, state->gameplay_data.any_living_danger());
     return 1;
 }
 
 int _lua_bind_prng_ranged_float(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     f32 a = luaL_checknumber(L, 1);
     f32 b = luaL_checknumber(L, 2);
     lua_pushnumber(L, random_ranged_float(&state->gameplay_data.prng, a, b));
@@ -3081,8 +3074,7 @@ int _lua_bind_prng_ranged_float(lua_State* L) {
 }
 
 int _lua_bind_prng_ranged_integer(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     s32 a = luaL_checkinteger(L, 1);
     s32 b = luaL_checkinteger(L, 2);
     lua_pushnumber(L, random_ranged_integer(&state->gameplay_data.prng, a, b));
@@ -3090,36 +3082,31 @@ int _lua_bind_prng_ranged_integer(lua_State* L) {
 }
 
 int _lua_bind_prng_normalized_float(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     lua_pushnumber(L, random_float(&state->gameplay_data.prng));
     return 1;
 }
 
 int _lua_bind_play_area_width(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     lua_pushinteger(L, state->gameplay_data.play_area.width);
     return 1;
 }
 
 int _lua_bind_play_area_height(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     lua_pushinteger(L, state->gameplay_data.play_area.height);
     return 1;
 }
 
 int _lua_bind_camera_traumatize(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     camera_traumatize(&state->gameplay_data.main_camera, luaL_checknumber(L, 1));
     return 0;
 }
 
 int _lua_bind_camera_set_trauma(lua_State* L) {
-    lua_getglobal(L, "_gamestate");
-    Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    Game_State* state = lua_binding_get_gamestate(L);
     camera_set_trauma(&state->gameplay_data.main_camera, luaL_checknumber(L, 1));
     return 0;
 }
@@ -3141,6 +3128,196 @@ int _lua_bind_async_task(lua_State* L) {
 
     state->coroutine_tasks.add_lua_game_task(state, state->coroutine_tasks.L, task_name,  make_slice(extra_parameters, remaining));
     return 0;
+}
+
+int _lua_bind_create_render_object(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    state->gameplay_data.add_scriptable_render_object(Scriptable_Render_Object {});
+    lua_pushinteger(L, state->gameplay_data.scriptable_render_objects.size-1);
+    return 1;
+}
+
+int _lua_bind_render_object_set_layer(lua_State* L){
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    scriptable_render_object.layer = luaL_checkinteger(L, 2);
+    return 0;
+}
+
+int _lua_bind_render_object_set_position(lua_State* L){
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    scriptable_render_object.position.x = luaL_checknumber(L, 2);
+    scriptable_render_object.position.y = luaL_checknumber(L, 3);
+    return 0;
+}
+
+int _lua_bind_render_object_set_src_rect(lua_State* L){
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    scriptable_render_object.src_rect.x = luaL_checknumber(L, 2);
+    scriptable_render_object.src_rect.y = luaL_checknumber(L, 3);
+    scriptable_render_object.src_rect.w = luaL_checknumber(L, 4);
+    scriptable_render_object.src_rect.h = luaL_checknumber(L, 5);
+    return 0;
+}
+
+int _lua_bind_render_object_set_img_id(lua_State* L){
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    scriptable_render_object.image_id.index = luaL_checkinteger(L, 2);
+    return 0;
+}
+
+int _lua_bind_render_object_set_scale(lua_State* L){
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    scriptable_render_object.scale.x = luaL_checknumber(L, 2);
+    scriptable_render_object.scale.y = luaL_checknumber(L, 3);
+    return 0;
+}
+
+int _lua_bind_render_object_set_modulation(lua_State* L){
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    scriptable_render_object.modulation.r = luaL_checknumber(L, 2) * 255;
+    scriptable_render_object.modulation.g = luaL_checknumber(L, 4) * 255;
+    scriptable_render_object.modulation.b = luaL_checknumber(L, 5) * 255;
+    scriptable_render_object.modulation.a = luaL_checknumber(L, 6) * 255;
+    return 0;
+}
+
+int _lua_bind_render_object_set_x_angle(lua_State* L){
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    scriptable_render_object.x_angle = luaL_checkinteger(L, 1);
+    return 0;
+}
+
+int _lua_bind_render_object_set_y_angle(lua_State* L){
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    scriptable_render_object.y_angle = luaL_checkinteger(L, 1);
+    return 0;
+}
+
+int _lua_bind_render_object_set_z_angle(lua_State* L){
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    scriptable_render_object.z_angle = luaL_checkinteger(L, 1);
+    return 0;
+}
+
+int _lua_bind_render_object_get_layer(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushinteger(L, scriptable_render_object.layer);
+    return 1;
+}
+
+int _lua_bind_render_object_get_position_x(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushnumber(L, scriptable_render_object.position.x);
+    return 1;
+}
+
+int _lua_bind_render_object_get_position_y(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushnumber(L, scriptable_render_object.position.y);
+    return 1;
+}
+
+int _lua_bind_render_object_get_src_rect_x(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushnumber(L, scriptable_render_object.src_rect.x);
+    return 1;
+}
+
+int _lua_bind_render_object_get_src_rect_y(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushnumber(L, scriptable_render_object.src_rect.y);
+    return 1;
+}
+
+int _lua_bind_render_object_get_src_rect_w(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushnumber(L, scriptable_render_object.src_rect.w);
+    return 1;
+}
+
+int _lua_bind_render_object_get_src_rect_h(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushnumber(L, scriptable_render_object.src_rect.h);
+    return 1;
+}
+
+int _lua_bind_render_object_get_scale_x(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushnumber(L, scriptable_render_object.scale.x);
+    return 1;
+}
+
+int _lua_bind_render_object_get_scale_y(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushnumber(L, scriptable_render_object.scale.y);
+    return 1;
+}
+
+int _lua_bind_render_object_get_modulation_r(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushnumber(L, scriptable_render_object.modulation.r / 255.0f);
+    return 1;
+}
+
+int _lua_bind_render_object_get_modulation_g(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushnumber(L, scriptable_render_object.modulation.g / 255.0f);
+    return 1;
+}
+
+int _lua_bind_render_object_get_modulation_b(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushnumber(L, scriptable_render_object.modulation.b / 255.0f);
+    return 1;
+}
+
+int _lua_bind_render_object_get_modulation_a(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushnumber(L, scriptable_render_object.modulation.a / 255.0f);
+    return 1;
+}
+
+int _lua_bind_render_object_get_x_angle(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushinteger(L, scriptable_render_object.x_angle);
+    return 1;
+}
+
+int _lua_bind_render_object_get_y_angle(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushinteger(L, scriptable_render_object.y_angle);
+    return 1;
+}
+
+int _lua_bind_render_object_get_z_angle(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
+    lua_pushinteger(L, scriptable_render_object.z_angle);
+    return 1;
 }
 
 int _lua_bind_load_image(lua_State* L) {
@@ -3232,7 +3409,7 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
         lua_register(L, "load_image",          _lua_bind_load_image);
         lua_register(L, "async_task",          _lua_bind_async_task);
 
-#if 0
+#if 1
         /* These are per frame objects */
         /*
          * NOTE: I'm not a fan of doing per scalar things
@@ -3249,26 +3426,22 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
         lua_register(L, "render_object_set_y_angle",    _lua_bind_render_object_set_y_angle);
         lua_register(L, "render_object_set_z_angle",    _lua_bind_render_object_set_z_angle);
 
-        lua_register(L, "render_object_get_layer",      _lua_bind_render_object_get_layer);
+        lua_register(L, "render_object_get_layer",        _lua_bind_render_object_get_layer);
         lua_register(L, "render_object_get_position_x",   _lua_bind_render_object_get_position_x);
         lua_register(L, "render_object_get_position_y",   _lua_bind_render_object_get_position_y);
-
         lua_register(L, "render_object_get_src_rect_x",   _lua_bind_render_object_get_src_rect_x);
         lua_register(L, "render_object_get_src_rect_y",   _lua_bind_render_object_get_src_rect_y);
         lua_register(L, "render_object_get_src_rect_w",   _lua_bind_render_object_get_src_rect_w);
         lua_register(L, "render_object_get_src_rect_h",   _lua_bind_render_object_get_src_rect_h);
-
         lua_register(L, "render_object_get_scale_x",      _lua_bind_render_object_get_scale_x);
         lua_register(L, "render_object_get_scale_y",      _lua_bind_render_object_get_scale_y);
-
         lua_register(L, "render_object_get_modulation_r", _lua_bind_render_object_get_modulation_r);
         lua_register(L, "render_object_get_modulation_g", _lua_bind_render_object_get_modulation_g);
         lua_register(L, "render_object_get_modulation_b", _lua_bind_render_object_get_modulation_b);
         lua_register(L, "render_object_get_modulation_a", _lua_bind_render_object_get_modulation_a);
-
-        lua_register(L, "render_object_get_x_angle",    _lua_bind_render_object_get_x_angle);
-        lua_register(L, "render_object_get_y_angle",    _lua_bind_render_object_get_y_angle);
-        lua_register(L, "render_object_get_z_angle",    _lua_bind_render_object_get_z_angle);
+        lua_register(L, "render_object_get_x_angle",      _lua_bind_render_object_get_x_angle);
+        lua_register(L, "render_object_get_y_angle",      _lua_bind_render_object_get_y_angle);
+        lua_register(L, "render_object_get_z_angle",      _lua_bind_render_object_get_z_angle);
 #endif
     }
 
