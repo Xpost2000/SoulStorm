@@ -2118,6 +2118,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
     { 
         stage_draw(&state->stage_state, dt, game_render_commands, this->state);
     }
+    state->update_and_render_all_background_scriptable_render_objects(this->state->resources, game_render_commands, dt);
     {
         for (int i = 0; i < (int)state->bullets.size; ++i) {
             auto& b = state->bullets[i];
@@ -2171,6 +2172,17 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 
         Transitions::update_and_render(ui_render_commands, dt);
     }
+    state->update_and_render_all_foreground_scriptable_render_objects(this->state->resources, game_render_commands, dt);
+
+
+    /*
+      NOTE: because these are per "task invocation" objects,
+      I need these render objects to still exist when coroutines are paused, otherwise it'll
+      look like the background disappeared!
+     */
+    if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE) {
+        state->scriptable_render_objects.zero();
+    }
 
     game_render_commands->clear_buffer_color = color32u8(32 * 2, 45 * 2, 80 * 2, 255);
     game_render_commands->should_clear_buffer = true;
@@ -2214,10 +2226,7 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
             update_and_render_game_main_menu(&game_render_commands, &ui_render_commands, dt);
         } break;
         case GAME_SCREEN_INGAME: {
-            state->gameplay_data.update_and_render_all_background_scriptable_render_objects(state->resources, &game_render_commands, dt);
             update_and_render_game_ingame(&game_render_commands, &ui_render_commands, dt);
-            state->gameplay_data.update_and_render_all_foreground_scriptable_render_objects(state->resources, &game_render_commands, dt);
-            state->gameplay_data.scriptable_render_objects.zero();
         } break;
         case GAME_SCREEN_CREDITS: {
             update_and_render_game_credits(&game_render_commands, &ui_render_commands, dt);
