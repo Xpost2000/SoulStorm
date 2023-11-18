@@ -1,4 +1,6 @@
 #include "common.h"
+#include "engine.h" // for memory arena access
+
 #include "audio.h"
 
 #include <SDL2/SDL_mixer.h>
@@ -16,6 +18,8 @@ namespace Audio {
     local u32        loaded_stream_hashes[MAX_LOADED_SAMPLES] = {};
     local s32        loaded_sample_count                      = 0;
     local s32        loaded_stream_count                      = 0;
+    local string     loaded_sample_filestrings[MAX_LOADED_SAMPLES] = {};
+    local string     loaded_stream_filestrings[MAX_LOADED_STREAMS] = {};
 
     void initialize(void) {
         _debugprintf("Audio hi");
@@ -39,6 +43,11 @@ namespace Audio {
                 if (path_hash == loaded_stream_hashes[index]) {
                     result.index  = index+1;
                     load_required = false;
+
+                    if (loaded_streams[index] == NULL) {
+                        loaded_streams[index] = Mix_LoadMUS(filepath);
+                    }
+
                     break;
                 }
             }
@@ -51,6 +60,7 @@ namespace Audio {
 
                 if (new_stream) {
                     _debugprintf("new stream: %p", new_stream);
+                    loaded_stream_filestrings[loaded_stream_count] = memory_arena_push_string(&Global_Engine()->main_arena, string_from_cstring((char*)filepath));
                     loaded_streams[loaded_stream_count]       = new_stream;
                     loaded_stream_hashes[loaded_stream_count] = path_hash;
 
@@ -64,6 +74,11 @@ namespace Audio {
                 if (path_hash == loaded_sample_hashes[index]) {
                     result.index  = index+1;
                     load_required = false;
+
+                    if (loaded_samples[index] == NULL) {
+                        loaded_samples[index] = Mix_LoadWAV(filepath);
+                    }
+
                     break;
                 }
             }
@@ -73,8 +88,10 @@ namespace Audio {
                 // SDL_RWops*         rw         = SDL_RWFromConstMem(filebuffer.buffer, filebuffer.length);
                 Mix_Chunk* new_chunk = Mix_LoadWAV(filepath);
                 // Mix_Chunk* new_chunk = Mix_LoadWAV_RW(rw, 1);
+
                 if (new_chunk) {
                     _debugprintf("new sample: %p", new_chunk);
+                    loaded_sample_filestrings[loaded_sample_count] = memory_arena_push_string(&Global_Engine()->main_arena, string_from_cstring((char*)filepath));
                     loaded_samples[loaded_sample_count]       = new_chunk;
                     loaded_sample_hashes[loaded_sample_count] = path_hash;
 
@@ -89,6 +106,18 @@ namespace Audio {
         return result;
     }
 
+    void unload(Sound_ID sound) {
+        s32 index = sound.index-1;
+
+        if (sound.streaming) {
+            Mix_FreeMusic(loaded_streams[index]);
+            loaded_streams[index] = 0;
+        } else {
+            Mix_FreeChunk(loaded_samples[index]);
+            loaded_samples[index] = 0;
+        }
+    }
+
     void stop_music(void) {
         Mix_HaltMusic();
     }
@@ -101,9 +130,15 @@ namespace Audio {
         }
 
         if (sound.streaming) {
+            if (loaded_streams[sound.index-1] == NULL)
+                loaded_streams[sound.index-1] = Mix_LoadMUS(loaded_stream_filestrings[sound.index-1].data);
+
             s32 status = Mix_PlayMusic(loaded_streams[sound.index-1], -1);
             _debugprintf("HI music?: %p (%s)", loaded_streams[sound.index-1], Mix_GetError());
         } else {
+            if (loaded_samples[sound.index-1] == NULL)
+                loaded_samples[sound.index-1] = Mix_LoadWAV(loaded_sample_filestrings[sound.index-1].data);
+
             Mix_PlayChannel(ANY_CHANNEL, loaded_samples[sound.index-1], 0);
             _debugprintf("HI: %p (%d)", loaded_samples[sound.index-1], sound.index);
         }

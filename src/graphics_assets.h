@@ -45,6 +45,14 @@ struct Sprite_Instance {
 
 Sprite_Instance sprite_instance(sprite_id id);
 
+// the principle unit is the image_buffer,
+// since it's the only "real" thing being loaded.
+// NOTE: for the needs of the game, I only need to unload assets that
+// the engine loads from a level.
+enum asset_status {
+    ASSET_STATUS_UNLOADED,
+    ASSET_STATUS_LOADED,
+};
 struct graphics_assets {
     Memory_Arena* arena;
 
@@ -53,6 +61,7 @@ struct graphics_assets {
     u32                  image_count;
     u32                  image_capacity;
     struct image_buffer* images;
+    u8*                  image_asset_status;
     struct font_cache*   fonts;
     string*              image_file_strings;
 
@@ -82,6 +91,8 @@ Sprite_Frame*          sprite_get_frame(Sprite* sprite, s32 index);
 
 void                   graphics_assets_finish(struct graphics_assets* assets);
 image_id               graphics_assets_load_image(struct graphics_assets* assets, string path);
+void                   graphics_assets_unload_image(struct graphics_assets* assets, image_id img);
+
 image_id               graphics_assets_get_image_by_filepath(struct graphics_assets* assets, string filepath);
 font_id                graphics_assets_load_bitmap_font(struct graphics_assets* assets, string path, s32 tile_width, s32 tile_height, s32 atlas_rows, s32 atlas_columns);
 struct font_cache*     graphics_assets_get_font_by_id(struct graphics_assets* assets, font_id font);

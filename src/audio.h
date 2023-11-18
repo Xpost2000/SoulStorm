@@ -2,7 +2,6 @@
 #define AUDIO_H
 
 #include "common.h"
-
 #define MAX_LOADED_SAMPLES (2048)
 #define MAX_LOADED_STREAMS (512)
 #define ANY_CHANNEL (-1)
@@ -19,6 +18,7 @@ namespace Audio {
     void deinitialize();
 
     Sound_ID load(const char* path, const bool streamed=false);
+    void     unload(Sound_ID sound);
 
     void play(const Sound_ID sound);
 

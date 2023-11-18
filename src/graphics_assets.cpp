@@ -130,6 +130,7 @@ struct graphics_assets graphics_assets_create(Memory_Arena* arena, u32 font_limi
 
     assets.arena              = arena;
     assets.images             = (image_buffer*)arena->push_unaligned(sizeof(*assets.images) * image_limit);
+    assets.image_asset_status = (u8*)arena->push_unaligned(sizeof(*assets.image_asset_status) * image_limit);
     assets.image_file_strings = (string*)arena->push_unaligned(sizeof(*assets.image_file_strings) *image_limit);
     assets.fonts              = (font_cache*)arena->push_unaligned(sizeof(*assets.fonts)  * font_limit);
     assets.sprites            = (Sprite*)arena->push_unaligned(sizeof(*assets.sprites) * sprite_limit);
@@ -155,9 +156,15 @@ void graphics_assets_finish(struct graphics_assets* assets) {
 
 image_id graphics_assets_load_image(struct graphics_assets* assets, string path) {
     for (s32 index = 0; index < assets->image_count; ++index) {
-        string filepath = assets->image_file_strings[index];
+        string filepath       = assets->image_file_strings[index];
+        u8*     status_field  = &assets->image_asset_status[index];
 
         if (string_equal(path, filepath)) {
+            if (*status_field == ASSET_STATUS_UNLOADED) {
+                struct image_buffer* new_image           = &assets->images[index];
+                *new_image                               = image_buffer_load_from_file(filepath);
+                *status_field                            = ASSET_STATUS_LOADED;
+            }
             return image_id{.index = index+1};
         }
     }
@@ -166,11 +173,23 @@ image_id graphics_assets_load_image(struct graphics_assets* assets, string path)
     _debugprintf("img loaded: %.*s", path.length, path.data);
 
     struct image_buffer* new_image           = &assets->images[assets->image_count];
+    u8*                  status_field        = &assets->image_asset_status[assets->image_count];
     string*              new_filepath_string = &assets->image_file_strings[assets->image_count++];
     *new_filepath_string                     = memory_arena_push_string(assets->arena, path);
     *new_image                               = image_buffer_load_from_file(*new_filepath_string);
+    *status_field                            = ASSET_STATUS_LOADED;
 
     return new_id;
+}
+
+void graphics_assets_unload_image(struct graphics_assets* assets, image_id img) {
+    s32 index = img.index-1;
+    auto img_buffer = graphics_assets_get_image_by_id(assets, img);
+
+    if (assets->image_asset_status[index] != ASSET_STATUS_UNLOADED) {
+        image_buffer_free(img_buffer);
+        assets->image_asset_status[index] = ASSET_STATUS_UNLOADED;
+    }
 }
 
 font_id graphics_assets_load_bitmap_font(struct graphics_assets* assets, string path, s32 tile_width, s32 tile_height, s32 atlas_rows, s32 atlas_columns) {
@@ -189,7 +208,16 @@ struct font_cache* graphics_assets_get_font_by_id(struct graphics_assets* assets
 
 struct image_buffer* graphics_assets_get_image_by_id(struct graphics_assets* assets, image_id image) {
     assertion(image.index > 0 && image.index <= assets->image_count);
-    return &assets->images[image.index-1];
+    s32 index = image.index - 1;
+
+    string filepath     = assets->image_file_strings[index];
+    u8*    status_field = &assets->image_asset_status[index];
+
+    if (*status_field == ASSET_STATUS_UNLOADED) {
+        graphics_assets_load_image(assets, filepath);
+    }
+
+    return &assets->images[index];
 }
 
 image_id graphics_assets_get_image_by_filepath(struct graphics_assets* assets, string filepath) {
