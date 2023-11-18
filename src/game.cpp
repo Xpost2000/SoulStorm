@@ -233,6 +233,7 @@ void Game::setup_stage_start() {
             this->state->coroutine_tasks.active_task_ids.zero();
             lua_close(state->stage_state.L);   
         }
+
         state->stage_state = stage_load_from_lua(this->state, format_temp("stages/%d_%d.lua", stage_id+1, level_id+1));
         state->current_stage_timer = 0.0f;
         this->state->coroutine_tasks.add_task(this->state, state->stage_state.tick_task);
@@ -371,6 +372,8 @@ void Game::init(Graphics_Driver* driver) {
 
         state->boss_health_displays.displays = Fixed_Array<Boss_Healthbar_Display>(arena, 16);
         state->scriptable_render_objects     = Fixed_Array<Scriptable_Render_Object>(arena, MAX_SCRIPTABLE_RENDER_OBJECTS);
+        state->script_loaded_images          = Fixed_Array<image_id>(arena, MAX_TRACKED_SCRIPT_LOADABLE_IMAGES);
+        state->script_loaded_sounds          = Fixed_Array<Audio::Sound_ID>(arena, MAX_TRACKED_SCRIPT_LOADABLE_SOUNDS);
     }
 
     // mainmenu_data initialize
@@ -627,6 +630,22 @@ void Scriptable_Render_Object::render(Game_Resources* resources, struct render_c
 }
 
 // Gameplay_Data
+void Gameplay_Data::unload_all_script_loaded_resources(Game_Resources* resources) {
+    _debugprintf("Unloading level-specific resources");
+    for (s32 image_index = 0; image_index < script_loaded_images.size; ++image_index) {
+        auto img_id = script_loaded_images[image_index];
+        graphics_assets_unload_image(&resources->graphics_assets, img_id);
+    }
+
+    for (s32 sound_index = 0; sound_index < script_loaded_sounds.size; ++sound_index) {
+        auto snd_id = script_loaded_sounds[sound_index];
+        Audio::unload(snd_id);
+    }
+
+    script_loaded_images.clear();
+    script_loaded_sounds.clear();
+}
+
 void Gameplay_Data::add_bullet(Bullet b) {
     switch (b.source_type) {
         case BULLET_SOURCE_PLAYER: {
@@ -2588,6 +2607,7 @@ void Game::switch_screen(s32 screen) {
         case GAME_SCREEN_TITLE_SCREEN: 
         case GAME_SCREEN_OPENING: 
         case GAME_SCREEN_MAIN_MENU: {
+            state->gameplay_data.unload_all_script_loaded_resources(this->state->resources);
         } break;
         case GAME_SCREEN_INGAME: {
             setup_stage_start();
@@ -3408,7 +3428,33 @@ int _lua_bind_load_image(lua_State* L) {
         string_from_cstring((char*)lua_tostring(L, 1))
     );
 
+    state->gameplay_data.script_loaded_images.push(img_id);
+
     lua_pushinteger(L, img_id.index);
+    return 1;
+}
+
+int _lua_bind_load_sound(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state     = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    auto        resources = state->resources;
+    const char* filepath = lua_tostring(L, 1);
+    auto sound_id = Audio::load(filepath, false);
+
+    lua_pushinteger(L, sound_id.index);
+    state->gameplay_data.script_loaded_sounds.push(sound_id);
+    return 1;
+}
+
+int _lua_bind_load_music(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state     = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    auto        resources = state->resources;
+    const char* filepath = lua_tostring(L, 1);
+    auto sound_id = Audio::load(filepath, true);
+
+    lua_pushinteger(L, sound_id.index);
+    state->gameplay_data.script_loaded_sounds.push(sound_id);
     return 1;
 }
 
@@ -3527,6 +3573,11 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
 
     {bind_v2_lualib(L);}
     {bind_entity_lualib(L);}
+    {
+        Audio::bind_audio_lualib(L);
+        lua_register(L, "load_sound", _lua_bind_load_sound);
+        lua_register(L, "load_music", _lua_bind_load_music);
+    }
 
 #ifndef RELEASE
     // just need to see if I did the table thing

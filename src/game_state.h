@@ -11,6 +11,7 @@
 #include "fixed_array.h"
 #include "prng.h"
 #include "camera.h"
+#include "audio.h"
 
 #include "game_task_scheduler.h"
 
@@ -21,6 +22,8 @@
 #define MAX_EXPLOSION_HAZARDS   (16)
 #define MAX_LASER_HAZARDS       (16)
 #define MAX_SCRIPTABLE_RENDER_OBJECTS (1024)
+#define MAX_TRACKED_SCRIPT_LOADABLE_IMAGES (512)
+#define MAX_TRACKED_SCRIPT_LOADABLE_SOUNDS (512)
 
 static string menu_font_variation_string_names[] = {
     string_literal("res/fonts/gnsh-bitmapfont-colour1.png"),
@@ -290,6 +293,11 @@ struct Gameplay_Data {
     s32 tries = MAX_BASE_TRIES;
     s32 current_score = 0;
     f32 current_stage_timer = 0;
+
+    Fixed_Array<image_id> script_loaded_images;
+    Fixed_Array<Audio::Sound_ID> script_loaded_sounds;
+
+    void unload_all_script_loaded_resources(Game_Resources* resources);
 
     // NOTE:
     // Bullets and enemy entities are queued up because

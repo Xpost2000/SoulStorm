@@ -35,6 +35,7 @@ union V2 {
             case 0: return x;
             case 1: return y;
         }
+        assertion(0 && "invalid index");
     }
 
     float magnitude() const;
