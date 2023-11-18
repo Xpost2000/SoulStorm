@@ -3195,21 +3195,21 @@ int _lua_bind_render_object_set_modulation(lua_State* L){
 int _lua_bind_render_object_set_x_angle(lua_State* L){
     Game_State* state = lua_binding_get_gamestate(L);
     auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
-    scriptable_render_object.x_angle = luaL_checkinteger(L, 1);
+    scriptable_render_object.x_angle = luaL_checkinteger(L, 2);
     return 0;
 }
 
 int _lua_bind_render_object_set_y_angle(lua_State* L){
     Game_State* state = lua_binding_get_gamestate(L);
     auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
-    scriptable_render_object.y_angle = luaL_checkinteger(L, 1);
+    scriptable_render_object.y_angle = luaL_checkinteger(L, 2);
     return 0;
 }
 
 int _lua_bind_render_object_set_z_angle(lua_State* L){
     Game_State* state = lua_binding_get_gamestate(L);
     auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
-    scriptable_render_object.z_angle = luaL_checkinteger(L, 1);
+    scriptable_render_object.z_angle = luaL_checkinteger(L, 2);
     return 0;
 }
 
