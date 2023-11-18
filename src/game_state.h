@@ -382,6 +382,22 @@ struct Game_Resources {
     image_id        ui_marquee_bkrnd;
     image_id        ui_vignette_borders[2];
 
+    // I should have more of these...
+    Audio::Sound_ID        attack_sounds[2];
+    Audio::Sound_ID        hit_sounds[2];
+
+    inline Audio::Sound_ID random_attack_sound(struct random_state* prng) {
+        return attack_sounds[
+            random_ranged_integer(prng, 0, array_count(attack_sounds)-1)
+        ];
+    }
+
+    inline Audio::Sound_ID random_hit_sound(struct random_state* prng) {
+        return hit_sounds[
+            random_ranged_integer(prng, 0, array_count(hit_sounds)-1)
+        ];
+    }
+
     inline font_cache* get_font(s32 variation) {
         struct font_cache* font = graphics_assets_get_font_by_id(&graphics_assets, menu_fonts[variation]);
         return font;

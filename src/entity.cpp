@@ -571,6 +571,13 @@ void Player::update(Game_State* state, f32 dt) {
     if (firing) {
         // okay these are normal real bullets
         if (attack()) {
+            auto resources = state->resources;
+            Audio::play(
+                resources->random_attack_sound(
+                    &state->gameplay_data.prng
+                )
+            );
+
             controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
             if (under_focus) {
                 spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 1000.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_STROBING);

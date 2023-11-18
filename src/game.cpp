@@ -216,6 +216,13 @@ void Game::init_audio_resources() {
     if (!initialized) {
         return;
     }
+
+    auto resources = state->resources;
+    resources->attack_sounds[0] = Audio::load(("res/snds/fire1.wav"));
+    resources->attack_sounds[1] = Audio::load(("res/snds/fire2.wav"));
+
+    resources->hit_sounds[0]    = Audio::load(("res/snds/hit1.wav"));
+    resources->hit_sounds[1]    = Audio::load(("res/snds/hit2.wav"));
 }
 
 void Game::setup_stage_start() {
@@ -1872,8 +1879,8 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
             auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd);
             // NOTE: playing with colors
             //auto modulation = color32f32(0.1, 0.35, 0.8, 1);
-            auto modulation        = color32u8_to_color32f32(color32u8(115, 148, 240, 255));
-            auto modulation_shadow = color32u8_to_color32f32(color32u8(0, 0, 0, 255));
+            auto modulation        = color32u8_to_color32f32(color32u8(155, 188, 255, 255));
+            auto modulation_shadow = color32u8_to_color32f32(color32u8(10, 10, 32, 255));
 
             f32 shadow_width = 64 + normalized_sinf(Global_Engine()->global_elapsed_time) * 48;
             // left border
@@ -1998,7 +2005,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
           TODO: add a way to dilate the time scale.
         */
 #if 0
-        const f32 TARGET_FRAMERATE = 0.0f; // use 0 for unlimited
+        const f32 TARGET_FRAMERATE = dt; // use 0 for unlimited
 #else
         const f32 TARGET_FRAMERATE = 1.0f / 240.0f; // use 0 for unlimited
 #endif
@@ -2552,6 +2559,11 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                 }
                 break;
             }
+        }
+
+        if (b.die) {
+            auto resources = this->state->resources;
+            Audio::play(resources->random_hit_sound(&state->prng));
         }
     }
     // unimplemented("Not done");
