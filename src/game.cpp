@@ -247,6 +247,7 @@ void Game::setup_stage_start() {
             this->state->coroutine_tasks.abort_all_lua_tasks();
             this->state->coroutine_tasks.tasks.zero();
             this->state->coroutine_tasks.active_task_ids.zero();
+            this->state->coroutine_tasks.L = nullptr;
             lua_close(state->stage_state.L);
             state->stage_state.L = nullptr;
         }
@@ -617,10 +618,10 @@ void Game::deinit() {
     // safely clean up everything...
     {
         auto state = &this->state->gameplay_data;
+        this->state->coroutine_tasks.abort_all_lua_tasks();
+        this->state->coroutine_tasks.tasks.zero();
+        this->state->coroutine_tasks.active_task_ids.zero();
         if (state->stage_state.L) {
-            this->state->coroutine_tasks.abort_all_lua_tasks();
-            this->state->coroutine_tasks.tasks.zero();
-            this->state->coroutine_tasks.active_task_ids.zero();
             lua_close(state->stage_state.L);   
         }
     }
@@ -3251,20 +3252,27 @@ int _lua_bind_camera_set_trauma(lua_State* L) {
 int _lua_bind_async_task(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     char* task_name = (char*)lua_tostring(L, 1);
+    lua_remove(L, 1);
     _debugprintf("Assign async task %s", task_name);
 
     Lua_Task_Extra_Parameter_Variant extra_parameters[128] = {};
-    s32 remaining = lua_gettop(L)-2;
+    s32 remaining = lua_gettop(L);
+
+    _debugprintf("Async task with %d elements [%d actual stack top]", remaining, lua_gettop(L));
 
     for (s32 index = 0; index < remaining; ++index) {
-        s32 stack_index = 2 + index;
-        if (lua_isnumber(L, stack_index)) extra_parameters[index] = ltep_variant_number(lua_tonumber(L, stack_index));
-        else if (lua_isstring(L, stack_index)) extra_parameters[index] = ltep_variant_string((char*)lua_tostring(L, stack_index));
-        else if (lua_isinteger(L, stack_index)) extra_parameters[index] = ltep_variant_integer(lua_tointeger(L, stack_index));
+        s32 stack_index = 1+index;
+        if (lua_isinteger(L, stack_index))      extra_parameters[index] = ltep_variant_integer(lua_tointeger(L, stack_index));
         else if (lua_isboolean(L, stack_index)) extra_parameters[index] = ltep_variant_boolean(lua_toboolean(L, stack_index));
+        else if (lua_isstring(L, stack_index))  extra_parameters[index] = ltep_variant_string((char*)lua_tostring(L, stack_index));
+        else if (lua_isnumber(L, stack_index))  extra_parameters[index] = ltep_variant_number(lua_tonumber(L, stack_index));
     }
-
-    state->coroutine_tasks.add_lua_game_task(state, state->coroutine_tasks.L, task_name,  make_slice(extra_parameters, remaining));
+    state->coroutine_tasks.add_lua_game_task(
+        state,
+        state->coroutine_tasks.L,
+        task_name,
+        make_slice(extra_parameters, remaining)
+    );
     return 0;
 }
 

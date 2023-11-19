@@ -368,6 +368,7 @@ struct Game_State {
 inline static Game_State* lua_binding_get_gamestate(lua_State* L) {
     lua_getglobal(L, "_gamestate");
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    lua_remove(L, lua_gettop(L));
     return state;
 }
 

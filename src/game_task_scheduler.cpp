@@ -30,21 +30,26 @@ Lua_Task_Extra_Parameter_Variant ltep_variant_string(char* s) {
 }
 
 void push_all_variants_to_lua_stack(lua_State* L, Slice<Lua_Task_Extra_Parameter_Variant> parameters) {
+    _debugprintf("Pushing variants to lua stack.");
     for (s32 index = 0; index < parameters.length; ++index) {
         const auto& v = parameters[index];
 
         switch (v.type) {
             case VARIANT_INT: {
                 lua_pushinteger(L, v.i);
+                _debugprintf("Push variant integer.\n");
             } break;
             case VARIANT_NUMBER: {
                 lua_pushnumber(L, v.n);
+                _debugprintf("Push variant number.\n");
             } break;
             case VARIANT_BOOLEAN: {
                 lua_pushboolean(L, v.i);
+                _debugprintf("Push variant boolean.\n");
             } break;
             case VARIANT_STRING: {
                 lua_pushstring(L, v.s);
+                _debugprintf("Push variant string.\n");
             } break;
         }
     }
@@ -147,8 +152,8 @@ s32 Game_Task_Scheduler::add_lua_game_task(struct Game_State* state, lua_State* 
     s32 current_screen_state = state->screen_mode;
     s32 first_free           = first_avaliable_task();
 
-    if (first_free == -1) return -1;
-    this->L = L;
+    if (first_free == -1)   return -1;
+    if (this->L == nullptr) this->L = L;
 
     auto& task               = tasks[first_free];
     task.source              = GAME_TASK_SOURCE_GAME;
@@ -159,11 +164,11 @@ s32 Game_Task_Scheduler::add_lua_game_task(struct Game_State* state, lua_State* 
 
     lua_getglobal(task.L_C, fn_name);
 
-    push_all_variants_to_lua_stack(L, parameters);
+    push_all_variants_to_lua_stack(task.L_C, parameters);
     task.nargs = parameters.length;
 
-    _debugprintf("Lua task (%p) assigned to coroutine on : %s", task.L_C, fn_name);
-    cstring_copy(fn_name, task.fn_name, array_count(task.fn_name));
+    _debugprintf("Lua task (%p) assigned to coroutine on (%d args!) : %s", task.L_C, task.nargs, fn_name);
+    cstring_copy(fn_name, task.fn_name, array_count(task.fn_name)-1);
     active_task_ids.push(first_free);
     return first_free;
 }
@@ -184,13 +189,12 @@ s32 Game_Task_Scheduler::add_lua_entity_game_task(struct Game_State* state, lua_
 
     lua_getglobal(task.L_C, fn_name);
     lua_pushinteger(task.L_C, uid);
-    push_all_variants_to_lua_stack(task.L_C, parameters);
-    task.nargs = 1 + parameters.length;
-    assertion(lua_gettop(task.L_C)-1 == task.nargs);
-    if (task.nargs <= 0) task.nargs = 1;
 
-    _debugprintf("Lua task (%p) assigned to coroutine on : %s", task.L_C, fn_name);
-    cstring_copy(fn_name, task.fn_name, array_count(task.fn_name));
+    push_all_variants_to_lua_stack(task.L_C, parameters);
+
+    task.nargs = 1 + parameters.length;
+    _debugprintf("Lua task (%p) assigned to coroutine on (called with %d arguments) : %s", task.L_C, task.nargs, fn_name);
+    // cstring_copy(fn_name, task.fn_name, array_count(task.fn_name));
     active_task_ids.push(first_free);
     return first_free;
 }
@@ -230,7 +234,7 @@ void Game_Task_Scheduler::abort_all_lua_tasks() {
     for (s32 index = 0; index < active_task_ids.size; ++index) {
         auto& task = tasks[active_task_ids[index]];
         if (task.L_C) {
-            lua_gc(task.L_C, LUA_GCCOLLECT);
+            lua_gc(L, LUA_GCCOLLECT);
             kill_task(active_task_ids[index]);
         }
     }
@@ -247,7 +251,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
         if (task.L_C) {
             if (task.last_L_C_status == JDR_DUFFCOROUTINE_FINISHED) {
                 delete_task = true;
-                _debugprintf("Killing task: %s", task.fn_name);
+                _debugprintf("Killing task: (%s)", task.fn_name);
             }
         } else {
             if (jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED) {
@@ -257,7 +261,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
 
         if (delete_task) {
             // NOTE: This is dangerous?
-            _debugprintf("Killed task");
+            _debugprintf("Killed task(%s)", task.fn_name);
             zero_memory(&task, sizeof(task));
             active_task_ids.pop_and_swap(index);   
         }
@@ -334,14 +338,14 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             if (task.L_C && task.last_L_C_status != JDR_DUFFCOROUTINE_FINISHED) {
                 s32 _nres;
                 s32 status = lua_resume(task.L_C, L, task.nargs, &_nres);
-                lua_gc(task.L_C, LUA_GCCOLLECT);
                 if (status == LUA_YIELD) { 
-                    status = JDR_DUFFCOROUTINE_SUSPENDED; 
+                    status = JDR_DUFFCOROUTINE_SUSPENDED;
+                    lua_gc(L, LUA_GCCOLLECT);
                 }
                 else if (status != LUA_YIELD) { 
                     static const char* lua_codes[] = { "LUA_OK", "LUA_YIELD", "LUA_ERRRUN", "LUA_ERRSYNTAX", "LUA_ERRMEM", "LUA_ERRERR" };
 
-                    _debugprintf("LuaTask: Code Status: %d (%s)", status, lua_codes[status]);
+                    _debugprintf("LuaTask(%s): Code Status: %d (%s)", task.fn_name, status, lua_codes[status]);
                     status = JDR_DUFFCOROUTINE_FINISHED; 
                 }
                 task.last_L_C_status = status;
