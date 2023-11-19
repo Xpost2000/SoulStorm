@@ -1134,28 +1134,16 @@ int _lua_bind_enemy_set_task(lua_State* L) {
     auto e = state->gameplay_data.lookup_enemy(uid);
 
     lua_remove(L, 1); lua_remove(L, 1);
-    /*
-     * NOTE: not sure how to do this right now.
-     * I would like to copy items between stacks.
-     */
-    Lua_Task_Extra_Parameter_Variant extra_parameters[64] = {};
     s32 remaining = lua_gettop(L);
 
     _debugprintf("entity async task with %d elements [%d actual stack top]", remaining, lua_gettop(L));
-    for (s32 index = 0; index < remaining; ++index) {
-        s32 stack_index = 1 + index;
-        if (lua_isnumber(L, stack_index)) extra_parameters[index] = ltep_variant_number(lua_tonumber(L, stack_index));
-        else if (lua_isstring(L, stack_index)) extra_parameters[index] = ltep_variant_string((char*)lua_tostring(L, stack_index));
-        else if (lua_isinteger(L, stack_index)) extra_parameters[index] = ltep_variant_integer(lua_tointeger(L, stack_index));
-        else if (lua_isboolean(L, stack_index)) extra_parameters[index] = ltep_variant_boolean(lua_toboolean(L, stack_index));
-    }
 
     state->coroutine_tasks.add_enemy_lua_game_task(
         state,
+        L,
         state->coroutine_tasks.L,
         task_name,
-        uid,
-        make_slice(extra_parameters, remaining)
+        uid
     );
     return 0;
 }
@@ -1489,23 +1477,14 @@ int _lua_bind_bullet_set_task(lua_State* L) {
 
     auto e = state->gameplay_data.lookup_bullet(uid);
 
-    Lua_Task_Extra_Parameter_Variant extra_parameters[64] = {};
     s32 remaining = lua_gettop(L);
     _debugprintf("bullet async task with %d elements [%d actual stack top]", remaining, lua_gettop(L));
-    for (s32 index = 0; index < remaining; ++index) {
-        s32 stack_index = 1 + index;
-        if (lua_isnumber(L, stack_index)) extra_parameters[index] = ltep_variant_number(lua_tonumber(L, stack_index));
-        else if (lua_isstring(L, stack_index)) extra_parameters[index] = ltep_variant_string((char*)lua_tostring(L, stack_index));
-        else if (lua_isinteger(L, stack_index)) extra_parameters[index] = ltep_variant_integer(lua_tointeger(L, stack_index));
-        else if (lua_isboolean(L, stack_index)) extra_parameters[index] = ltep_variant_boolean(lua_toboolean(L, stack_index));
-    }
-
     state->coroutine_tasks.add_bullet_lua_game_task(
         state,
+        L,
         state->coroutine_tasks.L,
         task_name,
-        uid,
-        make_slice(extra_parameters, remaining)
+        uid
     );
     return 0;
 }

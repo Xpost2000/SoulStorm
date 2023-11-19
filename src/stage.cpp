@@ -40,7 +40,7 @@ Stage_State stage_load_from_lua(Game_State* state, const char* lua_filename) {
         _debugprintf("Loading NULL stage as fallback!");
         return stage_null();
     } else {
-        state->coroutine_tasks.add_lua_game_task(state, result.L, (char*)"stage_task");
+        state->coroutine_tasks.add_lua_game_task(state, nullptr, result.L, (char*)"stage_task");
     }
 
     return result;

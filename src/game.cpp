@@ -2654,6 +2654,15 @@ void Game::switch_screen(s32 screen) {
         case GAME_SCREEN_OPENING: 
         case GAME_SCREEN_MAIN_MENU: {
             state->gameplay_data.unload_all_script_loaded_resources(this->state->resources);
+            auto state = &this->state->gameplay_data;
+            if (state->stage_state.L) {
+                this->state->coroutine_tasks.abort_all_lua_tasks();
+                this->state->coroutine_tasks.tasks.zero();
+                this->state->coroutine_tasks.active_task_ids.zero();
+                this->state->coroutine_tasks.L = nullptr;
+                lua_close(state->stage_state.L);
+                state->stage_state.L = nullptr;
+            }
         } break;
         case GAME_SCREEN_INGAME: {
             state->gameplay_data.unload_all_script_loaded_resources(this->state->resources);
@@ -3255,23 +3264,14 @@ int _lua_bind_async_task(lua_State* L) {
     lua_remove(L, 1);
     _debugprintf("Assign async task %s", task_name);
 
-    Lua_Task_Extra_Parameter_Variant extra_parameters[128] = {};
     s32 remaining = lua_gettop(L);
-
     _debugprintf("Async task with %d elements [%d actual stack top]", remaining, lua_gettop(L));
 
-    for (s32 index = 0; index < remaining; ++index) {
-        s32 stack_index = 1+index;
-        if (lua_isinteger(L, stack_index))      extra_parameters[index] = ltep_variant_integer(lua_tointeger(L, stack_index));
-        else if (lua_isboolean(L, stack_index)) extra_parameters[index] = ltep_variant_boolean(lua_toboolean(L, stack_index));
-        else if (lua_isstring(L, stack_index))  extra_parameters[index] = ltep_variant_string((char*)lua_tostring(L, stack_index));
-        else if (lua_isnumber(L, stack_index))  extra_parameters[index] = ltep_variant_number(lua_tonumber(L, stack_index));
-    }
     state->coroutine_tasks.add_lua_game_task(
         state,
+        L,
         state->coroutine_tasks.L,
-        task_name,
-        make_slice(extra_parameters, remaining)
+        task_name
     );
     return 0;
 }
@@ -3633,12 +3633,16 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
         lua_register(L, "load_music", _lua_bind_load_music);
     }
 
-#ifndef RELEASE
-    // just need to see if I did the table thing
-    // correctly...
-    luaL_dostring(L, "print(v2(1.0, 2.0)[2])");
-    luaL_dostring(L, "print(v2_add(v2(1.0, 2.0), v2(1.0, 2.0))[1])");
-#endif
+    // Register _threadtable
+    {
+        lua_newtable(L);
+        lua_setglobal(L, "_coroutinetable");
+        // lua_pushnumber(L, v.x);
+        // lua_rawseti(L, -2, 1);
+        // lua_pushnumber(L, v.y);
+        // lua_rawseti(L, -2, 2);
+    }
+
 
     _debugprintf("Allocated new lua state.");
     return L;

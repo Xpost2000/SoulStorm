@@ -59,26 +59,6 @@ struct Game_Task_Yield_Result {
 
 struct Game_State;
 
-enum Lua_Task_Extra_Parameter_Variant_Type {
-    VARIANT_INT,
-    VARIANT_NUMBER,
-    VARIANT_BOOLEAN,
-    VARIANT_STRING,
-};
-struct Lua_Task_Extra_Parameter_Variant {
-    u8 type;
-    union {
-        lua_Integer i;
-        lua_Number  n;
-        char*       s;
-    };
-};
-Lua_Task_Extra_Parameter_Variant ltep_variant_boolean(bool v);
-Lua_Task_Extra_Parameter_Variant ltep_variant_integer(s32  i);
-Lua_Task_Extra_Parameter_Variant ltep_variant_number(f32  f);
-Lua_Task_Extra_Parameter_Variant ltep_variant_string(char*  s);
-void push_all_variants_to_lua_stack(lua_State* L, Slice<Lua_Task_Extra_Parameter_Variant> params);
-
 struct Game_Task_Userdata {
     // NOTE: This must be the first member in order for the above yielding
     // macros to work correctly!
@@ -135,9 +115,12 @@ struct Game_Task {
 
     // NOTE: I'm using this scheduler for lua code as well.
     lua_State* L_C = nullptr;
+    s32        thread_table_location = -1;
     s32        last_L_C_status = 0;
     s32        nargs = 0;
     char       fn_name[64];
+    s8         uid_type  = 0; // 1 bullet, 2 enemy
+    u64        uid      = 0;
 };
 
 
@@ -165,15 +148,15 @@ struct Game_Task_Scheduler {
       NOTE:
       lua is specifically sandboxed to ONLY work on gameplay scenes.
     */
-    s32  add_lua_game_task(struct Game_State* state, lua_State* L, char* fn_name, Slice<Lua_Task_Extra_Parameter_Variant> parameters={}, bool essential=false);
+    s32  add_lua_game_task(struct Game_State* state, lua_State* caller_co, lua_State* L, char* fn_name, bool essential=false);
 
     /*
       NOTE: these are actually just aliases for the above as
       UID handles are not typed in any way.
     */
-    s32  add_lua_entity_game_task(struct Game_State* state, lua_State* L, char* fn_name, u64 uid, Slice<Lua_Task_Extra_Parameter_Variant> parameters);
-    s32  add_bullet_lua_game_task(struct Game_State* state, lua_State* L, char* fn_name, u64 uid, Slice<Lua_Task_Extra_Parameter_Variant> parameters);
-    s32  add_enemy_lua_game_task(struct Game_State* state, lua_State* L, char* fn_name, u64 uid, Slice<Lua_Task_Extra_Parameter_Variant> parameters);
+    s32  add_lua_entity_game_task(struct Game_State* state, lua_State* caller_co, lua_State* L, char* fn_name, u64 uid, s8 type);
+    s32  add_bullet_lua_game_task(struct Game_State* state, lua_State* caller_co, lua_State* L, char* fn_name, u64 uid);
+    s32  add_enemy_lua_game_task(struct Game_State* state,  lua_State* caller_co, lua_State* L, char* fn_name, u64 uid);
 
     s32  search_for_lua_task(lua_State* L);
 

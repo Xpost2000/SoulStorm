@@ -140,13 +140,11 @@ namespace Audio {
                 loaded_streams[sound.index-1] = Mix_LoadMUS(loaded_stream_filestrings[sound.index-1].data);
 
             s32 status = Mix_PlayMusic(loaded_streams[sound.index-1], -1);
-            _debugprintf("HI music?: %p (%s)", loaded_streams[sound.index-1], Mix_GetError());
         } else {
             if (loaded_samples[sound.index-1] == NULL)
                 loaded_samples[sound.index-1] = Mix_LoadWAV(loaded_sample_filestrings[sound.index-1].data);
 
             Mix_PlayChannel(ANY_CHANNEL, loaded_samples[sound.index-1], 0);
-            _debugprintf("HI: %p (%d)", loaded_samples[sound.index-1], sound.index);
         }
     }
 
@@ -157,7 +155,6 @@ namespace Audio {
     void play_fadein(Sound_ID sound, s32 fadein_ms) {
         if (sound.streaming) {
             Mix_FadeInMusic(loaded_streams[sound.index-1], -1, fadein_ms);
-            _debugprintf("fadein HI music?: %p (%s)", loaded_streams[sound.index-1], Mix_GetError());
         } else {
             Mix_FadeInChannel(ANY_CHANNEL, loaded_samples[sound.index-1], 0, fadein_ms);
         }
