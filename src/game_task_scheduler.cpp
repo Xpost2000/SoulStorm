@@ -228,9 +228,10 @@ void Game_Task_Scheduler::abort_all_lua_tasks() {
     for (s32 index = 0; index < active_task_ids.size; ++index) {
         auto& task = tasks[active_task_ids[index]];
         if (task.L_C) {
-            //lua_yield(task.L_C, 0);
-            kill_task(active_task_ids[index]);
+            // s32 _nres;
+            // while (lua_resume(task.L_C, L, task.nargs, &_nres) != LUA_OK);
             task.L_C = nullptr;
+            kill_task(active_task_ids[index]);
         }
     }
     L = nullptr;
@@ -288,7 +289,13 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
                          * Special case for Game tasks, which should logically
                          * not advance if the game is in any UI.
                          */
-                        if (task.source == GAME_TASK_SOURCE_GAME && current_ui_state != UI_STATE_INACTIVE && !state->gameplay_data.paused_from_death)
+                        if (task.source == GAME_TASK_SOURCE_GAME &&
+                            task.associated_state == GAME_SCREEN_INGAME &&
+                            (
+                                state->gameplay_data.paused_from_death ||
+                                state->gameplay_data.triggered_stage_completion_cutscene ||
+                                current_ui_state != UI_STATE_INACTIVE
+                            ))
                             break;
 
                         task.userdata.yielded.timer += dt;
@@ -333,4 +340,6 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             }
         }
     }
+
+    if (L) lua_gc(L, LUA_GCCOLLECT, 0);
 }

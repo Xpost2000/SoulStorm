@@ -237,6 +237,8 @@ void Game::setup_stage_start() {
     {
         s32 stage_id = this->state->mainmenu_data.stage_id_level_select;
         s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
+        assertion(stage_id >= 0 && level_id >= 0 && "Something bad happened");
+        _debugprintf("%d, %d", stage_id, level_id);
         // NOTE: check the ids later.
         game_register_stage_attempt(stage_id, level_id);
 
@@ -245,7 +247,9 @@ void Game::setup_stage_start() {
             this->state->coroutine_tasks.abort_all_lua_tasks();
             this->state->coroutine_tasks.tasks.zero();
             this->state->coroutine_tasks.active_task_ids.zero();
-            lua_close(state->stage_state.L);   
+            lua_gc(state->stage_state.L, LUA_GCCOLLECT, 0);
+            lua_close(state->stage_state.L);
+            state->stage_state.L = nullptr;
         }
 
         state->stage_state = stage_load_from_lua(this->state, format_temp("stages/%d_%d.lua", stage_id+1, level_id+1));
@@ -802,7 +806,7 @@ bool Gameplay_Data::any_hazards() const {
 
 bool Gameplay_Data::any_enemies() const {
     // NOTE: queued entities will also count.
-    _debugprintf("eeee %d, %d\n", enemies.size, to_create_enemies.size);
+    //_debugprintf("eeee %d, %d\n", enemies.size, to_create_enemies.size);
     return (enemies.size > 0) || (to_create_enemies.size > 0);
 }
 
@@ -1105,7 +1109,7 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
                         }
                     );
                 } else {
-                    state->ui_state = UI_STATE_CONFIRM_BACK_TO_MAIN_MENU;
+                    switch_ui(UI_STATE_CONFIRM_BACK_TO_MAIN_MENU);
                 }
             }
             y += 30;
@@ -1198,6 +1202,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
 
             auto met_all_prerequisites = can_access_stage(stage_id);
 
+            // Oh. I see!
             for (int i = 0; i < MAX_LEVELS_PER_STAGE; ++i) {
                 auto& level = stage.levels[i];
                 string name = {};
