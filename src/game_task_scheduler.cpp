@@ -65,7 +65,8 @@ s32 Game_Task_Scheduler::first_avaliable_task() {
         auto& task = tasks[index];
 
         if (task.source == GAME_TASK_AVALIABLE                                  ||
-            jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED) {
+            jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED ||
+            task.last_L_C_status                  == JDR_DUFFCOROUTINE_FINISHED) {
             return index;
         }
     }
@@ -185,6 +186,7 @@ s32 Game_Task_Scheduler::add_lua_entity_game_task(struct Game_State* state, lua_
     lua_pushinteger(task.L_C, uid);
     push_all_variants_to_lua_stack(task.L_C, parameters);
     task.nargs = 1 + parameters.length;
+    assertion(lua_gettop(task.L_C)-1 == task.nargs);
     if (task.nargs <= 0) task.nargs = 1;
 
     _debugprintf("Lua task (%p) assigned to coroutine on : %s", task.L_C, fn_name);
@@ -205,7 +207,7 @@ bool Game_Task_Scheduler::kill_task(s32 index) {
     auto& task            = tasks[index];
     if (task.source != GAME_TASK_AVALIABLE) {
         task.source = GAME_TASK_AVALIABLE;
-        task.L_C = 0;
+        task.last_L_C_status = JDR_DUFFCOROUTINE_FINISHED;
     } else {
         return false; // already dead.
     }
@@ -215,7 +217,7 @@ bool Game_Task_Scheduler::kill_task(s32 index) {
 s32 Game_Task_Scheduler::search_for_lua_task(lua_State* L) {
     for (s32 index = 0; index < active_task_ids.size; ++index) {
         auto& task = tasks[active_task_ids[index]];
-        if (task.L_C && task.L_C == L) {
+        if (task.L_C == L) {
             return active_task_ids[index];
         } else {
             continue;
@@ -228,13 +230,10 @@ void Game_Task_Scheduler::abort_all_lua_tasks() {
     for (s32 index = 0; index < active_task_ids.size; ++index) {
         auto& task = tasks[active_task_ids[index]];
         if (task.L_C) {
-            // s32 _nres;
-            // while (lua_resume(task.L_C, L, task.nargs, &_nres) != LUA_OK);
-            task.L_C = nullptr;
+            lua_gc(task.L_C, LUA_GCCOLLECT);
             kill_task(active_task_ids[index]);
         }
     }
-    L = nullptr;
 }
 
 void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
@@ -246,18 +245,20 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
         auto& task = tasks[active_task_ids[index]];
         bool delete_task = false;
         if (task.L_C) {
-            if (L == nullptr || task.last_L_C_status == JDR_DUFFCOROUTINE_FINISHED && task.source != GAME_TASK_AVALIABLE) {
+            if (task.last_L_C_status == JDR_DUFFCOROUTINE_FINISHED) {
                 delete_task = true;
+                _debugprintf("Killing task: %s", task.fn_name);
             }
         } else {
-            if (jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED && task.source != GAME_TASK_AVALIABLE) {
+            if (jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED) {
                 delete_task = true;
             }
         }
 
         if (delete_task) {
             // NOTE: This is dangerous?
-            // zero_memory(&task, sizeof(task));
+            _debugprintf("Killed task");
+            zero_memory(&task, sizeof(task));
             active_task_ids.pop_and_swap(index);   
         }
     }
@@ -292,6 +293,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
                         if (task.source == GAME_TASK_SOURCE_GAME &&
                             task.associated_state == GAME_SCREEN_INGAME &&
                             (
+                                current_screen_state != GAME_SCREEN_INGAME ||
                                 state->gameplay_data.paused_from_death ||
                                 state->gameplay_data.triggered_stage_completion_cutscene ||
                                 current_ui_state != UI_STATE_INACTIVE
@@ -329,17 +331,23 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             }
 
             // We either have lua powered tasks or native tasks.
-            if (task.L_C) {
+            if (task.L_C && task.last_L_C_status != JDR_DUFFCOROUTINE_FINISHED) {
                 s32 _nres;
                 s32 status = lua_resume(task.L_C, L, task.nargs, &_nres);
-                if (status == LUA_YIELD)      status = JDR_DUFFCOROUTINE_SUSPENDED;
-                else if (status == LUA_OK)    { status = JDR_DUFFCOROUTINE_FINISHED; task.L_C = nullptr; }
+                lua_gc(task.L_C, LUA_GCCOLLECT);
+                if (status == LUA_YIELD) { 
+                    status = JDR_DUFFCOROUTINE_SUSPENDED; 
+                }
+                else if (status != LUA_YIELD) { 
+                    static const char* lua_codes[] = { "LUA_OK", "LUA_YIELD", "LUA_ERRRUN", "LUA_ERRSYNTAX", "LUA_ERRMEM", "LUA_ERRERR" };
+
+                    _debugprintf("LuaTask: Code Status: %d (%s)", status, lua_codes[status]);
+                    status = JDR_DUFFCOROUTINE_FINISHED; 
+                }
                 task.last_L_C_status = status;
             } else {
                 if (task.coroutine.f) jdr_resume(&task.coroutine);
             }
         }
     }
-
-    if (L) lua_gc(L, LUA_GCCOLLECT, 0);
 }

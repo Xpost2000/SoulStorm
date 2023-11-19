@@ -247,7 +247,6 @@ void Game::setup_stage_start() {
             this->state->coroutine_tasks.abort_all_lua_tasks();
             this->state->coroutine_tasks.tasks.zero();
             this->state->coroutine_tasks.active_task_ids.zero();
-            lua_gc(state->stage_state.L, LUA_GCCOLLECT, 0);
             lua_close(state->stage_state.L);
             state->stage_state.L = nullptr;
         }

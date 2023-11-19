@@ -143,6 +143,9 @@ u64 cstring_length(const char* cstring) {
 void cstring_copy(cstring source, cstring destination, u64 destination_length) {
     u64 source_length = cstring_length(source);
 
+    // How do I program C++/C so much and still forget this?
+    if (source_length > destination_length) source_length = destination_length;
+
     s32 written = 0;
     for (u64 index = 0; index < destination_length && index < source_length; ++index, ++written) {
         destination[index] = source[index];

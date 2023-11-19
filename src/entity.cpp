@@ -1137,7 +1137,7 @@ int _lua_bind_enemy_set_task(lua_State* L) {
      * NOTE: not sure how to do this right now.
      * I would like to copy items between stacks.
      */
-    Lua_Task_Extra_Parameter_Variant extra_parameters[128] = {};
+    Lua_Task_Extra_Parameter_Variant extra_parameters[64] = {};
     s32 remaining = lua_gettop(L)-3;
 
     for (s32 index = 0; index < remaining; ++index) {
@@ -1478,7 +1478,7 @@ int _lua_bind_bullet_set_task(lua_State* L) {
     auto e = state->gameplay_data.lookup_bullet(uid);
     char* task_name = (char*)lua_tostring(L, 2);
 
-    Lua_Task_Extra_Parameter_Variant extra_parameters[128] = {};
+    Lua_Task_Extra_Parameter_Variant extra_parameters[64] = {};
     s32 remaining = lua_gettop(L)-3;
 
     for (s32 index = 0; index < remaining; ++index) {

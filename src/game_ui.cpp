@@ -455,7 +455,21 @@ namespace GameUI {
         }
     }
 
+    local bool any_selectable_widgets() {
+        for (s32 widget_index = 0; widget_index < global_ui_state->widgets.size; ++widget_index) {
+            auto& widget = global_ui_state->widgets[widget_index];
+            if (is_selectable_widget_type(widget.type) && widget.active)
+                return true;
+        }
+
+        return false;
+    }
+
     void move_selected_widget_id(s32 increments) {
+        // Don't want to infinite loop.
+        if (!any_selectable_widgets())
+            return;
+
         _debugprintf("Moving selected widget id by (%d is the current id) %d", global_ui_state->selected_index, increments);
         // NOTE: I want to skip the [+][-] buttons in the future
         global_ui_state->selected_index += increments;

@@ -137,7 +137,7 @@ struct Game_Task {
     lua_State* L_C = nullptr;
     s32        last_L_C_status = 0;
     s32        nargs = 0;
-    char       fn_name[32];
+    char       fn_name[64];
 };
 
 
