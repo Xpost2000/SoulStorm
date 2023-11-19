@@ -156,8 +156,8 @@ function _wave1_enemy_sweep_spinster(e, x_down, y_down, t_mv_speed, side)
    enemy_linear_move_to(e, enemy_position_x(e) + x_down, enemy_position_y(e) + y_down, t_mv_speed);
    local fire_delay = 0.10;
    local step       = 10;
-   local bspeed     = 120;
-   local bacel     =  60;
+   local bspeed     = 100;
+   local bacel     =  55;
 
    for p=0,3 do
       if p == 1 then
@@ -331,12 +331,12 @@ function wave_1_sub3()
    for i = 1, 3 do
       _wave1_side_moving_enemy(15 + 35 * i, -150, 0, 200 + i * 20, 1.5, 0, 1);
    end
-   t_wait(3.5);
+   t_wait(3.8);
    for i = 1, 4 do
       _wave1_side_moving_enemy(play_area_width() - 35 * i, -150, 0, 200 + i * 20, 1.5, 1, 2);
       _wave1_side_moving_enemy(15 + 35 * i, -150, 0, 200 + i * 20, 1.5, 0, 2);
    end
-   t_wait(1.7);
+   t_wait(1.9);
    _wave1_enemy_spinster(play_area_width()/2 -100, -20, -20, 80, 0.4, 0);
    _wave1_enemy_spinster(play_area_width()/2 +100, -20, 20, 80, 0.4, 1);
 end

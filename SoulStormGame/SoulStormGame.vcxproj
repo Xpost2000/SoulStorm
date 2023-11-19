@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(SolutionDir)..\dependencies\;$(SolutionDir)..\dependencies\msvc-x86-64\include;$(SolutionDir)..\lua54src\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\dependencies\msvc-x86-64\lib\x64;$(SolutionDir)..\SoulStormGame\x64\Release;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)..\dependencies\msvc-x86-64\lib\x64;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\../</OutDir>
     <TargetName>$(ProjectName)_Devel</TargetName>
   </PropertyGroup>
@@ -136,7 +136,6 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
@@ -144,6 +143,7 @@
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>false</ExceptionHandling>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
