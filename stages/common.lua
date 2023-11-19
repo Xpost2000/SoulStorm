@@ -41,7 +41,7 @@ function spawn_bullet_line(center, how_many, spacing, scale, direction, speed)
    return new_bullets;
 end
 
-function spawn_bullet_arc_pattern2(center, how_many, arc_degrees, direction, speed, distance_from_center)
+function spawn_bullet_arc_pattern2(center, how_many, arc_degrees, direction, speed, distance_from_center, src)
    local new_bullets = {};
    local arc_sub_length = arc_degrees / how_many;
    local direction_angle = math.deg(math.atan(direction[2], direction[1]));
@@ -53,7 +53,7 @@ function spawn_bullet_arc_pattern2(center, how_many, arc_degrees, direction, spe
       local current_arc_direction = v2_direction_from_degree(angle);
       local position = v2_add(center, v2(current_arc_direction[1] * distance_from_center, current_arc_direction[2] * distance_from_center));
       
-      local nb = bullet_new();
+      local nb = bullet_new(src);
       new_bullets[bullet_i] = nb;
       bullet_set_position(nb, position[1], position[2]);
       bullet_set_scale(nb, 10, 10);
@@ -63,3 +63,22 @@ function spawn_bullet_arc_pattern2(center, how_many, arc_degrees, direction, spe
    end
    return new_bullets;
 end
+
+function wait_no_danger()
+      while any_living_danger() do
+         t_yield();
+      end
+end
+
+function enemy_linear_move_to(e, x, y, t)
+   local cur_x = enemy_position_x(e);
+   local cur_y = enemy_position_y(e);
+
+   local dx = (x - cur_x) / t;
+   local dy = (y - cur_y) / t;
+
+   enemy_set_velocity(e, dx, dy);
+   t_wait(t);
+   enemy_reset_movement(e);
+end
+
