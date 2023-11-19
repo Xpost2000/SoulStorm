@@ -71,7 +71,7 @@ struct Position_Trail_Ghost {
 // since I inherit from this for shared behavior regarding kinematics,
 // and automatic timer tracking (t_since_spawn).
 struct Entity {
-    u64 uid;
+    u64 uid = 0;
     // primarily for collision purposes
     // a visual representation can be drawn separately
     V2    position      = V2(0, 0);
@@ -237,7 +237,7 @@ struct Explosion_Hazard {
 
     Timer explosion_timer;
 
-    bool exploded;
+    bool exploded = false;
 
     void update(Game_State* state, f32 dt);
     void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);

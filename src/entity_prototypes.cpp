@@ -47,7 +47,7 @@ V2 velocity_cyclic_cosine(f32 t, V2 direction) {
 }
 
 Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bullet_Entity_Velocity_Fn velocity, s32 visual) {
-    Bullet bullet;
+    Bullet bullet = {};
     bullet.uid = UID::bullet_uid();
     bullet.position    = position;
     bullet.scale       = scale;
@@ -131,7 +131,7 @@ Enemy_Entity enemy_linear_movement(Game_State* state, V2 position, V2 scale, V2 
 }
 
 Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, Enemy_Entity_Velocity_Fn velocity) {
-    Enemy_Entity enemy;
+    Enemy_Entity enemy = {};
     enemy.uid = UID::enemy_uid();
 
     enemy.position = position;
