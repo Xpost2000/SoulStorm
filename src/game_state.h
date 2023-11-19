@@ -348,11 +348,35 @@ struct Achievement_Menu_Data {
 };
 
 struct lua_State;
+
+
+/*
+  This is purely visual flare cause I think it would look cool,
+  and I have a dual sense.
+
+  Unfortunately it's difficult to think of genuinely super cool effects to
+  do with the controller, so it's just interpolating the lightbar...
+*/
+struct Controller_LED_State {
+    color32u8 primary_color = color32u8(255, 255, 255, 255);
+    color32u8 target_color  = color32u8(255, 255, 255, 255);
+
+    f32  animation_t         = 0.0f;
+    f32  animation_max_t     = 1.0f; // to avoid initial division by 0.
+    bool fade_back_when_done = true;
+    u8   fade_phase          = 0;
+    bool can_override        = true;
+    bool finished_anim       = true;
+    // data based API.
+};
+
 struct Game_State {
     s32 screen_mode      = GAME_SCREEN_TITLE_SCREEN;
     s32 last_screen_mode = GAME_SCREEN_TITLE_SCREEN;
     s32 ui_state         = UI_STATE_INACTIVE;
     s32 last_ui_state    = UI_STATE_INACTIVE;
+
+    Controller_LED_State led_state;
 
     Gameplay_Data    gameplay_data;
     MainMenu_Data    mainmenu_data;
@@ -363,6 +387,10 @@ struct Game_State {
     Game_Resources* resources;
 
     lua_State* alloc_lua_bindings();
+
+    void set_led_primary_color(color32u8 color);
+    void set_led_target_color_anim(color32u8 color, f32 anim_length, bool overridable=true, bool fade_back_when_done=true);
+    void set_led_target_color_anim_force(color32u8 color, f32 anim_length, bool overridable=true, bool fade_back_when_done=true);
 };
 
 inline static Game_State* lua_binding_get_gamestate(lua_State* L) {

@@ -476,7 +476,15 @@ namespace Input {
     int luaL_open_game_inputlib(lua_State* L);
 }
 
+// NOTE: platform layer handled.
 void controller_rumble_set(bool v);
+// NOTE: SDL handles rumble on a separate layer
+// so it's fine.
 void controller_rumble(struct game_controller* controller, f32 x_magnitude, f32 y_magnitude, u32 ms);
+
+// TODO: I want a nicer led api, even though it might be hard to support the flashing
+// however, it does not appear to support this for
+// the LED setting, so I'll make an analogous api
+void controller_set_led(struct game_controller* controller, u8 r, u8 g, u8 b);
 
 #endif

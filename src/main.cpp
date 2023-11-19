@@ -1,14 +1,16 @@
 /*
- *
- * TODO: Deal with resolution selection.
- *
  * A new engine. A new project.
  *
- * NOTE: I'm aware that the STL containers aren't super optimal, but
- *       I'm a little tired of rolling out new stuff right now so...
- *       Well I might backpetal on this...
- *
  * Platform layer
+ *
+ * While there is a planned primary Windows path
+ * (DirectX rendering), I am still going to use SDL2
+ * simply because it has a nicer API for handling controller
+ * support, and audio is an animal that I'm admittedly not experienced
+ * at tackling (beyond some waveOut tests).
+ *
+ * Most of the other code is otherwise pretty independent.
+ *
  */
 #ifdef _WIN32
 #include <Windows.h>
@@ -185,6 +187,18 @@ void controller_rumble(struct game_controller* controller, f32 x_magnitude, f32 
     x_magnitude                        = clamp<f32>(x_magnitude, 0, 1);
     y_magnitude                        = clamp<f32>(y_magnitude, 0, 1);
     SDL_GameControllerRumble(sdl_controller, (0xFFFF * x_magnitude), (0xFFFF * y_magnitude), ms);
+}
+
+void controller_set_led(struct game_controller* controller, u8 r, u8 g, u8 b) {
+    if (!controller)
+        return;
+
+    SDL_GameController* sdl_controller = (SDL_GameController*)controller->_internal_controller_handle;
+
+    if (!SDL_GameControllerHasLED(sdl_controller))
+        return;
+
+    SDL_GameControllerSetLED(sdl_controller, r, g, b);
 }
 
 local void update_all_controller_inputs(void) {
@@ -384,6 +398,8 @@ void handle_sdl_events(void) {
 void initialize() {
     SDL_Init(SDL_INIT_EVERYTHING);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, 0);
+    SDL_GameControllerAddMappingsFromFile("./gamecontrollerdb.txt");
+
     Audio::initialize();
 
     u32 flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_ALLOW_HIGHDPI;

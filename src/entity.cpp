@@ -526,6 +526,17 @@ void Player::handle_grazing_behavior(Game_State* state, f32 dt) {
                 grazing_award_score_pickup_timer -= dt;
             }
 
+
+            // Tint the led towards grazing.
+            {
+                // direct access
+                // NOTE: the stage will reset the color every frame anyway.
+                auto& led_state = state->led_state;
+                f32 effective_t = clamp<f32>(time_spent_grazing / 2.25, 0.0f, 1.0f);
+                led_state.primary_color.r = lerp_f32(led_state.primary_color.r, 30,  effective_t);
+                led_state.primary_color.g = lerp_f32(led_state.primary_color.g, 250, effective_t);
+                led_state.primary_color.b = lerp_f32(led_state.primary_color.b, 40,  effective_t);
+            }
             time_spent_grazing += dt;
         } else{
             grazing_delay -= dt;
@@ -572,6 +583,13 @@ void Player::update(Game_State* state, f32 dt) {
         // okay these are normal real bullets
         if (attack()) {
             auto resources = state->resources;
+
+            state->set_led_target_color_anim(
+                color32u8(255, 0, 0, 255),
+                DEFAULT_FIRING_COOLDOWN/4,
+                false,
+                true
+            );
             Audio::play(
                 resources->random_attack_sound(
                     &state->gameplay_data.prng
@@ -586,7 +604,9 @@ void Player::update(Game_State* state, f32 dt) {
                 
                 spawn_bullet_arc_pattern1(state, position, 3, 45, V2(5, 5), V2(0, -1), 650.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_ELECTRIC);
             }
+        } else {
         }
+    } else {
     }
 
     if (use_bomb) {

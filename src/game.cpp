@@ -1907,6 +1907,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
             //auto modulation = color32f32(0.1, 0.35, 0.8, 1);
             auto modulation        = color32u8_to_color32f32(color32u8(155, 188, 255, 255));
             auto modulation_shadow = color32u8_to_color32f32(color32u8(10, 10, 32, 255));
+            // auto modulation_shadow = color32u8_to_color32f32(color32u8(255, 10, 32, 255));
 
             f32 shadow_width = 64 + normalized_sinf(Global_Engine()->global_elapsed_time) * 48;
             // left border
@@ -1948,6 +1949,12 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 BLEND_MODE_ALPHA
             );
 
+            this->state->set_led_primary_color(
+                color32u8(255 * modulation_shadow.r,
+                          255 * modulation_shadow.g,
+                          255 * modulation_shadow.b,
+                          255)
+            );
         }
 
         // NOTE: really need to adjust the layout
@@ -2016,14 +2023,6 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 
           The gameplay needs to be about as deterministic as possible, so I need this
           to be a fixed update.
-
-          This is extremely sensitive
-          (
-          especially since the score relies on timing, and I need to ensure that framerate
-          has little effect on the actual game itself.
-
-          This is generally less important in other parts of the code, but is especially important here.
-          )
 
           Also, I'm aware that I should be interpolating between the last and current frame with an accumulator, but
           I don't think it's necessary for a bullet hell game like this.
@@ -2295,6 +2294,26 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
     camera_update(&state->main_camera, dt);
 }
 
+void Game_State::set_led_primary_color(color32u8 color) {
+    led_state.primary_color = color;
+}
+
+void Game_State::set_led_target_color_anim(color32u8 color, f32 anim_length, bool overridable, bool fade_back_when_done) {
+    if (led_state.can_override) {
+        set_led_target_color_anim_force(color, anim_length, overridable, fade_back_when_done);
+    }
+}
+
+void Game_State::set_led_target_color_anim_force(color32u8 color, f32 anim_length, bool overridable, bool fade_back_when_done) {
+    led_state.animation_t         = 0.0f;
+    led_state.animation_max_t     = anim_length;
+    led_state.target_color        = color;
+    led_state.fade_back_when_done = fade_back_when_done;
+    led_state.fade_phase          = 0;
+    led_state.can_override        = overridable;
+    led_state.finished_anim       = false;
+}
+
 void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     V2 resolution = driver->resolution();
 
@@ -2381,6 +2400,53 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     driver->consume_render_commands(&game_render_commands);
     driver->consume_render_commands(&ui_render_commands);
     total_playtime += dt;
+
+    // Update controller LED_State
+    {
+        auto& led_state = state->led_state;
+        if (!led_state.finished_anim) {
+            if (led_state.fade_back_when_done) {
+                switch (led_state.fade_phase) {
+                    case 0: { // fade_forward
+                        if (led_state.animation_t < led_state.animation_max_t) {
+                            led_state.animation_t += dt;
+                        } else {
+                            led_state.fade_phase = 1;
+                        }
+                    } break;
+                    case 1: { // fade back
+                        if (led_state.animation_t > 0) {
+                            led_state.animation_t -= dt;
+                        } else {
+                            led_state.finished_anim = true;
+                        }
+                    } break;
+                }
+            } else {
+                if (led_state.animation_t < led_state.animation_max_t) {
+                    led_state.animation_t += dt;
+                } else {
+                    led_state.finished_anim = true;
+                }
+            }
+        } else {
+            led_state.can_override = true;
+            led_state.fade_phase = 0;
+            led_state.animation_t  = 0;
+        }
+
+        led_state.animation_t = clamp<f32>(led_state.animation_t, 0.0f, led_state.animation_max_t);
+
+        f32 effective_t = led_state.animation_t / led_state.animation_max_t;
+        auto present_color = color32u8(
+            lerp_f32(led_state.primary_color.r, led_state.target_color.r, effective_t),
+            lerp_f32(led_state.primary_color.g, led_state.target_color.g, effective_t),
+            lerp_f32(led_state.primary_color.b, led_state.target_color.b, effective_t),
+            0
+        );
+
+        controller_set_led(Input::get_gamepad(0), present_color.r, present_color.g, present_color.b);
+    }
 }
 
 void Game::handle_bomb_usage(f32 dt) {
@@ -2424,6 +2490,10 @@ void Game::handle_bomb_usage(f32 dt) {
     }
 
     state->notify_score(5000, true);
+
+    this->state->set_led_target_color_anim_force(color32u8(255, 165, 0, 255), 0.08, false, true);
+    controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 150);
+
     state->queue_bomb_use = false;
 }
 
@@ -2914,15 +2984,6 @@ local void render_boss_health_bar(
         // The only time I'm rendering any lines.
         {
             auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
-
-#if 0
-            // f32 percentage = 0.75f;
-            f32 percentage = normalized_sinf(Global_Engine()->global_elapsed_time * 0.75);
-            //f32 percentage = 0.5;
-            f32 r          = 80.0f;
-            //V2  position   = V2(play_area_x + play_area_width + r*1.2, 200);
-            V2 position = V2(100, 100);
-#endif
 
             s32 arc_max    = 360 * percentage;
             // Uh... Yeah. This is uh. Performant. I don't have shaders, and
