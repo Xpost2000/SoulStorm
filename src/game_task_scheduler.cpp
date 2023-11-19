@@ -120,7 +120,7 @@ void Game_Task_Scheduler::setup_lua_task(Game_Task* task, lua_State* caller_co, 
         lua_xmove(caller_co, task->L_C, args);
     }
 
-    _debugprintf("Lua task (%p) assigned to coroutine on (called with %d arguments) : %s", task.L_C, task.nargs, fn_name);
+    _debugprintf("Lua task (%p) assigned to coroutine on (called with %d arguments) : %s", task->L_C, task->nargs, fn_name);
     cstring_copy((char*)fn_name, task->fn_name, array_count(task->fn_name)-1);
 }
 

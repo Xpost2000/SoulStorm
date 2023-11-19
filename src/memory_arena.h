@@ -34,15 +34,15 @@ struct Memory_Arena {
     cstring name;
     void*   memory;
     u64     capacity;
-    u64     used;
-    u64     used_top;
+    u64     used = 0;
+    u64     used_top = 0;
 
 
     // private usage information
-    u8      flags;
-    u8      alloc_region;
-    u64     peak_top;
-    u64     peak_bottom;
+    u8      flags = 0;
+    u8      alloc_region = MEMORY_ARENA_ALLOCATION_REGION_BOTTOM;
+    u64     peak_top = 0;
+    u64     peak_bottom = 0;
 
     void allocate_from_top() {
         alloc_region = MEMORY_ARENA_ALLOCATION_REGION_TOP;
@@ -68,9 +68,9 @@ struct Memory_Arena {
 struct Temporary_Memory : public Memory_Arena {
     Temporary_Memory(Memory_Arena* parent);
     ~Temporary_Memory();
-    Memory_Arena* parent;
-    u64           parent_top_marker;
-    u64           parent_bottom_marker;
+    Memory_Arena* parent = nullptr;
+    u64           parent_top_marker = 0;
+    u64           parent_bottom_marker = 0;
 };
 
 #endif

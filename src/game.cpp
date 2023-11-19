@@ -241,18 +241,7 @@ void Game::setup_stage_start() {
         _debugprintf("%d, %d", stage_id, level_id);
         // NOTE: check the ids later.
         game_register_stage_attempt(stage_id, level_id);
-
-        // clean up old lua state.
-        if (state->stage_state.L) {
-            // levels allocate from the top of the "stack"
-            arena->clear_top();
-            this->state->coroutine_tasks.abort_all_lua_tasks();
-            this->state->coroutine_tasks.tasks.zero();
-            this->state->coroutine_tasks.active_task_ids.zero();
-            this->state->coroutine_tasks.L = nullptr;
-            lua_close(state->stage_state.L);
-            state->stage_state.L = nullptr;
-        }
+        state->unload_all_script_loaded_resources(this->state, this->state->resources);
 
         state->stage_state = stage_load_from_lua(this->state, format_temp("stages/%d_%d.lua", stage_id+1, level_id+1));
         state->current_stage_timer = 0.0f;
@@ -617,16 +606,6 @@ void Game::init(Graphics_Driver* driver) {
 }
 
 void Game::deinit() {
-    // safely clean up everything...
-    {
-        auto state = &this->state->gameplay_data;
-        this->state->coroutine_tasks.abort_all_lua_tasks();
-        this->state->coroutine_tasks.tasks.zero();
-        this->state->coroutine_tasks.active_task_ids.zero();
-        if (state->stage_state.L) {
-            lua_close(state->stage_state.L);   
-        }
-    }
 }
 
 // Scriptable_Render_Object 
@@ -664,7 +643,7 @@ void Scriptable_Render_Object::render(Game_Resources* resources, struct render_c
 }
 
 // Gameplay_Data
-void Gameplay_Data::unload_all_script_loaded_resources(Game_Resources* resources) {
+void Gameplay_Data::unload_all_script_loaded_resources(Game_State* game_state, Game_Resources* resources) {
     _debugprintf("Unloading level-specific resources");
     for (s32 image_index = 0; image_index < script_loaded_images.size; ++image_index) {
         auto img_id = script_loaded_images[image_index];
@@ -681,6 +660,23 @@ void Gameplay_Data::unload_all_script_loaded_resources(Game_Resources* resources
 
     script_loaded_images.zero();
     script_loaded_sounds.zero();
+
+    // also a script loaded resource... is also the
+    // script...
+    {
+        auto state = this;
+        if (state->stage_state.L) {
+            // levels allocate from the top of the "stack"
+            Global_Engine()->main_arena.clear_top();
+            game_state->coroutine_tasks.abort_all_lua_tasks();
+            game_state->coroutine_tasks.tasks.zero();
+            game_state->coroutine_tasks.active_task_ids.zero();
+            assertion(state->stage_state.L && "This state should not be null?");
+            lua_close(state->stage_state.L);
+            game_state->coroutine_tasks.L = nullptr;
+            state->stage_state.L = nullptr;
+        }
+    }
 }
 
 void Gameplay_Data::add_bullet(Bullet b) {
@@ -2655,19 +2651,9 @@ void Game::switch_screen(s32 screen) {
         case GAME_SCREEN_TITLE_SCREEN: 
         case GAME_SCREEN_OPENING: 
         case GAME_SCREEN_MAIN_MENU: {
-            state->gameplay_data.unload_all_script_loaded_resources(this->state->resources);
-            auto state = &this->state->gameplay_data;
-            if (state->stage_state.L) {
-                this->state->coroutine_tasks.abort_all_lua_tasks();
-                this->state->coroutine_tasks.tasks.zero();
-                this->state->coroutine_tasks.active_task_ids.zero();
-                this->state->coroutine_tasks.L = nullptr;
-                lua_close(state->stage_state.L);
-                state->stage_state.L = nullptr;
-            }
+            state->gameplay_data.unload_all_script_loaded_resources(state, this->state->resources);
         } break;
         case GAME_SCREEN_INGAME: {
-            state->gameplay_data.unload_all_script_loaded_resources(this->state->resources);
             setup_stage_start();
         } break;
     }
