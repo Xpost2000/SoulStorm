@@ -46,7 +46,7 @@ enum {
 };
 struct Game_Task_Yield_Result {
     s32 reason = TASK_YIELD_REASON_NONE;
-    f32 timer, timer_max;
+    f32 timer = 0.0f, timer_max = 0.0f;
 };
 
 #define _Task_YieldData()     ((Game_Task_Yield_Result*)(_jdr_current())->userdata)
@@ -91,9 +91,9 @@ struct Game_Task_Userdata {
       means I don't get any funny questions regarding allocation
       of the userdata pointer since I often just need one more pointer.
     */
-    Game_State*            game_state;
-    void*                  userdata;
-    f32                    dt; // current dt. Although we can look at the engine object for this.
+    Game_State*            game_state = 0;
+    void*                  userdata = 0;
+    f32                    dt = 0; // current dt. Although we can look at the engine object for this.
 };
 
 struct Game_Task {
@@ -105,7 +105,7 @@ struct Game_Task {
     // Essential tasks will finish no matter what.
     // and cannot be killed normally.
     Game_Task_Userdata userdata;
-    bool essential;
+    bool essential = false;
 
     /*
       NOTE:
@@ -118,7 +118,7 @@ struct Game_Task {
     s32        thread_table_location = -1;
     s32        last_L_C_status = 0;
     s32        nargs = 0;
-    char       fn_name[64];
+    char       fn_name[64] = {};
     s8         uid_type  = 0; // 1 bullet, 2 enemy
     u64        uid      = 0;
 };
@@ -170,6 +170,10 @@ struct Game_Task_Scheduler {
 
     void scheduler(struct Game_State* state, f32 dt);
     s32  first_avaliable_task();
+
+    void setup_lua_task(Game_Task* task, lua_State* caller_co, const char* fn_name);
+    void deregister_all_dead_lua_threads();
+    void deregister_all_dead_standard_tasks();
 };
 
 #endif

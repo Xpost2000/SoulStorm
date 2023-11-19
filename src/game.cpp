@@ -244,6 +244,8 @@ void Game::setup_stage_start() {
 
         // clean up old lua state.
         if (state->stage_state.L) {
+            // levels allocate from the top of the "stack"
+            arena->clear_top();
             this->state->coroutine_tasks.abort_all_lua_tasks();
             this->state->coroutine_tasks.tasks.zero();
             this->state->coroutine_tasks.active_task_ids.zero();
@@ -3514,15 +3516,19 @@ int _lua_bind_load_music(lua_State* L) {
 
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
+    /*
+      NOTE: the game uses coroutines to implement tasks which
+      is a useful, albeit quite atypical usecase for coroutines in games.
+
+      However, when every bullet needs to be intelligent and you don't want to write
+      a state machine... Well... Yeah.
+     */
+    lua_checkstack(L, 512);
+    // lua_State* L = lua_newstate(_lua_top_linear_memory_allocator, (void*)&Global_Engine()->main_arena);
     // NOTE: only allow IO in the future.
     //luaL_openlibs(L);
     luaL_openlibs(L);
 
-#ifndef RELEASE
-#else
-    // This is a security hole anyway...
-    lua_register(L, "print", [](lua_State*) {return 0; });
-#endif
     {
         // constants to share.
         // Try to keep this up to date in the future...
