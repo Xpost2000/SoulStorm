@@ -28,6 +28,8 @@ namespace Audio {
     }
 
     void deinitialize(void) {
+        stop_music();
+        stop_sounds();
         Mix_Quit();
     }
 

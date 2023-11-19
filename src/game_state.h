@@ -378,6 +378,7 @@ struct Game_Resources {
 
 
     sprite_id       projectile_sprites[PROJECTILE_SPRITE_TYPES];
+    sprite_id       player_sprite;
 
     image_id        ui_marquee_bkrnd;
     image_id        ui_vignette_borders[2];

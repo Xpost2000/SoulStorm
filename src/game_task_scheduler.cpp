@@ -185,6 +185,7 @@ s32 Game_Task_Scheduler::add_lua_entity_game_task(struct Game_State* state, lua_
     lua_pushinteger(task.L_C, uid);
     push_all_variants_to_lua_stack(task.L_C, parameters);
     task.nargs = 1 + parameters.length;
+    if (task.nargs <= 0) task.nargs = 1;
 
     _debugprintf("Lua task (%p) assigned to coroutine on : %s", task.L_C, fn_name);
     cstring_copy(fn_name, task.fn_name, array_count(task.fn_name));
@@ -254,7 +255,8 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
         }
 
         if (delete_task) {
-            zero_memory(&task, sizeof(task));
+            // NOTE: This is dangerous?
+            // zero_memory(&task, sizeof(task));
             active_task_ids.pop_and_swap(index);   
         }
     }
@@ -286,7 +288,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
                          * Special case for Game tasks, which should logically
                          * not advance if the game is in any UI.
                          */
-                        if (task.source == GAME_TASK_SOURCE_GAME && current_ui_state != UI_STATE_INACTIVE)
+                        if (task.source == GAME_TASK_SOURCE_GAME && current_ui_state != UI_STATE_INACTIVE && !state->gameplay_data.paused_from_death)
                             break;
 
                         task.userdata.yielded.timer += dt;

@@ -88,7 +88,7 @@ struct Stage_State {
      * So I'm just going to unsafely cast this into an appropriate stage
      * data structure within the level file implementations.
      */
-    char stage_memory_buffer[Kilobyte(32)];
+    char stage_memory_buffer[1];
 
     // TODO: post process drawing
     /*
@@ -108,11 +108,6 @@ struct Stage_State {
       I'm heavily limiting game access from here anyway.
      */
     lua_State*           L = nullptr;
-
-    // Main stage coroutine task.
-    // Entities will maintain a lua thread handle
-    // if they're assigned a task.
-    lua_State*           C = nullptr;
 };
 
 Stage_State stage_load_from_lua(Game_State* state, const char* lua_filename);

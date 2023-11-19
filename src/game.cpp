@@ -210,6 +210,13 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             frame->source_rect = RECTANGLE_F32_NULL;
         }
     }
+
+    {
+        resources->player_sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 1);
+        auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->player_sprite), 0);
+        frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/player.png"));
+        frame->source_rect = RECTANGLE_F32_NULL;
+    }
 }
 
 void Game::init_audio_resources() {
@@ -255,6 +262,9 @@ void Game::setup_stage_start() {
     state->player.hp       = 1;
     state->player.die      = false;
     state->player.scale    = V2(2, 2);
+    {
+        state->player.sprite   = sprite_instance(resources->player_sprite);
+    }
 
     state->boss_health_displays.displays.zero();
 
@@ -600,7 +610,18 @@ void Game::init(Graphics_Driver* driver) {
 
 }
 
-void Game::deinit() {}
+void Game::deinit() {
+    // safely clean up everything...
+    {
+        auto state = &this->state->gameplay_data;
+        if (state->stage_state.L) {
+            this->state->coroutine_tasks.abort_all_lua_tasks();
+            this->state->coroutine_tasks.tasks.zero();
+            this->state->coroutine_tasks.active_task_ids.zero();
+            lua_close(state->stage_state.L);   
+        }
+    }
+}
 
 // Scriptable_Render_Object 
 void Scriptable_Render_Object::render(Game_Resources* resources, struct render_commands* render_commands) {
@@ -2630,6 +2651,7 @@ void Game::switch_screen(s32 screen) {
             state->gameplay_data.unload_all_script_loaded_resources(this->state->resources);
         } break;
         case GAME_SCREEN_INGAME: {
+            state->gameplay_data.unload_all_script_loaded_resources(this->state->resources);
             setup_stage_start();
         } break;
     }
