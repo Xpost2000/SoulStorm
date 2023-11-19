@@ -1378,8 +1378,12 @@ int _lua_bind_enemy_hide_boss_hp(lua_State* L) {
 // BULLET ENTITY
 int _lua_bind_bullet_new(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
-    auto e = bullet_generic( state, V2(0,0), V2(10,10), BULLET_SOURCE_NEUTRAL, nullptr, PROJECTILE_SPRITE_BLUE);
-    state->gameplay_data.add_bullet(e);
+    auto e = bullet_generic(
+        state, V2(0,0), V2(10,10),
+        luaL_checkinteger(L, 1),
+        nullptr,
+        PROJECTILE_SPRITE_BLUE);
+    // state->gameplay_data.add_bullet(e);
     lua_pushinteger(L, e.uid);
     return 1;
 }

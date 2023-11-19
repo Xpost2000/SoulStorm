@@ -781,6 +781,7 @@ bool Gameplay_Data::any_hazards() const {
 
 bool Gameplay_Data::any_enemies() const {
     // NOTE: queued entities will also count.
+    _debugprintf("eeee %d, %d\n", enemies.size, to_create_enemies.size);
     return (enemies.size > 0) || (to_create_enemies.size > 0);
 }
 
@@ -1854,11 +1855,12 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
     }
 
     if (Action::is_pressed(ACTION_MENU)) {
-        if (this->state->ui_state != UI_STATE_PAUSED &&
-            this->state->ui_state != UI_STATE_DEAD_MAYBE_RETRY) {
-            switch_ui(UI_STATE_PAUSED);
-        } else {
-            switch_ui(UI_STATE_INACTIVE);
+        if (this->state->ui_state != UI_STATE_DEAD_MAYBE_RETRY) {
+            if (this->state->ui_state != UI_STATE_PAUSED) {
+                switch_ui(UI_STATE_PAUSED);
+            } else {
+                switch_ui(UI_STATE_INACTIVE);
+            }
         }
     }
 
@@ -2526,6 +2528,7 @@ void Game::handle_all_bullet_collisions(f32 dt) {
 
     for (s32 bullet_index = 0; bullet_index < state->bullets.size; ++bullet_index) {
         auto& b = state->bullets[bullet_index];
+        bool hit_death = false;
         auto bullet_rect = b.get_rect();
 
         if (b.source_type == BULLET_SOURCE_NEUTRAL || b.source_type == BULLET_SOURCE_PLAYER) {
@@ -2544,6 +2547,7 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                         state->notify_score_with_hitmarker(e.score_value, e.position);
                     }
                     b.die = true;
+                    hit_death = true;
                     break;
                 }
             }
@@ -2556,12 +2560,13 @@ void Game::handle_all_bullet_collisions(f32 dt) {
             if (rectangle_f32_intersect(player_rect, bullet_rect)) {
                 if (p.kill()) {
                     b.die = true;
+                    hit_death = true;
                 }
                 break;
             }
         }
 
-        if (b.die) {
+        if (b.die && hit_death) {
             auto resources = this->state->resources;
             Audio::play(resources->random_hit_sound(&state->prng));
         }

@@ -162,6 +162,7 @@ s32 Game_Task_Scheduler::add_lua_game_task(struct Game_State* state, lua_State* 
     task.nargs = parameters.length;
 
     _debugprintf("Lua task (%p) assigned to coroutine on : %s", task.L_C, fn_name);
+    cstring_copy(fn_name, task.fn_name, array_count(task.fn_name));
     active_task_ids.push(first_free);
     return first_free;
 }
@@ -186,6 +187,7 @@ s32 Game_Task_Scheduler::add_lua_entity_game_task(struct Game_State* state, lua_
     task.nargs = 1 + parameters.length;
 
     _debugprintf("Lua task (%p) assigned to coroutine on : %s", task.L_C, fn_name);
+    cstring_copy(fn_name, task.fn_name, array_count(task.fn_name));
     active_task_ids.push(first_free);
     return first_free;
 }
