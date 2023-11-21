@@ -257,12 +257,14 @@ struct Scriptable_Render_Object {
 struct Gameplay_Data {
     bool stage_completed;
     Stage_State stage_state;
+    Particle_Pool particle_pool;
 
     Fixed_Array<Bullet>                   to_create_player_bullets;
     Fixed_Array<Bullet>                   to_create_enemy_bullets;
     Fixed_Array<Enemy_Entity>             to_create_enemies;
     Fixed_Array<Pickup_Entity>            to_create_pickups;
 
+    Fixed_Array<Particle_Emitter> particle_emitters;
     Fixed_Array<Pickup_Entity>    pickups;
     Fixed_Array<Bullet>           bullets;
     Fixed_Array<Enemy_Entity>     enemies;

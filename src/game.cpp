@@ -298,7 +298,6 @@ void Game::init(Graphics_Driver* driver) {
     this->resources = (Game_Resources*)arena->push_unaligned(sizeof(*this->resources));
     this->state = (Game_State*)arena->push_unaligned(sizeof(*this->state)); (new (this->state) Game_State);
     this->state->resources = resources;
- //   _global_game_state = this->state;
 
     if (load_preferences_from_disk(&preferences, string_literal("preferences.lua"))) {
         confirm_preferences(&preferences);
@@ -374,9 +373,11 @@ void Game::init(Graphics_Driver* driver) {
         state->pickups                 = Fixed_Array<Pickup_Entity>(arena, MAX_PICKUP_ENTITIES);
         state->score_notifications     = Fixed_Array<Gameplay_UI_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
         state->hit_score_notifications = Fixed_Array<Gameplay_UI_Hitmark_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
+        state->particle_emitters       = Fixed_Array<Particle_Emitter>(arena, 1024 + MAX_ENEMIES + MAX_PICKUP_ENTITIES + MAX_BULLETS + MAX_LASER_HAZARDS);
         state->prng                    = random_state();
         state->main_camera             = camera(V2(0, 0), 1.0);
         state->main_camera.rng         = &state->prng;
+        state->particle_pool.init(arena, 5000);
 
         // creation queues
         {
@@ -2233,6 +2234,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 
 
     state->update_and_render_all_background_scriptable_render_objects(this->state->resources, game_render_commands, dt);
+
     {
         for (int i = 0; i < (int)state->bullets.size; ++i) {
             auto& b = state->bullets[i];
@@ -2283,6 +2285,21 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         }
 
         state->player.draw(this->state, game_render_commands, resources);
+
+        // Update all particle emitters
+        {
+            for (s32 particle_emitter_index = 0; particle_emitter_index < state->particle_emitters.size; ++particle_emitter_index) {
+                auto& particle_emitter = state->particle_emitters[particle_emitter_index];
+                particle_emitter.update(&state->particle_pool, &state->prng, dt);
+
+                if (!particle_emitter.active) {
+                    state->particle_emitters.pop_and_swap(particle_emitter_index);
+                }
+            }
+        }
+
+        state->particle_pool.update(this->state, dt);
+        state->particle_pool.draw(game_render_commands, this->state->resources);
 
         Transitions::update_and_render(ui_render_commands, dt);
     }
