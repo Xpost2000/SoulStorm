@@ -244,6 +244,7 @@ void Game_Task_Scheduler::deregister_all_dead_lua_threads() {
 
     // Run garbage collection cycle to hopefully collect orphan tasks.
 
+    // maybe kill tasks later... (At the end of a level), so I'll turn off GC?
     if (L) {
         lua_gc(L, LUA_GCCOLLECT, 0);
     }

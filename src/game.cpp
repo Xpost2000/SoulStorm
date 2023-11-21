@@ -2647,16 +2647,18 @@ void Game::handle_all_bullet_collisions(f32 dt) {
             }
         }
 
-        if (b.source_type == BULLET_SOURCE_NEUTRAL || b.source_type == BULLET_SOURCE_ENEMY) {
-            auto& p = state->player;
-            auto player_rect = p.get_rect();
+        if (!DebugUI::godmode_enabled()) {
+            if (b.source_type == BULLET_SOURCE_NEUTRAL || b.source_type == BULLET_SOURCE_ENEMY) {
+                auto& p = state->player;
+                auto player_rect = p.get_rect();
 
-            if (rectangle_f32_intersect(player_rect, bullet_rect)) {
-                if (p.kill()) {
-                    b.die = true;
-                    hit_death = true;
+                if (rectangle_f32_intersect(player_rect, bullet_rect)) {
+                    if (p.kill()) {
+                        b.die = true;
+                        hit_death = true;
+                    }
+                    break;
                 }
-                break;
             }
         }
 

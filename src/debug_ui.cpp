@@ -17,6 +17,7 @@ local char lines[DEBUG_UI_MAX_STORED_LINES][DEBUG_UI_MAX_CHARACTER_LENGTH] = {};
 // 1 - show low opacity
 // 2 - show full
 local int show = 0;
+local bool godmode = false;
 #ifndef RELEASE
 
 namespace DebugUI {
@@ -41,6 +42,11 @@ namespace DebugUI {
 
     void render(struct render_commands* commands, struct font_cache* font) {
         show += Input::is_key_pressed(KEY_F1);
+
+        if (Input::is_key_pressed(KEY_F2)) {
+            godmode ^= 1;
+        }
+
         if (show > 2) show = 0;
         if (!show) return;
 
@@ -65,6 +71,10 @@ namespace DebugUI {
         // render_commands_push_text(commands, font, 2, V2(0, commands->screen_height-64), string_from_cstring(format_temp("ThreadPool::active_jobs: %d", Thread_Pool::active_jobs())), color32f32(1,1,1,1), BLEND_MODE_ALPHA);
         render_commands_push_text(commands, font, 2, V2(0, commands->screen_height-32), Global_Engine()->memory_usage_strings(), color32f32(1,1,1,1), BLEND_MODE_ALPHA);
     }
+
+    bool godmode_enabled() {
+        return godmode;
+    }
 }
 #else
 namespace DebugUI {
@@ -72,5 +82,6 @@ namespace DebugUI {
     void print(string what) {}
     bool enabled(){ return false; }
     void render(struct render_commands* commands, struct font_cache* font) {}
+    bool godmode_enabled() { return false; }
 }
 #endif

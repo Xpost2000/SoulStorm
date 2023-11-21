@@ -82,3 +82,15 @@ function enemy_linear_move_to(e, x, y, t)
    enemy_reset_movement(e);
 end
 
+
+-- As the C API requires a string in it's parameter
+-- list, this is a placeholder I can put to avoid making
+-- more dedicated functions... This is mostly just to have specific
+-- enemies without polluting the "global" namespace.
+--
+-- Which is a little redundant because I reconstruct a lua state for
+-- each level.
+function _delegate_enemy_task(e, f, a, b, c, d)
+   print(e, f, a, b, c, d, e);
+   f(e, a, b, c, d, e);
+end

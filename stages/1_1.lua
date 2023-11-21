@@ -156,7 +156,7 @@ function _wave1_enemy_sweep_spinster(e, x_down, y_down, t_mv_speed, side)
    enemy_linear_move_to(e, enemy_position_x(e) + x_down, enemy_position_y(e) + y_down, t_mv_speed);
    local fire_delay = 0.10;
    local step       = 10;
-   local bspeed     = 100;
+   local bspeed     = 90;
    local bacel     =  55;
 
    for p=0,3 do
@@ -262,7 +262,7 @@ end
 function _wave1_side_moving_enemy(px, py, xdown, ydown, t_mvspeed, side, variation)
    local e = enemy_new();
    enemy_set_scale(e, 10, 10);
-   enemy_set_hp(e, 20);
+   enemy_set_hp(e, 27);
    enemy_set_position(e, px, py);
    if variation == 0 then
       print("Variation 0 ");
@@ -280,7 +280,7 @@ end
 function _wave1_enemy_shotgun_spreader(px, py, xdown, ydown, t_mvspeed, side, firetimes, dx, dy, bullet_variation, cooldown1, cooldown2)
    local e = enemy_new();
    enemy_set_scale(e, 10, 10);
-   enemy_set_hp(e, 20);
+   enemy_set_hp(e, 27);
    enemy_set_position(e, px, py);
    enemy_set_task(e, "_wave1_enemy_shotgun_spread", xdown, ydown, t_mvspeed, side, firetimes, dx, dy, bullet_variation, cooldown1, cooldown2);
    return e;
@@ -317,7 +317,7 @@ function _wave1_enemy_spinster(px, py, xdown, ydown, mvspeed, side)
    local e = enemy_new();
    enemy_set_scale(e, 10, 10);
    enemy_set_position(e, px, py);
-   enemy_set_hp(e, 1500);
+   enemy_set_hp(e, 2500);
    enemy_set_task(e, "_wave1_enemy_sweep_spinster", xdown, ydown, mvspeed, side);
 end
 
@@ -364,19 +364,397 @@ end
 
    NOTE to self: last pattern should've been the two spinsters
 ]]-- 
+function _wave2_enemy_rainer_sprinkler1(e, i, max_i, base_wait, wait_phase_before_turn, fire_proc)
+   enemy_set_velocity(e, 0, -235);
+   t_wait(base_wait + i * wait_phase_before_turn);
+   local v_mod = (max_i - i) * 10;
+   for k = 0,90,10 do
+      local d = v2_direction_from_degree(90 + k);
+      d[2] = d[2] * -1;
+      enemy_set_velocity(e, (120+(v_mod)) * d[1], (120+(v_mod)) * d[2]);
+      t_wait(0.10);
+   end
+  -- start shooting 
+  fire_proc(e, (max_i - i));
+end
+
 function wave_2_sub1()
    -- Flying rainers
    -- bottom right to top left
+
+   -- These basic rainers will sprinkle bullets downwards
+
+   -- this one will shoot faster big shots
+   -- arc2
+   for i=1,5 do
+      local e = enemy_new();
+      enemy_set_scale(e, 10, 10);
+      enemy_set_hp(e, 20);
+      enemy_set_position(e, play_area_width() - 30, play_area_height() + 35 + (35 * i));
+      enemy_set_task(
+         e, "_wave2_enemy_rainer_sprinkler1", i, 5, 1.4, 0.23,
+
+         function (e, idx)
+            for i=1, 10 do
+               local ep = v2(enemy_position_x(e), enemy_position_y(e));
+               local bullets = spawn_bullet_arc_pattern2(
+                  ep,
+                  3,
+                  90,
+                  v2(0, 1),
+                  75,
+                  0,
+                  BULLET_SOURCE_ENEMY
+               );
+
+               bullet_list_set_visuals(
+                  bullets,
+                  PROJECTILE_SPRITE_HOT_PINK_ELECTRIC
+               );
+
+               for i,b in ipairs(bullets) do
+                  bullet_set_visual_scale(b, 0.25, 0.25);
+                  bullet_set_scale(b, 2.5, 2.5);
+               end
+
+               t_wait(0.10);
+            end
+         end
+      );
+   end
+   t_wait(1.75)
+
+   -- this one shoots slower waves
+   -- like a mini version of the sprinkler.
+   for i=1,5 do
+      local e = enemy_new();
+      enemy_set_scale(e, 10, 10);
+      enemy_set_hp(e, 25);
+      enemy_set_position(e, play_area_width() - 30, play_area_height() + 35 + (35 * i));
+      enemy_set_task(
+         e, "_wave2_enemy_rainer_sprinkler1", i, 5, 1.1, 0.27,
+         function (e, idx)
+            for i=1, 3 do
+               local ep = v2(enemy_position_x(e), enemy_position_y(e));
+               local bullets = spawn_bullet_arc_pattern2(
+                  ep,
+                  5,
+                  90,
+                  v2(0, 1),
+                  170,
+                  0,
+                  BULLET_SOURCE_ENEMY
+               );
+
+               bullet_list_set_visuals(
+                  bullets,
+                  PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
+               );
+
+               for i,b in ipairs(bullets) do
+                  bullet_set_visual_scale(b, 0.50, 0.50);
+                  bullet_set_scale(b, 5, 5);
+               end
+
+               t_wait(0.4);
+            end
+         end
+      );
+   end
+
 
    -- a few stray sprinkler hitters
 
    -- and slower flying rainers
 end
-function wave_2()
-   wave_2_sub1();
+
+function _wave2_enemy_dipshooter(e, dip_divisions, dip_height, fire_on_dip, dip_t, dip_delay, fire_f1, fire_f2)
+   local dip_x_adv = play_area_width() / dip_divisions;
+
+   for dip=1,dip_divisions do
+      t_wait(dip_delay);
+
+      local ex = enemy_position_x(e);
+      local ey = enemy_position_y(e);
+      local modifier = 1;
+
+      if (dip % 2) == 0 then
+         modifier = -1;
+         fire_f1(e)
+      else
+         fire_f2(e)
+      end
+
+      enemy_linear_move_to(e, ex + dip_x_adv, ey + dip_height * modifier, dip_t)
+      t_yield();
+   end
 end
 
-function wave_3()
+function wave_2_sub2()
+   -- some dip shooters come in
+   do 
+      local e = enemy_new();
+      enemy_set_scale(e, 10, 10);
+      enemy_set_hp(e, 20);
+      enemy_set_position(e, 0, 100);
+      enemy_set_task(
+         e, "_wave2_enemy_dipshooter", 7, 50, 1, 0.402, 0.35,
+         function (e)
+            for i=1, 4 do
+               local ep = v2(enemy_position_x(e), enemy_position_y(e));
+               local bullets = spawn_bullet_arc_pattern2(
+                  ep,
+                  5,
+                  90,
+                  v2(0, 1),
+                  120,
+                  0,
+                  BULLET_SOURCE_ENEMY
+               );
+
+               bullet_list_set_visuals(
+                  bullets,
+                  PROJECTILE_SPRITE_RED_ELECTRIC
+               );
+
+               for i,b in ipairs(bullets) do
+                  bullet_set_visual_scale(b, 0.50, 0.50);
+                  bullet_set_scale(b, 5, 5);
+               end
+
+               t_wait(0.25);
+            end
+         end,
+         function (e)
+         end
+      );
+   end
+
+   for i = 1, 5 do
+      _wave1_side_moving_enemy(-100, -175, 100 + i * 50, 200, 1.6, 0, 0);
+      t_wait(0.17);
+   end
+
+   for i1=1, 4 do 
+      local e = enemy_new();
+      enemy_set_scale(e, 10, 10);
+      enemy_set_hp(e, 20);
+      enemy_set_position(e, 0 + -i1 * 5, 30);
+      enemy_set_task(
+         e, "_wave2_enemy_dipshooter", 6, 80, 1, 0.250, 0.35,
+         function (e)
+         end,
+         function (e)
+            for i=1, 3 do
+               local ep = v2(enemy_position_x(e), enemy_position_y(e));
+               local d1 = v2_direction_from_degree(145 + 90);
+               d1[1]  = d1[1] * -1;
+               local d2 = v2_direction_from_degree(15 + 90);
+               d1[2]  = d1[2] * -1;
+               do 
+                  local bullets = spawn_bullet_arc_pattern2(
+                     ep,
+                     3,
+                     15,
+                     d1,
+                     150,
+                     0,
+                     BULLET_SOURCE_ENEMY
+                  );
+
+                  bullet_list_set_visuals(
+                     bullets,
+                     PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
+                  );
+
+                  for i,b in ipairs(bullets) do
+                     bullet_set_visual_scale(b, 0.25, 0.25);
+                     bullet_set_scale(b, 2.5, 2.5);
+                     bullet_start_trail(b, 12);
+                  end
+               end
+               do 
+                  local bullets = spawn_bullet_arc_pattern2(
+                     ep,
+                     3,
+                     15,
+                     d2,
+                     150,
+                     0,
+                     BULLET_SOURCE_ENEMY
+                  );
+
+                  bullet_list_set_visuals(
+                     bullets,
+                     PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
+                  );
+
+                  for i,b in ipairs(bullets) do
+                     bullet_set_visual_scale(b, 0.25, 0.25);
+                     bullet_set_scale(b, 2.5, 2.5);
+                     bullet_start_trail(b, 15);
+                  end
+               end
+
+               t_wait(0.25);
+            end
+         end
+      );
+      t_wait(1.5)
+   end
+   -- fireworks1 and fireworks2 (outer star shot)
+   -- fireworks3 and fireworks4
+end
+
+-- Simple pattern. Fire the pattern but slightly delayed between
+-- shots.
+-- Bullets will accelerate a little. Stop, then move out.
+-- this is just for visuals, but functionally it makes no difference
+function _wave2_bullet_firework1(b, arc_direction, start_speed, setup_t, acceleration_speed)
+   bullet_set_velocity(b, arc_direction[1] * start_speed, arc_direction[2] * start_speed);
+   t_wait(setup_t);
+   bullet_reset_movement(b);
+   bullet_set_acceleration(b, arc_direction[1] * acceleration_speed, arc_direction[2] * acceleration_speed);
+end
+
+-- Almost the same as the last one. But will spin for a bit before firing with the spin.
+function _wave2_bullet_firework2(b, arc_direction, start_speed, setup_t, acceleration_speed)
+   local sp = v2(bullet_position_x(b), bullet_position_y(b));
+
+   bullet_set_velocity(b, arc_direction[1] * start_speed, arc_direction[2] * start_speed);
+   t_wait(setup_t);
+   bullet_reset_movement(b);
+
+   local ep = v2(bullet_position_x(b), bullet_position_y(b));
+   local r = v2_distance(sp, ep);
+   do
+      local st = bullet_time_since_spawn(b);
+      local starting_angle = math.atan(arc_direction[2], arc_direction[1]);
+
+      while bullet_time_since_spawn(b) - st < 1.45 do
+         dt = bullet_time_since_spawn(b) - st;
+         bullet_set_velocity(
+            b,
+            -math.sin(starting_angle + dt*(dt+1)) * r,
+            math.cos(starting_angle + dt*(dt+1)) * r
+         );
+         t_yield();
+      end
+   end
+   t_wait(0.15);
+   -- I'mma be honest. I don't know why this looks so cool.
+   bullet_set_acceleration(b, arc_direction[1] * acceleration_speed, arc_direction[2] * acceleration_speed);
+end
+
+function _wave2_enemy_firework(e, accel, wait_t, wait_t2, shot_spreads, delay_between_spreads, variation)
+   enemy_set_acceleration(e, accel[1], accel[2]);
+   t_wait(wait_t);
+   enemy_reset_movement(e);
+
+   local ex = enemy_position_x(e);
+   local ey = enemy_position_y(e);
+   for j=0,(shot_spreads-1) do
+      local displacement = j * 16.5;
+
+      -- NOTE: if an enemy dies before their task "finishes"
+      -- we might get "ghost bullets that freeze"
+      for angle=1,360,40 do
+         local aangle = (angle + displacement) % 360;
+         local current_arc_direction = v2_direction_from_degree((angle + displacement) % 360);
+
+         local nb = bullet_new(BULLET_SOURCE_ENEMY);
+         bullet_set_task(nb, variation, current_arc_direction, 90, 0.25 + (j+1)*0.15, 800);
+         bullet_set_position(nb, ex, ey);
+         bullet_set_scale(nb, 5, 5);
+         -- bullet_reset_movement(nb);
+         if not (variation == "_wave2_bullet_firework1") then
+            bullet_set_visual(nb, PROJECTILE_SPRITE_NEGATIVE_ELECTRIC);
+         else
+            bullet_set_visual(nb, PROJECTILE_SPRITE_RED_ELECTRIC);
+         end
+         bullet_set_visual_scale(nb, 0.5, 0.5);
+         bullet_set_lifetime(nb, 10);
+      end
+
+      t_wait(delay_between_spreads);
+   end
+   t_wait(wait_t2);
+   enemy_set_acceleration(e, -100, -100);
+end
+
+function wave_2_sub3()
+   do
+      local dist_r = 100;
+      do
+         local e = enemy_new();
+         enemy_set_scale(e, 10, 10);
+         enemy_set_hp(e, 45);
+         enemy_set_position(e, play_area_width()/2 - dist_r, -50);
+         enemy_set_task(
+            e,
+            "_wave2_enemy_firework", v2(0, 100), 1.5, 4, 12, 0.45, "_wave2_bullet_firework1"
+         );
+      end
+      do
+         local e = enemy_new();
+         enemy_set_scale(e, 10, 10);
+         enemy_set_hp(e, 45);
+         enemy_set_position(e, play_area_width()/2 + dist_r, -50);
+         enemy_set_task(
+            e,
+            "_wave2_enemy_firework", v2(0, 100), 1.5, 4, 12, 0.45, "_wave2_bullet_firework1"
+         );
+      end
+   end
+   t_wait(1.25)
+   do
+      local e = enemy_new();
+      enemy_set_scale(e, 10, 10);
+      enemy_set_hp(e, 75);
+      enemy_set_position(e, play_area_width()/2, -50);
+      enemy_set_task(
+         e,
+         "_wave2_enemy_firework", v2(0, 100), 1.2, 6, 25, 0.45, "_wave2_bullet_firework2"
+      );
+   end
+   t_wait(5.35)
+   do
+      local dist_r = 40;
+      do
+         local e = enemy_new();
+         enemy_set_scale(e, 10, 10);
+         enemy_set_hp(e, 45);
+         enemy_set_position(e, play_area_width()/2 - dist_r, -20);
+         enemy_set_task(
+            e,
+            "_wave2_enemy_firework", v2(0, 50), 1.5, 4, 6, 0.25, "_wave2_bullet_firework1"
+         );
+      end
+      do
+         local e = enemy_new();
+         enemy_set_scale(e, 10, 10);
+         enemy_set_hp(e, 45);
+         enemy_set_position(e, play_area_width()/2 + dist_r, -20);
+         enemy_set_task(
+            e,
+            "_wave2_enemy_firework", v2(0, 50), 1.5, 4, 20, 0.15, "_wave2_bullet_firework1"
+         );
+      end
+   end
+end
+
+function wave_2()
+   wave_2_sub1();
+   t_wait(6.4);
+   wave_2_sub2();
+   t_wait(3.5)
+   wave_2_sub3();
+   t_wait(5);
+end
+
+function blanket_wave1()
+end
+function blanket_wave2()
 end
 
 local midboss_dead = false;
@@ -397,20 +775,38 @@ function mid_boss_wave()
    midboss_dead = true;
 end
 
+-- NOTE: I have not introduced explosions or lasers
+-- in this level yet!
+--
+-- I will introduce them in 1-3 as a new gameplay "mechanic"
+--
 function stage_task()
    t_wait(1.5);
    -- ideally this should not be a string, but I should allow closures...
    async_task("loop_bkg_music");
+
+-- stage main
    wave_1();
+   t_wait(12.5);
 
    -- NOTE: the spinsters in wave1 take about 4.? something seconds to
    -- finish their cycles.
-   t_wait(3.67);
    wave_2();
 
-   mid_boss();
-   async_task("mid_boss_minions");
+   -- NOTE:
+   -- I am using this level as a "testing" ground
+   -- and I need it to get feedback on the way I design the levels
+   -- and designing patterns for each 'wave' is really time consuming
+   -- so these blanket waves are waves where I don't have to think much at all...
+   -- and I can still pad out the play time a little longer.
+   
+   blanket_wave1()
+   blanket_wave2()
 
+   -- mid_boss();
+   -- async_task("mid_boss_minions");
+
+   t_wait(10);
    wait_no_danger();
    t_complete_stage();
 end

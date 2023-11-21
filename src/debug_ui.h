@@ -16,11 +16,13 @@
 
 struct render_commands;
 struct font_cache;
+// NOTE: and cheats as well
 namespace DebugUI {
     void print(char*);
     void print(string what);
     void render(struct render_commands* commands, struct font_cache* font);
     bool enabled();
+    bool godmode_enabled();
 }
 
 #endif
