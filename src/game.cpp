@@ -2000,7 +2000,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
             s32 seconds = 0;
             {
                 seconds = (s32)state->current_stage_timer % 60;
-                minutes = seconds / 60;
+                minutes = (s32)state->current_stage_timer / 60;
                 hours   = minutes / 60;
             }
             auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("Time %02d:%02d:%02d", hours, minutes, seconds)));

@@ -666,7 +666,6 @@ function _wave2_enemy_firework(e, accel, wait_t, wait_t2, shot_spreads, delay_be
          bullet_set_task(nb, variation, current_arc_direction, 90, 0.25 + (j+1)*0.15, 800);
          bullet_set_position(nb, ex, ey);
          bullet_set_scale(nb, 5, 5);
-         -- bullet_reset_movement(nb);
          if not (variation == "_wave2_bullet_firework1") then
             bullet_set_visual(nb, PROJECTILE_SPRITE_NEGATIVE_ELECTRIC);
          else
@@ -741,6 +740,36 @@ function wave_2_sub3()
          );
       end
    end
+   t_wait(8.5)
+
+   -- free bird flock for points + (padding time)
+   -- okay some of them sprinkle a little something
+   for enemy=1, 35 do
+      local e = enemy_new();
+      enemy_set_scale(e, 10, 10);
+      enemy_set_hp(e, 45);
+      local sign = enemy%3;
+      if (sign < 1) then
+         sign = -1;
+      else
+         sign = 1;
+      end
+      enemy_set_position(e, play_area_width() + 15*enemy, play_area_height()+30 + enemy * sign * 5);
+      -- enemy_set_acceleration(e, -170, -280);
+      enemy_set_velocity(e, -70, -100);
+   end
+
+   for i=1, 4 do
+      local d = v2_direction_from_degree(47);
+      _wave1_enemy_shotgun_spreader(-30, -20, 50, 50 + i*55, 2.0, 1, 3, d[1], d[2], 1, 0.15, 4.5);
+      t_wait(0.15)
+   end
+
+   t_wait_for_no_danger()
+end
+
+function wave_2_sub4()
+
 end
 
 function wave_2()
@@ -749,7 +778,9 @@ function wave_2()
    wave_2_sub2();
    t_wait(3.5)
    wave_2_sub3();
-   t_wait(5);
+   -- t_wait(5);
+   -- wave_2_sub4();
+   -- t_wait(2);
 end
 
 function blanket_wave1()

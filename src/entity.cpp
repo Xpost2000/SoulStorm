@@ -1686,6 +1686,18 @@ int _lua_bind_bullet_lifetime_percent(lua_State* L) {
     return 0; 
 }
 
+
+int _lua_bind_bullet_kill(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->die = true;
+        return 0;
+    }
+    return 0; 
+}
+
 // Misc entities
 int _lua_bind_explosion_hazard_new(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
@@ -1849,6 +1861,7 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "bullet_stop_trail",             _lua_bind_bullet_stop_trail);
         lua_register(L, "bullet_set_visual",             _lua_bind_bullet_set_visual);
         lua_register(L, "bullet_set_task",               _lua_bind_bullet_set_task);
+        lua_register(L, "bullet_kill",                   _lua_bind_bullet_kill);
         lua_register(L, "bullet_reset_movement",         _lua_bind_bullet_reset_movement);
         lua_register(L, "bullet_set_lifetime",   _lua_bind_bullet_set_lifetime);
 
