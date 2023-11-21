@@ -791,6 +791,8 @@ void Gameplay_Data::reify_all_creation_queues() {
 
             for (int i = 0; i < (int)state->to_create_enemies.size; ++i) {
                 auto& e = state->to_create_enemies[i];
+                assert(e.hp > 0 && "A dead enemy being created? This must be a bug!");
+                assert(!e.die && "An enemy shouldn't be dead on spawn?");
                 state->enemies.push(e);
             }
 
@@ -1274,6 +1276,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                     [&](void*) mutable {
                         _debugprintf("I would load stage-level : (%d - %d)'s script and get ready to play!", stage_id, enter_level);
                         switch_ui(UI_STATE_INACTIVE);
+                        setup_stage_start();
                         switch_screen(GAME_SCREEN_INGAME);
                         _debugprintf("off to the game you go!");
                         Transitions::do_shuteye_out(
@@ -2037,7 +2040,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 #if 0
         const f32 TARGET_FRAMERATE = dt; // use 0 for unlimited
 #else
-        const f32 TARGET_FRAMERATE = 1.0f / 240.0f; // use 0 for unlimited
+        const f32 TARGET_FRAMERATE = 1.0f / 240.0f;
 #endif
         static f32 accumulator = 0.0f;
         accumulator += dt;
@@ -2162,6 +2165,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
             );
 
             accumulator -= TARGET_FRAMERATE;
+            Thread_Pool::synchronize_tasks();
         }
 
         // these need to play sounds and a few other non-thread safe behaviors
@@ -2169,8 +2173,6 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         // for the heavier loads...
         handle_all_explosions(dt);
         handle_all_lasers(dt);
-
-        Thread_Pool::synchronize_tasks();
 
         // NOTE: these deliberately have to be after,
         // because I need clean up to happen at the end exactly. 
@@ -2737,7 +2739,6 @@ void Game::switch_screen(s32 screen) {
             state->gameplay_data.unload_all_script_loaded_resources(state, this->state->resources);
         } break;
         case GAME_SCREEN_INGAME: {
-            setup_stage_start();
         } break;
     }
 }
@@ -3221,6 +3222,9 @@ int _lua_bind_Task_Yield_Wait(lua_State* L) {
     task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_FOR_SECONDS;
     task.userdata.yielded.timer     = 0.0f;
     task.userdata.yielded.timer_max = wait_time;
+
+    // _debugprintf("LuaThread(%p) wants to wait for %f seconds", L, wait_time);
+    _debugprintf("LuaThread(%p)(taskid: %d) wants to wait for %f", L, task_id, wait_time);
 
     return lua_yield(L, 0);
 }

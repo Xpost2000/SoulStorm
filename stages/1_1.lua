@@ -488,6 +488,8 @@ function _wave2_enemy_dipshooter(e, dip_divisions, dip_height, fire_on_dip, dip_
       enemy_linear_move_to(e, ex + dip_x_adv, ey + dip_height * modifier, dip_t)
       t_yield();
    end
+   -- NOTE: it turns out one of the dipshooters didn't exit the stage properly. Whoops!
+   enemy_set_velocity(e, 100);
 end
 
 function wave_2_sub2()
@@ -773,13 +775,17 @@ end
 -- modified spinster pattern
 function _wave2_sub4_xcross_fire(e, xsgn, ascension_speed)
    local direction = v2_direction_from_degree(45);
+   print(e, direction, xsgn, ascension_speed)
+   print(e, "move");
    enemy_set_velocity(e, xsgn * 20, 0);
    t_wait(4.0);
+   print(e, "wait");
    enemy_reset_movement(e);
    t_wait(1.0);
+   print(e, "climbcrossdeath");
    enemy_set_velocity(e, 0, -1 * ascension_speed);
 
-   while true do
+   while enemy_valid(e) do
       local b = bullet_new(BULLET_SOURCE_ENEMY);
       local ex = enemy_position_x(e);
       local ey = enemy_position_y(e);
@@ -790,6 +796,7 @@ function _wave2_sub4_xcross_fire(e, xsgn, ascension_speed)
       bullet_set_visual_scale(b, 0.25, 0.25);
       bullet_set_velocity(b, xsgn * 100 * direction[1], direction[2] * 100);
 
+      print(e, "boom boom!");
       t_wait(0.15);
    end
 end
@@ -883,14 +890,18 @@ end
 function stage_task()
    t_wait(1.5);
    -- ideally this should not be a string, but I should allow closures...
+   print("1_1LUA Play music");
    async_task("loop_bkg_music");
 
 -- stage main
+   -- print("1_1LUA Start stage one");
    wave_1();
+   -- print("1_1LUA Stage 1 cooldown");
    t_wait(12.5);
 
    -- NOTE: the spinsters in wave1 take about 4.? something seconds to
    -- finish their cycles.
+   -- print("1_1LUA Stage 2");
    wave_2();
 
    -- NOTE:
@@ -906,6 +917,7 @@ function stage_task()
    -- mid_boss();
    -- async_task("mid_boss_minions");
 
+   print("1_1LUA cooldown to finish stage.");
    t_wait(10);
    -- wait_no_danger();
    t_complete_stage();

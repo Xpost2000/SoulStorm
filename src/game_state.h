@@ -176,7 +176,7 @@ struct Gameplay_Stage_Complete_Stage_Sequence {
     Timer stage_timer;
 };
 
-#define MAX_BASE_TRIES (3)
+#define MAX_BASE_TRIES (5)
 
 // will do a small jump before dying.
 // NOTE: not the same as the hit marker score notifications

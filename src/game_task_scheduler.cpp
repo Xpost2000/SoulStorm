@@ -23,6 +23,9 @@ s32 Game_Task_Scheduler::first_avaliable_task() {
     for (s32 index = 0; index < tasks.capacity; ++index) {
         auto& task = tasks[index];
 
+        // We have lua active. Do not try to return.
+        if (L && task.L_C) continue;
+
         if (task.source == GAME_TASK_AVALIABLE                                  ||
             jdr_coroutine_status(&task.coroutine) == JDR_DUFFCOROUTINE_FINISHED ||
             task.last_L_C_status                  == JDR_DUFFCOROUTINE_FINISHED) {
@@ -209,14 +212,14 @@ void Game_Task_Scheduler::deregister_all_dead_lua_threads() {
                 case 1: {
                     auto b = state->gameplay_data.lookup_bullet(task.uid);
                     if (!b) {
-                        _debugprintf("Associated task master(bullet) is dead.");
+                        _debugprintf("Associated task master(bullet) is dead. (%lld)", task.uid);
                         delete_task = true;
                     }
                 } break;
                 case 2: {
                     auto e = state->gameplay_data.lookup_enemy(task.uid);
                     if (!e) {
-                        _debugprintf("Associated task master(enemy) is dead.");
+                        _debugprintf("Associated task master(enemy) is dead. (%lld)", task.uid);
                         delete_task = true;
                     }
                 } break;
@@ -275,8 +278,23 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
     s32 current_ui_state     = state->ui_state;
     s32 current_screen_state = state->screen_mode;
 
+    deregister_all_dead_lua_threads();
+    deregister_all_dead_standard_tasks();
+
+#if 0
+#ifndef RELEASE
+    for (s32 i = 0; i < active_task_ids.size; ++i) {
+        for (s32 j = 0; j< active_task_ids.size; ++j) {
+            if (i != j) {
+                assertion(active_task_ids[i] != active_task_ids[j] && "Duplicate active task id? Fix this!");
+            }
+        }
+    }
+#endif
+#endif
     for (s32 index = 0; index < active_task_ids.size; ++index) {
         auto& task = tasks[active_task_ids[index]];
+       // _debugprintf("Active ID IDX: [%d] = %d", index, active_task_ids[index]);
         task.userdata.dt = dt;
 
         {
@@ -363,6 +381,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             if (task.L_C && task.last_L_C_status != JDR_DUFFCOROUTINE_FINISHED) {
                 s32 _nres;
                 s32 status = lua_resume(task.L_C, L, task.nargs, &_nres);
+                if (_nres != 0) _debugprintf("_nres = %d", _nres);
                 if (status == LUA_YIELD) { 
                     lua_gc(task.L_C, LUA_GCCOLLECT, 0);
                     status = JDR_DUFFCOROUTINE_SUSPENDED;
@@ -372,7 +391,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
 
                     _debugprintf("LuaTask(%s): Code Status: %d (%s)", task.fn_name, status, lua_codes[status]);
                     if (status != LUA_OK) {
-                        _debugprintf("(%s) error?", lua_tostring(task.L_C,-1));
+                        _debugprintf("LUA_ERROR (%s) error?", lua_tostring(task.L_C,-1));
                     }
                     status = JDR_DUFFCOROUTINE_FINISHED; 
                 }
@@ -382,7 +401,4 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             }
         }
     }
-
-    deregister_all_dead_lua_threads();
-    deregister_all_dead_standard_tasks();
 }

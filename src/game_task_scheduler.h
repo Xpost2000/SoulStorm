@@ -62,7 +62,7 @@ struct Game_State;
 struct Game_Task_Userdata {
     // NOTE: This must be the first member in order for the above yielding
     // macros to work correctly!
-    Game_Task_Yield_Result yielded;
+    Game_Task_Yield_Result yielded = {0};
 
     /*
       NOTE: game specific common task data.
@@ -91,20 +91,20 @@ struct Game_Task_Userdata {
       means I don't get any funny questions regarding allocation
       of the userdata pointer since I often just need one more pointer.
     */
-    Game_State*            game_state = 0;
-    void*                  userdata = 0;
-    f32                    dt = 0; // current dt. Although we can look at the engine object for this.
+    Game_State* game_state = 0;
+    void*       userdata   = 0;
+    f32         dt         = 0; // current dt. Although we can look at the engine object for this.
 };
 
 struct Game_Task {
     u8              source = GAME_TASK_AVALIABLE;
-    s32             associated_state;
+    s32             associated_state = -1;
 
-    jdr_duffcoroutine_t coroutine;
+    jdr_duffcoroutine_t coroutine = {0};
 
     // Essential tasks will finish no matter what.
     // and cannot be killed normally.
-    Game_Task_Userdata userdata;
+    Game_Task_Userdata userdata = {};
     bool essential = false;
 
     /*
@@ -114,13 +114,13 @@ struct Game_Task {
     */
 
     // NOTE: I'm using this scheduler for lua code as well.
-    lua_State* L_C = nullptr;
+    lua_State* L_C                   = nullptr;
     s32        thread_table_location = -1;
-    s32        last_L_C_status = 0;
-    s32        nargs = 0;
-    char       fn_name[64] = {};
-    s8         uid_type  = 0; // 1 bullet, 2 enemy
-    u64        uid      = 0;
+    s32        last_L_C_status       = 0;
+    s32        nargs                 = 0;
+    char       fn_name[64]           = {};
+    s8         uid_type              = 0; // 1 bullet, 2 enemy
+    u64        uid                   = 0;
 };
 
 

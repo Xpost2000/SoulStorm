@@ -18,6 +18,18 @@ local char lines[DEBUG_UI_MAX_STORED_LINES][DEBUG_UI_MAX_CHARACTER_LENGTH] = {};
 // 2 - show full
 local int show = 0;
 local bool godmode = false;
+
+namespace DebugUI {
+    void cheat_controls() {
+        show += Input::is_key_pressed(KEY_F1);
+        if (Input::is_key_pressed(KEY_F2)) {
+            godmode ^= 1;
+        }
+
+        if (show > 2) show = 0;
+    }
+}
+
 #ifndef RELEASE
 
 namespace DebugUI {
@@ -41,13 +53,7 @@ namespace DebugUI {
     }
 
     void render(struct render_commands* commands, struct font_cache* font) {
-        show += Input::is_key_pressed(KEY_F1);
-
-        if (Input::is_key_pressed(KEY_F2)) {
-            godmode ^= 1;
-        }
-
-        if (show > 2) show = 0;
+        cheat_controls();
         if (!show) return;
 
         const f32 scale = 1.0f;
@@ -81,7 +87,9 @@ namespace DebugUI {
     void print(char* s) {}
     void print(string what) {}
     bool enabled(){ return false; }
-    void render(struct render_commands* commands, struct font_cache* font) {}
-    bool godmode_enabled() { return false; }
+    void render(struct render_commands* commands, struct font_cache* font) {
+        cheat_controls();
+    }
+    bool godmode_enabled() { return godmode; }
 }
 #endif
