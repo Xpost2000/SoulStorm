@@ -1317,15 +1317,11 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
         GameUI::label(V2(50, y), string_literal("DEAD"), color32f32(1, 1, 1, alpha), 4);
         y += 45;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
-        {
-            string text = {};
-            bool out_of_tries = state->gameplay_data.tries <= 0;
 
-            if (out_of_tries) {
-                text = string_literal("No more lives");
-            } else {
-                text = string_from_cstring(format_temp("Retry (%d tries)", state->gameplay_data.tries));
-            }
+        bool out_of_tries = state->gameplay_data.tries <= 0;
+        if (!out_of_tries) {
+            string text = {};
+            text = string_from_cstring(format_temp("Retry (%d tries)", state->gameplay_data.tries));
 
             if (GameUI::button(V2(50, y), text, color32f32(1, 1, 1, alpha), 2, !out_of_tries && !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 Transitions::do_color_transition_out(
@@ -1985,13 +1981,13 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                     render_commands_push_text(ui_render_commands,
                                               font1,
                                               2,
-                                              V2(play_area_x+play_area_width + 10,
-                                                 100 + normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
+                                              V2(play_area_x+play_area_width + 40,
+                                                 50 + normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
                                               text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
                 }
             }
 
-            render_commands_push_text(ui_render_commands, font, 2, V2(play_area_x+play_area_width + 10, 100), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+            render_commands_push_text(ui_render_commands, font, 2, V2(play_area_x+play_area_width + 40, 50), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
         }
         // Render_Time
         {
@@ -2006,7 +2002,15 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 hours   = minutes / 60;
             }
             auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("Time %02d:%02d:%02d", hours, minutes, seconds)));
-            render_commands_push_text(ui_render_commands, font, 2, V2(play_area_x+play_area_width, 130), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+            render_commands_push_text(ui_render_commands, font, 2, V2(play_area_x+play_area_width + 40, 80), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+        }
+
+        // Render_Lives
+        {
+            auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
+            auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
+            auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("Lives: (%d / %d)", state->tries, MAX_BASE_TRIES)));
+            render_commands_push_text(ui_render_commands, font, 2, V2(play_area_x+play_area_width + 40, 120), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
         }
 
         // Render Boss HP
@@ -2469,6 +2473,10 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
 
 void Game::handle_bomb_usage(f32 dt) {
     auto state = &this->state->gameplay_data;
+    if (state->tries <= 1) {
+        return;
+    }
+
     if (!state->queue_bomb_use) {
         return;
     }
@@ -2510,9 +2518,12 @@ void Game::handle_bomb_usage(f32 dt) {
     state->notify_score(5000, true);
 
     this->state->set_led_target_color_anim_force(color32u8(255, 165, 0, 255), 0.08, false, true);
-    controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 150);
+    Audio::play(resources->random_hit_sound(&state->prng));
+    controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
+    camera_traumatize(&state->main_camera, 0.5f);
 
     state->queue_bomb_use = false;
+    state->tries         -= 1;
 }
 
 void Game::handle_all_dead_entities(f32 dt) {
