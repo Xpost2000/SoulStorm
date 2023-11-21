@@ -2723,7 +2723,7 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                             emitter.reset();
                             emitter.sprite                  = sprite_instance(resources->circle_sprite);
                             emitter.sprite.scale            = V2(0.125/6, 0.125/6);
-                            emitter.shape                   = particle_emit_shape_circle(e.position, 5.0f);
+                            emitter.shape                   = particle_emit_shape_circle(p.position, 5.0f);
                             emitter.modulation              = color32f32(1, 0.15, 0.1, 1);
                             emitter.lifetime                = 0.40f;
                             emitter.scale_variance          = V2(-0.055, 0.055);
