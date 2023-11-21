@@ -176,7 +176,8 @@ void Particle_Pool::draw(struct render_commands* commands, Game_Resources* resou
         auto& particle = particles[particle_index];
 
         color32f32 modulation = particle.modulation;
-        modulation.a *= (particle.lifetime/particle.lifetime_max);
+        f32 effective_t = clamp<f32>(particle.lifetime/particle.lifetime_max, 0.0f, 1.0f);
+        modulation.a *= effective_t;
 
         auto sprite_object = graphics_get_sprite_by_id(&resources->graphics_assets, particle.sprite.id);
         auto sprite_frame  = sprite_get_frame(sprite_object, particle.sprite.frame);
