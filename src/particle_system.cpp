@@ -183,7 +183,7 @@ void Particle_Pool::draw(struct render_commands* commands, Game_Resources* resou
         auto sprite_frame  = sprite_get_frame(sprite_object, particle.sprite.frame);
         auto sprite_img    = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
         V2 sprite_image_size = V2(sprite_img->width, sprite_img->height);
-        sprite_image_size.x *= particle.sprite.scale.x; sprite_image_size.y *= particle.sprite.scale.y;
+        sprite_image_size.x *= particle.sprite.scale.x * particle.scale; sprite_image_size.y *= particle.sprite.scale.y * particle.scale;
 
         V2 sprite_position = V2(
             particle.position.x - particle.scale/2 + (particle.sprite.offset.x - sprite_image_size.x/2),

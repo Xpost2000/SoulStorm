@@ -67,6 +67,7 @@ Particle_Emit_Shape particle_emit_shape_quad(V2 center, V2 half_lengths, bool fi
 Particle_Emit_Shape particle_emit_shape_line(V2 start, V2 end);
 
 struct Particle_Pool;
+// NOTE: particle sizes are based off image size.
 struct Particle_Emitter {
     Particle_Emit_Shape shape;
 

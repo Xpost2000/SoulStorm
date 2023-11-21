@@ -2,6 +2,9 @@ dofile("stages/common.lua")
 -- Because this is the first level of the bunch
 -- it's going to have the worst code since I'm exploring the lua interfacing
 -- and also the early lua interface was kinda crap...
+-- also refactoring/rewriting is not a goal
+-- it takes a long time to test the pattern, and rewriting the old patterns could mean I break
+-- them soo............. sorry for the next reader.
 --
 -- I'm probably not going to add metatables, but I'll hope that future levels are
 -- a bit less unwieldy.
@@ -84,6 +87,7 @@ function _wave1_enemy_shoot_down_and_fly_to_side(e, x_down, y_down, t_mv_speed, 
       bullet_set_velocity(b, 0, 100);
       bullet_set_task(b, "_wave1_bullet_side_shooter_homing_a_little");
       -- t_wait(0.30);
+      play_sound(random_attack_sound());
       t_wait(0.32);
    end
    t_wait(0.15);
@@ -111,6 +115,7 @@ function _wave1_enemy_shoot_down_and_fly_to_side2(e, x_down, y_down, t_mv_speed,
       bullet_set_position(b, enemy_position_x(e), enemy_position_y(e));
       local d  = v2_direction(v2(ex, ey), v2(play_area_width()/2, play_area_height()*0.75))
       bullet_set_velocity(b, d[1] * 75, d[2] * 75);
+      play_sound(random_attack_sound());
       t_wait(0.30);
    end
    print("SIDE2BYELOOP");
@@ -138,6 +143,7 @@ function _wave1_enemy_shoot_down_and_fly_to_side3(e, x_down, y_down, t_mv_speed,
       local ey = enemy_position_y(e);
       local d  = v2_direction_from_degree(enemy_time_since_spawn(e) * 16 + 100 * e);
       bullet_set_velocity(b, d[1] * 110, d[2] * 110);
+      play_sound(random_attack_sound());
       t_wait(0.25);
    end
    print("SIDE3BYELOOP");
@@ -179,6 +185,7 @@ function _wave1_enemy_sweep_spinster(e, x_down, y_down, t_mv_speed, side)
          bullet_set_velocity(b, dx * bspeed, dy * bspeed);
          bullet_set_acceleration(b, dx * bacel, dy * bacel);
 
+         play_sound(random_attack_sound());
          t_wait(fire_delay);
       end
       for angle=180, 0, -step do
@@ -193,6 +200,7 @@ function _wave1_enemy_sweep_spinster(e, x_down, y_down, t_mv_speed, side)
          bullet_set_velocity(b, dx * bspeed, dy * bspeed);
          bullet_set_acceleration(b, dx * bacel, dy * bacel);
 
+         play_sound(random_attack_sound());
          t_wait(fire_delay);
       end
       t_wait(0.2);
@@ -406,6 +414,7 @@ function wave_2_sub1()
                   0,
                   BULLET_SOURCE_ENEMY
                );
+               play_sound(random_attack_sound());
 
                bullet_list_set_visuals(
                   bullets,
@@ -445,6 +454,7 @@ function wave_2_sub1()
                   0,
                   BULLET_SOURCE_ENEMY
                );
+               play_sound(random_attack_sound());
 
                bullet_list_set_visuals(
                   bullets,
@@ -513,6 +523,7 @@ function wave_2_sub2()
                   0,
                   BULLET_SOURCE_ENEMY
                );
+               play_sound(random_attack_sound());
 
                bullet_list_set_visuals(
                   bullets,
@@ -563,6 +574,7 @@ function wave_2_sub2()
                      0,
                      BULLET_SOURCE_ENEMY
                   );
+                  play_sound(random_attack_sound());
 
                   bullet_list_set_visuals(
                      bullets,
@@ -585,6 +597,7 @@ function wave_2_sub2()
                      0,
                      BULLET_SOURCE_ENEMY
                   );
+                  play_sound(random_attack_sound());
 
                   bullet_list_set_visuals(
                      bullets,
@@ -675,6 +688,7 @@ function _wave2_enemy_firework(e, accel, wait_t, wait_t2, shot_spreads, delay_be
          end
          bullet_set_visual_scale(nb, 0.5, 0.5);
          bullet_set_lifetime(nb, 10);
+         play_sound(random_attack_sound());
       end
 
       t_wait(delay_between_spreads);
@@ -797,6 +811,7 @@ function _wave2_sub4_xcross_fire(e, xsgn, ascension_speed)
       bullet_set_velocity(b, xsgn * 100 * direction[1], direction[2] * 100);
 
       print(e, "boom boom!");
+      play_sound(random_attack_sound());
       t_wait(0.15);
    end
 end

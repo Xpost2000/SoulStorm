@@ -217,6 +217,13 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/player.png"));
         frame->source_rect = RECTANGLE_F32_NULL;
     }
+
+    {
+        resources->circle_sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 1);
+        auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->circle_sprite), 0);
+        frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
+        frame->source_rect = RECTANGLE_F32_NULL;
+    }
 }
 
 void Game::init_audio_resources() {
@@ -400,20 +407,6 @@ void Game::init(Graphics_Driver* driver) {
         auto resolution = driver->resolution();
 
         state->particle_pool.init(arena, 2500);
-        // {
-        //     auto& emitter = state->test_emitter;
-        //     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
-        //     emitter.scale  = 16.0f;
-        //     emitter.shape = particle_emit_shape_circle(V2(resolution.x/2, resolution.y/2), 50.0f);
-        //     emitter.lifetime = 5.0f;
-        //     emitter.velocity_x_variance = V2(-100, 100);
-        //     emitter.velocity_y_variance = V2(-100, 100);
-        //     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-
-        //     emitter.active = true;
-        //     emitter.emission_max_timer = 0.055f;
-        // }
-
         
         state->player.position      = V2(resolution.x / 2, resolution.y / 2);
         state->player.scale         = V2(15, 15);
@@ -483,7 +476,7 @@ void Game::init(Graphics_Driver* driver) {
                 {
                     auto& emitter = portal.emitter_main;
                     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
-                    emitter.scale  = 16.0f;
+                    emitter.scale  = 1.0f;
                     emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
                     emitter.lifetime = 1.0f;
                     emitter.velocity_x_variance = V2(-100, 100);
@@ -497,7 +490,7 @@ void Game::init(Graphics_Driver* driver) {
                 {
                     auto& emitter = portal.emitter_vortex;
                     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
-                    emitter.scale  = 8.0f;
+                    emitter.scale  = 0.5;
                     emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
                     emitter.lifetime = 2.0f;
                     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
@@ -564,7 +557,7 @@ void Game::init(Graphics_Driver* driver) {
                 {
                     auto& emitter = portal.emitter_main;
                     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
-                    emitter.scale  = 4.0f;
+                    emitter.scale  = 1.0f;
                     emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
                     emitter.lifetime = 1.0f;
                     emitter.velocity_x_variance = V2(-100, 100);
@@ -578,7 +571,7 @@ void Game::init(Graphics_Driver* driver) {
                 {
                     auto& emitter = portal.emitter_vortex;
                     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
-                    emitter.scale  = 8.0f;
+                    emitter.scale  = 0.5;
                     emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
                     emitter.lifetime = 2.0f;
                     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
@@ -1277,8 +1270,8 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                     [&](void*) mutable {
                         _debugprintf("I would load stage-level : (%d - %d)'s script and get ready to play!", stage_id, enter_level);
                         switch_ui(UI_STATE_INACTIVE);
-                        setup_stage_start();
                         switch_screen(GAME_SCREEN_INGAME);
+                        setup_stage_start();
                         _debugprintf("off to the game you go!");
                         Transitions::do_shuteye_out(
                             color32f32(0, 0, 0, 1),
@@ -2165,6 +2158,21 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 (void*)update_packet_data
             );
 
+            // Update all particle emitters
+            // while we wait.
+            {
+                for (s32 particle_emitter_index = 0; particle_emitter_index < state->particle_emitters.size; ++particle_emitter_index) {
+                    auto& particle_emitter = state->particle_emitters[particle_emitter_index];
+                    particle_emitter.update(&state->particle_pool, &state->prng, dt);
+
+                    if (!particle_emitter.active) {
+                        state->particle_emitters.pop_and_swap(particle_emitter_index);
+                    }
+                }
+            }
+
+            state->particle_pool.update(this->state, dt);
+
             accumulator -= TARGET_FRAMERATE;
             Thread_Pool::synchronize_tasks();
         }
@@ -2285,20 +2293,6 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         }
 
         state->player.draw(this->state, game_render_commands, resources);
-
-        // Update all particle emitters
-        {
-            for (s32 particle_emitter_index = 0; particle_emitter_index < state->particle_emitters.size; ++particle_emitter_index) {
-                auto& particle_emitter = state->particle_emitters[particle_emitter_index];
-                particle_emitter.update(&state->particle_pool, &state->prng, dt);
-
-                if (!particle_emitter.active) {
-                    state->particle_emitters.pop_and_swap(particle_emitter_index);
-                }
-            }
-        }
-
-        state->particle_pool.update(this->state, dt);
         state->particle_pool.draw(game_render_commands, this->state->resources);
 
         Transitions::update_and_render(ui_render_commands, dt);
@@ -2660,11 +2654,53 @@ void Game::handle_all_bullet_collisions(f32 dt) {
 
                 if (rectangle_f32_intersect(enemy_rect, bullet_rect)) {
                     e.damage(1);
+                    {
+                        auto& emitter = *(state->particle_emitters.alloc());
+                        emitter.reset();
+                        emitter.sprite                  = sprite_instance(resources->circle_sprite);
+                        emitter.sprite.scale            = V2(0.125/8, 0.125/8);
+                        emitter.shape                   = particle_emit_shape_circle(e.position, 2.5f);
+                        emitter.modulation              = color32f32(1, 0.15, 0.1, 1);
+                        emitter.lifetime                = 0.45f;
+                        emitter.scale_variance          = V2(-0.005, 0.005);
+                        emitter.velocity_x_variance     = V2(-145, 145);
+                        emitter.velocity_y_variance     = V2(-145, 145);
+                        emitter.acceleration_x_variance = V2(-100, 100);
+                        emitter.acceleration_y_variance = V2(-100, 100);
+                        emitter.lifetime_variance       = V2(-0.25f, 1.0f);
+                        emitter.emission_max_timer      = 0.035f;
+                        emitter.max_emissions           = 1;
+                        emitter.emit_per_emission       = 8;
+                        emitter.active                  = true;
+                        emitter.scale                   = 1;
+                    }
+
                     if (e.die) {
                         state->notify_score_with_hitmarker(e.score_value * e.death_multiplier, e.position);   
                         Achievements::get(ACHIEVEMENT_ID_KILLER)->report((s32)1);
                         Achievements::get(ACHIEVEMENT_ID_MURDERER)->report((s32)1);
                         Achievements::get(ACHIEVEMENT_ID_SLAYER)->report((s32)1);
+
+                        {
+                            auto& emitter = *(state->particle_emitters.alloc());
+                            emitter.reset();
+                            emitter.sprite                  = sprite_instance(resources->circle_sprite);
+                            emitter.sprite.scale            = V2(0.125/6, 0.125/6);
+                            emitter.shape                   = particle_emit_shape_circle(e.position, 5.0f);
+                            emitter.modulation              = color32f32(1, 0.15, 0.1, 1);
+                            emitter.lifetime                = 0.40f;
+                            emitter.scale_variance          = V2(-0.055, 0.055);
+                            emitter.velocity_x_variance     = V2(-140, 140);
+                            emitter.velocity_y_variance     = V2(-140, 140);
+                            emitter.acceleration_x_variance = V2(-100, 100);
+                            emitter.acceleration_y_variance = V2(-100, 100);
+                            emitter.lifetime_variance       = V2(-0.25f, 0.2f);
+                            emitter.emission_max_timer      = 0.035f;
+                            emitter.max_emissions           = 1;
+                            emitter.emit_per_emission       = 8;
+                            emitter.active                  = true;
+                            emitter.scale                   = 1;
+                        }
                     } else {
                         state->notify_score_with_hitmarker(e.score_value, e.position);
                     }
@@ -2682,6 +2718,26 @@ void Game::handle_all_bullet_collisions(f32 dt) {
 
                 if (rectangle_f32_intersect(player_rect, bullet_rect)) {
                     if (p.kill()) {
+                        {
+                            auto& emitter = *(state->particle_emitters.alloc());
+                            emitter.reset();
+                            emitter.sprite                  = sprite_instance(resources->circle_sprite);
+                            emitter.sprite.scale            = V2(0.125/6, 0.125/6);
+                            emitter.shape                   = particle_emit_shape_circle(e.position, 5.0f);
+                            emitter.modulation              = color32f32(1, 0.15, 0.1, 1);
+                            emitter.lifetime                = 0.40f;
+                            emitter.scale_variance          = V2(-0.055, 0.055);
+                            emitter.velocity_x_variance     = V2(-140, 140);
+                            emitter.velocity_y_variance     = V2(-140, 140);
+                            emitter.acceleration_x_variance = V2(-100, 100);
+                            emitter.acceleration_y_variance = V2(-100, 100);
+                            emitter.lifetime_variance       = V2(-0.25f, 0.2f);
+                            emitter.emission_max_timer      = 0.035f;
+                            emitter.max_emissions           = 1;
+                            emitter.emit_per_emission       = 8;
+                            emitter.active                  = true;
+                            emitter.scale                   = 1;
+                        }
                         b.die = true;
                         hit_death = true;
                     }
@@ -2693,6 +2749,24 @@ void Game::handle_all_bullet_collisions(f32 dt) {
         if (b.die && hit_death) {
             auto resources = this->state->resources;
             Audio::play(resources->random_hit_sound(&state->prng));
+
+            // spawn particle death
+            // auto& emitter                   = *(state->particle_emitters.alloc());
+            // emitter.sprite                  = sprite_instance(resources->circle_sprite);
+            // emitter.sprite.scale            = V2(0.125/2, 0.125/2);
+            // emitter.shape                   = particle_emit_shape_circle(b.position, 15.0f);
+            // emitter.lifetime                = 1.0f;
+            // emitter.velocity_x_variance     = V2(-120, 120);
+            // emitter.velocity_y_variance     = V2(-120, 120);
+            // emitter.acceleration_x_variance = V2(0, 0);
+            // emitter.acceleration_y_variance = V2(-100, 100);
+            // emitter.lifetime_variance       = V2(-0.5f, 1.5f);
+            // emitter.emission_max_timer      = 0.025f;
+            // emitter.max_emissions           = 1;
+            // emitter.modulation              = color32f32(0.3, 0.3, 0.3, 1.0);
+            // emitter.emit_per_emission       = 16;
+            // emitter.active                  = true;
+            // emitter.scale                   = 1;
         }
     }
     // unimplemented("Not done");
@@ -3594,6 +3668,15 @@ int _lua_bind_load_music(lua_State* L) {
     return 1;
 }
 
+int _lua_bind_random_attack_sound(lua_State* L) {
+    lua_getglobal(L, "_gamestate");
+    Game_State* state     = (Game_State*)lua_touserdata(L, lua_gettop(L));
+    auto        resources = state->resources;
+    auto        result    = resources->random_attack_sound(&state->gameplay_data.prng);
+    lua_pushinteger(L, result.index);
+    return 1;
+}
+
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     /*
@@ -3672,6 +3755,7 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
         // Some really basic engine bindings.
         lua_register(L, "load_image",          _lua_bind_load_image);
         lua_register(L, "async_task",          _lua_bind_async_task);
+        lua_register(L, "random_attack_sound",  _lua_bind_random_attack_sound);
 
 #if 1
         /* These are per frame objects */
