@@ -238,6 +238,7 @@ void Game_Task_Scheduler::deregister_all_dead_lua_threads() {
             // NOTE: This is dangerous?
             _debugprintf("Killed lua task(%s)", task.fn_name);
             zero_memory(&task, sizeof(task));
+            task.L_C = 0;
             active_task_ids.pop_and_swap(index);   
         }
     }
@@ -245,9 +246,7 @@ void Game_Task_Scheduler::deregister_all_dead_lua_threads() {
     // Run garbage collection cycle to hopefully collect orphan tasks.
 
     // maybe kill tasks later... (At the end of a level), so I'll turn off GC?
-    if (L) {
-        lua_gc(L, LUA_GCCOLLECT, 0);
-    }
+    // if (L) {lua_gc(L, LUA_GCCOLLECT, 0); }
 }
 
 void Game_Task_Scheduler::deregister_all_dead_standard_tasks() {
@@ -275,9 +274,6 @@ void Game_Task_Scheduler::deregister_all_dead_standard_tasks() {
 void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
     s32 current_ui_state     = state->ui_state;
     s32 current_screen_state = state->screen_mode;
-
-    deregister_all_dead_lua_threads();
-    deregister_all_dead_standard_tasks();
 
     for (s32 index = 0; index < active_task_ids.size; ++index) {
         auto& task = tasks[active_task_ids[index]];
@@ -335,6 +331,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
                         task.userdata.yielded.timer += dt;
                         continue;
                     } else {
+                        task.userdata.yielded.timer = 0;
                         task.userdata.yielded.reason = TASK_YIELD_REASON_NONE;
                     }
                 } break;
@@ -385,4 +382,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
             }
         }
     }
+
+    deregister_all_dead_lua_threads();
+    deregister_all_dead_standard_tasks();
 }

@@ -747,7 +747,7 @@ function wave_2_sub3()
    for enemy=1, 35 do
       local e = enemy_new();
       enemy_set_scale(e, 10, 10);
-      enemy_set_hp(e, 45);
+      enemy_set_hp(e, 25);
       local sign = enemy%3;
       if (sign < 1) then
          sign = -1;
@@ -768,8 +768,76 @@ function wave_2_sub3()
    t_wait_for_no_danger()
 end
 
-function wave_2_sub4()
 
+-- X Cross pattern (very easy)
+-- modified spinster pattern
+function _wave2_sub4_xcross_fire(e, xsgn, ascension_speed)
+   local direction = v2_direction_from_degree(45);
+   enemy_set_velocity(e, xsgn * 20, 0);
+   t_wait(4.0);
+   enemy_reset_movement(e);
+   t_wait(1.0);
+   enemy_set_velocity(e, 0, -1 * ascension_speed);
+
+   while true do
+      local b = bullet_new(BULLET_SOURCE_ENEMY);
+      local ex = enemy_position_x(e);
+      local ey = enemy_position_y(e);
+
+      bullet_set_position(b, ex, ey);
+      bullet_set_visual(b, PROJECTILE_SPRITE_RED_ELECTRIC);
+      bullet_set_scale(b, 2.5, 2.5);
+      bullet_set_visual_scale(b, 0.25, 0.25);
+      bullet_set_velocity(b, xsgn * 100 * direction[1], direction[2] * 100);
+
+      t_wait(0.15);
+   end
+end
+
+-- NOTE: this requires exploiting the fact the play area wraps in order to beat
+-- which is a unique thing for some of the levels in this game.
+-- If you didn't discover it already, this pattern should force you to do so...
+function wave_2_sub4()
+   for i=1, 5 do
+      local r = 25;
+      local y = 45 * i;
+      do
+        local e = enemy_new();
+        enemy_set_scale(e, 10, 10);
+        enemy_set_hp(e, 35);
+        enemy_set_position(e, -r, y);
+        enemy_set_task(e, "_wave2_sub4_xcross_fire", 1, 50);
+      end
+      do
+        local e = enemy_new();
+        enemy_set_scale(e, 10, 10);
+        enemy_set_hp(e, 35);
+        enemy_set_position(e, play_area_width() + r, y);
+        enemy_set_task(e, "_wave2_sub4_xcross_fire", -1, 50);
+      end
+   end
+
+   t_wait_for_no_danger();
+   t_wait(15);
+
+   for i=1, 15, 5 do
+      local r = 25;
+      local y = 35 * i + 20;
+      do
+        local e = enemy_new();
+        enemy_set_scale(e, 10, 10);
+        enemy_set_hp(e, 35);
+        enemy_set_position(e, -r, y);
+        enemy_set_task(e, "_wave2_sub4_xcross_fire", 1, 100);
+      end
+      do
+        local e = enemy_new();
+        enemy_set_scale(e, 10, 10);
+        enemy_set_hp(e, 35);
+        enemy_set_position(e, play_area_width() + r, y);
+        enemy_set_task(e, "_wave2_sub4_xcross_fire", -1, 100);
+      end
+   end
 end
 
 function wave_2()
@@ -778,9 +846,10 @@ function wave_2()
    wave_2_sub2();
    t_wait(3.5)
    wave_2_sub3();
-   -- t_wait(5);
-   -- wave_2_sub4();
-   -- t_wait(2);
+   -- safe buffer for five seconds.
+   t_wait(7);
+   wave_2_sub4();
+   t_wait(2);
 end
 
 function blanket_wave1()
@@ -831,13 +900,13 @@ function stage_task()
    -- so these blanket waves are waves where I don't have to think much at all...
    -- and I can still pad out the play time a little longer.
    
-   blanket_wave1()
-   blanket_wave2()
+   -- blanket_wave1()
+   -- blanket_wave2()
 
    -- mid_boss();
    -- async_task("mid_boss_minions");
 
    t_wait(10);
-   wait_no_danger();
+   -- wait_no_danger();
    t_complete_stage();
 end

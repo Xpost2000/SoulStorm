@@ -136,6 +136,7 @@ Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, Enemy_Entit
 
     enemy.position = position;
     enemy.scale    = scale;
+    enemy.die      = false;
 
     enemy.velocity_function = velocity;
 

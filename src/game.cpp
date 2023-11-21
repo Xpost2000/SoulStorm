@@ -272,6 +272,11 @@ void Game::setup_stage_start() {
     state->scriptable_render_objects.clear();
     state->hit_score_notifications.clear();
 
+    state->to_create_enemy_bullets.clear();
+    state->to_create_player_bullets.clear();
+    state->to_create_enemies.clear();
+    state->to_create_pickups.clear();
+
     state->tries = MAX_BASE_TRIES;
     state->current_score = 0;
 
@@ -3208,7 +3213,6 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
 
 int _lua_bind_Task_Yield_Wait(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
-    _debugprintf("%p lua state", L);
     s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
     assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
     f32         wait_time = luaL_checknumber(L, 1);
