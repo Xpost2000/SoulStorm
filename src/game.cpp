@@ -1999,7 +1999,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
             s32 minutes = 0;
             s32 seconds = 0;
             {
-                seconds = (s32)state->current_stage_timer;
+                seconds = (s32)state->current_stage_timer % 60;
                 minutes = seconds / 60;
                 hours   = minutes / 60;
             }
@@ -2586,8 +2586,10 @@ void Game::handle_all_lasers(f32 dt) {
             auto laser_rect  = h.get_rect(&state->play_area);
             auto player_rect = state->player.get_rect();
 
-            if (rectangle_f32_intersect(player_rect, laser_rect)) {
-                state->player.kill();
+            if (!DebugUI::godmode_enabled()) {
+                if (rectangle_f32_intersect(player_rect, laser_rect)) {
+                    state->player.kill();
+                }
             }
         }
     }
@@ -2608,8 +2610,10 @@ void Game::handle_all_explosions(f32 dt) {
                 auto explosion_circle = circle_f32(h.position.x, h.position.y, h.radius);
                 auto player_circle    = circle_f32(state->player.position.x, state->player.position.y, state->player.scale.x);
 
-                if (circle_f32_intersect(explosion_circle, player_circle)) {
-                    state->player.kill();
+                if (!DebugUI::godmode_enabled()) {
+                    if (circle_f32_intersect(explosion_circle, player_circle)) {
+                        state->player.kill();
+                    }
                 }
             }
         }
@@ -2678,8 +2682,10 @@ void Game::handle_player_enemy_collisions(f32 dt) {
         auto& e = state->gameplay_data.enemies[enemy_index];
         auto enemy_rect = e.get_rect();
 
-        if (rectangle_f32_intersect(player_rect, enemy_rect)) {
-            p.kill();
+        if (!DebugUI::godmode_enabled()) {
+            if (rectangle_f32_intersect(player_rect, enemy_rect)) {
+                p.kill();
+            }
         }
     }
 }
