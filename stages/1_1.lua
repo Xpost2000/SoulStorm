@@ -1091,6 +1091,126 @@ function wave_2_sub5()
    end
 end
 
+function wave_2_sub6_generic_attacker1(e, dir)
+   while enemy_valid(e) do
+      local bullets = spawn_bullet_line(enemy_position(e), 3, 10, v2(10,10), v2(0, 1), 100, BULLET_SOURCE_ENEMY);
+      t_wait(0.55);
+      play_sound(random_attack_sound());
+   end
+end
+
+function wave_2_sub_6()
+   
+   -- some basic dummy enemies that exist to be shot
+
+   do
+
+      for i=1, 12 do
+         local e = enemy_new();
+         enemy_set_scale(e, 10, 10);
+         enemy_set_hp(e, 10);
+         enemy_set_position(e, play_area_width()-50, -20);
+         enemy_set_velocity(e, 0, 95);
+         enemy_set_acceleration(e, -100, 5);
+         t_wait(0.20);
+      end
+      t_wait(1.2);
+
+      -- spawn some actual aggressors.
+      for i=1, 7 do
+         local e = enemy_new();
+         enemy_set_scale(e, 10, 10);
+         enemy_set_hp(e, 15);
+         enemy_set_position(e, play_area_width()/2, -10);
+         enemy_set_velocity(e, 0, 80);
+
+         if (i <= 3) then
+            enemy_set_acceleration(e, -120, 25);
+            enemy_set_task(e, "wave_2_sub6_generic_attacker1", 0);
+         else
+            enemy_set_acceleration(e, 120, 25);
+            enemy_set_task(e, "wave_2_sub6_generic_attacker1", 1);
+         end
+      end
+
+      for i=1, 12 do
+         local e = enemy_new();
+         enemy_set_scale(e, 10, 10);
+         enemy_set_hp(e, 20);
+         enemy_set_position(e, 90, -30);
+         enemy_set_velocity(e, 0, 75);
+         enemy_set_acceleration(e, 100, 10);
+         t_wait(0.20);
+      end
+
+      t_wait(1);
+
+      for i=1,5 do
+         local e = enemy_new();
+         enemy_set_scale(e, 10, 10);
+         enemy_set_hp(e, 20);
+         enemy_set_position(e, play_area_width() - 30, play_area_height() + 35 + (30 * i));
+         enemy_set_task(
+            e, "_wave2_enemy_rainer_sprinkler1", i, 5, 1.4, 0.23,
+
+            function (e, idx)
+               for i=1, 10 do
+                  local ep = v2(enemy_position_x(e), enemy_position_y(e));
+                  local bullets = spawn_bullet_arc_pattern2(
+                     ep,
+                     3,
+                     90,
+                     v2(0, 1),
+                     75,
+                     0,
+                     BULLET_SOURCE_ENEMY
+                  );
+                  play_sound(random_attack_sound());
+
+                  bullet_list_set_visuals(
+                     bullets,
+                     PROJECTILE_SPRITE_HOT_PINK_ELECTRIC
+                  );
+
+                  for i,b in ipairs(bullets) do
+                     bullet_set_visual_scale(b, 0.25, 0.25);
+                     bullet_set_scale(b, 2.5, 2.5);
+                  end
+
+                  t_wait(0.10);
+               end
+            end
+         );
+      end
+
+      t_wait(1.5);
+      do
+         local dist_r = 100;
+         do
+            local e = enemy_new();
+            enemy_set_scale(e, 10, 10);
+            enemy_set_hp(e, 45);
+            enemy_set_position(e, play_area_width()/2 - dist_r, -50);
+            enemy_set_task(
+               e,
+               "_wave2_enemy_firework", v2(0, 100), 1.5, 2, 6, 0.65, "_wave2_bullet_firework1"
+            );
+         end
+      do
+         local e = enemy_new();
+         enemy_set_scale(e, 10, 10);
+         enemy_set_hp(e, 45);
+         enemy_set_position(e, play_area_width()/2 + dist_r, -50);
+         enemy_set_task(
+            e,
+            "_wave2_enemy_firework", v2(0, 100), 1.5, 2, 6, 0.65, "_wave2_bullet_firework1"
+         );
+      end
+   end
+
+   end
+end
+
 function wave_2()
    wave_2_sub1();
    t_wait(6.4);
@@ -1105,6 +1225,12 @@ function wave_2()
 
    -- spawn 3 enemies that will start blanketing
    wave_2_sub5();
+   t_wait(11.0);
+
+   -- here are some standard shmup waves.
+   wave_2_sub2();
+   t_wait(10.0);
+   wave_2_sub_6();
 end
 
 function blanket_wave1()

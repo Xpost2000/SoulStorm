@@ -14,7 +14,11 @@ function bullet_list_set_scale(bullets, scale)
    end
 end
 
-function spawn_bullet_line(center, how_many, spacing, scale, direction, speed)
+function enemy_position(e)
+   return v2(enemy_position_x(e), enemy_position_y(e));
+end
+
+function spawn_bullet_line(center, how_many, spacing, scale, direction, speed, src)
    local new_bullets = {};
    local direction     = v2_normalized(direction);
    local pattern_width = spacing * how_many + scale[1] * how_many;
@@ -26,8 +30,8 @@ function spawn_bullet_line(center, how_many, spacing, scale, direction, speed)
 
    bullet_i = 1;
 
-   for i=0, how_many do
-      local nb = bullet_new();
+   for i=1, how_many do
+      local nb = bullet_new(src);
       new_bullets[bullet_i] = nb;
       bullet_set_position(nb, center[1], center[2]);
       bullet_set_velocity(nb, direction[1] * speed, direction[2] * speed);
