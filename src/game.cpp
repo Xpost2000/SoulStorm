@@ -1304,6 +1304,32 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
     GameUI::update(dt);
 }
 
+bool Game::can_resurrect() {
+    bool out_of_tries = state->gameplay_data.tries <= 0;
+    return !out_of_tries;
+}
+
+bool Game::safely_resurrect_player() {
+    bool worked = can_resurrect();
+    const float RESURRECT_NEARBY_RADIUS = 150;
+
+    if (worked) {
+        state->gameplay_data.paused_from_death  = false;
+        state->gameplay_data.tries             -= 1;
+        state->gameplay_data.player.begin_invincibility();
+        state->gameplay_data.player.heal(1);
+
+        {
+            // check nearby bullets and clear them.
+            convert_bullets_to_score_pickups(RESURRECT_NEARBY_RADIUS);
+        }
+    }
+
+    return worked;
+}
+
+// TODO: planning to deprecate this and
+// make a new death menu.
 void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands* commands, f32 dt) {
     if (state->gameplay_data.paused_from_death) {
         render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
@@ -1325,32 +1351,6 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
         y += 45;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
 
-        bool out_of_tries = state->gameplay_data.tries <= 0;
-        if (!out_of_tries) {
-            string text = {};
-            text = string_from_cstring(format_temp("Retry (%d tries)", state->gameplay_data.tries));
-
-            if (GameUI::button(V2(50, y), text, color32f32(1, 1, 1, alpha), 2, !out_of_tries && !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-                Transitions::do_color_transition_out(
-                    color32f32(0, 0, 0, 0.5),
-                    0.15f,
-                    0.20f
-                );
-
-                state->gameplay_data.paused_from_death  = false;
-                state->gameplay_data.tries             -= 1;
-
-                state->gameplay_data.player.begin_invincibility();
-                state->gameplay_data.player.heal(1);
-                // resurrect the player with iframes.
-
-                Transitions::register_on_finish(
-                    [&](void*) mutable {
-                        switch_ui(UI_STATE_INACTIVE);
-                    }
-                );
-            }
-        }
         y += 30;
         if (GameUI::button(V2(50, y), string_literal("Give up"), color32f32(1, 1, 1, alpha), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             Transitions::do_shuteye_in(
@@ -2473,6 +2473,53 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     }
 }
 
+void Game::convert_bullets_to_score_pickups(float radius) {
+    auto state = &this->state->gameplay_data;
+
+    for (s32 bullet_index = 0; bullet_index < state->bullets.size; ++bullet_index) {
+        auto& b = state->bullets[bullet_index];
+
+        if (V2_distance_sq(state->player.position, b.position) >= radius*radius)
+            continue;
+
+        if (b.source_type == BULLET_SOURCE_PLAYER)
+            continue;
+
+        b.kill();
+
+        auto pe = pickup_score_entity(
+            this->state,
+            b.position,
+            b.position,
+            50
+        );
+        pe.seek_towards_player = true;
+        state->add_pickup_entity(pe);
+    }
+}
+
+void Game::convert_enemies_to_score_pickups(float radius) {
+    auto state = &this->state->gameplay_data;
+
+    for (s32 enemy_index = 0; enemy_index < state->enemies.size; ++enemy_index) {
+        auto& e = state->enemies[enemy_index];
+
+        if (V2_distance_sq(state->player.position, e.position) >= radius*radius)
+            continue;
+
+        e.kill();
+
+        auto pe = pickup_score_entity(
+            this->state,
+            e.position,
+            e.position,
+            e.score_value/2
+        );
+        pe.seek_towards_player = true;
+        state->add_pickup_entity(pe);
+    }
+}
+
 void Game::handle_bomb_usage(f32 dt) {
     auto state = &this->state->gameplay_data;
     if (state->tries <= 1) {
@@ -2484,37 +2531,8 @@ void Game::handle_bomb_usage(f32 dt) {
     }
 
     {
-        for (s32 bullet_index = 0; bullet_index < state->bullets.size; ++bullet_index) {
-            auto& b = state->bullets[bullet_index];
-
-            if (b.source_type == BULLET_SOURCE_PLAYER)
-                continue;
-
-            b.kill();
-
-            auto pe = pickup_score_entity(
-                this->state,
-                b.position,
-                b.position,
-                50
-            );
-            pe.seek_towards_player = true;
-            state->add_pickup_entity(pe);
-        }
-
-        for (s32 enemy_index = 0; enemy_index < state->enemies.size; ++enemy_index) {
-            auto& e = state->enemies[enemy_index];
-            e.kill();
-
-            auto pe = pickup_score_entity(
-                this->state,
-                e.position,
-                e.position,
-                e.score_value/2
-            );
-            pe.seek_towards_player = true;
-            state->add_pickup_entity(pe);
-        }
+        convert_enemies_to_score_pickups();
+        convert_bullets_to_score_pickups();
     }
 
     state->notify_score(5000, true);
@@ -2530,6 +2548,39 @@ void Game::handle_bomb_usage(f32 dt) {
 
 void Game::handle_all_dead_entities(f32 dt) {
     auto state = &this->state->gameplay_data;
+
+    if (state->player.die) {
+        if (state->paused_from_death == false) {
+            state->paused_from_death = true;
+            Transitions::do_color_transition_in(
+                color32f32(1, 1, 1, 1),
+                0.10f,
+                0.0f
+            );
+
+            Transitions::register_on_finish(
+                [&](void*) mutable {
+                    Transitions::do_color_transition_out(
+                        color32f32(1, 1, 1, 1),
+                        0.1f,
+                        0.025f
+                    );
+
+                    Transitions::register_on_finish(
+                        [&](void*) mutable {
+                            Audio::play(resources->hit_sounds[0]);
+                            if (safely_resurrect_player()) {
+                            } else {
+                                // Would like to trigger a death cutscene
+                                // but now is not the time.
+                                switch_ui(UI_STATE_DEAD_MAYBE_RETRY);
+                            }
+                        }
+                    );
+                }
+            );
+        }
+    }
 
     Thread_Pool::add_job(
         [](void* ctx) {
@@ -2582,23 +2633,6 @@ void Game::handle_all_dead_entities(f32 dt) {
         }, state);
 
     Thread_Pool::synchronize_tasks();
-    if (state->player.die) {
-        if (state->paused_from_death == false) {
-            state->paused_from_death = true;
-            Transitions::do_color_transition_in(
-                color32f32(0, 0, 0, 0.5),
-                0.10f,
-                0.45f
-            );
-
-            Transitions::register_on_finish(
-                [&](void*) mutable {
-                    Transitions::clear_effect();
-                    switch_ui(UI_STATE_DEAD_MAYBE_RETRY);
-                }
-            );
-        }
-    }
 }
 
 void Game::handle_all_lasers(f32 dt) {
@@ -3848,10 +3882,6 @@ PLAY_AREA_EDGE_RIGHT      = 3;
     {
         lua_newtable(L);
         lua_setglobal(L, "_coroutinetable");
-        // lua_pushnumber(L, v.x);
-        // lua_rawseti(L, -2, 1);
-        // lua_pushnumber(L, v.y);
-        // lua_rawseti(L, -2, 2);
     }
 
 

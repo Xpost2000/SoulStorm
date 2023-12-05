@@ -100,6 +100,12 @@ private:
     void handle_all_dead_entities(f32 dt);
     void handle_bomb_usage(f32 dt);
 
+    void convert_bullets_to_score_pickups(float radius=99999);
+    void convert_enemies_to_score_pickups(float radius=99999);
+
+    bool safely_resurrect_player();
+    bool can_resurrect();
+
     void switch_screen(s32 screen);
     void switch_ui(s32 ui);
     bool can_access_stage(s32 id);
