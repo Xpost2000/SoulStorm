@@ -142,29 +142,8 @@ function enemy_linear_move_to(e, x, y, t)
    enemy_reset_movement(e);
 end
 
--- NOTE: only designed for one point!
-function enemy_move_to_nonlinear1(e, x, y, start_speed, start_accel, max_speed)
-   local position  = v2(x, y);
-   local direction = v2_direction(enemy_position(e), position);
-   local velocity  = v2(direction[1] * start_speed, direction[2] * start_speed);
-   local accel     = v2(direction[1] * start_accel, direction[2] * start_accel);
-
-   enemy_set_velocity(e, velocity);
-   enemy_set_acceleration(e, accel);
-
-   while v2_distance(enemy_position(e), position) > 1.5 do
-      local v = enemy_velocity(e);
-      if v2_magnitude(v) > max_speed then
-         v = v2_normalized(v);
-         v[1] = v[1] * max_speed;
-         v[2] = v[2] * max_speed;
-         enemy_set_velocity(e, v[1], v[2]);
-      end
-      t_yield();
-   end
-   enemy_reset_movement(e);
-   return enemy_acceleration(e);
-end
+-- NOTE: asympotopic movements have to be done manually.
+--       no good support for it.
 
 -- As the C API requires a string in it's parameter
 -- list, this is a placeholder I can put to avoid making

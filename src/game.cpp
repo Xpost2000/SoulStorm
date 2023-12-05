@@ -1216,7 +1216,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                     name = string_literal("???");
                 }
 
-                auto s = format_temp("%d - %d: %.*s", stage_id, (i+1), name.length, name.data);
+                auto s = format_temp("%d - %d: %.*s", (stage_id+1), (i+1), name.length, name.data);
                 s32 button_status = (GameUI::button(V2(100, y), string_from_cstring(s), color32f32(1, 1, 1, 1), 2, is_unlocked && !Transitions::fading()));
                 y += 30;
 
