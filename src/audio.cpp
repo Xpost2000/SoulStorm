@@ -25,6 +25,7 @@ namespace Audio {
         _debugprintf("Audio hi");
         Mix_Init(MIX_INIT_OGG | MIX_INIT_MOD);
         Mix_OpenAudio(44100, AUDIO_S16, 2, 2048);
+        Mix_AllocateChannels(32);
     }
 
     void deinitialize(void) {
