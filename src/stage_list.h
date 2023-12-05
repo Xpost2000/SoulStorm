@@ -3,23 +3,23 @@
 // Stage 1
 // easy and slow themed.
     Stage {
-        string_literal("Limbo"),
-            string_literal("The Endless Nothing"),
+        string_literal("Witch's Playpen"),
+            string_literal("Magical wonderland! Or not?"),
             1,
             {
                 Level {
-                    string_literal("Gates of Eternity"),
-                        string_literal("The beginnings of escape."),
+                    string_literal("Reception Room"),
+                        string_literal("Wait in line, just like everyone else!"),
                         0,
                         },
                 Level {
-                    string_literal("Empty Sea"),
-                        string_literal("The path of wayward souls."),
+                    string_literal("Play Room"),
+                        string_literal("Aren't you just entertained?"),
                         0,
                         },
                 Level {
-                    string_literal("Reaper's Gate"),
-                        string_literal("Judgement awaits."),
+                    string_literal("Witch"),
+                        string_literal("She's gonna put a spell on you!"),
                         1,
                 },
             }
@@ -28,23 +28,23 @@
     // Stage 2
     // this is "normal"
     Stage {
-        string_literal("Fiery Gates"),
-            string_literal("Lost Paradise"),
+        string_literal("The Doghouse"),
+            string_literal("Where the goodest of boys belong."),
             1,
             {
                 Level {
                     string_literal("River Styx"),
-                        string_literal("Washing away with forgetfulness."),
+                        string_literal("Try not to forget the way out!"),
                         0
                         },
                 Level {
-                    string_literal("Fiery Sojourn"),
-                        string_literal("Only embers will remain."),
+                    string_literal("Backyard"),
+                        string_literal("Play fetch with bullets!"),
                         0,
                         },
                 Level {
                     string_literal("Cerberus"),
-                        string_literal("The Loyal Gatekeeper"),
+                        string_literal("Three heads is better than one!"),
                         1,
                         },
                     }
@@ -53,23 +53,23 @@
     // Stage 3
     // this is "hard"
     Stage {
-        string_literal("Inferno"),
-            string_literal("A place for the sinful."),
+        string_literal("The Deep Sea"),
+            string_literal("A big space for big fishies."),
             1,
             {
                 Level {
-                    string_literal("Greed"),
-                        string_literal("For those who want too much."),
+                    string_literal("School"),
+                        string_literal("The fish kind."),
                         0
                         },
                 Level {
-                    string_literal("Heresy"),
-                        string_literal("For those who don't believe."),
+                    string_literal("Aquarium"),
+                        string_literal(""),
                         0,
                         },
                 Level {
-                    string_literal("Treachery"),
-                        string_literal("For those who betray themselves and everyone else."),
+                    string_literal("Apex Predator"),
+                        string_literal("The real top of the foodchain."),
                         1,
                         },
                     }
