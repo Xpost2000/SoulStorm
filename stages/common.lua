@@ -1,3 +1,8 @@
+-- NOTE
+--
+-- This Bullet Hell's engine 
+-- uses very simple lua. No meta tables please!
+--
 function spawn_bullet_line(center, how_many, spacing, scale, direction, speed, src)
    local new_bullets = {};
    local direction     = v2_normalized(direction);
@@ -54,18 +59,6 @@ function wait_no_danger()
       end
 end
 
--- As the C API requires a string in it's parameter
--- list, this is a placeholder I can put to avoid making
--- more dedicated functions... This is mostly just to have specific
--- enemies without polluting the "global" namespace.
---
--- Which is a little redundant because I reconstruct a lua state for
--- each level.
-function _delegate_enemy_task(e, f, a, b, c, d)
-   print(e, f, a, b, c, d, e);
-   f(e, a, b, c, d, e);
-end
-
 function bullet_list_set_visuals(bullets, visual)
    for i,b in ipairs(bullets) do
       bullet_set_visual(b, visual);
@@ -82,11 +75,12 @@ function bullet_list_set_scale(bullets, scale)
    end
 end
 
+-- Generalish
 function player_position()
    return v2(player_position_x(), player_position_y());
 end
 function dir_to_player(a)
-   return v2_direction(a, player_position);
+   return v2_direction(a, player_position());
 end
 
 function bullet_position(e)
@@ -114,6 +108,28 @@ function dir_to_angle(direction)
    return math.deg(math.atan(nd[2], nd[1]));
 end
 
+--
+-- bullet_helpers
+--
+function bullet_make(src, spawnposition, visual, vscale, scale)
+   local b = bullet_new(src);
+   bullet_set_visual(b, visual);
+   bullet_set_visual_scale(b, vscale[1], vscale[2]);
+   bullet_set_scale(b, scale[1], scale[2]);
+   bullet_set_position(b, spawnposition[1], spawnposition[2]);
+   return b;
+end
+function bullet_move_linear(b, d, v)
+   local d1 = v2_normalized(d);
+   bullet_set_velocity(b, d1[1] * v, d1[2] * v);
+end
+
+-- TODO add asympotopic movement?
+
+--
+-- enemy_helpers
+--
+
 function enemy_linear_move_to(e, x, y, t)
    local cur_x = enemy_position_x(e);
    local cur_y = enemy_position_y(e);
@@ -137,8 +153,42 @@ function enemy_move_to_nonlinear1(e, x, y, start_speed, start_accel, max_speed)
    enemy_set_acceleration(e, accel);
 
    while v2_distance(enemy_position(e), position) > 1.5 do
+      local v = enemy_velocity(e);
+      if v2_magnitude(v) > max_speed then
+         v = v2_normalized(v);
+         v[1] = v[1] * max_speed;
+         v[2] = v[2] * max_speed;
+         enemy_set_velocity(e, v[1], v[2]);
+      end
       t_yield();
    end
    enemy_reset_movement(e);
    return enemy_acceleration(e);
+end
+
+-- As the C API requires a string in it's parameter
+-- list, this is a placeholder I can put to avoid making
+-- more dedicated functions... This is mostly just to have specific
+-- enemies without polluting the "global" namespace.
+--
+-- Which is a little redundant because I reconstruct a lua state for
+-- each level.
+function _generic_dispatch(fn, a, b, c, d, e, f, g)
+   fn(a,b,c,d,e,f,g)
+end
+
+function _generic_entity_task_dispatch(e, fn, a, b, c, d, e1, f, g)
+   fn(e, a, b, c, d, e1, f, g);
+end
+
+function bullet_task_lambda(e, fn, a, b, c, d, e1, f, g)
+   bullet_set_task(e, "_generic_entity_task_dispatch", fn, a, b, c, d, e1, f, g);
+end
+
+function enemy_task_lambda(e, fn, a, b, c, d, e1, f, g)
+   enemy_set_task(e, "_generic_entity_task_dispatch", fn, a, b, c, d, e1, f, g);
+end
+
+function async_task_lambda(fn, a, b, c, d, e, f, g)
+   async_task("_generic_dispatch", fn,a,b,c,d,e,f,g);
 end

@@ -190,6 +190,13 @@ void bind_v2_lualib(lua_State* L) {
                      push_v2_as_lua(L, V2_direction_from_degree(v1));
                      return 1;
                  });
+
+    lua_register(L, "v2_magnitude",
+                 [](lua_State* L) {
+                     auto v = v2_from_lua(L, 1);
+                     lua_pushnumber(L, v.magnitude());
+                     return 1;
+                 });
     lua_register(L, "v2_perp",
                  [](lua_State* L) {
                      auto v = v2_from_lua(L, 1);

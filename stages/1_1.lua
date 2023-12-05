@@ -1,6 +1,12 @@
 dofile("stages/common.lua")
 -- TODO:
 -- Prettification pass.
+-- revise pattern sprinkler 1
+-- compose music track
+-- skin all enemies.
+-- miniboss
+
+-- Maybe? Redesign everything before the miniboss.
 
 -- Because this is the first level of the bunch
 -- it's going to have the worst code since I'm exploring the lua interfacing
@@ -33,37 +39,6 @@ function loop_bkg_music()
 end
 
 --[[UNIQUE BULLET PATTERNS]]--
-function _wave1_bullet_side_shooter_homing_a_little(b)
-   bullet_set_velocity(b, 0, 80);
-   t_wait(1.54);
-   bullet_reset_movement(b);
-   t_wait(1.00);
-
-   local t = bullet_time_since_spawn(b);
-   while true do
-      bullet_start_trail(b, 12);
-      bullet_set_trail_modulation(b, 0.8, 0.5, 0.5, 1.0);
-      local bx = bullet_position_x(b);
-      local by = bullet_position_y(b);
-      local px = player_position_x();
-      local py = player_position_y();
-      local ct = bullet_time_since_spawn(b);
-      local dt = ct - t;
-      local dir = v2_direction(v2(bx, by), v2(px, py));
-
-      dir[1] = dir[1] * (150 + (dt * 180));
-      dir[2] = dir[2] * (150 + (dt * 180));
-
-      bullet_set_velocity(b, dir[1], dir[2]);
-
-      if dt > 0.375 then
-         break;
-      end
-
-      t_yield();
-   end
-end
-
 --[[
    MID BOSS?
 ]]--
@@ -82,14 +57,30 @@ function _wave1_enemy_shoot_down_and_fly_to_side(e, x_down, y_down, t_mv_speed, 
    local ex = enemy_position_x(e);
    local ey = enemy_position_y(e);
    for bullet=1, 4 do
-      local b = bullet_new(BULLET_SOURCE_ENEMY);
-      bullet_set_visual(b, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
-      bullet_set_visual_scale(b, 0.5, 0.5);
-      bullet_set_scale(b, 5, 5);
-      bullet_set_position(b, ex, ey);
-      bullet_set_velocity(b, 0, 100);
-      bullet_set_task(b, "_wave1_bullet_side_shooter_homing_a_little");
-      -- t_wait(0.30);
+      local b = bullet_make(BULLET_SOURCE_ENEMY, enemy_position(e), PROJECTILE_SPRITE_HOT_PINK_ELECTRIC, v2(0.5, 0.5), v2(5, 5))
+      bullet_task_lambda(
+         b,
+         function(b)
+            bullet_move_linear(b, v2(0, 1), 80);
+            t_wait(1.54);
+            bullet_reset_movement(b);
+            t_wait(1);
+            bullet_start_trail(b, 12);
+            bullet_set_trail_modulation(b, 0.8, 0.5, 0.5, 1.0);
+
+            local spawn_time = bullet_time_since_spawn(b);
+            while true do
+               local dt = bullet_time_since_spawn(b) - spawn_time;
+               local aim = dir_to_player(bullet_position(b));
+
+               aim[1] = aim[1] * (150 + (dt * 180));
+               aim[2] = aim[2] * (150 + (dt * 180));
+
+               bullet_set_velocity(b, aim[1], aim[2]);
+               t_yield();
+            end
+         end
+      )
       play_sound(random_attack_sound());
       t_wait(0.32);
    end
@@ -648,7 +639,7 @@ function _wave2_bullet_firework2(b, arc_direction, start_speed, setup_t, acceler
    local r = v2_distance(sp, ep);
    do
       local st = bullet_time_since_spawn(b);
-      local starting_angle = math.atan(arc_direction[2], arc_direction[1]);
+      local starting_angle = dir_to_angle(arc_direction);
 
       while bullet_time_since_spawn(b) - st < 1.45 do
          dt = bullet_time_since_spawn(b) - st;
@@ -1265,39 +1256,39 @@ function stage_task()
    t_wait_for_stage_intro();
    -- ideally this should not be a string, but I should allow closures...
    print("1_1LUA Play music");
-   -- async_task("loop_bkg_music");
+--    -- async_task("loop_bkg_music");
 
--- stage main
+-- -- stage main
 
-   -- Player Dialogue Here
-   --
-   -- ???
-   --
+--    -- Player Dialogue Here
+--    --
+--    -- ???
+--    --
    wave_1();
    t_wait(12.5);
-   -- Player Dialogue Here...
-   --
-   --
-   --
+--    -- Player Dialogue Here...
+--    --
+--    --
+--    --
    wave_2();
 
-   -- NOTE:
-   -- I am using this level as a "testing" ground
-   -- and I need it to get feedback on the way I design the levels
-   -- and designing patterns for each 'wave' is really time consuming
-   -- so these blanket waves are waves where I don't have to think much at all...
-   -- and I can still pad out the play time a little longer.
+--    -- NOTE:
+--    -- I am using this level as a "testing" ground
+--    -- and I need it to get feedback on the way I design the levels
+--    -- and designing patterns for each 'wave' is really time consuming
+--    -- so these blanket waves are waves where I don't have to think much at all...
+--    -- and I can still pad out the play time a little longer.
    
-   -- blanket_wave1()
-   -- blanket_wave2()
+--    -- blanket_wave1()
+--    -- blanket_wave2()
 
-   -- Player Dialogue Here...
-   --
-   -- 
-   -- mid_boss();
-   -- async_task("mid_boss_minions");
+--    -- Player Dialogue Here...
+--    --
+--    -- 
+--    -- mid_boss();
+--    -- async_task("mid_boss_minions");
 
-   -- Final Dialogue. Finish stage!
+--    -- Final Dialogue. Finish stage!
 
    print("1_1LUA cooldown to finish stage.");
    t_wait(10);
