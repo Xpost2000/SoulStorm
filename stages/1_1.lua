@@ -254,6 +254,7 @@ function _wave1_enemy_shotgun_spread(e, x_down, y_down, t_mv_speed, side, shot_t
          end
       end
 
+      play_sound(random_attack_sound());
       t_wait(cooldown);
    end
    t_wait(cooldown2);
@@ -869,8 +870,11 @@ function _wave2_sub5_goon_initial(e, goon_number)
    -- these goons will spawn an arc pointed towards the center line
    -- that will delay before initiating.
    -- side goons shoot a bit faster.
-   local position = v2(enemy_position_x(e), enemy_position_y(e));
-   if goon_number == 0 then
+   local eposition = v2(enemy_position_x(e), enemy_position_y(e));
+
+   -- I'm aware this can be copied and pasted
+   -- but cleaning this up is more trouble than it's worth. LOL
+   if goon_number == 0 or goon_number == 2 then
       local new_bullets = {};
       local arcs1       = {};
 
@@ -880,63 +884,97 @@ function _wave2_sub5_goon_initial(e, goon_number)
       local new_bullets3 = {};
       local arcs3       = {};
 
-      local arc_sub_length = 180 / 16;
-      for i=1, 16 do
-         local angle = dir_to_angle(v2(1, 1)) + arc_sub_length * ((i-1) - (16/2));
+      local bcount_per_wave = 20;
+
+      local sgn = 1;
+      if (goon_number == 2) then
+         sgn = -1;
+      end
+
+      local arc_sub_length = 180 / bcount_per_wave;
+      for i=1, bcount_per_wave do
+         local angle = dir_to_angle(v2(1*sgn, 1)) + arc_sub_length * ((i-1) - (bcount_per_wave/2));
          local current_arc_direction = v2_direction_from_degree(angle);
-         local position = v2_add(position, v2(current_arc_direction[1] * 45, current_arc_direction[2] * 45))
+         local position = v2_add(eposition, v2(current_arc_direction[1] * 45, current_arc_direction[2] * 45))
 
          local nb = bullet_new(BULLET_SOURCE_ENEMY);
          new_bullets[i] = nb;
+         arcs1[i] = current_arc_direction;
          bullet_set_visual(nb, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
          bullet_set_position(nb, position[1], position[2]);
          bullet_set_scale(nb, 2.5, 2.5);
          bullet_set_visual_scale(nb, 0.25, 0.25);
-         bullet_set_lifetime(nb, 10);
+         bullet_set_lifetime(nb, 25);
          play_sound(random_attack_sound());
          t_wait(0.025);
       end
 
-      for i=1, 16 do
-         local angle = dir_to_angle(v2(1, 1))-10 + arc_sub_length * ((i-1) - (16/2));
+      for i=1, bcount_per_wave do
+         local angle = dir_to_angle(v2(1*sgn, 1))-10 + arc_sub_length * ((i-1) - (bcount_per_wave/2));
          local current_arc_direction = v2_direction_from_degree(angle);
-         local position = v2_add(position, v2(current_arc_direction[1] * 70, current_arc_direction[2] * 70))
+         local position = v2_add(eposition, v2(current_arc_direction[1] * 70, current_arc_direction[2] * 70))
 
          local nb = bullet_new(BULLET_SOURCE_ENEMY);
          new_bullets2[i] = nb;
+         arcs2[i] = current_arc_direction;
          bullet_set_visual(nb, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
          bullet_set_position(nb, position[1], position[2]);
          bullet_set_scale(nb, 2.5, 2.5);
          bullet_set_visual_scale(nb, 0.25, 0.25);
-         bullet_set_lifetime(nb, 10);
+         bullet_set_lifetime(nb, 25);
          play_sound(random_attack_sound());
          t_wait(0.025);
       end
 
-      for i=1, 16 do
-         local angle = dir_to_angle(v2(1, 1))-20 + arc_sub_length * ((i-1) - (16/2));
+      for i=1, bcount_per_wave do
+         local angle = dir_to_angle(v2(1*sgn, 1))-10 + arc_sub_length * ((i-1) - (bcount_per_wave/2));
          local current_arc_direction = v2_direction_from_degree(angle);
-         local position = v2_add(position, v2(current_arc_direction[1] * 90, current_arc_direction[2] * 00))
+         local position = v2_add(eposition, v2(current_arc_direction[1] * 90, current_arc_direction[2] * 90))
 
          local nb = bullet_new(BULLET_SOURCE_ENEMY);
          new_bullets3[i] = nb;
+         arcs3[i] = current_arc_direction;
          bullet_set_visual(nb, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
          bullet_set_position(nb, position[1], position[2]);
          bullet_set_scale(nb, 2.5, 2.5);
          bullet_set_visual_scale(nb, 0.25, 0.25);
-         bullet_set_lifetime(nb, 10);
+         bullet_set_lifetime(nb, 25);
          play_sound(random_attack_sound());
          t_wait(0.025);
       end
+
+      t_wait(1);
+      for i=1,bcount_per_wave do
+         bullet_set_velocity(new_bullets[i],
+                             arcs1[i][1] * 45,
+                             arcs1[i][2] * 45 
+         );
+      end
+      t_wait(0.5);
+      for i=1,bcount_per_wave do
+         bullet_set_velocity(new_bullets2[i],
+                             arcs2[i][1] * 65,
+                             arcs2[i][2] * 65 
+         );
+      end
+      t_wait(0.5);
+      for i=1,bcount_per_wave do
+         bullet_set_velocity(new_bullets3[i],
+                             arcs3[i][1] * 35,
+                             arcs3[i][2] * 35 
+         );
+      end
+      t_wait(0.470)
+      enemy_set_velocity(e, 0, 100);
    elseif goon_number == 1 then
       -- This one will vomit out a mass of bullets
       -- that are slow, and will last a fair while.
-      for i=1, 50 do
+      for i=1, 45 do
          local ep = v2(enemy_position_x(e), enemy_position_y(e));
          local bullets = spawn_bullet_arc_pattern2(
             ep,
-            25,
-            90-i,
+            35,
+            100-i,
             v2(0, 1),
             45,
             0,
@@ -954,64 +992,15 @@ function _wave2_sub5_goon_initial(e, goon_number)
             bullet_set_scale(b, 1.5, 1.5);
          end
 
-         t_wait(0.175);
+         t_wait(0.177);
       end
-   elseif goon_number == 2 then
-      local new_bullets = {};
-      local new_bullets2 = {};
-      local new_bullets3 = {};
-      local arc_sub_length = 180 / 16;
-      for i=1, 16 do
-         local angle = dir_to_angle(v2(-1, 1)) + arc_sub_length * ((i-1) - (16/2));
-         local current_arc_direction = v2_direction_from_degree(angle);
-         local position = v2_add(position, v2(current_arc_direction[1] * 45, current_arc_direction[2] * 45))
-
-         local nb = bullet_new(BULLET_SOURCE_ENEMY);
-         new_bullets[i] = nb;
-         bullet_set_visual(nb, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
-         bullet_set_position(nb, position[1], position[2]);
-         bullet_set_scale(nb, 2.5, 2.5);
-         bullet_set_visual_scale(nb, 0.25, 0.25);
-         bullet_set_lifetime(nb, 10);
-         play_sound(random_attack_sound());
-         t_wait(0.025);
-      end
-
-      for i=1, 16 do
-         local angle = dir_to_angle(v2(-1, 1))-10 + arc_sub_length * ((i-1) - (16/2));
-         local current_arc_direction = v2_direction_from_degree(angle);
-         local position = v2_add(position, v2(current_arc_direction[1] * 70, current_arc_direction[2] * 70))
-
-         local nb = bullet_new(BULLET_SOURCE_ENEMY);
-         new_bullets2[i] = nb;
-         bullet_set_visual(nb, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
-         bullet_set_position(nb, position[1], position[2]);
-         bullet_set_scale(nb, 2.5, 2.5);
-         bullet_set_visual_scale(nb, 0.25, 0.25);
-         bullet_set_lifetime(nb, 10);
-         play_sound(random_attack_sound());
-         t_wait(0.025);
-      end
-
-      for i=1, 16 do
-         local angle = dir_to_angle(v2(-1, 1))-20 + arc_sub_length * ((i-1) - (16/2));
-         local current_arc_direction = v2_direction_from_degree(angle);
-         local position = v2_add(position, v2(current_arc_direction[1] * 90, current_arc_direction[2] * 90))
-
-         local nb = bullet_new(BULLET_SOURCE_ENEMY);
-         new_bullets3[i] = nb;
-         bullet_set_visual(nb, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
-         bullet_set_position(nb, position[1], position[2]);
-         bullet_set_scale(nb, 2.5, 2.5);
-         bullet_set_visual_scale(nb, 0.25, 0.25);
-         bullet_set_lifetime(nb, 10);
-         play_sound(random_attack_sound());
-         t_wait(0.025);
-      end
+      t_wait(0.250)
+      enemy_set_velocity(e, 100, 100);
    end
 end
 
 function wave_2_sub5()
+   t_wait(1.0)
    do
       -- TODO: Fade these guys in.
       local goon = {};
@@ -1022,7 +1011,7 @@ function wave_2_sub5()
       t_wait(1.0);
       goon[2] = enemy_new();
       enemy_set_scale(goon[2], 10, 10);
-      enemy_set_hp(goon[2], 125);
+      enemy_set_hp(goon[2], 5000); -- He's making the main puzzle pattern.
       enemy_set_position(goon[2], play_area_width()/2, 30);
       t_wait(1.0);
       goon[3] = enemy_new();
@@ -1037,19 +1026,82 @@ function wave_2_sub5()
       enemy_set_task(goon[2], "_wave2_sub5_goon_initial", 1);
       t_wait(1.0);
    end
+   t_wait(3.25);
+   do
+      local slice_y = play_area_height()/8;
+      for i=1, 8 do
+         local new_bullet = bullet_new(BULLET_SOURCE_ENEMY);
+         bullet_set_position(new_bullet, -10, (i-1) * slice_y);
+         bullet_set_velocity(new_bullet, 50, 0);
+         bullet_set_visual(new_bullet, PROJECTILE_SPRITE_BLUE);
+         bullet_set_visual_scale(new_bullet, 0.5, 0.5);
+         bullet_set_scale(new_bullet, 5, 5);
+      end
+
+      for i=1, 8 do
+         local new_bullet = bullet_new(BULLET_SOURCE_ENEMY);
+         bullet_set_position(new_bullet, play_area_width()+10, (i-3) * slice_y);
+         bullet_set_velocity(new_bullet, -50, 0);
+         bullet_set_visual(new_bullet, PROJECTILE_SPRITE_BLUE);
+         bullet_set_visual_scale(new_bullet, 0.5, 0.5);
+         bullet_set_scale(new_bullet, 5, 5);
+      end
+   end
+   t_wait(3.5);
+   do
+      local slice_y = play_area_height()/8;
+      for i=1, 8 do
+         local new_bullet = bullet_new(BULLET_SOURCE_ENEMY);
+         bullet_set_position(new_bullet, -10, (i-3) * slice_y);
+         bullet_set_velocity(new_bullet, 50, 0);
+         bullet_set_visual(new_bullet, PROJECTILE_SPRITE_BLUE);
+         bullet_set_visual_scale(new_bullet, 0.5, 0.5);
+         bullet_set_scale(new_bullet, 5, 5);
+      end
+
+      for i=1, 8 do
+         local new_bullet = bullet_new(BULLET_SOURCE_ENEMY);
+         bullet_set_position(new_bullet, play_area_width()+10, (i-1) * slice_y);
+         bullet_set_velocity(new_bullet, -50, 0);
+         bullet_set_visual(new_bullet, PROJECTILE_SPRITE_BLUE);
+         bullet_set_visual_scale(new_bullet, 0.5, 0.5);
+         bullet_set_scale(new_bullet, 5, 5);
+      end
+   end
+   t_wait(3.5);
+   do
+      local slice_y = play_area_height()/8;
+      for i=1, 8 do
+         local new_bullet = bullet_new(BULLET_SOURCE_ENEMY);
+         bullet_set_position(new_bullet, -10, (i-1) * slice_y);
+         bullet_set_velocity(new_bullet, 50, 0);
+         bullet_set_visual(new_bullet, PROJECTILE_SPRITE_BLUE);
+         bullet_set_visual_scale(new_bullet, 0.5, 0.5);
+         bullet_set_scale(new_bullet, 5, 5);
+      end
+
+      for i=1, 8 do
+         local new_bullet = bullet_new(BULLET_SOURCE_ENEMY);
+         bullet_set_position(new_bullet, play_area_width()+10, (i-3) * slice_y);
+         bullet_set_velocity(new_bullet, -50, 0);
+         bullet_set_visual(new_bullet, PROJECTILE_SPRITE_BLUE);
+         bullet_set_visual_scale(new_bullet, 0.5, 0.5);
+         bullet_set_scale(new_bullet, 5, 5);
+      end
+   end
 end
 
 function wave_2()
-   -- wave_2_sub1();
-   -- t_wait(6.4);
-   -- wave_2_sub2();
-   -- t_wait(3.5)
-   -- wave_2_sub3();
+   wave_2_sub1();
+   t_wait(6.4);
+   wave_2_sub2();
+   t_wait(3.5)
+   wave_2_sub3();
    -- safe buffer for five seconds.
-   -- t_wait(5);
-   -- wave_2_sub4();
-   -- t_wait_for_no_danger();
-   -- t_wait(1.5);
+   t_wait(5);
+   wave_2_sub4();
+   t_wait_for_no_danger();
+   t_wait(7.5);
 
    -- spawn 3 enemies that will start blanketing
    wave_2_sub5();
@@ -1090,14 +1142,8 @@ function stage_task()
    -- async_task("loop_bkg_music");
 
 -- stage main
-   -- print("1_1LUA Start stage one");
-   -- wave_1();
-   -- print("1_1LUA Stage 1 cooldown");
-   -- t_wait(12.5);
-
-   -- NOTE: the spinsters in wave1 take about 4.? something seconds to
-   -- finish their cycles.
-   -- print("1_1LUA Stage 2");
+   wave_1();
+   t_wait(12.5);
    wave_2();
 
    -- NOTE:
