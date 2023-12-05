@@ -1,7 +1,9 @@
 dofile("stages/common.lua")
 -- TODO:
 -- Prettification pass.
--- revise pattern sprinkler 1
+-- revise spinster pattern 1
+--     Too much dead time!
+--     add popcorn enemies for this wave
 -- compose music track
 -- skin all enemies.
 -- miniboss
@@ -77,6 +79,11 @@ function _wave1_enemy_shoot_down_and_fly_to_side(e, x_down, y_down, t_mv_speed, 
                aim[2] = aim[2] * (150 + (dt * 180));
 
                bullet_set_velocity(b, aim[1], aim[2]);
+
+               if dt > 0.375 then
+                  break;
+               end
+
                t_yield();
             end
          end
@@ -342,6 +349,10 @@ function wave_1_sub3()
    t_wait(1.9);
    _wave1_enemy_spinster(play_area_width()/2 -100, -20, -20, 80, 0.4, 0);
    _wave1_enemy_spinster(play_area_width()/2 +100, -20, 20, 80, 0.4, 1);
+
+   -- TODO pop corn enemies here
+   -- to add more interest and scoring opportunities.
+   -- some light danger enemies.
 end
 
 --[I intentionally want this to be the heavier wave and the rest is easier,
@@ -673,7 +684,7 @@ function _wave2_enemy_firework(e, accel, wait_t, wait_t2, shot_spreads, delay_be
          local current_arc_direction = v2_direction_from_degree((angle + displacement) % 360);
 
          local nb = bullet_new(BULLET_SOURCE_ENEMY);
-         bullet_set_task(nb, variation, current_arc_direction, 90, 0.25 + (j+1)*0.15, 800);
+         bullet_set_task(nb, variation, current_arc_direction, 90, 0.25 + (j+1)*0.15, 700);
          bullet_set_position(nb, ex, ey);
          bullet_set_scale(nb, 5, 5);
          if not (variation == "_wave2_bullet_firework1") then
@@ -1212,7 +1223,7 @@ function wave_2()
    t_wait(5);
    wave_2_sub4();
    t_wait_for_no_danger();
-   t_wait(7.5);
+   t_wait(9.5);
 
    -- spawn 3 enemies that will start blanketing
    wave_2_sub5();
@@ -1220,7 +1231,7 @@ function wave_2()
 
    -- here are some standard shmup waves.
    wave_2_sub2();
-   t_wait(10.0);
+   t_wait(8.0);
    wave_2_sub_6();
 end
 
