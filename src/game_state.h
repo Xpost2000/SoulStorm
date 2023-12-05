@@ -75,15 +75,15 @@ enum Projectile_Sprite_Type {
     PROJECTILE_SPRITE_TYPES
 };
 
-#define PLAY_AREA_WIDTH_PX (370)
+#define PLAY_AREA_WIDTH_PX (375)
 
 // this is where the actual member variables of the game go
 // the class is just a small wrapper for this stuff
 enum Play_Area_Edge_Behavior {
-    PLAY_AREA_EDGE_BLOCKING = 0,
-    PLAY_AREA_EDGE_DEADLY,
-    PLAY_AREA_EDGE_WRAPPING,
-    PLAY_AREA_EDGE_PASSTHROUGH,
+    PLAY_AREA_EDGE_BLOCKING    = 0,
+    PLAY_AREA_EDGE_DEADLY      = 1,
+    PLAY_AREA_EDGE_WRAPPING    = 2,
+    PLAY_AREA_EDGE_PASSTHROUGH = 3,
     PLAY_AREA_EDGE_BEHAVIOR_COUNT,
 };
 struct Play_Area {

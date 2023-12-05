@@ -1268,8 +1268,17 @@ function stage_task()
    -- async_task("loop_bkg_music");
 
 -- stage main
+
+   -- Player Dialogue Here
+   --
+   -- ???
+   --
    wave_1();
    t_wait(12.5);
+   -- Player Dialogue Here...
+   --
+   --
+   --
    wave_2();
 
    -- NOTE:
@@ -1282,8 +1291,13 @@ function stage_task()
    -- blanket_wave1()
    -- blanket_wave2()
 
+   -- Player Dialogue Here...
+   --
+   -- 
    -- mid_boss();
    -- async_task("mid_boss_minions");
+
+   -- Final Dialogue. Finish stage!
 
    print("1_1LUA cooldown to finish stage.");
    t_wait(10);

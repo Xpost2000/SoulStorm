@@ -260,14 +260,20 @@ void Game::setup_stage_start() {
     // reset UID to 0.
     UID::reset();
 
-    state->player.position = V2(state->play_area.width / 2, 300);
-    state->player.hp       = 1;
-    state->player.die      = false;
-    state->player.scale    = V2(2, 2);
-    state->player.end_invincibility();
     {
-        state->player.sprite   = sprite_instance(resources->player_sprite);
+        state->player.position = V2(state->play_area.width / 2, 300);
+        state->player.hp       = 1;
+        state->player.die      = false;
+        state->player.scale    = V2(2, 2);
+        state->player.end_invincibility();
+        {
+            state->player.sprite   = sprite_instance(resources->player_sprite);
+        }
     }
+
+    state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_BLOCKING);
+    state->play_area.edge_behavior_top    = PLAY_AREA_EDGE_WRAPPING;
+    state->play_area.edge_behavior_bottom = PLAY_AREA_EDGE_WRAPPING;
 
     state->boss_health_displays.displays.zero();
 
@@ -1868,11 +1874,6 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
     {
         state->play_area.x      = resolution.x / 2 - state->play_area.width * 0.75;
         state->play_area.height = resolution.y;
-
-        // state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_WRAPPING);
-        state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_BLOCKING);
-        state->play_area.edge_behavior_top    = PLAY_AREA_EDGE_WRAPPING;
-        state->play_area.edge_behavior_bottom = PLAY_AREA_EDGE_WRAPPING;
 
         state->main_camera.xy.x = -state->play_area.x;
     }
@@ -3689,6 +3690,19 @@ int _lua_bind_random_attack_sound(lua_State* L) {
     return 1;
 }
 
+int _lua_bind_play_area_edge_behavior(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto& play_area = state->gameplay_data.play_area;
+    int edge_id   = luaL_checkinteger(L, 1);
+    int edge_flag = luaL_checkinteger(L, 2);
+
+    if (edge_id < 0) edge_id  = 0;
+    if (edge_id >= 3) edge_id = 3;
+
+    play_area.edge_behaviors[edge_id] = edge_flag;
+    return 0;
+}
+
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     /*
@@ -3699,34 +3713,47 @@ lua_State* Game_State::alloc_lua_bindings() {
       a state machine... Well... Yeah.
      */
     lua_checkstack(L, 512);
-    // lua_State* L = lua_newstate(_lua_top_linear_memory_allocator, (void*)&Global_Engine()->main_arena);
-    // NOTE: only allow IO in the future.
-    //luaL_openlibs(L);
     luaL_openlibs(L);
 
     {
         // constants to share.
         // Try to keep this up to date in the future...
+
+        /*
+         * NOTE:
+         * I would probably like to have projectile visuals loadable
+         * but it's not a top priority. It might even remain this way until release LOL.
+         */
         const char* lua_code = R"(
-PROJECTILE_SPRITE_BLUE = 0;
-PROJECTILE_SPRITE_BLUE_STROBING = 1;
-PROJECTILE_SPRITE_BLUE_ELECTRIC = 2;
-PROJECTILE_SPRITE_RED = 3;
-PROJECTILE_SPRITE_RED_STROBING = 4;
-PROJECTILE_SPRITE_RED_ELECTRIC = 5;
-PROJECTILE_SPRITE_NEGATIVE = 6;
+PROJECTILE_SPRITE_BLUE              = 0;
+PROJECTILE_SPRITE_BLUE_STROBING     = 1;
+PROJECTILE_SPRITE_BLUE_ELECTRIC     = 2;
+PROJECTILE_SPRITE_RED               = 3;
+PROJECTILE_SPRITE_RED_STROBING      = 4;
+PROJECTILE_SPRITE_RED_ELECTRIC      = 5;
+PROJECTILE_SPRITE_NEGATIVE          = 6;
 PROJECTILE_SPRITE_NEGATIVE_STROBING = 7;
 PROJECTILE_SPRITE_NEGATIVE_ELECTRIC = 8;
-PROJECTILE_SPRITE_HOT_PINK = 9;
+PROJECTILE_SPRITE_HOT_PINK          = 9;
 PROJECTILE_SPRITE_HOT_PINK_STROBING = 10;
 PROJECTILE_SPRITE_HOT_PINK_ELECTRIC = 11;
 
 BULLET_SOURCE_NEUTRAL = 0;
-BULLET_SOURCE_PLAYER = 1;
-BULLET_SOURCE_ENEMY = 2;
+BULLET_SOURCE_PLAYER  = 1;
+BULLET_SOURCE_ENEMY   = 2;
 
 LASER_HAZARD_DIRECTION_HORIZONTAL = 0;
 LASER_HAZARD_DIRECTION_VERTICAL = 1;
+
+PLAY_AREA_EDGE_BLOCKING    = 0;
+PLAY_AREA_EDGE_DEADLY      = 1;
+PLAY_AREA_EDGE_WRAPPING    = 2;
+PLAY_AREA_EDGE_PASSTHROUGH = 3;
+
+PLAY_AREA_EDGE_TOP = 0;
+PLAY_AREA_EDGE_BOTTOM    = 1;
+PLAY_AREA_EDGE_LEFT    = 2;
+PLAY_AREA_EDGE_RIGHT      = 3;
 )";
         luaL_dostring(L, lua_code);
     }
@@ -3751,6 +3778,8 @@ LASER_HAZARD_DIRECTION_VERTICAL = 1;
 
         lua_register(L, "camera_traumatize", _lua_bind_camera_traumatize);
         lua_register(L, "camera_set_trauma", _lua_bind_camera_set_trauma);
+
+        lua_register(L, "play_area_set_edge_behavior", _lua_bind_play_area_edge_behavior);
     }
 
     /*
