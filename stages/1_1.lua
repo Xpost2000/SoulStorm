@@ -1,4 +1,7 @@
 dofile("stages/common.lua")
+-- TODO:
+-- Prettification pass.
+
 -- Because this is the first level of the bunch
 -- it's going to have the worst code since I'm exploring the lua interfacing
 -- and also the early lua interface was kinda crap...
@@ -862,16 +865,194 @@ function wave_2_sub4()
    end
 end
 
+function _wave2_sub5_goon_initial(e, goon_number)
+   -- these goons will spawn an arc pointed towards the center line
+   -- that will delay before initiating.
+   -- side goons shoot a bit faster.
+   local position = v2(enemy_position_x(e), enemy_position_y(e));
+   if goon_number == 0 then
+      local new_bullets = {};
+      local arcs1       = {};
+
+      local new_bullets2 = {};
+      local arcs2       = {};
+
+      local new_bullets3 = {};
+      local arcs3       = {};
+
+      local arc_sub_length = 180 / 16;
+      for i=1, 16 do
+         local angle = dir_to_angle(v2(1, 1)) + arc_sub_length * ((i-1) - (16/2));
+         local current_arc_direction = v2_direction_from_degree(angle);
+         local position = v2_add(position, v2(current_arc_direction[1] * 45, current_arc_direction[2] * 45))
+
+         local nb = bullet_new(BULLET_SOURCE_ENEMY);
+         new_bullets[i] = nb;
+         bullet_set_visual(nb, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
+         bullet_set_position(nb, position[1], position[2]);
+         bullet_set_scale(nb, 2.5, 2.5);
+         bullet_set_visual_scale(nb, 0.25, 0.25);
+         bullet_set_lifetime(nb, 10);
+         play_sound(random_attack_sound());
+         t_wait(0.025);
+      end
+
+      for i=1, 16 do
+         local angle = dir_to_angle(v2(1, 1))-10 + arc_sub_length * ((i-1) - (16/2));
+         local current_arc_direction = v2_direction_from_degree(angle);
+         local position = v2_add(position, v2(current_arc_direction[1] * 70, current_arc_direction[2] * 70))
+
+         local nb = bullet_new(BULLET_SOURCE_ENEMY);
+         new_bullets2[i] = nb;
+         bullet_set_visual(nb, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
+         bullet_set_position(nb, position[1], position[2]);
+         bullet_set_scale(nb, 2.5, 2.5);
+         bullet_set_visual_scale(nb, 0.25, 0.25);
+         bullet_set_lifetime(nb, 10);
+         play_sound(random_attack_sound());
+         t_wait(0.025);
+      end
+
+      for i=1, 16 do
+         local angle = dir_to_angle(v2(1, 1))-20 + arc_sub_length * ((i-1) - (16/2));
+         local current_arc_direction = v2_direction_from_degree(angle);
+         local position = v2_add(position, v2(current_arc_direction[1] * 90, current_arc_direction[2] * 00))
+
+         local nb = bullet_new(BULLET_SOURCE_ENEMY);
+         new_bullets3[i] = nb;
+         bullet_set_visual(nb, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
+         bullet_set_position(nb, position[1], position[2]);
+         bullet_set_scale(nb, 2.5, 2.5);
+         bullet_set_visual_scale(nb, 0.25, 0.25);
+         bullet_set_lifetime(nb, 10);
+         play_sound(random_attack_sound());
+         t_wait(0.025);
+      end
+   elseif goon_number == 1 then
+      -- This one will vomit out a mass of bullets
+      -- that are slow, and will last a fair while.
+      for i=1, 50 do
+         local ep = v2(enemy_position_x(e), enemy_position_y(e));
+         local bullets = spawn_bullet_arc_pattern2(
+            ep,
+            25,
+            90-i,
+            v2(0, 1),
+            45,
+            0,
+            BULLET_SOURCE_ENEMY
+         );
+         play_sound(random_attack_sound());
+
+         bullet_list_set_visuals(
+            bullets,
+            PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
+         );
+
+         for i,b in ipairs(bullets) do
+            bullet_set_visual_scale(b, 0.15, 0.15);
+            bullet_set_scale(b, 1.5, 1.5);
+         end
+
+         t_wait(0.175);
+      end
+   elseif goon_number == 2 then
+      local new_bullets = {};
+      local new_bullets2 = {};
+      local new_bullets3 = {};
+      local arc_sub_length = 180 / 16;
+      for i=1, 16 do
+         local angle = dir_to_angle(v2(-1, 1)) + arc_sub_length * ((i-1) - (16/2));
+         local current_arc_direction = v2_direction_from_degree(angle);
+         local position = v2_add(position, v2(current_arc_direction[1] * 45, current_arc_direction[2] * 45))
+
+         local nb = bullet_new(BULLET_SOURCE_ENEMY);
+         new_bullets[i] = nb;
+         bullet_set_visual(nb, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
+         bullet_set_position(nb, position[1], position[2]);
+         bullet_set_scale(nb, 2.5, 2.5);
+         bullet_set_visual_scale(nb, 0.25, 0.25);
+         bullet_set_lifetime(nb, 10);
+         play_sound(random_attack_sound());
+         t_wait(0.025);
+      end
+
+      for i=1, 16 do
+         local angle = dir_to_angle(v2(-1, 1))-10 + arc_sub_length * ((i-1) - (16/2));
+         local current_arc_direction = v2_direction_from_degree(angle);
+         local position = v2_add(position, v2(current_arc_direction[1] * 70, current_arc_direction[2] * 70))
+
+         local nb = bullet_new(BULLET_SOURCE_ENEMY);
+         new_bullets2[i] = nb;
+         bullet_set_visual(nb, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
+         bullet_set_position(nb, position[1], position[2]);
+         bullet_set_scale(nb, 2.5, 2.5);
+         bullet_set_visual_scale(nb, 0.25, 0.25);
+         bullet_set_lifetime(nb, 10);
+         play_sound(random_attack_sound());
+         t_wait(0.025);
+      end
+
+      for i=1, 16 do
+         local angle = dir_to_angle(v2(-1, 1))-20 + arc_sub_length * ((i-1) - (16/2));
+         local current_arc_direction = v2_direction_from_degree(angle);
+         local position = v2_add(position, v2(current_arc_direction[1] * 90, current_arc_direction[2] * 90))
+
+         local nb = bullet_new(BULLET_SOURCE_ENEMY);
+         new_bullets3[i] = nb;
+         bullet_set_visual(nb, PROJECTILE_SPRITE_HOT_PINK_ELECTRIC);
+         bullet_set_position(nb, position[1], position[2]);
+         bullet_set_scale(nb, 2.5, 2.5);
+         bullet_set_visual_scale(nb, 0.25, 0.25);
+         bullet_set_lifetime(nb, 10);
+         play_sound(random_attack_sound());
+         t_wait(0.025);
+      end
+   end
+end
+
+function wave_2_sub5()
+   do
+      -- TODO: Fade these guys in.
+      local goon = {};
+      goon[1] = enemy_new();
+      enemy_set_scale(goon[1], 10, 10);
+      enemy_set_hp(goon[1], 125);
+      enemy_set_position(goon[1], 50, 80);
+      t_wait(1.0);
+      goon[2] = enemy_new();
+      enemy_set_scale(goon[2], 10, 10);
+      enemy_set_hp(goon[2], 125);
+      enemy_set_position(goon[2], play_area_width()/2, 30);
+      t_wait(1.0);
+      goon[3] = enemy_new();
+      enemy_set_scale(goon[3], 10, 10);
+      enemy_set_hp(goon[3], 125);
+      enemy_set_position(goon[3], play_area_width() - 50, 80);
+      t_wait(1.0);
+
+      enemy_set_task(goon[1], "_wave2_sub5_goon_initial", 0);
+      enemy_set_task(goon[3], "_wave2_sub5_goon_initial", 2);
+      t_wait(1.0);
+      enemy_set_task(goon[2], "_wave2_sub5_goon_initial", 1);
+      t_wait(1.0);
+   end
+end
+
 function wave_2()
-   wave_2_sub1();
-   t_wait(6.4);
-   wave_2_sub2();
-   t_wait(3.5)
-   wave_2_sub3();
+   -- wave_2_sub1();
+   -- t_wait(6.4);
+   -- wave_2_sub2();
+   -- t_wait(3.5)
+   -- wave_2_sub3();
    -- safe buffer for five seconds.
-   t_wait(7);
-   wave_2_sub4();
-   t_wait(2);
+   -- t_wait(5);
+   -- wave_2_sub4();
+   -- t_wait_for_no_danger();
+   -- t_wait(1.5);
+
+   -- spawn 3 enemies that will start blanketing
+   wave_2_sub5();
 end
 
 function blanket_wave1()
@@ -903,16 +1084,16 @@ end
 -- I will introduce them in 1-3 as a new gameplay "mechanic"
 --
 function stage_task()
-   t_wait(1.5);
+   t_wait_for_stage_intro();
    -- ideally this should not be a string, but I should allow closures...
    print("1_1LUA Play music");
-   async_task("loop_bkg_music");
+   -- async_task("loop_bkg_music");
 
 -- stage main
    -- print("1_1LUA Start stage one");
-   wave_1();
+   -- wave_1();
    -- print("1_1LUA Stage 1 cooldown");
-   t_wait(12.5);
+   -- t_wait(12.5);
 
    -- NOTE: the spinsters in wave1 take about 4.? something seconds to
    -- finish their cycles.
@@ -934,6 +1115,6 @@ function stage_task()
 
    print("1_1LUA cooldown to finish stage.");
    t_wait(10);
-   -- wait_no_danger();
+   wait_no_danger();
    t_complete_stage();
 end

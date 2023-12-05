@@ -41,10 +41,15 @@ function spawn_bullet_line(center, how_many, spacing, scale, direction, speed)
    return new_bullets;
 end
 
+function dir_to_angle(direction)
+   local nd = v2_normalized(direction);
+   return math.deg(math.atan(nd[2], nd[1]));
+end
+
 function spawn_bullet_arc_pattern2(center, how_many, arc_degrees, direction, speed, distance_from_center, src)
    local new_bullets = {};
    local arc_sub_length = arc_degrees / how_many;
-   local direction_angle = math.deg(math.atan(direction[2], direction[1]));
+   local direction_angle = dir_to_angle(direction);
    
    local bullet_i = 1;
    

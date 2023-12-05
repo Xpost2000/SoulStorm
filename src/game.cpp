@@ -264,6 +264,7 @@ void Game::setup_stage_start() {
     state->player.hp       = 1;
     state->player.die      = false;
     state->player.scale    = V2(2, 2);
+    state->player.end_invincibility();
     {
         state->player.sprite   = sprite_instance(resources->player_sprite);
     }
