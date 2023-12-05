@@ -3045,11 +3045,13 @@ void Game::update_from_save_data(Save_File* save_data) {
         {
             state->cutscene1.triggered = have_postgame_access;
         }
+#if 0
         // Enable postgame portal if we're in the postgame
         {
             auto& portal = state->portals[3]; 
             portal.visible = can_access_stage(3);
         }    
+#endif
     }
 }
 

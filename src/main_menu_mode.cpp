@@ -16,14 +16,17 @@ void cutscene_completed_maingame_task(jdr_duffcoroutine_t* co) {
 
     *trauma_timer = 0;
 
-    main_menu_state->screen_message_add(string_literal("You have proven yourself!"));
+    main_menu_state->screen_message_add(string_literal("Congratulations!"));
     while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
-    main_menu_state->screen_message_add(string_literal("But it is not enough."));
+    main_menu_state->screen_message_add(string_literal("I hope you enjoyed your time!"));
     while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
-    main_menu_state->screen_message_add(string_literal("A final trial remains."));
+    main_menu_state->screen_message_add(string_literal("Feel free to maximize your score!"));
+    while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
+    main_menu_state->screen_message_add(string_literal("Otherwise, I hope to see you again!"));
     while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
 
 
+#if 0
     // post game portal focus and spawn.
     // Using a similar animation to the player.
     {
@@ -64,7 +67,7 @@ void cutscene_completed_maingame_task(jdr_duffcoroutine_t* co) {
     while (camera_interpolating(&camera)) {
         JDR_Coroutine_YieldNR();
     }
-
+#endif
     TASK_WAIT(0.5f);
 
     main_menu_state->cutscene1.phase = 0;
@@ -86,10 +89,10 @@ void cutscene_introduction_fasttrack_task(jdr_duffcoroutine_t* co) {
     main_menu_state->player.visible = false;
 
     TASK_WAIT(0.25f);
-    main_menu_state->screen_message_add(string_literal("There is always more to do."));
-    while (!main_menu_state->screen_messages_finished()) {
-        JDR_Coroutine_YieldNR();
-    }
+    main_menu_state->screen_message_add(string_literal("Welcome back!"));
+    while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
+    main_menu_state->screen_message_add(string_literal("There's always more to do!"));
+    while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
 
     while ((*trauma_timer) < 0.45f) {
         controller_rumble(Input::get_gamepad(0), 0.25f, 0.25f, 10);
@@ -143,8 +146,7 @@ void cutscene_introduction_firsttime_task(jdr_duffcoroutine_t* co) {
     camera_traumatize(&camera, 0.47f);
 
     main_menu_state->player.visible = true;
-    main_menu_state->screen_message_add(string_literal("Now the adventure begins."));
-    main_menu_state->screen_message_add(string_literal("Prove your worthiness!"));
+    main_menu_state->screen_message_add(string_literal("Now the adventure begins..."));
 
     while (!main_menu_state->screen_messages_finished()) {
         JDR_Coroutine_YieldNR();

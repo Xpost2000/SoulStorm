@@ -9,6 +9,13 @@
  * main menu specific behaviors since it's
  * meant to be somewhat interactive, but not necessarily
  * the same as the "ingame" stuff.
+
+ *
+ * The main menu hub is kind of intended to be a "hub" area
+ * that grows a little after each stage.
+ *
+ * Just a nice thing to add a little world building.
+ *
  */
 
 struct MainMenu_Data;
