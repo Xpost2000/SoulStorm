@@ -2487,6 +2487,27 @@ void Game::convert_bullets_to_score_pickups(float radius) {
 
         b.kill();
 
+        {
+            auto& emitter = *(state->particle_emitters.alloc());
+            emitter.reset();
+            emitter.sprite                  = sprite_instance(resources->circle_sprite);
+            emitter.sprite.scale            = V2(0.125/6, 0.125/6);
+            emitter.shape                   = particle_emit_shape_circle(b.position, 5.0f);
+            emitter.modulation              = color32f32(0.8, 0.8, 0.8, 1.0);
+            emitter.lifetime                = 0.35f;
+            emitter.scale_variance          = V2(-0.055, 0.055);
+            emitter.velocity_x_variance     = V2(-140, 140);
+            emitter.velocity_y_variance     = V2(-140, 140);
+            emitter.acceleration_x_variance = V2(-100, 100);
+            emitter.acceleration_y_variance = V2(-100, 100);
+            emitter.lifetime_variance       = V2(-0.25f, 0.2f);
+            emitter.emission_max_timer      = 0.035f;
+            emitter.max_emissions           = 1;
+            emitter.emit_per_emission       = 8;
+            emitter.active                  = true;
+            emitter.scale                   = 1;
+        }
+
         auto pe = pickup_score_entity(
             this->state,
             b.position,
@@ -2508,6 +2529,27 @@ void Game::convert_enemies_to_score_pickups(float radius) {
             continue;
 
         e.kill();
+
+        {
+            auto& emitter = *(state->particle_emitters.alloc());
+            emitter.reset();
+            emitter.sprite                  = sprite_instance(resources->circle_sprite);
+            emitter.sprite.scale            = V2(0.125/5, 0.125/5);
+            emitter.shape                   = particle_emit_shape_circle(e.position, 5.0f);
+            emitter.modulation              = color32f32(1.0, 0.2, 0.2, 1.0);
+            emitter.lifetime                = 0.45f;
+            emitter.scale_variance          = V2(-0.055, 0.055);
+            emitter.velocity_x_variance     = V2(-140, 140);
+            emitter.velocity_y_variance     = V2(-140, 140);
+            emitter.acceleration_x_variance = V2(-100, 100);
+            emitter.acceleration_y_variance = V2(-100, 100);
+            emitter.lifetime_variance       = V2(-0.25f, 0.2f);
+            emitter.emission_max_timer      = 0.035f;
+            emitter.max_emissions           = 1;
+            emitter.emit_per_emission       = 8;
+            emitter.active                  = true;
+            emitter.scale                   = 1;
+        }
 
         auto pe = pickup_score_entity(
             this->state,
@@ -2555,7 +2597,7 @@ void Game::handle_all_dead_entities(f32 dt) {
             Transitions::do_color_transition_in(
                 color32f32(1, 1, 1, 1),
                 0.10f,
-                0.0f
+                0.05f
             );
 
             Transitions::register_on_finish(
