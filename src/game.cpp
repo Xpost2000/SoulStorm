@@ -25,20 +25,16 @@ local Stage stage_list[] = {
 
 // Should not change in the future.
 enum Achievement_ID_List {
-    ACHIEVEMENT_ID_TEST_ACHIEVEMENT0,
-
     ACHIEVEMENT_ID_STAGE1,
-
     ACHIEVEMENT_ID_STAGE2,
-
     ACHIEVEMENT_ID_STAGE3,
 
-    ACHIEVEMENT_ID_STAGE4,
 
-    // ACHIEVEMENT_ID_STAGE1_FLAWLESS,
-    // ACHIEVEMENT_ID_STAGE2_FLAWLESS,
-    // ACHIEVEMENT_ID_STAGE3_FLAWLESS,
-    // ACHIEVEMENT_ID_STAGE4_FLAWLESS,
+    // TODO: add achievement triggers.
+    ACHIEVEMENT_ID_STAGE1_FLAWLESS,
+    ACHIEVEMENT_ID_STAGE2_FLAWLESS,
+    ACHIEVEMENT_ID_STAGE3_FLAWLESS,
+    ACHIEVEMENT_ID_UNTOUCHABLE,
 
     // play as every character type(?)
     // ACHIEVEMENT_ID_JACK_OF_ALL_TRADES,
@@ -127,7 +123,7 @@ local int game_complete_stage_level(s32 stage_id, s32 level_id) {
 
     // Check for all stages completed.
     if (stage.unlocked_levels > MAX_LEVELS_PER_STAGE) {
-        assertion(ACHIEVEMENT_ID_STAGE1 + stage_id <= ACHIEVEMENT_ID_STAGE4 && "Invalid achievement for stage id.");
+        assertion(ACHIEVEMENT_ID_STAGE1 + stage_id <= ACHIEVEMENT_ID_STAGE3 && "Invalid achievement for stage id.");
         auto achievement = Achievements::get(ACHIEVEMENT_ID_STAGE1 + stage_id);
         achievement->report();
 
