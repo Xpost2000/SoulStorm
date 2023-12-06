@@ -2036,7 +2036,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 #if 0
         const f32 TARGET_FRAMERATE = dt; // use 0 for unlimited
 #else
-        const f32 TARGET_FRAMERATE = 1.0f / 240.0f;
+        const f32 TARGET_FRAMERATE = 1.0f / 72.0f;
 #endif
         static f32 accumulator = 0.0f;
         accumulator += dt;
@@ -2174,6 +2174,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
             }
 
             state->particle_pool.update(this->state, dt);
+            this->state->coroutine_tasks.schedule_by_type(this->state, dt, GAME_TASK_SOURCE_GAME_FIXED);
 
             accumulator -= TARGET_FRAMERATE;
             Thread_Pool::synchronize_tasks();
@@ -2350,15 +2351,8 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         driver->screenshot((char*)"screenshot.png");
     }
 
-    /*
-     * NOTE: this is rescheduled here so that way the background script can
-     *       add objects to the render queue at the appropriate time,
-     *       this doesn't affect game behavior in a noticable way regarding the
-     *       scripts since they're only meant to spawn things.
-     *
-     *       At worst, maybe there's a frame of latency difference or something.
-     */
-    state->coroutine_tasks.scheduler(state, dt);
+    state->coroutine_tasks.schedule_by_type(state, dt, GAME_TASK_SOURCE_UI);
+    state->coroutine_tasks.schedule_by_type(state, dt, GAME_TASK_SOURCE_GAME);
 
     switch (state->screen_mode) {
         case GAME_SCREEN_TITLE_SCREEN: {

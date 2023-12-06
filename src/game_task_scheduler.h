@@ -26,9 +26,14 @@ extern "C" {
   TODO: should also schedule lua coroutines
 */
 enum {
-    GAME_TASK_AVALIABLE,
+    GAME_TASK_AVALIABLE = 0,
     GAME_TASK_SOURCE_UI,
     GAME_TASK_SOURCE_GAME,
+    // Entity tasks must run on the fixed framerate timer
+    // I don't really care about the background rendering tasks
+    // however it was always a big risk updating the game tasks at
+    // a different frametime.
+    GAME_TASK_SOURCE_GAME_FIXED,
     GAME_TASK_SOURCE_ALWAYS
 };
 
@@ -168,7 +173,7 @@ struct Game_Task_Scheduler {
 
     bool kill_task(s32 index);
 
-    void scheduler(struct Game_State* state, f32 dt);
+    void schedule_by_type(struct Game_State* state, f32 dt, u8 type);
     s32  first_avaliable_task();
 
     void setup_lua_task(Game_Task* task, lua_State* caller_co, const char* fn_name);

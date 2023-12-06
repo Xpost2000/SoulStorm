@@ -149,7 +149,7 @@ s32 Game_Task_Scheduler::add_lua_entity_game_task(struct Game_State* state, lua_
     if (this->L == nullptr) this->L = L;
 
     auto& task               = tasks[first_free];
-    setup_generic_task(&task, GAME_TASK_SOURCE_GAME, current_screen_state, false, state, nullptr);
+    setup_generic_task(&task, GAME_TASK_SOURCE_GAME_FIXED, current_screen_state, false, state, nullptr);
     task.uid                 = uid;
     task.uid_type            = type;
 
@@ -274,28 +274,21 @@ void Game_Task_Scheduler::deregister_all_dead_standard_tasks() {
     }
 }
 
-void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
+void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 type) {
     s32 current_ui_state     = state->ui_state;
     s32 current_screen_state = state->screen_mode;
 
     deregister_all_dead_lua_threads();
     deregister_all_dead_standard_tasks();
 
-#if 0
-#ifndef RELEASE
-    for (s32 i = 0; i < active_task_ids.size; ++i) {
-        for (s32 j = 0; j< active_task_ids.size; ++j) {
-            if (i != j) {
-                assertion(active_task_ids[i] != active_task_ids[j] && "Duplicate active task id? Fix this!");
-            }
-        }
-    }
-#endif
-#endif
     for (s32 index = 0; index < active_task_ids.size; ++index) {
         auto& task = tasks[active_task_ids[index]];
        // _debugprintf("Active ID IDX: [%d] = %d", index, active_task_ids[index]);
         task.userdata.dt = dt;
+
+        if (task.source != type) continue;
+
+        const bool is_game_task = (task.source == GAME_TASK_SOURCE_GAME || task.source == GAME_TASK_SOURCE_GAME_FIXED);
 
         {
             switch (task.userdata.yielded.reason) {
@@ -336,8 +329,7 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
                          * Special case for Game tasks, which should logically
                          * not advance if the game is in any UI.
                          */
-                        if (task.source == GAME_TASK_SOURCE_GAME &&
-                            task.associated_state == GAME_SCREEN_INGAME &&
+                        if (is_game_task && task.associated_state == GAME_SCREEN_INGAME &&
                             (
                                 current_screen_state != GAME_SCREEN_INGAME ||
                                 state->gameplay_data.paused_from_death ||
@@ -359,15 +351,15 @@ void Game_Task_Scheduler::scheduler(struct Game_State* state, f32 dt) {
         if (
             (task.source == GAME_TASK_SOURCE_ALWAYS)                                          ||
             (task.source == GAME_TASK_SOURCE_UI && task.associated_state == current_ui_state) ||
-            (task.source == GAME_TASK_SOURCE_GAME && task.associated_state == current_screen_state)
+            (is_game_task && task.associated_state == current_screen_state)
         ) {
             /*
              * special case for gameplay.
              * This will tell me how legal it is to run the game.
              */
-            if ((task.source == GAME_TASK_SOURCE_GAME &&
-                 task.associated_state == GAME_SCREEN_INGAME &&
+            if ((is_game_task && task.associated_state == GAME_SCREEN_INGAME &&
                  (
+                     current_screen_state != GAME_SCREEN_INGAME ||
                      state->gameplay_data.paused_from_death ||
                      state->gameplay_data.triggered_stage_completion_cutscene ||
                      current_ui_state != UI_STATE_INACTIVE
