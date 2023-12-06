@@ -350,9 +350,60 @@ function wave_1_sub3()
    _wave1_enemy_spinster(play_area_width()/2 -100, -20, -20, 80, 0.4, 0);
    _wave1_enemy_spinster(play_area_width()/2 +100, -20, 20, 80, 0.4, 1);
 
+   t_wait(1.5);
+
    -- TODO pop corn enemies here
    -- to add more interest and scoring opportunities.
    -- some light danger enemies.
+   Make_BrainDead_Enemy_Popcorn1(
+      20,
+      v2(play_area_width() + 25, play_area_height()/2 - 30),
+      0.086,
+      7,
+      -150,
+      30,
+      2,
+      25,
+      4,
+      -1);
+   t_wait(0.125);
+   Make_BrainDead_Enemy_Popcorn1(
+      10,
+      v2(130, -10),
+      0.026,
+      7,
+      -20,
+      100,
+      25,
+      2,
+      4,
+      -1);
+
+   t_wait(2.5);
+   Make_BrainDead_Enemy_Popcorn1(
+      10,
+      v2(play_area_width() + 25, play_area_height()/2 - 30),
+      0.086,
+      7,
+      -150,
+      30,
+      2,
+      45,
+      2,
+      -1);
+
+   Make_BrainDead_Enemy_Popcorn1(
+      10,
+      v2(play_area_width() + 25, play_area_height()/2 + 30),
+      0.086,
+      7,
+      -150,
+      30,
+      2,
+      45,
+      3,
+      -1);
+
 end
 
 --[I intentionally want this to be the heavier wave and the rest is easier,
@@ -1276,7 +1327,52 @@ function stage_task()
 --    -- ???
 --    --
    wave_1();
-   t_wait(12.5);
+   t_wait(5.5);
+   Make_BrainDead_Enemy_Popcorn1(
+      10,
+      v2(play_area_width() + 10, play_area_height()/2 - 30),
+      0.086,
+      7,
+      -180,
+      30,
+      2,
+      25,
+      4,
+      -1);
+   t_wait(0.125);
+   Make_BrainDead_Enemy_Popcorn1(
+      10,
+      v2(-10, play_area_height()/2 - 50),
+      0.086,
+      7,
+      180,
+      30,
+      2,
+      25,
+      4,
+      -1);
+   t_wait(0.325);
+
+   Make_Enemy_Burst360_1_1_2(
+      15,
+      v2(play_area_width()/2, -10),
+      v2(play_area_width()/2, play_area_height()/2),
+      0.75,
+
+      0.15, 4,
+      40, 45,
+
+      35,
+      120,
+
+      v2(0, 1),
+      125,
+      45,
+      
+      PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
+   );
+
+   t_wait(6.67);
 --    -- Player Dialogue Here...
 --    --
 --    --
