@@ -281,6 +281,14 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
     deregister_all_dead_lua_threads();
     deregister_all_dead_standard_tasks();
 
+    const bool block_game_task_update =
+        (
+            current_screen_state != GAME_SCREEN_INGAME ||
+            state->gameplay_data.paused_from_death ||
+            state->gameplay_data.triggered_stage_completion_cutscene ||
+            current_ui_state != UI_STATE_INACTIVE
+        );
+
     for (s32 index = 0; index < active_task_ids.size; ++index) {
         auto& task = tasks[active_task_ids[index]];
        // _debugprintf("Active ID IDX: [%d] = %d", index, active_task_ids[index]);
@@ -324,20 +332,10 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
                     }
                 } break;
                 case TASK_YIELD_REASON_WAIT_FOR_SECONDS: {
-                    if (task.userdata.yielded.timer < task.userdata.yielded.timer_max) {
-                        /*
-                         * Special case for Game tasks, which should logically
-                         * not advance if the game is in any UI.
-                         */
-                        if (is_game_task && task.associated_state == GAME_SCREEN_INGAME &&
-                            (
-                                current_screen_state != GAME_SCREEN_INGAME ||
-                                state->gameplay_data.paused_from_death ||
-                                state->gameplay_data.triggered_stage_completion_cutscene ||
-                                current_ui_state != UI_STATE_INACTIVE
-                            ))
-                            continue;
+                    if (is_game_task && task.associated_state == GAME_SCREEN_INGAME && block_game_task_update)
+                        continue;
 
+                    if (task.userdata.yielded.timer < task.userdata.yielded.timer_max) {
                         task.userdata.yielded.timer += dt;
                         continue;
                     } else {
@@ -353,19 +351,7 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
             (task.source == GAME_TASK_SOURCE_UI && task.associated_state == current_ui_state) ||
             (is_game_task && task.associated_state == current_screen_state)
         ) {
-            /*
-             * special case for gameplay.
-             * This will tell me how legal it is to run the game.
-             */
-            if ((is_game_task && task.associated_state == GAME_SCREEN_INGAME &&
-                 (
-                     current_screen_state != GAME_SCREEN_INGAME ||
-                     state->gameplay_data.paused_from_death ||
-                     state->gameplay_data.triggered_stage_completion_cutscene ||
-                     current_ui_state != UI_STATE_INACTIVE
-                 )
-                )
-            ) {
+            if ((is_game_task && task.associated_state == GAME_SCREEN_INGAME && block_game_task_update)) {
                 continue;
             }
 
@@ -378,8 +364,16 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
                     lua_gc(task.L_C, LUA_GCCOLLECT, 0);
                     status = JDR_DUFFCOROUTINE_SUSPENDED;
                 }
+
                 else if (status != LUA_YIELD) { 
-                    static const char* lua_codes[] = { "LUA_OK", "LUA_YIELD", "LUA_ERRRUN", "LUA_ERRSYNTAX", "LUA_ERRMEM", "LUA_ERRERR" };
+                    static const char* lua_codes[] = {
+                        "LUA_OK",
+                        "LUA_YIELD",
+                        "LUA_ERRRUN",
+                        "LUA_ERRSYNTAX",
+                        "LUA_ERRMEM",
+                        "LUA_ERRERR"
+                    };
 
                     _debugprintf("LuaTask(%s): Code Status: %d (%s)", task.fn_name, status, lua_codes[status]);
                     if (status != LUA_OK) {
