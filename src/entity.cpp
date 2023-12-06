@@ -376,15 +376,6 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
     }
 }
 
-bool Entity::attack() {
-    if (!firing) {
-        firing = true;
-        firing_t = 0;
-    }
-
-    return firing_t <= 0.0f;
-}
-
 void Entity::update_ghost_trails(f32 dt) {
     if (trail_ghost_record_timer <= 0.0f && trail_ghost_count < trail_ghost_limit) {
         auto& ghost = trail_ghosts[trail_ghost_count++];
@@ -436,16 +427,28 @@ void Entity::handle_invincibility_behavior(f32 dt) {
     invincibility_time.update(dt);
 }
 
+bool Entity::attack() {
+    if (!firing) {
+        firing = true;
+        firing_t = 0;
+    }
+
+    return firing_t <= 0.0f;
+}
+
+void Entity::stop_attack() {
+    firing = false;
+}
+
 void Entity::update_firing_behavior(f32 dt) {
     if (firing) {
         if (firing_t <= 0.0f) {
             firing_t = firing_cooldown;
-        } else {
-            firing_t -= dt;
         }
     } else {
-        firing_t = 0;
     }
+
+    firing_t -= dt;
 }
 
 void Entity::update(Game_State* state, f32 dt) {
@@ -607,6 +610,7 @@ void Player::update(Game_State* state, f32 dt) {
         } else {
         }
     } else {
+        stop_attack();
     }
 
     if (use_bomb) {

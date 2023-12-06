@@ -1,6 +1,10 @@
 /*
  * This is a "mega-header" which will include all the other entity
  * related header files.
+ *
+ * NOTE: some cruft related from when I still wanted to write a decent
+ * amount of the game code native and not in lua.
+ *
  */
 
 #ifndef ENTITY_H
@@ -127,6 +131,7 @@ struct Entity {
     s32   death_multiplier = DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER;
 
     bool attack();
+    void stop_attack();
 
     // I normally don't like using these... I still don't!
     virtual void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
