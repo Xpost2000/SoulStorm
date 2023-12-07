@@ -18,7 +18,8 @@
 
 #include "action_mapper.h"
 
-#define FIXED_TICKTIME (1.0f / 72.0f)
+#define TICKRATE       (72)
+#define FIXED_TICKTIME (1.0f / 72)
 
 // I kinda wanna draw a cute icon for each of the levels.
 local Stage stage_list[] = {
@@ -2065,6 +2066,22 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         static f32 accumulator = 0.0f;
         accumulator += dt;
 
+        // NOTE:
+        // since the game demo functionality is only meant for recording the "game" itself
+        // and not to operate as full debug input, I only care about producing input packets here.
+        {
+            V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
+            if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
+
+            state->current_input_packet.actions=
+                (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT))  *Action::is_down(ACTION_ACTION) ||
+                (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT))   *Action::is_down(ACTION_FOCUS)  ||
+                (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))*Action::is_down(ACTION_USE_BOMB)
+                ;
+            state->current_input_packet.axes[0] = (s8)(axes[0] * 127.0f);
+            state->current_input_packet.axes[1] = (s8)(axes[1] * 127.0f);
+        }
+
         while (accumulator >= TARGET_FRAMERATE) {
             f32 dt = TARGET_FRAMERATE;
             state->current_stage_timer += dt;
@@ -3481,6 +3498,13 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
             state->resources
         );
     }
+}
+
+// Game demo functionality
+V2 gameplay_frame_input_packet_quantify_axes(const Gameplay_Frame_Input_Packet& input_packet) {
+    f32 x = (f32)input_packet.axes[0] / 127.0f;
+    f32 y = (f32)input_packet.axes[1] / 127.0f;
+    return V2(x, y);
 }
 
 // Lua bindings

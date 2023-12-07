@@ -586,19 +586,18 @@ f32 Player::get_grazing_score_modifier(s32 amount) {
 }
 
 void Player::update(Game_State* state, f32 dt) {
-    const auto& play_area = state->gameplay_data.play_area;
+    const auto& play_area    = state->gameplay_data.play_area;
+    const auto& input_packet = state->gameplay_data.current_input_packet;
     // unfortunately the action mapper system doesn't exist
     // here like it did in the last project, so I'll have to use key inputs
     // and gamepad power.
-    bool firing   = Action::is_down(ACTION_ACTION);
-    bool focusing = Action::is_down(ACTION_FOCUS);
-    bool use_bomb = Action::is_pressed(ACTION_USE_BOMB);
+    bool firing   = input_packet.actions & BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT);
+    bool focusing = input_packet.actions & BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT);
+    bool use_bomb = input_packet.actions & BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT);
 
     under_focus = focusing;
 
-    V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
-    if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
-
+    V2 axes = gameplay_frame_input_packet_quantify_axes(input_packet);
     float UNIT_SPEED = (under_focus) ? 225 : 325;
 
     velocity.x = axes[0] * UNIT_SPEED;

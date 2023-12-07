@@ -272,10 +272,42 @@ struct Scriptable_Render_Object {
     void render(Game_Resources* resources, struct render_commands* render_commands);
 };
 
+// This is meant for demo files.
+// will be recorded using the top of the memory arena.
+
+// GAMEPLAY DEMO FUNCTIONALITY
+enum Gameplay_Recording_File_Version {
+    GAMEPLAY_RECORDING_FILE_VERSION_1 = 0,
+};
+
+#define GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT   (0)
+#define GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT    (1)
+#define GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT (2)
+
+// Describes a single frame of "unpaused" gameplay.
+// Thankfully as a danmaku/bullet hell. There's not much data.
+struct Gameplay_Frame_Input_Packet {
+    u8 actions;
+    s8 axes[2];
+};
+V2 gameplay_frame_input_packet_quantify_axes(const Gameplay_Frame_Input_Packet& input_packet);
+
+struct Gameplay_Recording_File {
+    // check for both version and tickrate.
+    s16                          version;
+    s16                          tickrate;
+    struct random_state          prng_state;
+    s32                          frame_count;
+    Gameplay_Frame_Input_Packet* frames; // Allocated in the top region of the arena.
+};
+// END GAMEPLAY DEMO FUNCTIONALITY
+
 struct Gameplay_Data {
     bool stage_completed;
     Stage_State stage_state;
     Particle_Pool particle_pool;
+
+    Gameplay_Frame_Input_Packet current_input_packet;
 
     Fixed_Array<Bullet>                   to_create_player_bullets;
     Fixed_Array<Bullet>                   to_create_enemy_bullets;
@@ -474,7 +506,5 @@ struct Game_Resources {
         return font;
     }
 };
-
-// No methods, just a bunch of free functions if I have any here.
 
 #endif
