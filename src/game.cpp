@@ -269,7 +269,9 @@ void Game::setup_stage_start() {
         assertion(stage_id >= 0 && level_id >= 0 && "Something bad happened");
         _debugprintf("%d, %d", stage_id, level_id);
         // NOTE: check the ids later.
-        game_register_stage_attempt(stage_id, level_id);
+        if (!state->recording.in_playback) {
+            game_register_stage_attempt(stage_id, level_id);
+        }
         state->unload_all_script_loaded_resources(this->state, this->state->resources);
 
         state->stage_state = stage_load_from_lua(this->state, format_temp("stages/%d_%d.lua", stage_id+1, level_id+1));
@@ -286,6 +288,7 @@ void Game::setup_stage_start() {
         state->player.position = V2(state->play_area.width / 2, 300);
         state->player.hp       = 1;
         state->player.die      = false;
+        state->paused_from_death = false;
         state->player.scale    = V2(2, 2);
         state->player.end_invincibility();
         {
@@ -333,6 +336,7 @@ void Game::setup_stage_start() {
     // setup recording file for recording or playback.
     {
         if (!state->recording.in_playback) {
+            _debugprintf("Recording!");
             gameplay_recording_file_start_recording(
                 &state->recording,
                 state->prng,
@@ -1738,6 +1742,10 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
     timer.start();
 
     string level_complete_text = string_literal("LEVEL COMPLETE");
+    if (state->gameplay_data.recording.in_playback) {
+        level_complete_text = string_literal("RECORDING COMPLETE");
+    }
+
     string score_string_result = string_from_cstring(format_temp(
                                                          (game_will_be_new_high_score(stage_id, level_id, state->gameplay_data.current_score)) ?
                                                          "New High Score: %d" :
@@ -1808,8 +1816,6 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                 _debugprintf("Okay. Transition bye?");
                 complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
 
-                game_update_stage_score(stage_id, level_id, state->gameplay_data.current_score);
-                game_register_stage_completion(stage_id, level_id);
                 /*
                  * A neat thing to do would just be setup the main menu to preview
                  *
@@ -1821,7 +1827,13 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                  * I mean trying to write any real sequence code in C++ is never really pretty :/
                  */
 
-                s32 completion_type = game_complete_stage_level(stage_id, level_id);
+                s32 completion_type =  GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY;
+
+                if (!state->gameplay_data.recording.in_playback) {
+                    game_update_stage_score(stage_id, level_id, state->gameplay_data.current_score);
+                    game_register_stage_completion(stage_id, level_id);
+                    completion_type = game_complete_stage_level(stage_id, level_id);
+                }
 
                 Transitions::do_color_transition_in(
                     color32f32(0, 0, 0, 1),
@@ -1880,7 +1892,6 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                             [&](void*) mutable {
                                 state->ui_state    = UI_STATE_STAGE_SELECT;
                                 switch_screen(GAME_SCREEN_MAIN_MENU);
-                                _debugprintf("Hi main menu. We can do some more stuff like demonstrate if we unlocked a new stage!");
 
                                 Transitions::do_shuteye_out(
                                     color32f32(0, 0, 0, 1),
@@ -2115,6 +2126,8 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                     // nop and exit to main menu.
                     // TODO: add a different message rather than stage completion.
                     state->triggered_stage_completion_cutscene = true;
+                    state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
+                    state->complete_stage.stage_timer = Timer(0.35f);
                     zero_memory(&state->current_input_packet, sizeof(state->current_input_packet));
                 }
             } else {
@@ -2735,7 +2748,7 @@ void Game::handle_all_dead_entities(f32 dt) {
             );
 
             Transitions::register_on_finish(
-                [&](void*) mutable {
+                [&](void*) {
                     Transitions::do_color_transition_out(
                         color32f32(1, 1, 1, 1),
                         0.1f,
@@ -2743,13 +2756,25 @@ void Game::handle_all_dead_entities(f32 dt) {
                     );
 
                     Transitions::register_on_finish(
-                        [&](void*) mutable {
+                        [&](void*) {
+                            auto state = &this->state->gameplay_data;
+
                             Audio::play(resources->hit_sounds[0]);
                             if (safely_resurrect_player()) {
                             } else {
-                                // Would like to trigger a death cutscene
-                                // but now is not the time.
-                                switch_ui(UI_STATE_DEAD_MAYBE_RETRY);
+                                // TODO: Will have to change if
+                                // I have "CONTINUES" support
+                                _debugprintf("record status (%d) %d\n", state->recording.frame_count, state->recording.in_playback);
+                                if (state->recording.in_playback) {
+                                    _debugprintf("TODO handle continues?");
+                                    state->triggered_stage_completion_cutscene = true;
+                                    state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
+                                    state->complete_stage.stage_timer = Timer(0.35f);
+                                } else {
+                                    // Would like to trigger a death cutscene
+                                    // but now is not the time.
+                                    switch_ui(UI_STATE_DEAD_MAYBE_RETRY);
+                                }
                             }
                         }
                     );
@@ -3067,6 +3092,7 @@ void Game::switch_screen(s32 screen) {
             } else {
                 _debugprintf("Finished playback.");
                 state->gameplay_data.recording.in_playback = false;
+                state->gameplay_data.prng                 = state->gameplay_data.recording.old_prng;
             }
         } break;
         case GAME_SCREEN_INGAME: {
@@ -3553,6 +3579,7 @@ void gameplay_recording_file_start_recording(Gameplay_Recording_File* recording,
     recording->frame_count         = 0;
     recording->memory_arena        = arena;
     recording->memory_arena_cursor = arena->used;
+    recording->in_playback         = false;
     recording->frames              = (Gameplay_Frame_Input_Packet*)recording->memory_arena->push_unaligned(0);
 }
 

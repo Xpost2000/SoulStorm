@@ -297,8 +297,8 @@ struct Gameplay_Recording_File {
     u16                          version;
     s16                          tickrate;
     struct random_state          prng;
-    s32                          frame_count;
     struct random_state          old_prng; // For session restoration.
+    s32                          frame_count;
     u8                           stage_id;
     u8                           level_id;
 
@@ -315,11 +315,11 @@ struct Gameplay_Recording_File {
     Gameplay_Frame_Input_Packet* frames;
 
     // runtime data
-    Memory_Arena*                memory_arena;
-    u64                          memory_arena_cursor;
+    Memory_Arena*                memory_arena = nullptr;
+    u64                          memory_arena_cursor = 0;
 
-    bool                         in_playback;
-    s32                          playback_frame_index;
+    bool                         in_playback = false;
+    s32                          playback_frame_index = 0;
 };
 // NOTE: for what it's worth, I actually prefer this kind of C API
 // and it's kind of habitual for me to write stuff like this in my own personal code anyway...
