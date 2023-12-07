@@ -262,12 +262,25 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
     if (sprite.id.index != 0) {
         // NOTE: entity updates are responsible for actually
         //       animating their own sprites!
-        auto sprite_object   = graphics_get_sprite_by_id(&resources->graphics_assets, sprite.id);
-        auto sprite_frame    = sprite_get_frame(sprite_object, sprite.frame);
-        auto sprite_img = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
-        V2 sprite_image_size = V2(sprite_img->width, sprite_img->height);
+        auto  sprite_object     = graphics_get_sprite_by_id(&resources->graphics_assets, sprite.id);
+        auto  sprite_frame      = sprite_get_frame(sprite_object, sprite.frame);
+        auto  sprite_img        = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
+        V2    sprite_image_size = V2(sprite_img->width, sprite_img->height);
+        float facing_angle      = 0.0f;
 
-        // NOTE: provided sprites are 32x32
+        // NOTE: specifically needed for bullet disks which must be rotated to look correct.
+        // I would personally... Like to not have this here, but it's not a big deal imo.
+        if (resources->sprite_id_should_be_rotated(sprite.id)) {
+            auto velocity_direction = velocity.normalized();
+            facing_angle = radians_to_degrees(
+                atan2(velocity_direction.y,
+                      velocity_direction.x)
+            );
+        }
+
+
+        // NOTE: provided sprites are 32x32, so that will be the "assumed" scale for my development purposes
+        // although obviously none of the code here requires that. It's just my convention.
         sprite_image_size.x *= sprite.scale.x; sprite_image_size.y *= sprite.scale.y;
 
         for (s32 trail_ghost_index = 0; trail_ghost_index < trail_ghost_count; ++trail_ghost_index) {
@@ -280,12 +293,14 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
             auto modulation = trail_ghost_modulation;
             modulation.a *= (ghost.alpha/trail_ghost_max_alpha);
 
-            render_commands_push_image(
+            render_commands_push_image_ext(
                 render_commands,
                 sprite_img,
                 rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
                 sprite_frame->source_rect,
                 modulation,
+                V2(0.5, 0.5),
+                facing_angle,
                 0,
                 BLEND_MODE_ALPHA
             );
@@ -295,12 +310,14 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
             position.x + (sprite.offset.x - sprite_image_size.x/2),
             position.y + (sprite.offset.y - sprite_image_size.y/2)
         );
-        render_commands_push_image(
+        render_commands_push_image_ext(
             render_commands,
             sprite_img,
             rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
             sprite_frame->source_rect,
             color32f32(1.0, 1.0, 1.0, 1.0),
+            V2(0.5, 0.5),
+            facing_angle,
             0,
             BLEND_MODE_ALPHA
         );
@@ -612,7 +629,7 @@ void Player::update(Game_State* state, f32 dt) {
 
             controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
             if (under_focus) {
-                spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 1000.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_STROBING);
+                spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 1000.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_DISK);
             } else {
                 // spawn_bullet_line_pattern1(state, position, 1, 20.0f, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
                 
