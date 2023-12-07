@@ -72,7 +72,25 @@ enum Projectile_Sprite_Type {
     PROJECTILE_SPRITE_HOT_PINK_STROBING,
     PROJECTILE_SPRITE_HOT_PINK_ELECTRIC,
 
+    PROJECTILE_SPRITE_GREEN,
+    PROJECTILE_SPRITE_GREEN_STROBING,
+    PROJECTILE_SPRITE_GREEN_ELECTRIC,
+
+    PROJECTILE_SPRITE_BLUE_DISK,
+    PROJECTILE_SPRITE_RED_DISK,
+    PROJECTILE_SPRITE_HOT_PINK_DISK,
+    PROJECTILE_SPRITE_NEGATIVE_DISK,
+    PROJECTILE_SPRITE_GREEN_DISK,
+
     PROJECTILE_SPRITE_TYPES
+};
+
+local int projectile_sprites_requiring_rotation[] = {
+    PROJECTILE_SPRITE_BLUE_DISK,
+    PROJECTILE_SPRITE_RED_DISK,
+    PROJECTILE_SPRITE_HOT_PINK_DISK,
+    PROJECTILE_SPRITE_NEGATIVE_DISK,
+    PROJECTILE_SPRITE_GREEN_DISK
 };
 
 #define PLAY_AREA_WIDTH_PX (375)
@@ -423,6 +441,21 @@ struct Game_Resources {
     // I should have more of these...
     Audio::Sound_ID        attack_sounds[2];
     Audio::Sound_ID        hit_sounds[2];
+
+    // weird special case for bullets since those actually
+    // require rotation.
+    //
+    // It's being used by entity rendering as a hint basically.
+    inline bool sprite_id_should_be_rotated(sprite_id id) {
+        for (int i = 0; i < array_count(projectile_sprites_requiring_rotation); ++i) {
+            auto projectile_sprite_id = projectile_sprites[projectile_sprites_requiring_rotation[i]];
+            if (projectile_sprite_id.index == id.index) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     inline Audio::Sound_ID random_attack_sound(struct random_state* prng) {
         return attack_sounds[

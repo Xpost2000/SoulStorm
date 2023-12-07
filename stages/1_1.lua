@@ -59,7 +59,7 @@ function _wave1_enemy_shoot_down_and_fly_to_side(e, x_down, y_down, t_mv_speed, 
    local ex = enemy_position_x(e);
    local ey = enemy_position_y(e);
    for bullet=1, 4 do
-      local b = bullet_make(BULLET_SOURCE_ENEMY, enemy_position(e), PROJECTILE_SPRITE_HOT_PINK_ELECTRIC, v2(0.5, 0.5), v2(5, 5))
+      local b = bullet_make(BULLET_SOURCE_ENEMY, enemy_position(e), PROJECTILE_SPRITE_GREEN_ELECTRIC, v2(0.5, 0.5), v2(5, 5))
       bullet_task_lambda(
          b,
          function(b)
@@ -67,8 +67,9 @@ function _wave1_enemy_shoot_down_and_fly_to_side(e, x_down, y_down, t_mv_speed, 
             t_wait(1.54);
             bullet_reset_movement(b);
             t_wait(1);
+            bullet_set_visual(b, PROJECTILE_SPRITE_GREEN_DISK);
             bullet_start_trail(b, 12);
-            bullet_set_trail_modulation(b, 0.8, 0.5, 0.5, 1.0);
+            bullet_set_trail_modulation(b, 0.8, 0.8, 0.8, 0.3);
 
             local spawn_time = bullet_time_since_spawn(b);
             while true do

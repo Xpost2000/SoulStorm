@@ -173,7 +173,15 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
         1, 2, 4,
 
-        1, 2, 4
+        1, 2, 4,
+
+        1, 2, 4,
+
+        1,
+        1,
+        1,
+        1,
+        1,
     };
 
     // NOTE: I would like these to become sprite atlases at some point.
@@ -193,6 +201,18 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         {string_literal("projectiles/projectile1_hp.png")},
         {string_literal("projectiles/projectile1_hp.png"), string_literal("projectiles/projectile1_1_hp.png"),},
         {string_literal("projectiles/projectile1_hp.png"), string_literal("projectiles/projectile1_1_hp.png"), string_literal("projectiles/projectile1_1_2_hp.png"), string_literal("projectiles/projectile1_2_hp.png")},
+
+        {string_literal("projectiles/projectile1_g.png")},
+        {string_literal("projectiles/projectile1_g.png"), string_literal("projectiles/projectile1_1_g.png"),},
+        {string_literal("projectiles/projectile1_g.png"), string_literal("projectiles/projectile1_1_g.png"), string_literal("projectiles/projectile1_1_2_g.png"), string_literal("projectiles/projectile1_2_g.png")},
+
+        // NOTE: reauthor these. (I'm manually scaling these so these are unlikely to be animated yet.)
+        // they'll look decent enough since they're small but yeah.
+        {string_literal("projectiles/projectile1_flat.png")},
+        {string_literal("projectiles/projectile1_r_flat.png")},
+        {string_literal("projectiles/projectile1_hp_flat.png")},
+        {string_literal("projectiles/projectile1_inv_flat.png")},
+        {string_literal("projectiles/projectile1_g_flat.png")},
     };
 
     for (int projectile_sprite_id = 0; projectile_sprite_id < PROJECTILE_SPRITE_TYPES; ++projectile_sprite_id) {
