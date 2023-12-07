@@ -65,9 +65,14 @@ struct Memory_Arena {
     Memory_Arena sub_arena(u64 amount);
 };
 
+// NOTE:
+// only intended to be used in scopes... Although in practice
+// this literally never gets used.
+// At least it's not that much code...
 struct Temporary_Memory : public Memory_Arena {
     Temporary_Memory(Memory_Arena* parent);
     ~Temporary_Memory();
+    void reset_parent();
     Memory_Arena* parent = nullptr;
     u64           parent_top_marker = 0;
     u64           parent_bottom_marker = 0;

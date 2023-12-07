@@ -260,9 +260,12 @@ void Game::init_audio_resources() {
 
 void Game::setup_stage_start() {
     auto state = &this->state->gameplay_data;
+    s32 stage_id = this->state->mainmenu_data.stage_id_level_select;
+    s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
+
+    // TODO: recording playbacks should not count as attempts or completions!
+    // or high scores or anything!
     {
-        s32 stage_id = this->state->mainmenu_data.stage_id_level_select;
-        s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
         assertion(stage_id >= 0 && level_id >= 0 && "Something bad happened");
         _debugprintf("%d, %d", stage_id, level_id);
         // NOTE: check the ids later.
@@ -325,6 +328,22 @@ void Game::setup_stage_start() {
     {
         state->triggered_stage_completion_cutscene = false;
         state->complete_stage.stage                = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
+    }
+
+    // setup recording file for recording or playback.
+    {
+        if (!state->recording.in_playback) {
+            gameplay_recording_file_start_recording(
+                &state->recording,
+                state->prng,
+                &Global_Engine()->main_arena
+            );
+            state->recording.stage_id = stage_id;
+            state->recording.level_id = level_id;
+        } else {
+            state->recording.old_prng = state->prng;
+            state->prng               = state->recording.prng;
+        }
     }
 }
 
@@ -1306,12 +1325,6 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                             0.15f,
                             0.3f
                         );
-
-                        Transitions::register_on_finish(
-                            [&](void*) mutable {
-                                _debugprintf("Set up stage introduction cutscene");
-                            }
-                        );
                     }
                 );
             }
@@ -2066,22 +2079,6 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         static f32 accumulator = 0.0f;
         accumulator += dt;
 
-        // NOTE:
-        // since the game demo functionality is only meant for recording the "game" itself
-        // and not to operate as full debug input, I only care about producing input packets here.
-        {
-            V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
-            if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
-
-            state->current_input_packet.actions=
-                (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT))  *Action::is_down(ACTION_ACTION) ||
-                (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT))   *Action::is_down(ACTION_FOCUS)  ||
-                (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))*Action::is_down(ACTION_USE_BOMB)
-                ;
-            state->current_input_packet.axes[0] = (s8)(axes[0] * 127.0f);
-            state->current_input_packet.axes[1] = (s8)(axes[1] * 127.0f);
-        }
-
         while (accumulator >= TARGET_FRAMERATE) {
             f32 dt = TARGET_FRAMERATE;
             state->current_stage_timer += dt;
@@ -2094,6 +2091,35 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
             auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
             update_packet_data->dt = dt;
             update_packet_data->game_state = this->state;
+
+            // NOTE:
+            // since the game demo functionality is only meant for recording the "game" itself
+            // and not to operate as full debug input, I only care about producing input packets here.
+            {
+                V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
+                if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
+
+                state->current_input_packet.actions=
+                    (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT))  *Action::is_down(ACTION_ACTION) |
+                    (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT))   *Action::is_down(ACTION_FOCUS)  |
+                    (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))*Action::is_pressed(ACTION_USE_BOMB)
+                    ;
+                state->current_input_packet.axes[0] = (s8)(axes[0] * 127.0f);
+                state->current_input_packet.axes[1] = (s8)(axes[1] * 127.0f);
+            }
+
+            if (state->recording.in_playback) {
+                if (gameplay_recording_file_has_more_frames(&state->recording)) {
+                    state->current_input_packet = gameplay_recording_file_next_frame(&state->recording);
+                } else {
+                    // nop and exit to main menu.
+                    // TODO: add a different message rather than stage completion.
+                    state->triggered_stage_completion_cutscene = true;
+                    zero_memory(&state->current_input_packet, sizeof(state->current_input_packet));
+                }
+            } else {
+                gameplay_recording_file_record_frame(&state->recording, state->current_input_packet);
+            }
 
             Thread_Pool::add_job(
                 [](void* ctx) {
@@ -3025,6 +3051,23 @@ void Game::switch_screen(s32 screen) {
         case GAME_SCREEN_OPENING: 
         case GAME_SCREEN_MAIN_MENU: {
             state->gameplay_data.unload_all_script_loaded_resources(state, this->state->resources);
+            gameplay_recording_file_finish(&state->gameplay_data.recording);
+
+            if (!state->gameplay_data.recording.in_playback) {
+                _debugprintf("Writing recording...");
+
+                auto serializer = open_write_file_serializer(string_literal("game.recording"));
+                serializer.expected_endianess = ENDIANESS_LITTLE;
+                gameplay_recording_file_serialize(
+                    &state->gameplay_data.recording,
+                    nullptr,
+                    &serializer
+                );
+                serializer_finish(&serializer);
+            } else {
+                _debugprintf("Finished playback.");
+                state->gameplay_data.recording.in_playback = false;
+            }
         } break;
         case GAME_SCREEN_INGAME: {
         } break;
@@ -3501,6 +3544,93 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
 }
 
 // Game demo functionality
+void gameplay_recording_file_start_recording(Gameplay_Recording_File* recording,
+                                             struct random_state prng_state,
+                                             Memory_Arena* arena) {
+    recording->version             = GAMEPLAY_RECORDING_FILE_VERSION_1;
+    recording->tickrate            = TICKRATE;
+    recording->prng                = prng_state;
+    recording->frame_count         = 0;
+    recording->memory_arena        = arena;
+    recording->memory_arena_cursor = arena->used;
+    recording->frames              = (Gameplay_Frame_Input_Packet*)recording->memory_arena->push_unaligned(0);
+}
+
+void gameplay_recording_file_record_frame(Gameplay_Recording_File* recording, const Gameplay_Frame_Input_Packet& frame_input) {
+    assert(recording->memory_arena && "Cannot record frame without allocator");
+    recording->memory_arena->push_unaligned(sizeof(frame_input));
+    recording->frames[recording->frame_count++] = frame_input;
+}
+
+
+void gameplay_recording_file_finish(Gameplay_Recording_File* recording) {
+    if (recording->memory_arena) {
+        recording->memory_arena->used = recording->memory_arena_cursor;
+    }
+    recording->memory_arena = nullptr;
+}
+void gameplay_recording_file_stop_recording(Gameplay_Recording_File* recording) {
+    // NOTE:
+    // memory is deliberately not reset.
+    // It is resident because the intention is to serialize if needed.
+    // IE: it is fine for the remainder of a frame.
+    gameplay_recording_file_finish(recording);
+}
+
+bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memory_Arena* arena, struct binary_serializer* serializer) {
+    serialize_u16(serializer, &recording->version);
+    serialize_s16(serializer, &recording->tickrate);
+    serialize_s32(serializer, &recording->prng.constant);
+    serialize_s32(serializer, &recording->prng.multiplier);
+    serialize_s32(serializer, &recording->prng.state);
+    serialize_s32(serializer, &recording->prng.seed);
+    serialize_s32(serializer, &recording->prng.modulus);
+    serialize_s32(serializer, &recording->frame_count);
+    serialize_u8(serializer,  &recording->stage_id);
+    serialize_u8(serializer,  &recording->level_id);
+    _debugprintf("Serializing recording version: %d", recording->version);
+    _debugprintf("Serializing recording tickrate: %d", recording->tickrate);
+
+    switch (recording->version) {
+        case GAMEPLAY_RECORDING_FILE_VERSION_1: {
+            if (arena) {
+                recording->memory_arena = arena;
+                recording->memory_arena_cursor = arena->used;
+                recording->frames =
+                    (Gameplay_Frame_Input_Packet*)recording->memory_arena->push_unaligned(recording->frame_count * sizeof(*recording->frames));
+            }
+
+            for (s32 index = 0; index < recording->frame_count; ++index) {
+                serialize_u8(serializer, &recording->frames[index].actions);
+                serialize_s8(serializer, &recording->frames[index].axes[0]);
+                serialize_s8(serializer, &recording->frames[index].axes[1]);
+            }
+
+            return true;
+        } break;
+        default: {
+            // TODO: should make this error more pleasantly in the future.
+            // Although the game has little to no UI to speak of.
+            assert(0 && "Unsupported version of replay.");
+        } break;
+    }
+
+    return false;
+}
+
+void gameplay_recording_file_start_playback(Gameplay_Recording_File* recording) {
+    recording->in_playback = true;
+    recording->playback_frame_index = 0;
+}
+
+bool gameplay_recording_file_has_more_frames(Gameplay_Recording_File* recording) {
+    return recording->playback_frame_index < recording->frame_count;
+}
+
+Gameplay_Frame_Input_Packet gameplay_recording_file_next_frame(Gameplay_Recording_File* recording) {
+    return recording->frames[recording->playback_frame_index++];
+}
+
 V2 gameplay_frame_input_packet_quantify_axes(const Gameplay_Frame_Input_Packet& input_packet) {
     f32 x = (f32)input_packet.axes[0] / 127.0f;
     f32 y = (f32)input_packet.axes[1] / 127.0f;

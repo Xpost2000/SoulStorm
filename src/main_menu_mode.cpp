@@ -369,6 +369,53 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
         }
     }
 
+    // TODO/FIXME: DEBUG FOR RECORD PLAYBACK!
+    // I NEED A UI!
+    if (Input::is_key_pressed(KEY_F5)) {
+        if (OS_file_exists(string_literal("game.recording"))) {
+            _debugprintf("Loading recording");
+
+            auto serializer = open_read_file_serializer(string_literal("game.recording"));
+            serializer.expected_endianess = ENDIANESS_LITTLE;
+
+            gameplay_recording_file_serialize(
+                &state->gameplay_data.recording,
+                &Global_Engine()->main_arena,
+                &serializer
+            );
+            gameplay_recording_file_start_playback(
+                &state->gameplay_data.recording
+            );
+            serializer_finish(&serializer);
+
+            Transitions::do_shuteye_in(
+                color32f32(0, 0, 0, 1),
+                0.15f,
+                0.3f
+            );
+
+            _debugprintf("Playback on stage (%d, %d)", state->gameplay_data.recording.stage_id+1, state->gameplay_data.recording.level_id+1);
+            Transitions::register_on_finish(
+                [&](void*) mutable {
+                    this->state->mainmenu_data.stage_id_level_select          = state->gameplay_data.recording.stage_id;
+                    this->state->mainmenu_data.stage_id_level_in_stage_select = state->gameplay_data.recording.level_id;
+
+                    switch_ui(UI_STATE_INACTIVE);
+                    switch_screen(GAME_SCREEN_INGAME);
+                    setup_stage_start();
+                    Transitions::do_shuteye_out(
+                        color32f32(0, 0, 0, 1),
+                        0.15f,
+                        0.3f
+                    );
+                }
+            );
+
+        } else {
+            _debugprintf("no debug recording");
+        }
+    }
+
     if (state->ui_state == UI_STATE_INACTIVE && !main_menu_state.cutscene_active()) {
         main_menu_state.player.update(&main_menu_state, dt);
     }

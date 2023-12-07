@@ -105,10 +105,12 @@ Temporary_Memory::Temporary_Memory(Memory_Arena* parent) {
 }
 
 Temporary_Memory::~Temporary_Memory() {
+    reset_parent();
+}
+
+void Temporary_Memory::reset_parent() {
     if (flags & MEMORY_ARENA_TOUCHED_BOTTOM)
         parent->used     = parent_bottom_marker;
     if (flags & MEMORY_ARENA_TOUCHED_TOP)
         parent->used_top = parent_top_marker;
-
-    memory = 0;
 }
