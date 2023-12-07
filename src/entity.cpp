@@ -459,6 +459,17 @@ void Entity::update(Game_State* state, f32 dt) {
     handle_invincibility_behavior(dt);
     update_firing_behavior(dt);
 
+    {
+        float velocity_mag = velocity.magnitude();
+        if (velocity_mag > fabs(maximum_speed)) {
+            velocity_mag = fabs(maximum_speed);
+
+            auto velocity_direction = velocity.normalized();
+            auto new_velocity       = velocity_direction * velocity_mag;
+            velocity                = new_velocity;
+        }
+    }
+
     position           += velocity * dt;
     t_since_spawn      += dt;
 }
@@ -1248,6 +1259,31 @@ int _lua_bind_enemy_acceleration_y(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_enemy_set_max_speed(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+
+    if (e) {
+        e->maximum_speed = luaL_checknumber(L, 2);
+    }
+
+    return 0;
+}
+
+int _lua_bind_enemy_get_max_speed(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+
+    if (e) {
+        lua_pushnumber(L, e->maximum_speed);
+        return 1;
+    }
+
+    return 0;
+}
+
 int _lua_bind_enemy_hp(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
@@ -1510,6 +1546,31 @@ int _lua_bind_bullet_set_task(lua_State* L) {
         task_name,
         uid
     );
+    return 0;
+}
+
+int _lua_bind_bullet_set_max_speed(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+
+    if (e) {
+        e->maximum_speed = luaL_checknumber(L, 2);
+    }
+
+    return 0;
+}
+
+int _lua_bind_bullet_get_max_speed(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+
+    if (e) {
+        lua_pushnumber(L, e->maximum_speed);
+        return 1;
+    }
+
     return 0;
 }
 
@@ -1845,6 +1906,8 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "enemy_velocity_y", _lua_bind_enemy_velocity_y);
         lua_register(L, "enemy_acceleration_x", _lua_bind_enemy_acceleration_x);
         lua_register(L, "enemy_acceleration_y", _lua_bind_enemy_acceleration_y);
+        lua_register(L, "enemy_set_max_speed", _lua_bind_enemy_set_max_speed);
+        lua_register(L, "enemy_get_max_speed", _lua_bind_enemy_get_max_speed);
         lua_register(L, "enemy_hp",         _lua_bind_enemy_hp);
         lua_register(L, "enemy_hp_percent", _lua_bind_enemy_hp_percent);
 
@@ -1865,6 +1928,8 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "bullet_stop_trail",             _lua_bind_bullet_stop_trail);
         lua_register(L, "bullet_set_visual",             _lua_bind_bullet_set_visual);
         lua_register(L, "bullet_set_task",               _lua_bind_bullet_set_task);
+        lua_register(L, "bullet_set_max_speed",          _lua_bind_bullet_set_max_speed);
+        lua_register(L, "bullet_get_max_speed",          _lua_bind_bullet_get_max_speed);
         lua_register(L, "bullet_kill",                   _lua_bind_bullet_kill);
         lua_register(L, "bullet_reset_movement",         _lua_bind_bullet_reset_movement);
         lua_register(L, "bullet_set_lifetime",   _lua_bind_bullet_set_lifetime);

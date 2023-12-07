@@ -88,6 +88,8 @@ struct Entity {
     V2    velocity      = V2(0, 0);
     V2    acceleration  = V2(0, 0);
 
+    float maximum_speed = 99999999;
+
     f32   t_since_spawn = 0.0f;
     Sprite_Instance sprite;
 
