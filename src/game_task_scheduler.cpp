@@ -335,7 +335,12 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
                     if (is_game_task && task.associated_state == GAME_SCREEN_INGAME && block_game_task_update)
                         continue;
 
-                    if (task.userdata.yielded.timer < task.userdata.yielded.timer_max) {
+#if 0
+                    bool game_task_skip_current_wait = is_game_task && !state->gameplay_data.any_hazards();
+#else
+                    bool game_task_skip_current_wait = false;
+#endif
+                    if (!game_task_skip_current_wait && task.userdata.yielded.timer < task.userdata.yielded.timer_max) {
                         task.userdata.yielded.timer += dt;
                         continue;
                     } else {

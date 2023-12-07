@@ -3929,6 +3929,13 @@ lua_State* Game_State::alloc_lua_bindings() {
         lua_setglobal(L, "_gamestate"); // we'll store this implicitly
 
         lua_register(L, "t_wait",               _lua_bind_Task_Yield_Wait);
+
+        // TODO:
+        // 1_1 is designed with all these timings being "absolute", and gradually
+        // changing to "safe" waits is pretty hard.
+        // although I'll add scaffolding code for it.
+        lua_register(L, "t_fwait",              _lua_bind_Task_Yield_Wait);
+
         lua_register(L, "t_yield",              _lua_bind_Task_Yield);
         lua_register(L, "t_wait_for_no_danger", _lua_bind_Task_Yield_Until_No_Danger);
         lua_register(L, "t_wait_for_stage_intro", _lua_bind_Task_Yield_Wait_For_Stage_Intro);

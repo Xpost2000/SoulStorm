@@ -1399,7 +1399,7 @@ function stage_task()
 --    -- Final Dialogue. Finish stage!
 
    print("1_1LUA cooldown to finish stage.");
-   t_wait(10);
+   t_fwait(10);
    wait_no_danger();
    t_complete_stage();
 end
