@@ -15,12 +15,6 @@
 
 #include "game_preferences.h"
 
-/*
- * The game code. Finally some fresh code :)
- *
- * NOTE: this is not the game state.
- */
-
 // forward decl some opaque types
 struct Game_State;
 struct Game_Resources;
@@ -43,6 +37,22 @@ struct Achievement_Notification_State {
 
 #include "save_data.h"
 
+// TODO:
+//
+// I'd like to have a way to make more particle systems.
+// that are preferably not hardcoded, or at least more flexible.
+//
+// I may just have a simple text file format through fscanf since it's
+// not a big "deal" to user handle things.
+//
+// or have a very flat tokenizer to handle really really simple formats that
+// I would keep in text or something like that.
+//
+// Since there's a lot of hardcoded data, and while some of it is justified
+// something like the particles should obviously not require a re-compile.
+//
+// Might work on getting more stuff to be data oriented to be less painful.
+// 
 class Game {
 public:
     Game();
@@ -100,6 +110,13 @@ private:
     void handle_all_dead_entities(f32 dt);
     void handle_bomb_usage(f32 dt);
 
+    /*
+     * NOTE: primarily with the player as context
+     *
+     * kill_all_* is scoreless. Meant to just easily cleanup a wave.
+     */
+    void kill_all_bullets();
+    void kill_all_enemies();
     void convert_bullets_to_score_pickups(float radius=99999);
     void convert_enemies_to_score_pickups(float radius=99999);
 

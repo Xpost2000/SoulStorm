@@ -18,6 +18,8 @@
 
 #include "action_mapper.h"
 
+#define FIXED_TICKTIME (1.0f / 72.0f)
+
 // I kinda wanna draw a cute icon for each of the levels.
 local Stage stage_list[] = {
     #include "stage_list.h"
@@ -2036,7 +2038,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 #if 0
         const f32 TARGET_FRAMERATE = dt; // use 0 for unlimited
 #else
-        const f32 TARGET_FRAMERATE = 1.0f / 72.0f;
+        const f32 TARGET_FRAMERATE = FIXED_TICKTIME;
 #endif
         static f32 accumulator = 0.0f;
         accumulator += dt;
@@ -2463,8 +2465,72 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     }
 }
 
-void Game::convert_bullets_to_score_pickups(float radius) {
-    auto state = &this->state->gameplay_data;
+// NOTE: should deduplicate later?
+void Game_State::kill_all_bullets() {
+    auto state = &gameplay_data;
+
+    for (s32 bullet_index = 0; bullet_index < state->bullets.size; ++bullet_index) {
+        auto& b = state->bullets[bullet_index];
+
+        if (b.source_type == BULLET_SOURCE_PLAYER)
+            continue;
+
+        b.kill();
+        {
+            auto& emitter = *(state->particle_emitters.alloc());
+            emitter.reset();
+            emitter.sprite                  = sprite_instance(resources->circle_sprite);
+            emitter.sprite.scale            = V2(0.125/6, 0.125/6);
+            emitter.shape                   = particle_emit_shape_circle(b.position, 5.0f);
+            emitter.modulation              = color32f32(0.8, 0.8, 0.8, 1.0);
+            emitter.lifetime                = 0.35f;
+            emitter.scale_variance          = V2(-0.055, 0.055);
+            emitter.velocity_x_variance     = V2(-140, 140);
+            emitter.velocity_y_variance     = V2(-140, 140);
+            emitter.acceleration_x_variance = V2(-100, 100);
+            emitter.acceleration_y_variance = V2(-100, 100);
+            emitter.lifetime_variance       = V2(-0.25f, 0.2f);
+            emitter.emission_max_timer      = 0.035f;
+            emitter.max_emissions           = 1;
+            emitter.emit_per_emission       = 8;
+            emitter.active                  = true;
+            emitter.scale                   = 1;
+        }
+    }
+}
+
+void Game_State::kill_all_enemies() {
+    auto state = &gameplay_data;
+
+    for (s32 enemy_index = 0; enemy_index < state->enemies.size; ++enemy_index) {
+        auto& e = state->enemies[enemy_index];
+        e.kill();
+
+        {
+            auto& emitter = *(state->particle_emitters.alloc());
+            emitter.reset();
+            emitter.sprite                  = sprite_instance(resources->circle_sprite);
+            emitter.sprite.scale            = V2(0.125/5, 0.125/5);
+            emitter.shape                   = particle_emit_shape_circle(e.position, 5.0f);
+            emitter.modulation              = color32f32(1.0, 0.2, 0.2, 1.0);
+            emitter.lifetime                = 0.45f;
+            emitter.scale_variance          = V2(-0.055, 0.055);
+            emitter.velocity_x_variance     = V2(-140, 140);
+            emitter.velocity_y_variance     = V2(-140, 140);
+            emitter.acceleration_x_variance = V2(-100, 100);
+            emitter.acceleration_y_variance = V2(-100, 100);
+            emitter.lifetime_variance       = V2(-0.25f, 0.2f);
+            emitter.emission_max_timer      = 0.035f;
+            emitter.max_emissions           = 1;
+            emitter.emit_per_emission       = 8;
+            emitter.active                  = true;
+            emitter.scale                   = 1;
+        }
+    }
+}
+
+void Game_State::convert_bullets_to_score_pickups(float radius) {
+    auto state = &gameplay_data;
 
     for (s32 bullet_index = 0; bullet_index < state->bullets.size; ++bullet_index) {
         auto& b = state->bullets[bullet_index];
@@ -2499,7 +2565,7 @@ void Game::convert_bullets_to_score_pickups(float radius) {
         }
 
         auto pe = pickup_score_entity(
-            this->state,
+            this,
             b.position,
             b.position,
             50
@@ -2509,8 +2575,8 @@ void Game::convert_bullets_to_score_pickups(float radius) {
     }
 }
 
-void Game::convert_enemies_to_score_pickups(float radius) {
-    auto state = &this->state->gameplay_data;
+void Game_State::convert_enemies_to_score_pickups(float radius) {
+    auto state = &gameplay_data;
 
     for (s32 enemy_index = 0; enemy_index < state->enemies.size; ++enemy_index) {
         auto& e = state->enemies[enemy_index];
@@ -2542,7 +2608,7 @@ void Game::convert_enemies_to_score_pickups(float radius) {
         }
 
         auto pe = pickup_score_entity(
-            this->state,
+            this,
             e.position,
             e.position,
             e.score_value/2
@@ -2550,6 +2616,19 @@ void Game::convert_enemies_to_score_pickups(float radius) {
         pe.seek_towards_player = true;
         state->add_pickup_entity(pe);
     }
+}
+
+void Game::kill_all_bullets() {
+    state->kill_all_bullets();
+}
+void Game::kill_all_enemies() {
+    state->kill_all_enemies();
+}
+void Game::convert_bullets_to_score_pickups(float radius) {
+    state->convert_bullets_to_score_pickups(radius);
+}
+void Game::convert_enemies_to_score_pickups(float radius) {
+    state->convert_enemies_to_score_pickups(radius);
 }
 
 void Game::handle_bomb_usage(f32 dt) {
@@ -3709,6 +3788,11 @@ int _lua_bind_global_elapsed_time(lua_State* L) {
     return 1;
 }
 
+int _lua_bind_ticktime(lua_State* L) {
+    lua_pushnumber(L, FIXED_TICKTIME);
+    return 1;
+}
+
 int _lua_bind_load_image(lua_State* L) {
     lua_getglobal(L, "_gamestate");
     Game_State* state     = (Game_State*)lua_touserdata(L, lua_gettop(L));
@@ -3771,6 +3855,41 @@ int _lua_bind_play_area_edge_behavior(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_convert_all_bullets_to_score(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    float radius = 999999;
+
+    if (lua_gettop(L) == 1) {
+        radius = luaL_checknumber(L, 1);
+    }
+
+    state->convert_bullets_to_score_pickups(radius);
+    return 0;
+}
+
+int _lua_bind_convert_all_enemies_to_score(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    float radius = 999999;
+
+    if (lua_gettop(L) == 1) {
+        radius = luaL_checknumber(L, 1);
+    }
+
+    state->convert_enemies_to_score_pickups(radius);
+    return 0;
+}
+
+int _lua_bind_kill_all_bullets(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    state->kill_all_bullets();
+    return 0;
+}
+int _lua_bind_kill_all_enemies(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    state->kill_all_enemies();
+    return 0;
+}
+
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     /*
@@ -3782,49 +3901,6 @@ lua_State* Game_State::alloc_lua_bindings() {
      */
     lua_checkstack(L, 512);
     luaL_openlibs(L);
-
-    {
-        // constants to share.
-        // Try to keep this up to date in the future...
-
-        /*
-         * NOTE:
-         * I would probably like to have projectile visuals loadable
-         * but it's not a top priority. It might even remain this way until release LOL.
-         */
-        const char* lua_code = R"(
-PROJECTILE_SPRITE_BLUE              = 0;
-PROJECTILE_SPRITE_BLUE_STROBING     = 1;
-PROJECTILE_SPRITE_BLUE_ELECTRIC     = 2;
-PROJECTILE_SPRITE_RED               = 3;
-PROJECTILE_SPRITE_RED_STROBING      = 4;
-PROJECTILE_SPRITE_RED_ELECTRIC      = 5;
-PROJECTILE_SPRITE_NEGATIVE          = 6;
-PROJECTILE_SPRITE_NEGATIVE_STROBING = 7;
-PROJECTILE_SPRITE_NEGATIVE_ELECTRIC = 8;
-PROJECTILE_SPRITE_HOT_PINK          = 9;
-PROJECTILE_SPRITE_HOT_PINK_STROBING = 10;
-PROJECTILE_SPRITE_HOT_PINK_ELECTRIC = 11;
-
-BULLET_SOURCE_NEUTRAL = 0;
-BULLET_SOURCE_PLAYER  = 1;
-BULLET_SOURCE_ENEMY   = 2;
-
-LASER_HAZARD_DIRECTION_HORIZONTAL = 0;
-LASER_HAZARD_DIRECTION_VERTICAL = 1;
-
-PLAY_AREA_EDGE_BLOCKING    = 0;
-PLAY_AREA_EDGE_DEADLY      = 1;
-PLAY_AREA_EDGE_WRAPPING    = 2;
-PLAY_AREA_EDGE_PASSTHROUGH = 3;
-
-PLAY_AREA_EDGE_TOP = 0;
-PLAY_AREA_EDGE_BOTTOM    = 1;
-PLAY_AREA_EDGE_LEFT    = 2;
-PLAY_AREA_EDGE_RIGHT      = 3;
-)";
-        luaL_dostring(L, lua_code);
-    }
 
     {
         lua_pushlightuserdata(L, this);
@@ -3901,6 +3977,14 @@ PLAY_AREA_EDGE_RIGHT      = 3;
         lua_register(L, "render_object_get_z_angle",      _lua_bind_render_object_get_z_angle);
 
         lua_register(L, "global_elapsed_time",      _lua_bind_global_elapsed_time);
+        lua_register(L, "ticktime", _lua_bind_ticktime);
+
+        // NOTE: these should consider "boss filter" enemies
+        // but I need ways to adjust entity flags
+        lua_register(L, "convert_all_bullets_to_score", _lua_bind_convert_all_bullets_to_score);
+        lua_register(L, "convert_all_enemies_to_score", _lua_bind_convert_all_enemies_to_score);
+        lua_register(L, "kill_all_bullets",             _lua_bind_kill_all_bullets);
+        lua_register(L, "kill_all_enemies",             _lua_bind_kill_all_enemies);
 #endif
     }
 

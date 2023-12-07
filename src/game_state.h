@@ -393,6 +393,11 @@ struct Game_State {
     void set_led_primary_color(color32u8 color);
     void set_led_target_color_anim(color32u8 color, f32 anim_length, bool overridable=true, bool fade_back_when_done=true);
     void set_led_target_color_anim_force(color32u8 color, f32 anim_length, bool overridable=true, bool fade_back_when_done=true);
+
+    void kill_all_bullets();
+    void kill_all_enemies();
+    void convert_bullets_to_score_pickups(float radius=9999);
+    void convert_enemies_to_score_pickups(float radius=9999);
 };
 
 inline static Game_State* lua_binding_get_gamestate(lua_State* L) {
