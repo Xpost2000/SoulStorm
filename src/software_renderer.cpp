@@ -7,12 +7,17 @@
 
 inline local void _rotate_f32_xy_as_pseudo_zyx(f32* x, f32* y, f32 c=0, f32 s=0, f32 c1=0, f32 s1=0, f32 c2=0, f32 s2=1) {
     // z rot
-    *x = floor(c * (*x) - s * (*y));
-    *y = floor(s * (*x) + c * (*y));
+    float _x = *x;
+    float _y = *y;
+    *x = floor(c * (_x) - s * (_y));
+    *y = floor(s * (_x) + c * (_y));
+
+#if 1
     // y rot
     *y = floor(c1 * (*y));
     // x rot
     *x = floor(s2 * (*x));
+#endif
 }
 
 // The main software renderer code
@@ -393,6 +398,7 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
                 f32 dx    = adjx;
                 f32 dy    = adjy;
                 _rotate_f32_xy_as_pseudo_zyx(&dx, &dy, c, s, c1, s1);
+
                 dx       += (unclamped_start_x + origin_off_x);
                 dy       += (unclamped_start_y + origin_off_y);
 
