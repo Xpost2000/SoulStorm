@@ -303,6 +303,8 @@ void Game::setup_stage_start() {
     state->score_notifications.clear();
     state->scriptable_render_objects.clear();
     state->hit_score_notifications.clear();
+    state->particle_pool.clear();
+    state->particle_emitters.zero();
 
     state->to_create_enemy_bullets.clear();
     state->to_create_player_bullets.clear();

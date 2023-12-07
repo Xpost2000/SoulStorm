@@ -117,6 +117,7 @@ struct Particle_Pool {
 
     void update(Game_State* state, f32 dt);
     void draw(struct render_commands* commands, Game_Resources* resources);
+    void clear();
 
     Fixed_Array<Particle> particles;
 };

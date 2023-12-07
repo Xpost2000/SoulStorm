@@ -201,3 +201,7 @@ void Particle_Pool::draw(struct render_commands* commands, Game_Resources* resou
         );
     }
 }
+
+void Particle_Pool::clear() {
+    particles.zero();
+}
