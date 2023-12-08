@@ -20,7 +20,6 @@
 
 #define TICKRATE       (60)
 #define FIXED_TICKTIME (1.0f / TICKRATE)
-local f32 accumulator = 0.0f;
 
 // I kinda wanna draw a cute icon for each of the levels.
 local Stage stage_list[] = {
@@ -383,7 +382,7 @@ void Game::setup_stage_start() {
             );
         }
     }
-    accumulator = 0;
+    state->fixed_tickrate_timer = 0;
 }
 
 void Game::init(Graphics_Driver* driver) {
@@ -788,8 +787,6 @@ void Gameplay_Data::add_enemy_entity(Enemy_Entity e) {
 }
 
 void Gameplay_Data::add_pickup_entity(Pickup_Entity s) {
-    // TODO: investigate
-    return;
     to_create_pickups.push(s);
 }
 
@@ -2152,8 +2149,6 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 
           TODO: add a way to dilate the time scale.
         */
-        accumulator += FIXED_TICKTIME;
-        // accumulator += dt;
 
         struct Entity_Loop_Update_Packet {
             Game_State* game_state;
@@ -2166,32 +2161,8 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 
         int frames_simulated = 0;
 
-        {
-            // I cannot physically record gameplay data at a faster rate...
-            // NOTE:
-            // since the game demo functionality is only meant for recording the "game" itself
-            // and not to operate as full debug input, I only care about producing input packets here.
-            {
-                V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
-                if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
-
-                // (special case for building input packet on button press)
-                // this is primarily because I should only record the "pressed" status
-                // once, but this is not really possible to do since my input happens at a higher framerate
-                // than the game logic...
-                bool previous_bomb_press = (state->current_input_packet.actions & (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT)));
-
-                state->current_input_packet.actions=
-                    (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT))  *Action::is_down(ACTION_ACTION) |
-                    (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT))   *Action::is_down(ACTION_FOCUS)  |
-                    (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))*Action::is_pressed(ACTION_USE_BOMB) * (!previous_bomb_press)
-                    ;
-                state->current_input_packet.axes[0] = (s8)(axes[0] * 127.0f);
-                state->current_input_packet.axes[1] = (s8)(axes[1] * 127.0f);
-            }
-        }
-
-        while (accumulator >= FIXED_TICKTIME) {
+        state->fixed_tickrate_timer += dt;
+        while (state->fixed_tickrate_timer >= FIXED_TICKTIME) {
             frames_simulated++;
             if (state->recording.in_playback) {
                 if (gameplay_recording_file_has_more_frames(&state->recording)) {
@@ -2208,6 +2179,29 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                     break;
                 }
             } else {
+                // I cannot physically record gameplay data at a faster rate...
+                // NOTE:
+                // since the game demo functionality is only meant for recording the "game" itself
+                // and not to operate as full debug input, I only care about producing input packets here.
+                {
+                    V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
+                    if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
+
+                    // (special case for building input packet on button press)
+                    // this is primarily because I should only record the "pressed" status
+                    // once, but this is not really possible to do since my input happens at a higher framerate
+                    // than the game logic...
+                    bool previous_bomb_press = (state->current_input_packet.actions & (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT)));
+
+                    state->current_input_packet.actions=
+                        (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT))  *Action::is_down(ACTION_ACTION) |
+                        (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT))   *Action::is_down(ACTION_FOCUS)  |
+                        (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))*Action::is_pressed(ACTION_USE_BOMB) * (!previous_bomb_press)
+                        ;
+                    state->current_input_packet.axes[0] = (s8)(axes[0] * 127.0f);
+                    state->current_input_packet.axes[1] = (s8)(axes[1] * 127.0f);
+                }
+
                 gameplay_recording_file_record_frame(&state->recording, state->current_input_packet);
             }
 
@@ -2304,7 +2298,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 Game_State* game_state = packet->game_state;
                 Gameplay_Data* state = &packet->game_state->gameplay_data;
                 state->player.update(game_state, FIXED_TICKTIME);
-                // state->player.handle_grazing_behavior(game_state, FIXED_TICKTIME);
+                state->player.handle_grazing_behavior(game_state, FIXED_TICKTIME);
             }
 
             handle_all_explosions(FIXED_TICKTIME);
@@ -2332,10 +2326,9 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 state->particle_pool.update(this->state, FIXED_TICKTIME);
             }
 
-            accumulator -= FIXED_TICKTIME;
-            state->current_stage_timer += FIXED_TICKTIME;
+            state->fixed_tickrate_timer -= FIXED_TICKTIME;
+            state->current_stage_timer  += FIXED_TICKTIME;
         }
-        _debugprintf("Simulated %d fixed frames on this real frame", frames_simulated);
     }
 
     handle_ui_update_and_render(ui_render_commands, dt);
@@ -2501,7 +2494,6 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
             update_and_render_game_main_menu(&game_render_commands, &ui_render_commands, dt);
         } break;
         case GAME_SCREEN_INGAME: {
-            f32 dt = FIXED_TICKTIME;
             update_and_render_game_ingame(&game_render_commands, &ui_render_commands, dt);
         } break;
         case GAME_SCREEN_CREDITS: {
@@ -4225,7 +4217,11 @@ lua_State* Game_State::alloc_lua_bindings() {
 
         lua_register(L, "t_yield",              _lua_bind_Task_Yield);
         lua_register(L, "t_wait_for_no_danger", _lua_bind_Task_Yield_Until_No_Danger);
+#if 0
+        // Do not use this. It causes desync galore.
+        // I'll just deal with the mandatory screen intrusion
         lua_register(L, "t_wait_for_stage_intro", _lua_bind_Task_Yield_Wait_For_Stage_Intro);
+#endif
         lua_register(L, "t_complete_stage",     _lua_bind_Task_Yield_Finish_Stage);
 
         lua_register(L, "any_living_danger",   _lua_bind_any_living_danger);

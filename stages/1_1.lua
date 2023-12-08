@@ -1316,7 +1316,6 @@ end
 -- I will introduce them in 1-3 as a new gameplay "mechanic"
 --
 function stage_task()
-   t_wait_for_stage_intro();
    -- ideally this should not be a string, but I should allow closures...
    print("1_1LUA Play music");
 --    -- async_task("loop_bkg_music");
