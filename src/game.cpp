@@ -18,8 +18,9 @@
 
 #include "action_mapper.h"
 
-#define TICKRATE       (72)
-#define FIXED_TICKTIME (1.0f / 72)
+#define TICKRATE       (60)
+#define FIXED_TICKTIME (1.0f / TICKRATE)
+local f32 accumulator = 0.0f;
 
 // I kinda wanna draw a cute icon for each of the levels.
 local Stage stage_list[] = {
@@ -273,7 +274,7 @@ void Game::setup_stage_start() {
             game_register_stage_attempt(stage_id, level_id);
         }
         state->unload_all_script_loaded_resources(this->state, this->state->resources);
-
+        
         state->stage_state = stage_load_from_lua(this->state, format_temp("stages/%d_%d.lua", stage_id+1, level_id+1));
         state->current_stage_timer = 0.0f;
         this->state->coroutine_tasks.add_task(this->state, state->stage_state.tick_task);
@@ -285,12 +286,18 @@ void Game::setup_stage_start() {
     UID::reset();
 
     {
-        state->player.position = V2(state->play_area.width / 2, 300);
-        state->player.hp       = 1;
-        state->player.die      = false;
-        state->paused_from_death = false;
-        state->player.scale    = V2(2, 2);
+        state->player.position                         = V2(state->play_area.width / 2, 300);
+        state->player.hp                               = state->player.max_hp = 1;
+        state->player.die                              = false;
+        state->paused_from_death                       = false;
+        state->player.t_since_spawn                    = 0;
+        state->player.trail_ghost_count                = 0;
+        state->player.scale                            = V2(2, 2);
         state->player.end_invincibility();
+        state->player.grazing_award_timer              = 0.0f;
+        state->player.grazing_award_score_pickup_timer = 0.0f;
+        state->player.time_spent_grazing               = 0.0f;
+        state->player.under_focus                      = false;
         {
             state->player.sprite   = sprite_instance(resources->player_sprite);
         }
@@ -311,15 +318,19 @@ void Game::setup_stage_start() {
     state->scriptable_render_objects.clear();
     state->hit_score_notifications.clear();
     state->particle_pool.clear();
-    state->particle_emitters.zero();
+    state->particle_emitters.clear();
 
-    state->to_create_enemy_bullets.clear();
-    state->to_create_player_bullets.clear();
-    state->to_create_enemies.clear();
-    state->to_create_pickups.clear();
+    state->to_create_enemy_bullets.zero();
+    state->to_create_player_bullets.zero();
+    state->to_create_enemies.zero();
+    state->to_create_pickups.zero();
 
     state->tries = MAX_BASE_TRIES;
     state->current_score = 0;
+    state->paused_from_death = false;
+    state->current_stage_timer = 0.0f;
+    state->triggered_stage_completion_cutscene = false;
+    state->queue_bomb_use = false;
 
     // setup introduction badge
     {
@@ -335,6 +346,11 @@ void Game::setup_stage_start() {
 
     // setup recording file for recording or playback.
     {
+
+        _debugprintf(
+            "Stage Start PRNG:\n(prng: %d, %d, %d, %d,  %d)",
+            state->prng.constant, state->prng.multiplier, state->prng.state, state->prng.seed, state->prng.modulus
+        );
         if (!state->recording.in_playback) {
             _debugprintf("Recording!");
             gameplay_recording_file_start_recording(
@@ -347,8 +363,27 @@ void Game::setup_stage_start() {
         } else {
             state->recording.old_prng = state->prng;
             state->prng               = state->recording.prng;
+
+            _debugprintf(
+                "Set OldPRNG to (%d, %d, %d, %d, %d)",
+                state->recording.old_prng.constant,
+                state->recording.old_prng.multiplier,
+                state->recording.old_prng.state,
+                state->recording.old_prng.seed,
+                state->recording.old_prng.modulus
+            );
+
+            _debugprintf(
+                "Set PRNG to (%d, %d, %d, %d, %d)",
+                state->recording.prng.constant,
+                state->recording.prng.multiplier,
+                state->recording.prng.state,
+                state->recording.prng.seed,
+                state->recording.prng.modulus
+            );
         }
     }
+    accumulator = 0;
 }
 
 void Game::init(Graphics_Driver* driver) {
@@ -640,7 +675,7 @@ void Game::init(Graphics_Driver* driver) {
         {
             auto bkg_slow_stars = state->star_positions[0];
             auto bkg_faster_stars = state->star_positions[1];
-            auto& prng = this->state->gameplay_data.prng;
+            auto& prng = this->state->mainmenu_data.prng;
             for (int i = 0; i < MAX_MAINMENU_OUTERSPACE_STARS; ++i) {
                 bkg_slow_stars[i] = V2(random_ranged_float(&prng, -640, 640),
                                        random_ranged_float(&prng, -480, 480));
@@ -753,6 +788,8 @@ void Gameplay_Data::add_enemy_entity(Enemy_Entity e) {
 }
 
 void Gameplay_Data::add_pickup_entity(Pickup_Entity s) {
+    // TODO: investigate
+    return;
     to_create_pickups.push(s);
 }
 
@@ -794,6 +831,7 @@ Bullet* Gameplay_Data::lookup_bullet(u64 uid) {
 }
 
 void Gameplay_Data::reify_all_creation_queues() {
+#if 1
     Thread_Pool::add_job(
         [](void* ctx) {
             Gameplay_Data* state = (Gameplay_Data*)ctx;
@@ -848,6 +886,38 @@ void Gameplay_Data::reify_all_creation_queues() {
     );
 
     Thread_Pool::synchronize_tasks();
+#else
+    auto state = this;
+    for (int i = 0; i < (int)state->to_create_enemy_bullets.size; ++i) {
+        auto& b = state->to_create_enemy_bullets[i];
+        state->bullets.push(b);
+    }
+
+    for (int i = 0; i < (int)state->to_create_player_bullets.size; ++i) {
+        auto& b = state->to_create_player_bullets[i];
+        state->bullets.push(b);
+    }
+
+    for (int i = 0; i < (int)state->to_create_pickups.size; ++i) {
+        auto& e = state->to_create_pickups[i];
+        state->pickups.push(e);
+    }
+
+    state->to_create_pickups.zero();
+
+
+    state->to_create_player_bullets.zero();
+    state->to_create_enemy_bullets.zero();
+
+    for (int i = 0; i < (int)state->to_create_enemies.size; ++i) {
+        auto& e = state->to_create_enemies[i];
+        assert(e.hp > 0 && "A dead enemy being created? This must be a bug!");
+        assert(!e.die && "An enemy shouldn't be dead on spawn?");
+        state->enemies.push(e);
+    }
+
+    state->to_create_enemies.zero();
+#endif
 }
 
 bool Gameplay_Data::any_hazards() const {
@@ -2082,27 +2152,22 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 
           TODO: add a way to dilate the time scale.
         */
-#if 0
-        const f32 TARGET_FRAMERATE = dt; // use 0 for unlimited
-#else
-        const f32 TARGET_FRAMERATE = FIXED_TICKTIME;
-#endif
-        static f32 accumulator = 0.0f;
-        accumulator += dt;
+        accumulator += FIXED_TICKTIME;
+        // accumulator += dt;
 
-        while (accumulator >= TARGET_FRAMERATE) {
-            f32 dt = TARGET_FRAMERATE;
-            state->current_stage_timer += dt;
-                
-            struct Entity_Loop_Update_Packet {
-                Game_State* game_state;
-                f32         dt;
-            };
+        struct Entity_Loop_Update_Packet {
+            Game_State* game_state;
+            f32         dt;
+        };
 
-            auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
-            update_packet_data->dt = dt;
-            update_packet_data->game_state = this->state;
+        auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
+        update_packet_data->dt = FIXED_TICKTIME;
+        update_packet_data->game_state = this->state;
 
+        int frames_simulated = 0;
+
+        {
+            // I cannot physically record gameplay data at a faster rate...
             // NOTE:
             // since the game demo functionality is only meant for recording the "game" itself
             // and not to operate as full debug input, I only care about producing input packets here.
@@ -2110,17 +2175,27 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
                 if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
 
+                // (special case for building input packet on button press)
+                // this is primarily because I should only record the "pressed" status
+                // once, but this is not really possible to do since my input happens at a higher framerate
+                // than the game logic...
+                bool previous_bomb_press = (state->current_input_packet.actions & (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT)));
+
                 state->current_input_packet.actions=
                     (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT))  *Action::is_down(ACTION_ACTION) |
                     (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT))   *Action::is_down(ACTION_FOCUS)  |
-                    (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))*Action::is_pressed(ACTION_USE_BOMB)
+                    (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))*Action::is_pressed(ACTION_USE_BOMB) * (!previous_bomb_press)
                     ;
                 state->current_input_packet.axes[0] = (s8)(axes[0] * 127.0f);
                 state->current_input_packet.axes[1] = (s8)(axes[1] * 127.0f);
             }
+        }
 
+        while (accumulator >= FIXED_TICKTIME) {
+            frames_simulated++;
             if (state->recording.in_playback) {
                 if (gameplay_recording_file_has_more_frames(&state->recording)) {
+                    // NOTE: 
                     state->current_input_packet = gameplay_recording_file_next_frame(&state->recording);
                 } else {
                     // nop and exit to main menu.
@@ -2129,11 +2204,14 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                     state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
                     state->complete_stage.stage_timer = Timer(0.35f);
                     zero_memory(&state->current_input_packet, sizeof(state->current_input_packet));
+                    _debugprintf("Out of frames.");
+                    break;
                 }
             } else {
                 gameplay_recording_file_record_frame(&state->recording, state->current_input_packet);
             }
 
+            this->state->coroutine_tasks.schedule_by_type(this->state, FIXED_TICKTIME, GAME_TASK_SOURCE_GAME_FIXED);
             Thread_Pool::add_job(
                 [](void* ctx) {
                     auto packet = (Entity_Loop_Update_Packet*) ctx;
@@ -2141,9 +2219,9 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                     Gameplay_Data* state = &packet->game_state->gameplay_data;
                     f32 dt = packet->dt;
 
-                    for (int i = 0; i < (int)state->bullets.size; ++i) {
-                        auto& b = state->bullets[i];
-                        b.update(packet->game_state, dt);
+                    for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
+                        auto& h = state->explosion_hazards[i];
+                        h.update(game_state, dt);
                     }
 
                     return 0;
@@ -2158,9 +2236,9 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                     Gameplay_Data* state = &packet->game_state->gameplay_data;
                     f32 dt = packet->dt;
 
-                    for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
-                        auto& h = state->explosion_hazards[i];
-                        h.update(game_state, dt);
+                    for (int i = 0; i < (int)state->bullets.size; ++i) {
+                        auto& b = state->bullets[i];
+                        b.update(packet->game_state, dt);
                     }
 
                     return 0;
@@ -2202,6 +2280,8 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 (void*)update_packet_data
             );
 
+            // NOTE: this is "hard" data dependency
+            // since it's kind of noticable if pickups deviate more.
             Thread_Pool::add_job(
                 [](void* ctx) {
                     auto packet = (Entity_Loop_Update_Packet*) ctx;
@@ -2218,66 +2298,44 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 },
                 (void*)update_packet_data
             );
+            Thread_Pool::synchronize_tasks();
+            {
+                auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
+                Game_State* game_state = packet->game_state;
+                Gameplay_Data* state = &packet->game_state->gameplay_data;
+                state->player.update(game_state, FIXED_TICKTIME);
+                // state->player.handle_grazing_behavior(game_state, FIXED_TICKTIME);
+            }
 
-            Thread_Pool::add_job(
-                [](void* ctx) {
-                    auto packet = (Entity_Loop_Update_Packet*) ctx;
-                    Game_State* game_state = packet->game_state;
-                    Gameplay_Data* state = &packet->game_state->gameplay_data;
-                    f32 dt = packet->dt;
-                    state->player.update(game_state, dt);
-                    // NOTE:
-                    // I am aware that the bullets may not be done updating
-                    // when this is called.
-                    //
-                    // However, I am only reading, and the bullets shouldn't be
-                    // going fast enough for this to be inaccurate...
-                    //
-                    // If It some how is, I'll just make this happen after all the updates...
-                    state->player.handle_grazing_behavior(game_state, dt);
-                    return 0;
-                },
-                (void*)update_packet_data
-            );
+            handle_all_explosions(FIXED_TICKTIME);
+            handle_all_lasers(FIXED_TICKTIME);
+            handle_player_pickup_collisions(FIXED_TICKTIME);
+            handle_player_enemy_collisions(FIXED_TICKTIME);
+            handle_all_bullet_collisions(FIXED_TICKTIME);
+            handle_bomb_usage(FIXED_TICKTIME);
+            handle_all_dead_entities(FIXED_TICKTIME);
+            state->reify_all_creation_queues();
+            camera_update(&state->main_camera, FIXED_TICKTIME);
 
             // Update all particle emitters
             // while we wait.
             {
                 for (s32 particle_emitter_index = 0; particle_emitter_index < state->particle_emitters.size; ++particle_emitter_index) {
                     auto& particle_emitter = state->particle_emitters[particle_emitter_index];
-                    particle_emitter.update(&state->particle_pool, &state->prng, dt);
+                    particle_emitter.update(&state->particle_pool, &state->prng, FIXED_TICKTIME);
 
                     if (!particle_emitter.active) {
                         state->particle_emitters.pop_and_swap(particle_emitter_index);
                     }
                 }
+
+                state->particle_pool.update(this->state, FIXED_TICKTIME);
             }
 
-            state->particle_pool.update(this->state, dt);
-            this->state->coroutine_tasks.schedule_by_type(this->state, dt, GAME_TASK_SOURCE_GAME_FIXED);
-
-            accumulator -= TARGET_FRAMERATE;
-            Thread_Pool::synchronize_tasks();
+            accumulator -= FIXED_TICKTIME;
+            state->current_stage_timer += FIXED_TICKTIME;
         }
-
-        // these need to play sounds and a few other non-thread safe behaviors
-        // and besides, might as well have these guys just burn some time while we wait
-        // for the heavier loads...
-        handle_all_explosions(dt);
-        handle_all_lasers(dt);
-
-        // NOTE: these deliberately have to be after,
-        // because I need clean up to happen at the end exactly. 
-
-        handle_player_pickup_collisions(dt);
-        handle_player_enemy_collisions(dt);
-        handle_all_bullet_collisions(dt);
-        handle_all_dead_entities(dt);
-
-        // Actually spawn the stuff we wanted to make...
-        state->reify_all_creation_queues();
-
-        handle_bomb_usage(dt);
+        _debugprintf("Simulated %d fixed frames on this real frame", frames_simulated);
     }
 
     handle_ui_update_and_render(ui_render_commands, dt);
@@ -2391,8 +2449,6 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
     if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE) {
         state->scriptable_render_objects.zero();
     }
-
-    camera_update(&state->main_camera, dt);
 }
 
 void Game_State::set_led_primary_color(color32u8 color) {
@@ -2445,6 +2501,7 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
             update_and_render_game_main_menu(&game_render_commands, &ui_render_commands, dt);
         } break;
         case GAME_SCREEN_INGAME: {
+            f32 dt = FIXED_TICKTIME;
             update_and_render_game_ingame(&game_render_commands, &ui_render_commands, dt);
         } break;
         case GAME_SCREEN_CREDITS: {
@@ -2550,6 +2607,9 @@ void Game_State::kill_all_bullets() {
     for (s32 bullet_index = 0; bullet_index < state->bullets.size; ++bullet_index) {
         auto& b = state->bullets[bullet_index];
 
+        if (b.die)
+            continue;
+
         if (b.source_type == BULLET_SOURCE_PLAYER)
             continue;
 
@@ -2582,6 +2642,10 @@ void Game_State::kill_all_enemies() {
 
     for (s32 enemy_index = 0; enemy_index < state->enemies.size; ++enemy_index) {
         auto& e = state->enemies[enemy_index];
+
+        if (e.die)
+            continue;
+
         e.kill();
 
         {
@@ -2612,6 +2676,9 @@ void Game_State::convert_bullets_to_score_pickups(float radius) {
 
     for (s32 bullet_index = 0; bullet_index < state->bullets.size; ++bullet_index) {
         auto& b = state->bullets[bullet_index];
+
+        if (b.die)
+            continue;
 
         if (V2_distance_sq(state->player.position, b.position) >= radius*radius)
             continue;
@@ -2658,6 +2725,9 @@ void Game_State::convert_enemies_to_score_pickups(float radius) {
 
     for (s32 enemy_index = 0; enemy_index < state->enemies.size; ++enemy_index) {
         auto& e = state->enemies[enemy_index];
+
+        if (e.die)
+            continue;
 
         if (V2_distance_sq(state->player.position, e.position) >= radius*radius)
             continue;
@@ -2895,10 +2965,18 @@ void Game::handle_all_bullet_collisions(f32 dt) {
         bool hit_death = false;
         auto bullet_rect = b.get_rect();
 
+        if (b.die) {
+            continue;
+        }
+
         if (b.source_type == BULLET_SOURCE_NEUTRAL || b.source_type == BULLET_SOURCE_PLAYER) {
             for (s32 enemy_index = 0; enemy_index < state->enemies.size; ++enemy_index) {
                 auto& e = state->enemies[enemy_index];
                 auto enemy_rect = e.get_rect();
+
+                if (e.die) {
+                    continue;
+                }
 
                 if (rectangle_f32_intersect(enemy_rect, bullet_rect)) {
                     e.damage(1);
@@ -2959,8 +3037,9 @@ void Game::handle_all_bullet_collisions(f32 dt) {
             }
         }
 
+
         if (!DebugUI::godmode_enabled()) {
-            if (b.source_type == BULLET_SOURCE_NEUTRAL || b.source_type == BULLET_SOURCE_ENEMY) {
+            if (!b.die && b.source_type == BULLET_SOURCE_NEUTRAL || b.source_type == BULLET_SOURCE_ENEMY) {
                 auto& p = state->player;
                 auto player_rect = p.get_rect();
 
@@ -2997,27 +3076,8 @@ void Game::handle_all_bullet_collisions(f32 dt) {
         if (b.die && hit_death) {
             auto resources = this->state->resources;
             Audio::play(resources->random_hit_sound(&state->prng));
-
-            // spawn particle death
-            // auto& emitter                   = *(state->particle_emitters.alloc());
-            // emitter.sprite                  = sprite_instance(resources->circle_sprite);
-            // emitter.sprite.scale            = V2(0.125/2, 0.125/2);
-            // emitter.shape                   = particle_emit_shape_circle(b.position, 15.0f);
-            // emitter.lifetime                = 1.0f;
-            // emitter.velocity_x_variance     = V2(-120, 120);
-            // emitter.velocity_y_variance     = V2(-120, 120);
-            // emitter.acceleration_x_variance = V2(0, 0);
-            // emitter.acceleration_y_variance = V2(-100, 100);
-            // emitter.lifetime_variance       = V2(-0.5f, 1.5f);
-            // emitter.emission_max_timer      = 0.025f;
-            // emitter.max_emissions           = 1;
-            // emitter.modulation              = color32f32(0.3, 0.3, 0.3, 1.0);
-            // emitter.emit_per_emission       = 16;
-            // emitter.active                  = true;
-            // emitter.scale                   = 1;
         }
     }
-    // unimplemented("Not done");
 }
 
 void Game::handle_player_enemy_collisions(f32 dt) {
@@ -3027,6 +3087,10 @@ void Game::handle_player_enemy_collisions(f32 dt) {
     for (s32 enemy_index = 0; enemy_index < state->gameplay_data.enemies.size; ++enemy_index) {
         auto& e = state->gameplay_data.enemies[enemy_index];
         auto enemy_rect = e.get_rect();
+
+        if (e.die) {
+            continue;
+        }
 
         if (!DebugUI::godmode_enabled()) {
             if (rectangle_f32_intersect(player_rect, enemy_rect)) {
@@ -3043,6 +3107,10 @@ void Game::handle_player_pickup_collisions(f32 dt) {
     for (s32 pickup_index = 0; pickup_index < state->gameplay_data.pickups.size; ++pickup_index) {
         auto& pe          = state->gameplay_data.pickups[pickup_index];
         auto  pickup_rect = pe.get_rect();
+
+        if (pe.die) {
+            continue;
+        }
 
         if (rectangle_f32_intersect(player_rect, pickup_rect)) {
             pe.on_picked_up(state);
@@ -3076,24 +3144,45 @@ void Game::switch_screen(s32 screen) {
         case GAME_SCREEN_OPENING: 
         case GAME_SCREEN_MAIN_MENU: {
             state->gameplay_data.unload_all_script_loaded_resources(state, this->state->resources);
-            gameplay_recording_file_finish(&state->gameplay_data.recording);
 
+            // TODO: be careful with this.
             if (!state->gameplay_data.recording.in_playback) {
-                _debugprintf("Writing recording...");
+                if (state->gameplay_data.recording.memory_arena) {
+                    _debugprintf("Writing recording... (%d recorded score)", state->gameplay_data.current_score);
 
-                auto serializer = open_write_file_serializer(string_literal("game.recording"));
-                serializer.expected_endianess = ENDIANESS_LITTLE;
-                gameplay_recording_file_serialize(
-                    &state->gameplay_data.recording,
-                    nullptr,
-                    &serializer
-                );
-                serializer_finish(&serializer);
+                    auto serializer = open_write_file_serializer(string_literal("game.recording"));
+                    serializer.expected_endianess = ENDIANESS_LITTLE;
+                    gameplay_recording_file_serialize(
+                        &state->gameplay_data.recording,
+                        nullptr,
+                        &serializer
+                    );
+                    serializer_finish(&serializer);
+                    gameplay_recording_file_finish(&state->gameplay_data.recording);
+                }
             } else {
                 _debugprintf("Finished playback.");
+                _debugprintf(
+                    "Set OldPRNG to (%d, %d, %d, %d, %d)",
+                    state->gameplay_data.recording.old_prng.constant,
+                    state->gameplay_data.recording.old_prng.multiplier,
+                    state->gameplay_data.recording.old_prng.state,
+                    state->gameplay_data.recording.old_prng.seed,
+                    state->gameplay_data.recording.old_prng.modulus
+                );
                 state->gameplay_data.recording.in_playback = false;
-                state->gameplay_data.prng                 = state->gameplay_data.recording.old_prng;
+                state->gameplay_data.prng                  = state->gameplay_data.recording.old_prng;
+                _debugprintf(
+                    "Set State->PRNG to (%d, %d, %d, %d, %d)",
+                    state->gameplay_data.prng.constant,
+                    state->gameplay_data.prng.multiplier,
+                    state->gameplay_data.prng.state,
+                    state->gameplay_data.prng.seed,
+                    state->gameplay_data.prng.modulus
+                );
+                gameplay_recording_file_finish(&state->gameplay_data.recording);
             }
+
         } break;
         case GAME_SCREEN_INGAME: {
         } break;
@@ -3573,20 +3662,27 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
 void gameplay_recording_file_start_recording(Gameplay_Recording_File* recording,
                                              struct random_state prng_state,
                                              Memory_Arena* arena) {
-    recording->version             = GAMEPLAY_RECORDING_FILE_VERSION_1;
-    recording->tickrate            = TICKRATE;
-    recording->prng                = prng_state;
-    recording->frame_count         = 0;
-    recording->memory_arena        = arena;
-    recording->memory_arena_cursor = arena->used;
-    recording->in_playback         = false;
-    recording->frames              = (Gameplay_Frame_Input_Packet*)recording->memory_arena->push_unaligned(0);
+    _debugprintf(
+        "Start recording:\n(prng: %d, %d, %d, %d,  %d)",
+        prng_state.constant, prng_state.multiplier, prng_state.state, prng_state.seed, prng_state.modulus
+    );
+
+    recording->version                    = GAMEPLAY_RECORDING_FILE_VERSION_1;
+    recording->tickrate                   = TICKRATE;
+    recording->prng                       = recording->start_prng = prng_state;
+    recording->frame_count                = 0;
+    recording->memory_arena               = arena;
+    recording->memory_arena_cursor        = arena->used;
+    recording->in_playback                = false;
+    recording->frames_run                 = 0;
+    recording->frames                     = (Gameplay_Frame_Input_Packet*)recording->memory_arena->push_unaligned(0);
 }
 
 void gameplay_recording_file_record_frame(Gameplay_Recording_File* recording, const Gameplay_Frame_Input_Packet& frame_input) {
     assert(recording->memory_arena && "Cannot record frame without allocator");
     recording->memory_arena->push_unaligned(sizeof(frame_input));
     recording->frames[recording->frame_count++] = frame_input;
+    recording->frames_run += 1;
 }
 
 
@@ -3595,6 +3691,8 @@ void gameplay_recording_file_finish(Gameplay_Recording_File* recording) {
         recording->memory_arena->used = recording->memory_arena_cursor;
     }
     recording->memory_arena = nullptr;
+    _debugprintf("Run through: %d frames of gameplay", recording->frames_run);
+    _debugprintf("Playback: %d/%d frames", recording->playback_frame_index, recording->frame_count);
 }
 void gameplay_recording_file_stop_recording(Gameplay_Recording_File* recording) {
     // NOTE:
@@ -3602,6 +3700,8 @@ void gameplay_recording_file_stop_recording(Gameplay_Recording_File* recording) 
     // It is resident because the intention is to serialize if needed.
     // IE: it is fine for the remainder of a frame.
     gameplay_recording_file_finish(recording);
+    recording->prng = recording->start_prng;
+    _debugprintf("Recorded: %d frames", recording->frame_count);
 }
 
 bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memory_Arena* arena, struct binary_serializer* serializer) {
@@ -3617,6 +3717,10 @@ bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memor
     serialize_u8(serializer,  &recording->level_id);
     _debugprintf("Serializing recording version: %d", recording->version);
     _debugprintf("Serializing recording tickrate: %d", recording->tickrate);
+    _debugprintf(
+        "Serializing Recording PRNG:\n(prng: %d, %d, %d, %d, %d)",
+        recording->prng.constant, recording->prng.multiplier, recording->prng.state, recording->prng.seed, recording->prng.modulus
+    );
 
     switch (recording->version) {
         case GAMEPLAY_RECORDING_FILE_VERSION_1: {
@@ -3646,6 +3750,7 @@ bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memor
 }
 
 void gameplay_recording_file_start_playback(Gameplay_Recording_File* recording) {
+    recording->frames_run          = 0;
     recording->in_playback = true;
     recording->playback_frame_index = 0;
 }
@@ -3655,6 +3760,7 @@ bool gameplay_recording_file_has_more_frames(Gameplay_Recording_File* recording)
 }
 
 Gameplay_Frame_Input_Packet gameplay_recording_file_next_frame(Gameplay_Recording_File* recording) {
+    recording->frames_run += 1;
     return recording->frames[recording->playback_frame_index++];
 }
 
@@ -3678,7 +3784,7 @@ int _lua_bind_Task_Yield_Wait(lua_State* L) {
     task.userdata.yielded.timer_max = wait_time;
 
     // _debugprintf("LuaThread(%p) wants to wait for %f seconds", L, wait_time);
-    _debugprintf("LuaThread(%p)(taskid: %d) wants to wait for %f", L, task_id, wait_time);
+    // _debugprintf("LuaThread(%p)(taskid: %d) wants to wait for %f", L, task_id, wait_time);
 
     return lua_yield(L, 0);
 }

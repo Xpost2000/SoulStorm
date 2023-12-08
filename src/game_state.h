@@ -296,6 +296,7 @@ struct Gameplay_Recording_File {
     // check for both version and tickrate.
     u16                          version;
     s16                          tickrate;
+    struct random_state          start_prng;
     struct random_state          prng;
     struct random_state          old_prng; // For session restoration.
     s32                          frame_count;
@@ -320,6 +321,7 @@ struct Gameplay_Recording_File {
 
     bool                         in_playback = false;
     s32                          playback_frame_index = 0;
+    s32                          frames_run           = 0;
 };
 // NOTE: for what it's worth, I actually prefer this kind of C API
 // and it's kind of habitual for me to write stuff like this in my own personal code anyway...

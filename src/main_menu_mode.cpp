@@ -383,9 +383,6 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
                 &Global_Engine()->main_arena,
                 &serializer
             );
-            gameplay_recording_file_start_playback(
-                &state->gameplay_data.recording
-            );
             serializer_finish(&serializer);
 
             Transitions::do_shuteye_in(
@@ -402,6 +399,9 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
 
                     switch_ui(UI_STATE_INACTIVE);
                     switch_screen(GAME_SCREEN_INGAME);
+                    gameplay_recording_file_start_playback(
+                        &state->gameplay_data.recording
+                    );
                     setup_stage_start();
                     Transitions::do_shuteye_out(
                         color32f32(0, 0, 0, 1),

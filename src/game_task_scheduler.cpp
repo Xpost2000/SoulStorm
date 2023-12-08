@@ -123,7 +123,7 @@ void Game_Task_Scheduler::setup_lua_task(Game_Task* task, lua_State* caller_co, 
         lua_xmove(caller_co, task->L_C, args);
     }
 
-    _debugprintf("Lua task (%p) assigned to coroutine on (called with %d arguments) : %s", task->L_C, task->nargs, fn_name);
+    // _debugprintf("Lua task (%p) assigned to coroutine on (called with %d arguments) : %s", task->L_C, task->nargs, fn_name);
     cstring_copy((char*)fn_name, task->fn_name, array_count(task->fn_name)-1);
 }
 
@@ -135,7 +135,7 @@ s32 Game_Task_Scheduler::add_lua_game_task(struct Game_State* state, lua_State* 
     if (this->L == nullptr) this->L = L;
 
     auto& task               = tasks[first_free];
-    setup_generic_task(&task, GAME_TASK_SOURCE_GAME, current_screen_state, essential, state, nullptr);
+    setup_generic_task(&task, GAME_TASK_SOURCE_GAME_FIXED, current_screen_state, essential, state, nullptr);
     setup_lua_task(&task, caller_co,fn_name);
     active_task_ids.push(first_free);
     return first_free;
@@ -380,7 +380,7 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
                         "LUA_ERRERR"
                     };
 
-                    _debugprintf("LuaTask(%s): Code Status: %d (%s)", task.fn_name, status, lua_codes[status]);
+                    // _debugprintf("LuaTask(%s): Code Status: %d (%s)", task.fn_name, status, lua_codes[status]);
                     if (status != LUA_OK) {
                         _debugprintf("LUA_ERROR (%s) error?", lua_tostring(task.L_C,-1));
                     }

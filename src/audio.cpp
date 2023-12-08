@@ -130,7 +130,6 @@ namespace Audio {
     }
 
     void play(Sound_ID sound) {
-        _debugprintf("play sound hit?");
         if (sound.index == 0) {
             _debugprintf("bad sound");
             return;

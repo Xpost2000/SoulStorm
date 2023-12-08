@@ -75,6 +75,7 @@ Bullet bullet_upwards_linear(Game_State* state, V2 position, V2 direction, f32 m
         },
         visual
     );
+    bullet.die      = false;
     bullet.lifetime = Timer(6.0f);
     return bullet;
 }

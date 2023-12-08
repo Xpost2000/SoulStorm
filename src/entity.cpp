@@ -506,6 +506,10 @@ s32 Player::currently_grazing(Game_State* state) {
     for (s32 bullet_index = 0; bullet_index < state->gameplay_data.bullets.size; ++bullet_index) {
         auto& b = state->gameplay_data.bullets[bullet_index];
 
+        if (b.die) {
+            continue;
+        }
+
         if (b.source_type == BULLET_SOURCE_PLAYER) {
             continue;
         }
@@ -1028,14 +1032,16 @@ void Pickup_Entity::update(Game_State* state, f32 dt) {
 }
 
 void Pickup_Entity::on_picked_up(Game_State* state) {
+    if (awarded || die)
+        return;
+
     if (!seek_towards_player) {
-        if (awarded || die)
-            return;
         if (animation_t < PICKUP_ENTITY_ANIMATION_T_LENGTH)
             return;
     }
 
     awarded = true;
+    die     = true;
 
     // POLISH/TODO: would like polish animation.
     // but I haven't thought of the look too much right now so it's fine.
