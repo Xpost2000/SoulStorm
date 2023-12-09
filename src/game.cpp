@@ -869,7 +869,7 @@ Bullet* Gameplay_Data::lookup_bullet(u64 uid) {
 }
 
 void Gameplay_Data::reify_all_creation_queues() {
-#if 0
+#if 1
     Thread_Pool::add_job(
         [](void* ctx) {
             Gameplay_Data* state = (Gameplay_Data*)ctx;
@@ -2066,7 +2066,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     }
 
     this->state->coroutine_tasks.schedule_by_type(this->state, FIXED_TICKTIME, GAME_TASK_SOURCE_GAME_FIXED);
-#if 0
+#if 1
     Thread_Pool::add_job(
         [](void* ctx) {
             auto packet = (Entity_Loop_Update_Packet*) ctx;
@@ -2141,6 +2141,21 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     // NOTE: this is "hard" data dependency
     // since it's kind of noticable if pickups deviate more.
     Thread_Pool::synchronize_tasks();
+
+    {
+        auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
+        Game_State* game_state = packet->game_state;
+        Gameplay_Data* state = &packet->game_state->gameplay_data;
+        f32 dt = packet->dt;
+
+        for (int i = 0; i < (s32)state->pickups.size; ++i) {
+            auto& e = state->pickups[i];
+            e.update(game_state, dt);
+        }
+
+        state->player.update(game_state, dt);
+        state->player.handle_grazing_behavior(game_state, dt);
+    }
 #else
     {
         auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
@@ -2174,7 +2189,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
         }
 
         state->player.update(game_state, dt);
-        // state->player.handle_grazing_behavior(game_state, dt);
+        state->player.handle_grazing_behavior(game_state, dt);
     }
 #endif
 
@@ -3035,6 +3050,8 @@ void Game::handle_all_dead_entities(f32 dt) {
             // TODO:
             // I... don't like skipping the animation, but the simulation requires the animation
             // for timing...
+            // however, I also am unaware of a way to do so given my replay method because I do not record any
+            // animations.
             on_player_death();
         } else {
             if (state->paused_from_death == false) {
@@ -3060,7 +3077,7 @@ void Game::handle_all_dead_entities(f32 dt) {
         }
     }
 
-#if 0
+#if 1
     Thread_Pool::add_job(
         [](void* ctx) {
             Gameplay_Data* state = (Gameplay_Data*) ctx;
