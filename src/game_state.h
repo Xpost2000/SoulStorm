@@ -19,11 +19,11 @@
 #define MAX_BULLETS             (5000)
 #define MAX_SCORE_NOTIFICATIONS (5000)
 #define MAX_ENEMIES             (128)
-#define MAX_EXPLOSION_HAZARDS   (16)
-#define MAX_LASER_HAZARDS       (16)
+#define MAX_EXPLOSION_HAZARDS   (32)
+#define MAX_LASER_HAZARDS       (32)
 #define MAX_SCRIPTABLE_RENDER_OBJECTS (1024)
-#define MAX_TRACKED_SCRIPT_LOADABLE_IMAGES (512)
-#define MAX_TRACKED_SCRIPT_LOADABLE_SOUNDS (512)
+#define MAX_TRACKED_SCRIPT_LOADABLE_IMAGES (256)
+#define MAX_TRACKED_SCRIPT_LOADABLE_SOUNDS (256)
 
 static string menu_font_variation_string_names[] = {
     string_literal("res/fonts/gnsh-bitmapfont-colour1.png"),
@@ -339,6 +339,15 @@ Gameplay_Frame_Input_Packet gameplay_recording_file_next_frame(Gameplay_Recordin
 bool                        gameplay_recording_file_has_more_frames(Gameplay_Recording_File* recording);
 // END GAMEPLAY DEMO FUNCTIONALITY
 
+struct Gameplay_Demo_Viewer { 
+    // NOTE  this is kind of expensive to compute,
+    // it would be nice to cache, but this doesn't really super duper
+    // work afaik.
+    bool  paused        = false;
+    int   current_frame = 0;
+    float timescale     = 1.0f;
+};
+
 struct Gameplay_Data {
     bool stage_completed;
     Stage_State stage_state;
@@ -378,6 +387,8 @@ struct Gameplay_Data {
     bool queue_bomb_use = false;
 
     f32 fixed_tickrate_timer = 0.0f;
+
+    Gameplay_Demo_Viewer                   demo_viewer;
 
     Gameplay_Stage_Introduction_Sequence   intro;
     Gameplay_Stage_Complete_Stage_Sequence complete_stage;

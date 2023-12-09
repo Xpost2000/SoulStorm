@@ -53,6 +53,11 @@ struct Achievement_Notification_State {
 //
 // Might work on getting more stuff to be data oriented to be less painful.
 // 
+struct Entity_Loop_Update_Packet {
+    Game_State* game_state;
+    f32         dt;
+};
+
 class Game {
 public:
     Game();
@@ -128,6 +133,9 @@ private:
     bool can_access_stage(s32 id);
 
     void setup_stage_start();
+    void reset_stage_simulation_state();
+    void cleanup_game_simulation();
+    void simulate_game_frame(Entity_Loop_Update_Packet* update_params);
 
     // The game will only utilize one save file
     // and auto save so this makes so much way easier.

@@ -258,7 +258,14 @@ void Game::init_audio_resources() {
     resources->hit_sounds[1]    = Audio::load(("res/snds/hit2.wav"));
 }
 
-void Game::setup_stage_start() {
+
+// NOTE: as part of the replay system, I want to be able to scroll arbitrarily
+// and I would rather resimulate everything vs. storing snapshots as with lua as my VM
+// it's impossible to access a program counter or a similar construct. So I can't even use a snapshot
+// even if I wanted to :)
+// So this is here to "refresh" the simulation state
+// by reloading and resetting all the appropriate state.
+void Game::reset_stage_simulation_state() {
     auto state = &this->state->gameplay_data;
     s32 stage_id = this->state->mainmenu_data.stage_id_level_select;
     s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
@@ -331,27 +338,9 @@ void Game::setup_stage_start() {
     state->triggered_stage_completion_cutscene = false;
     state->queue_bomb_use = false;
 
-    // setup introduction badge
-    {
-        state->intro.stage       = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN;
-        state->intro.stage_timer = Timer(0.25f);
-    }
-
-    // setup end sequence information
-    {
-        state->triggered_stage_completion_cutscene = false;
-        state->complete_stage.stage                = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
-    }
-
     // setup recording file for recording or playback.
     {
-
-        _debugprintf(
-            "Stage Start PRNG:\n(prng: %d, %d, %d, %d,  %d)",
-            state->prng.constant, state->prng.multiplier, state->prng.state, state->prng.seed, state->prng.modulus
-        );
         if (!state->recording.in_playback) {
-            _debugprintf("Recording!");
             gameplay_recording_file_start_recording(
                 &state->recording,
                 state->prng,
@@ -362,27 +351,67 @@ void Game::setup_stage_start() {
         } else {
             state->recording.old_prng = state->prng;
             state->prng               = state->recording.prng;
-
-            _debugprintf(
-                "Set OldPRNG to (%d, %d, %d, %d, %d)",
-                state->recording.old_prng.constant,
-                state->recording.old_prng.multiplier,
-                state->recording.old_prng.state,
-                state->recording.old_prng.seed,
-                state->recording.old_prng.modulus
-            );
-
-            _debugprintf(
-                "Set PRNG to (%d, %d, %d, %d, %d)",
-                state->recording.prng.constant,
-                state->recording.prng.multiplier,
-                state->recording.prng.state,
-                state->recording.prng.seed,
-                state->recording.prng.modulus
-            );
         }
     }
     state->fixed_tickrate_timer = 0;
+}
+
+void Game::cleanup_game_simulation() {
+    state->gameplay_data.unload_all_script_loaded_resources(state, this->state->resources);
+
+    // TODO: be careful with this.
+    if (!state->gameplay_data.recording.in_playback) {
+        if (state->gameplay_data.recording.memory_arena) {
+            _debugprintf("Writing recording... (%d recorded score)", state->gameplay_data.current_score);
+
+            auto serializer = open_write_file_serializer(string_literal("game.recording"));
+            serializer.expected_endianess = ENDIANESS_LITTLE;
+            gameplay_recording_file_serialize(
+                &state->gameplay_data.recording,
+                nullptr,
+                &serializer
+            );
+            serializer_finish(&serializer);
+            gameplay_recording_file_finish(&state->gameplay_data.recording);
+        }
+    } else {
+        _debugprintf("Finished playback.");
+        _debugprintf(
+            "Set OldPRNG to (%d, %d, %d, %d, %d)",
+            state->gameplay_data.recording.old_prng.constant,
+            state->gameplay_data.recording.old_prng.multiplier,
+            state->gameplay_data.recording.old_prng.state,
+            state->gameplay_data.recording.old_prng.seed,
+            state->gameplay_data.recording.old_prng.modulus
+        );
+        state->gameplay_data.recording.in_playback = false;
+        state->gameplay_data.prng                  = state->gameplay_data.recording.old_prng;
+        _debugprintf(
+            "Set State->PRNG to (%d, %d, %d, %d, %d)",
+            state->gameplay_data.prng.constant,
+            state->gameplay_data.prng.multiplier,
+            state->gameplay_data.prng.state,
+            state->gameplay_data.prng.seed,
+            state->gameplay_data.prng.modulus
+        );
+        gameplay_recording_file_finish(&state->gameplay_data.recording);
+    }
+}
+
+void Game::setup_stage_start() {
+    reset_stage_simulation_state();
+
+    auto state = &this->state->gameplay_data;
+    {
+        state->intro.stage       = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN;
+        state->intro.stage_timer = Timer(0.25f);
+    }
+
+    // setup end sequence information
+    {
+        state->triggered_stage_completion_cutscene = false;
+        state->complete_stage.stage                = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
+    }
 }
 
 void Game::init(Graphics_Driver* driver) {
@@ -1980,6 +2009,172 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
     timer.update(dt);
 }
 
+void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
+    auto state = &this->state->gameplay_data;
+
+    if (state->recording.in_playback) {
+        if (gameplay_recording_file_has_more_frames(&state->recording)) {
+            // NOTE: 
+            state->current_input_packet = gameplay_recording_file_next_frame(&state->recording);
+        } else {
+            // nop and exit to main menu.
+            // TODO: add a different message rather than stage completion.
+            state->triggered_stage_completion_cutscene = true;
+            state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
+            state->complete_stage.stage_timer = Timer(0.35f);
+            zero_memory(&state->current_input_packet, sizeof(state->current_input_packet));
+            _debugprintf("Out of frames.");
+            return;
+        }
+    } else {
+        // I cannot physically record gameplay data at a faster rate...
+        // NOTE:
+        // since the game demo functionality is only meant for recording the "game" itself
+        // and not to operate as full debug input, I only care about producing input packets here.
+        {
+            V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
+            if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
+
+            // (special case for building input packet on button press)
+            // this is primarily because I should only record the "pressed" status
+            // once, but this is not really possible to do since my input happens at a higher framerate
+            // than the game logic...
+            bool previous_bomb_press = (state->current_input_packet.actions & (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT)));
+
+            state->current_input_packet.actions=
+                (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT))  *Action::is_down(ACTION_ACTION) |
+                (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT))   *Action::is_down(ACTION_FOCUS)  |
+                (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))*Action::is_pressed(ACTION_USE_BOMB) * (!previous_bomb_press)
+                ;
+            state->current_input_packet.axes[0] = (s8)(axes[0] * 127.0f);
+            state->current_input_packet.axes[1] = (s8)(axes[1] * 127.0f);
+        }
+
+        gameplay_recording_file_record_frame(&state->recording, state->current_input_packet);
+    }
+
+    this->state->coroutine_tasks.schedule_by_type(this->state, FIXED_TICKTIME, GAME_TASK_SOURCE_GAME_FIXED);
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            auto packet = (Entity_Loop_Update_Packet*) ctx;
+            Game_State* game_state = packet->game_state;
+            Gameplay_Data* state = &packet->game_state->gameplay_data;
+            f32 dt = packet->dt;
+
+            for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
+                auto& h = state->explosion_hazards[i];
+                h.update(game_state, dt);
+            }
+
+            return 0;
+        },
+        (void*)update_packet_data
+    );
+
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            auto packet = (Entity_Loop_Update_Packet*) ctx;
+            Game_State* game_state = packet->game_state;
+            Gameplay_Data* state = &packet->game_state->gameplay_data;
+            f32 dt = packet->dt;
+
+            for (int i = 0; i < (int)state->bullets.size; ++i) {
+                auto& b = state->bullets[i];
+                b.update(packet->game_state, dt);
+            }
+
+            return 0;
+        },
+        (void*)update_packet_data
+    );
+
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            auto packet = (Entity_Loop_Update_Packet*) ctx;
+            Game_State* game_state = packet->game_state;
+            Gameplay_Data* state = &packet->game_state->gameplay_data;
+            f32 dt = packet->dt;
+
+            for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
+                auto& h = state->laser_hazards[i];
+                h.update(game_state, dt);
+            }
+
+            return 0;
+        },
+        (void*)update_packet_data
+    );
+
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            auto packet = (Entity_Loop_Update_Packet*) ctx;
+            Game_State* game_state = packet->game_state;
+            Gameplay_Data* state = &packet->game_state->gameplay_data;
+            f32 dt = packet->dt;
+
+            for (int i = 0; i < (s32)state->enemies.size; ++i) {
+                auto& e = state->enemies[i];
+                e.update(game_state, dt);
+            }
+
+            return 0;
+        },
+        (void*)update_packet_data
+    );
+
+    // NOTE: this is "hard" data dependency
+    // since it's kind of noticable if pickups deviate more.
+    Thread_Pool::add_job(
+        [](void* ctx) {
+            auto packet = (Entity_Loop_Update_Packet*) ctx;
+            Game_State* game_state = packet->game_state;
+            Gameplay_Data* state = &packet->game_state->gameplay_data;
+            f32 dt = packet->dt;
+
+            for (int i = 0; i < (s32)state->pickups.size; ++i) {
+                auto& e = state->pickups[i];
+                e.update(game_state, dt);
+            }
+
+            return 0;
+        },
+        (void*)update_packet_data
+    );
+    Thread_Pool::synchronize_tasks();
+    {
+        auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
+        Game_State* game_state = packet->game_state;
+        Gameplay_Data* state = &packet->game_state->gameplay_data;
+        state->player.update(game_state, FIXED_TICKTIME);
+        state->player.handle_grazing_behavior(game_state, FIXED_TICKTIME);
+    }
+
+    handle_all_explosions(FIXED_TICKTIME);
+    handle_all_lasers(FIXED_TICKTIME);
+    handle_player_pickup_collisions(FIXED_TICKTIME);
+    handle_player_enemy_collisions(FIXED_TICKTIME);
+    handle_all_bullet_collisions(FIXED_TICKTIME);
+    handle_bomb_usage(FIXED_TICKTIME);
+    handle_all_dead_entities(FIXED_TICKTIME);
+    state->reify_all_creation_queues();
+    camera_update(&state->main_camera, FIXED_TICKTIME);
+
+    // Update all particle emitters
+    // while we wait.
+    {
+        for (s32 particle_emitter_index = 0; particle_emitter_index < state->particle_emitters.size; ++particle_emitter_index) {
+            auto& particle_emitter = state->particle_emitters[particle_emitter_index];
+            particle_emitter.update(&state->particle_pool, &state->prng, FIXED_TICKTIME);
+
+            if (!particle_emitter.active) {
+                state->particle_emitters.pop_and_swap(particle_emitter_index);
+            }
+        }
+
+        state->particle_pool.update(this->state, FIXED_TICKTIME);
+    }
+}
+
 void Game::update_and_render_game_ingame(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
     auto state = &this->state->gameplay_data;
     V2 resolution = V2(game_render_commands->screen_width, game_render_commands->screen_height);
@@ -2146,186 +2341,15 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 
           Also, I'm aware that I should be interpolating between the last and current frame with an accumulator, but
           I don't think it's necessary for a bullet hell game like this.
-
-          TODO: add a way to dilate the time scale.
         */
-
-        struct Entity_Loop_Update_Packet {
-            Game_State* game_state;
-            f32         dt;
-        };
 
         auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
         update_packet_data->dt = FIXED_TICKTIME;
         update_packet_data->game_state = this->state;
 
-        int frames_simulated = 0;
-
         state->fixed_tickrate_timer += dt;
         while (state->fixed_tickrate_timer >= FIXED_TICKTIME) {
-            frames_simulated++;
-            if (state->recording.in_playback) {
-                if (gameplay_recording_file_has_more_frames(&state->recording)) {
-                    // NOTE: 
-                    state->current_input_packet = gameplay_recording_file_next_frame(&state->recording);
-                } else {
-                    // nop and exit to main menu.
-                    // TODO: add a different message rather than stage completion.
-                    state->triggered_stage_completion_cutscene = true;
-                    state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
-                    state->complete_stage.stage_timer = Timer(0.35f);
-                    zero_memory(&state->current_input_packet, sizeof(state->current_input_packet));
-                    _debugprintf("Out of frames.");
-                    break;
-                }
-            } else {
-                // I cannot physically record gameplay data at a faster rate...
-                // NOTE:
-                // since the game demo functionality is only meant for recording the "game" itself
-                // and not to operate as full debug input, I only care about producing input packets here.
-                {
-                    V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
-                    if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
-
-                    // (special case for building input packet on button press)
-                    // this is primarily because I should only record the "pressed" status
-                    // once, but this is not really possible to do since my input happens at a higher framerate
-                    // than the game logic...
-                    bool previous_bomb_press = (state->current_input_packet.actions & (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT)));
-
-                    state->current_input_packet.actions=
-                        (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT))  *Action::is_down(ACTION_ACTION) |
-                        (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT))   *Action::is_down(ACTION_FOCUS)  |
-                        (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))*Action::is_pressed(ACTION_USE_BOMB) * (!previous_bomb_press)
-                        ;
-                    state->current_input_packet.axes[0] = (s8)(axes[0] * 127.0f);
-                    state->current_input_packet.axes[1] = (s8)(axes[1] * 127.0f);
-                }
-
-                gameplay_recording_file_record_frame(&state->recording, state->current_input_packet);
-            }
-
-            this->state->coroutine_tasks.schedule_by_type(this->state, FIXED_TICKTIME, GAME_TASK_SOURCE_GAME_FIXED);
-            Thread_Pool::add_job(
-                [](void* ctx) {
-                    auto packet = (Entity_Loop_Update_Packet*) ctx;
-                    Game_State* game_state = packet->game_state;
-                    Gameplay_Data* state = &packet->game_state->gameplay_data;
-                    f32 dt = packet->dt;
-
-                    for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
-                        auto& h = state->explosion_hazards[i];
-                        h.update(game_state, dt);
-                    }
-
-                    return 0;
-                },
-                (void*)update_packet_data
-            );
-
-            Thread_Pool::add_job(
-                [](void* ctx) {
-                    auto packet = (Entity_Loop_Update_Packet*) ctx;
-                    Game_State* game_state = packet->game_state;
-                    Gameplay_Data* state = &packet->game_state->gameplay_data;
-                    f32 dt = packet->dt;
-
-                    for (int i = 0; i < (int)state->bullets.size; ++i) {
-                        auto& b = state->bullets[i];
-                        b.update(packet->game_state, dt);
-                    }
-
-                    return 0;
-                },
-                (void*)update_packet_data
-            );
-
-            Thread_Pool::add_job(
-                [](void* ctx) {
-                    auto packet = (Entity_Loop_Update_Packet*) ctx;
-                    Game_State* game_state = packet->game_state;
-                    Gameplay_Data* state = &packet->game_state->gameplay_data;
-                    f32 dt = packet->dt;
-
-                    for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
-                        auto& h = state->laser_hazards[i];
-                        h.update(game_state, dt);
-                    }
-
-                    return 0;
-                },
-                (void*)update_packet_data
-            );
-
-            Thread_Pool::add_job(
-                [](void* ctx) {
-                    auto packet = (Entity_Loop_Update_Packet*) ctx;
-                    Game_State* game_state = packet->game_state;
-                    Gameplay_Data* state = &packet->game_state->gameplay_data;
-                    f32 dt = packet->dt;
-
-                    for (int i = 0; i < (s32)state->enemies.size; ++i) {
-                        auto& e = state->enemies[i];
-                        e.update(game_state, dt);
-                    }
-
-                    return 0;
-                },
-                (void*)update_packet_data
-            );
-
-            // NOTE: this is "hard" data dependency
-            // since it's kind of noticable if pickups deviate more.
-            Thread_Pool::add_job(
-                [](void* ctx) {
-                    auto packet = (Entity_Loop_Update_Packet*) ctx;
-                    Game_State* game_state = packet->game_state;
-                    Gameplay_Data* state = &packet->game_state->gameplay_data;
-                    f32 dt = packet->dt;
-
-                    for (int i = 0; i < (s32)state->pickups.size; ++i) {
-                        auto& e = state->pickups[i];
-                        e.update(game_state, dt);
-                    }
-
-                    return 0;
-                },
-                (void*)update_packet_data
-            );
-            Thread_Pool::synchronize_tasks();
-            {
-                auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
-                Game_State* game_state = packet->game_state;
-                Gameplay_Data* state = &packet->game_state->gameplay_data;
-                state->player.update(game_state, FIXED_TICKTIME);
-                state->player.handle_grazing_behavior(game_state, FIXED_TICKTIME);
-            }
-
-            handle_all_explosions(FIXED_TICKTIME);
-            handle_all_lasers(FIXED_TICKTIME);
-            handle_player_pickup_collisions(FIXED_TICKTIME);
-            handle_player_enemy_collisions(FIXED_TICKTIME);
-            handle_all_bullet_collisions(FIXED_TICKTIME);
-            handle_bomb_usage(FIXED_TICKTIME);
-            handle_all_dead_entities(FIXED_TICKTIME);
-            state->reify_all_creation_queues();
-            camera_update(&state->main_camera, FIXED_TICKTIME);
-
-            // Update all particle emitters
-            // while we wait.
-            {
-                for (s32 particle_emitter_index = 0; particle_emitter_index < state->particle_emitters.size; ++particle_emitter_index) {
-                    auto& particle_emitter = state->particle_emitters[particle_emitter_index];
-                    particle_emitter.update(&state->particle_pool, &state->prng, FIXED_TICKTIME);
-
-                    if (!particle_emitter.active) {
-                        state->particle_emitters.pop_and_swap(particle_emitter_index);
-                    }
-                }
-
-                state->particle_pool.update(this->state, FIXED_TICKTIME);
-            }
-
+            simulate_game_frame(update_packet_data);
             state->fixed_tickrate_timer -= FIXED_TICKTIME;
             state->current_stage_timer  += FIXED_TICKTIME;
         }
@@ -3135,46 +3159,7 @@ void Game::switch_screen(s32 screen) {
         case GAME_SCREEN_TITLE_SCREEN: 
         case GAME_SCREEN_OPENING: 
         case GAME_SCREEN_MAIN_MENU: {
-            state->gameplay_data.unload_all_script_loaded_resources(state, this->state->resources);
-
-            // TODO: be careful with this.
-            if (!state->gameplay_data.recording.in_playback) {
-                if (state->gameplay_data.recording.memory_arena) {
-                    _debugprintf("Writing recording... (%d recorded score)", state->gameplay_data.current_score);
-
-                    auto serializer = open_write_file_serializer(string_literal("game.recording"));
-                    serializer.expected_endianess = ENDIANESS_LITTLE;
-                    gameplay_recording_file_serialize(
-                        &state->gameplay_data.recording,
-                        nullptr,
-                        &serializer
-                    );
-                    serializer_finish(&serializer);
-                    gameplay_recording_file_finish(&state->gameplay_data.recording);
-                }
-            } else {
-                _debugprintf("Finished playback.");
-                _debugprintf(
-                    "Set OldPRNG to (%d, %d, %d, %d, %d)",
-                    state->gameplay_data.recording.old_prng.constant,
-                    state->gameplay_data.recording.old_prng.multiplier,
-                    state->gameplay_data.recording.old_prng.state,
-                    state->gameplay_data.recording.old_prng.seed,
-                    state->gameplay_data.recording.old_prng.modulus
-                );
-                state->gameplay_data.recording.in_playback = false;
-                state->gameplay_data.prng                  = state->gameplay_data.recording.old_prng;
-                _debugprintf(
-                    "Set State->PRNG to (%d, %d, %d, %d, %d)",
-                    state->gameplay_data.prng.constant,
-                    state->gameplay_data.prng.multiplier,
-                    state->gameplay_data.prng.state,
-                    state->gameplay_data.prng.seed,
-                    state->gameplay_data.prng.modulus
-                );
-                gameplay_recording_file_finish(&state->gameplay_data.recording);
-            }
-
+            cleanup_game_simulation();
         } break;
         case GAME_SCREEN_INGAME: {
         } break;
