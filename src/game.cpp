@@ -2488,7 +2488,12 @@ void Game::update_and_render_dialogue_ui(struct render_commands* commands, f32 d
         // update some dialogue ui.
         {
             if (Action::is_pressed(ACTION_ACTION)) {
-                dialogue_state.shown_characters = dialogue_state.length;
+                if (dialogue_state.shown_characters < dialogue_state.length) {
+                    dialogue_state.shown_characters = dialogue_state.length;
+                } else {
+                    // allows the lua script to resume.
+                    dialogue_state.confirm_continue = true;
+                }
             }
 
             if (dialogue_state.shown_characters < dialogue_state.length) {
@@ -4529,6 +4534,64 @@ int _lua_bind_kill_all_enemies(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_dialogue_start(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto&       dialogue_state = state->dialogue_state;
+    return 0;
+}
+
+int _lua_bind_dialogue_end(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto&       dialogue_state = state->dialogue_state;
+    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
+    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
+
+    auto& task = state->coroutine_tasks.tasks[task_id];
+    task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_DIALOGUE_FINISH;
+    return lua_yield(L, 0);
+}
+
+int _lua_bind_dialogue_say_line(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto&       dialogue_state = state->dialogue_state;
+    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
+    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
+
+    auto& task = state->coroutine_tasks.tasks[task_id];
+    task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_DIALOGUE_CONTINUE;
+    return lua_yield(L, 0);
+}
+
+int _lua_bind_dialogue_speaker_set_visibility(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto&       dialogue_state = state->dialogue_state;
+    return 0;
+}
+
+int _lua_bind_dialogue_speaker_set_image_scale(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto&       dialogue_state = state->dialogue_state;
+    return 0;
+}
+
+int _lua_bind_dialogue_speaker_set_image(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto&       dialogue_state = state->dialogue_state;
+    return 0;
+}
+
+int _lua_bind_dialogue_speaker_set_mirrored(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto&       dialogue_state = state->dialogue_state;
+    return 0;
+}
+
+int _lua_bind_dialogue_speaker_set_position_offset(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto&       dialogue_state = state->dialogue_state;
+    return 0;
+}
+
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     /*
@@ -4592,6 +4655,14 @@ lua_State* Game_State::alloc_lua_bindings() {
         lua_register(L, "async_task",          _lua_bind_async_task);
         lua_register(L, "random_attack_sound",  _lua_bind_random_attack_sound);
 
+        lua_register(L, "dialogue_start",                    _lua_bind_dialogue_start);
+        lua_register(L, "dialogue_end",                      _lua_bind_dialogue_end);
+        lua_register(L, "dialogue_say_line",                 _lua_bind_dialogue_say_line);
+        lua_register(L, "dialogue_speaker_set_visibility",   _lua_bind_dialogue_speaker_set_visibility);
+        lua_register(L, "dialogue_speaker_set_image",        _lua_bind_dialogue_speaker_set_image);
+        lua_register(L, "dialogue_speaker_set_image_scale",  _lua_bind_dialogue_speaker_set_image_scale);
+        lua_register(L, "dialogue_speaker_set_mirrored",     _lua_bind_dialogue_speaker_set_mirrored);
+        lua_register(L, "dialogue_speaker_set_position_offset",     _lua_bind_dialogue_speaker_set_position_offset);
 #if 1
         /* These are per frame objects */
         /*
