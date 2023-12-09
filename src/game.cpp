@@ -868,7 +868,7 @@ Bullet* Gameplay_Data::lookup_bullet(u64 uid) {
 }
 
 void Gameplay_Data::reify_all_creation_queues() {
-#if 1
+#if 0
     Thread_Pool::add_job(
         [](void* ctx) {
             Gameplay_Data* state = (Gameplay_Data*)ctx;
@@ -2065,6 +2065,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     }
 
     this->state->coroutine_tasks.schedule_by_type(this->state, FIXED_TICKTIME, GAME_TASK_SOURCE_GAME_FIXED);
+#if 0
     Thread_Pool::add_job(
         [](void* ctx) {
             auto packet = (Entity_Loop_Update_Packet*) ctx;
@@ -2081,6 +2082,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
         },
         (void*)update_packet_data
     );
+    Thread_Pool::synchronize_tasks();
 
     Thread_Pool::add_job(
         [](void* ctx) {
@@ -2098,6 +2100,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
         },
         (void*)update_packet_data
     );
+    Thread_Pool::synchronize_tasks();
 
     Thread_Pool::add_job(
         [](void* ctx) {
@@ -2115,6 +2118,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
         },
         (void*)update_packet_data
     );
+    Thread_Pool::synchronize_tasks();
 
     Thread_Pool::add_job(
         [](void* ctx) {
@@ -2135,29 +2139,42 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
 
     // NOTE: this is "hard" data dependency
     // since it's kind of noticable if pickups deviate more.
-    Thread_Pool::add_job(
-        [](void* ctx) {
-            auto packet = (Entity_Loop_Update_Packet*) ctx;
-            Game_State* game_state = packet->game_state;
-            Gameplay_Data* state = &packet->game_state->gameplay_data;
-            f32 dt = packet->dt;
-
-            for (int i = 0; i < (s32)state->pickups.size; ++i) {
-                auto& e = state->pickups[i];
-                e.update(game_state, dt);
-            }
-
-            return 0;
-        },
-        (void*)update_packet_data
-    );
     Thread_Pool::synchronize_tasks();
+#else
+#endif
     {
         auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
         Game_State* game_state = packet->game_state;
         Gameplay_Data* state = &packet->game_state->gameplay_data;
-        state->player.update(game_state, FIXED_TICKTIME);
-        state->player.handle_grazing_behavior(game_state, FIXED_TICKTIME);
+        f32 dt = packet->dt;
+
+        for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
+            auto& h = state->explosion_hazards[i];
+            h.update(game_state, dt);
+        }
+
+        for (int i = 0; i < (int)state->bullets.size; ++i) {
+            auto& b = state->bullets[i];
+            b.update(packet->game_state, dt);
+        }
+
+        for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
+            auto& h = state->laser_hazards[i];
+            h.update(game_state, dt);
+        }
+
+        for (int i = 0; i < (s32)state->enemies.size; ++i) {
+            auto& e = state->enemies[i];
+            e.update(game_state, dt);
+        }
+
+        for (int i = 0; i < (s32)state->pickups.size; ++i) {
+            auto& e = state->pickups[i];
+            e.update(game_state, dt);
+        }
+
+        state->player.update(game_state, dt);
+        state->player.handle_grazing_behavior(game_state, dt);
     }
 
     handle_all_explosions(FIXED_TICKTIME);
@@ -2168,7 +2185,6 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     handle_bomb_usage(FIXED_TICKTIME);
     handle_all_dead_entities(FIXED_TICKTIME);
     state->reify_all_creation_queues();
-    camera_update(&state->main_camera, FIXED_TICKTIME);
 
     // Update all particle emitters
     // while we wait.
@@ -2184,6 +2200,8 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
 
         state->particle_pool.update(this->state, FIXED_TICKTIME);
     }
+
+    camera_update(&state->main_camera, FIXED_TICKTIME);
 }
 
 void Game::update_and_render_game_ingame(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
@@ -2343,7 +2361,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         // Replay_Demo_UI
         if (state->recording.in_playback && this->state->ui_state == UI_STATE_INACTIVE) {
             auto& viewer_ui = state->demo_viewer;
-            f32 y = play_area_height-150;
+            f32 y = play_area_height-120;
 
             auto media_button_string =
                 (viewer_ui.paused) ?
@@ -2359,6 +2377,45 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 state->recording.playback_frame_index = 0;
                 state->recording.frames_run           = 0;
                 reset_stage_simulation_state();
+            }
+            y += 30;
+            if (GameUI::button(V2(play_area_x+play_area_width + 20, y), string_literal("[TO END]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+                // partial clean up of resources...
+                state->unload_all_script_loaded_resources(this->state, this->state->resources);
+                state->prng = state->recording.old_prng;
+                state->recording.playback_frame_index = 0;
+                state->recording.frames_run           = 0;
+                reset_stage_simulation_state();
+
+                int  desired_frame   = state->recording.frame_count;
+                {
+                    auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
+                    update_packet_data->dt = FIXED_TICKTIME;
+                    update_packet_data->game_state = this->state;
+
+                    // NOTE: only frames that come before require a full resimulation
+                    // since the timeline runs from a lua coroutine, I need to maintain coroutine state
+                    // which isn't possible in lua.
+                    //
+                    // Yeah.
+                    if (desired_frame < state->recording.playback_frame_index) {
+                        // partial clean up of resources...
+                        state->unload_all_script_loaded_resources(this->state, this->state->resources);
+                        state->prng = state->recording.old_prng;
+                        state->recording.playback_frame_index = 0;
+                        state->recording.frames_run = 0;
+                        reset_stage_simulation_state();
+                    } else {
+                        desired_frame -= state->recording.playback_frame_index;
+                    }
+
+                    while (desired_frame) {
+                        simulate_game_frame(update_packet_data);
+                        state->current_stage_timer  += FIXED_TICKTIME;
+                        desired_frame -= 1;
+                    }
+                }
+                viewer_ui.paused = true;
             }
             y += 30;
             if (GameUI::button(V2(play_area_x+play_area_width + 20, y), media_button_string, color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
@@ -2983,6 +3040,7 @@ void Game::handle_all_dead_entities(f32 dt) {
         }
     }
 
+#if 0
     Thread_Pool::add_job(
         [](void* ctx) {
             Gameplay_Data* state = (Gameplay_Data*) ctx;
@@ -2992,6 +3050,7 @@ void Game::handle_all_dead_entities(f32 dt) {
             }
             return 0;
         }, state);
+    Thread_Pool::synchronize_tasks();
 
     Thread_Pool::add_job(
         [](void* ctx) {
@@ -3002,6 +3061,7 @@ void Game::handle_all_dead_entities(f32 dt) {
             }
             return 0;
         }, state);
+    Thread_Pool::synchronize_tasks();
 
     Thread_Pool::add_job(
         [](void* ctx) {
@@ -3012,6 +3072,7 @@ void Game::handle_all_dead_entities(f32 dt) {
             }
             return 0;
         }, state);
+    Thread_Pool::synchronize_tasks();
 
     Thread_Pool::add_job(
         [](void* ctx) {
@@ -3022,6 +3083,7 @@ void Game::handle_all_dead_entities(f32 dt) {
             }
             return 0;
         }, state);
+    Thread_Pool::synchronize_tasks();
 
     Thread_Pool::add_job(
         [](void* ctx) {
@@ -3034,6 +3096,28 @@ void Game::handle_all_dead_entities(f32 dt) {
         }, state);
 
     Thread_Pool::synchronize_tasks();
+#else
+    for (int i = 0; i < state->laser_hazards.size; ++i) {
+        auto& h = state->laser_hazards[i];
+        if (h.die) {state->laser_hazards.pop_and_swap(i);}
+    }
+    for (int i = 0; i < state->pickups.size; ++i) {
+        auto& pe = state->pickups[i];
+        if (pe.die) {state->pickups.pop_and_swap(i);}
+    }
+    for (int i = 0; i < state->bullets.size; ++i) {
+        auto& b = state->bullets[i];
+        if (b.die) {state->bullets.pop_and_swap(i);}
+    }
+    for (int i = 0; i < state->enemies.size; ++i) {
+        auto& e = state->enemies[i];
+        if (e.die) {state->enemies.pop_and_swap(i);}
+    }
+    for (int i = 0; i < state->explosion_hazards.size; ++i) {
+        auto& h = state->explosion_hazards[i];
+        if (h.exploded) {state->explosion_hazards.pop_and_swap(i);}
+    }
+#endif
 }
 
 void Game::handle_all_lasers(f32 dt) {

@@ -103,6 +103,7 @@ struct rectangle_f32 camera_project_rectangle(struct camera* camera, struct rect
 }
 
 void camera_update(struct camera* camera, f32 dt) {
+    camera->trauma_displacement = camera_displacement_from_trauma(camera);
     {
         if (camera->trauma > 0) {
             camera->trauma -= dt;

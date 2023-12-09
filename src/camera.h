@@ -42,6 +42,8 @@ struct camera {
     f32                  start_interpolation_values[3] = { 0,0,0 };
     bool                 try_interpolation[3] = { false, false, false };
 
+    // updates from camera_update
+    V2                   trauma_displacement;
     f32 trauma = 0.0f;
 };
 

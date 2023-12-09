@@ -150,7 +150,8 @@ void software_framebuffer_render_commands(struct software_framebuffer* framebuff
     }
 
     /* move all things into clip space */
-    V2 displacement      = camera_displacement_from_trauma(&commands->camera);
+    // V2 displacement      = camera_displacement_from_trauma(&commands->camera);
+    V2 displacement      = commands->camera.trauma_displacement;
 
     for (unsigned index = 0; index < commands->command_count; ++index) {
         struct render_command* command = &commands->commands[index];
