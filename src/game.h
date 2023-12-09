@@ -125,6 +125,7 @@ private:
     void convert_bullets_to_score_pickups(float radius=99999);
     void convert_enemies_to_score_pickups(float radius=99999);
 
+    void on_player_death();
     bool safely_resurrect_player();
     bool can_resurrect();
 

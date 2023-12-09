@@ -827,6 +827,7 @@ void Gameplay_Data::add_enemy_entity(Enemy_Entity e) {
 }
 
 void Gameplay_Data::add_pickup_entity(Pickup_Entity s) {
+    return;
     to_create_pickups.push(s);
 }
 
@@ -2141,7 +2142,6 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     // since it's kind of noticable if pickups deviate more.
     Thread_Pool::synchronize_tasks();
 #else
-#endif
     {
         auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
         Game_State* game_state = packet->game_state;
@@ -2174,8 +2174,9 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
         }
 
         state->player.update(game_state, dt);
-        state->player.handle_grazing_behavior(game_state, dt);
+        // state->player.handle_grazing_behavior(game_state, dt);
     }
+#endif
 
     handle_all_explosions(FIXED_TICKTIME);
     handle_all_lasers(FIXED_TICKTIME);
@@ -2361,7 +2362,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         // Replay_Demo_UI
         if (state->recording.in_playback && this->state->ui_state == UI_STATE_INACTIVE) {
             auto& viewer_ui = state->demo_viewer;
-            f32 y = play_area_height-120;
+            f32 y = play_area_height-180;
 
             auto media_button_string =
                 (viewer_ui.paused) ?
@@ -2409,11 +2410,13 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                         desired_frame -= state->recording.playback_frame_index;
                     }
 
+                    viewer_ui.arbitrary_frame_visit = true;
                     while (desired_frame) {
                         simulate_game_frame(update_packet_data);
                         state->current_stage_timer  += FIXED_TICKTIME;
                         desired_frame -= 1;
                     }
+                    viewer_ui.arbitrary_frame_visit = false;
                 }
                 viewer_ui.paused = true;
             }
@@ -2455,6 +2458,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 }
 
                 if (change_to_frame) {
+                    viewer_ui.arbitrary_frame_visit = true;
                     if (desired_frame >= state->recording.frame_count) {
                         desired_frame = state->recording.frame_count-1;
                     } else if (desired_frame < 0) {
@@ -2489,6 +2493,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                             desired_frame -= 1;
                         }
                     }
+                    viewer_ui.arbitrary_frame_visit = false;
                 }
             }
             GameUI::end_frame();
@@ -2990,53 +2995,68 @@ void Game::handle_bomb_usage(f32 dt) {
     state->tries         -= 1;
 }
 
+void Game::on_player_death() {
+    auto state = &this->state->gameplay_data;
+    _debugprintf("On finish death");
+
+    Audio::play(resources->hit_sounds[0]);
+    if (safely_resurrect_player()) {
+        _debugprintf("Resurrected player?");
+    } else {
+        // TODO: Will have to change if
+        // I have "CONTINUES" support
+        _debugprintf("record status (%d) %d\n", state->recording.frame_count, state->recording.in_playback);
+        if (state->recording.in_playback) {
+            _debugprintf("TODO handle continues?");
+            state->triggered_stage_completion_cutscene = true;
+            state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
+            state->complete_stage.stage_timer = Timer(0.35f);
+        } else {
+            // Would like to trigger a death cutscene
+            // but now is not the time.
+            switch_ui(UI_STATE_DEAD_MAYBE_RETRY);
+        }
+    }
+}
+
 void Game::handle_all_dead_entities(f32 dt) {
     auto state = &this->state->gameplay_data;
 
     if (state->player.die) {
-        if (state->paused_from_death == false) {
-            state->paused_from_death = true;
-            Transitions::do_color_transition_in(
-                color32f32(1, 1, 1, 1),
-                0.10f,
-                0.05f
-            );
+        if (state->recording.in_playback &&
+            (state->demo_viewer.arbitrary_frame_visit ||
+             state->demo_viewer.timescale_index != DEFAULT_DEMO_VIEWER_TIMESCALE_INDEX))
+        {
+            // NOTE:
+            // unideal simulation conditions.
+            // the transition would interrupt the simulation, so I cannot play the transition
+            // without risking a desync.
 
-            Transitions::register_on_finish(
-                [&](void*) {
-                    Transitions::do_color_transition_out(
-                        color32f32(1, 1, 1, 1),
-                        0.1f,
-                        0.025f
-                    );
+            // TODO:
+            // I... don't like skipping the animation, but the simulation requires the animation
+            // for timing...
+            on_player_death();
+        } else {
+            if (state->paused_from_death == false) {
+                state->paused_from_death = true;
+                Transitions::do_color_transition_in(color32f32(1, 1, 1, 1), 0.10f, 0.05f);
 
-                    Transitions::register_on_finish(
-                        [&](void*) {
-                            auto state = &this->state->gameplay_data;
-                            _debugprintf("On finish death");
+                Transitions::register_on_finish(
+                    [&](void*) {
+                        Transitions::do_color_transition_out(
+                            color32f32(1, 1, 1, 1),
+                            0.1f,
+                            0.025f
+                        );
 
-                            Audio::play(resources->hit_sounds[0]);
-                            if (safely_resurrect_player()) {
-                                _debugprintf("Resurrected player?");
-                            } else {
-                                // TODO: Will have to change if
-                                // I have "CONTINUES" support
-                                _debugprintf("record status (%d) %d\n", state->recording.frame_count, state->recording.in_playback);
-                                if (state->recording.in_playback) {
-                                    _debugprintf("TODO handle continues?");
-                                    state->triggered_stage_completion_cutscene = true;
-                                    state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
-                                    state->complete_stage.stage_timer = Timer(0.35f);
-                                } else {
-                                    // Would like to trigger a death cutscene
-                                    // but now is not the time.
-                                    switch_ui(UI_STATE_DEAD_MAYBE_RETRY);
-                                }
+                        Transitions::register_on_finish(
+                            [&](void*) {
+                                on_player_death();
                             }
-                        }
-                    );
-                }
-            );
+                        );
+                    }
+                );
+            }
         }
     }
 

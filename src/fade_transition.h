@@ -68,6 +68,7 @@ namespace Transitions {
     void do_color_transition_out(color32f32 target_color, f32 delay_time, f32 time);
 
     void update_and_render(struct render_commands* commands, f32 dt);
+
     void clear_effect();
 }
 

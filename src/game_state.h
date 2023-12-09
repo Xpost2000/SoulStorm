@@ -339,12 +339,14 @@ Gameplay_Frame_Input_Packet gameplay_recording_file_next_frame(Gameplay_Recordin
 bool                        gameplay_recording_file_has_more_frames(Gameplay_Recording_File* recording);
 // END GAMEPLAY DEMO FUNCTIONALITY
 
-struct Gameplay_Demo_Viewer { 
+#define DEFAULT_DEMO_VIEWER_TIMESCALE_INDEX (3)
+struct Gameplay_Demo_Viewer {
     // NOTE  this is kind of expensive to compute,
     // it would be nice to cache, but this doesn't really super duper
     // work afaik.
-    bool paused          = false;
-    int  timescale_index = 3;
+    bool paused                = false;
+    bool arbitrary_frame_visit = false; 
+    int  timescale_index       = DEFAULT_DEMO_VIEWER_TIMESCALE_INDEX;
 };
 
 struct Gameplay_Data {

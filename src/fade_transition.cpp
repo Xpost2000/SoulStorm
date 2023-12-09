@@ -215,6 +215,7 @@ namespace Transitions {
     void update_and_render(struct render_commands* commands, f32 dt) {
         struct transition_fader_state* transition_state = &global_transition_fader_state;
         auto                           on_delay_finish  = transition_state->on_delay_finish;
+        auto                           on_start         = transition_state->on_start;
         auto                           on_finish        = transition_state->on_finish;
 
         if (transition_state->type == TRANSITION_FADER_TYPE_NONE) {
