@@ -353,6 +353,8 @@ struct Gameplay_Data {
     bool stage_completed;
     Stage_State stage_state;
     Particle_Pool particle_pool;
+    // TODO: allow player name configuration
+    /* char          player_name[64]; */
 
     Gameplay_Frame_Input_Packet current_input_packet;
     Gameplay_Demo_Viewer        demo_viewer;
@@ -441,6 +443,7 @@ enum UI_State_Mode {
     UI_STATE_STAGE_SELECT,
     UI_STATE_DEAD_MAYBE_RETRY,
     UI_STATE_ACHIEVEMENTS,
+    UI_STATE_REPLAY_COLLECTION,
     UI_STATE_CONFIRM_BACK_TO_MAIN_MENU,
     UI_STATE_CONFIRM_EXIT_TO_WINDOWS,
     UI_STATE_COUNT,

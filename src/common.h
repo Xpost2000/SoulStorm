@@ -53,6 +53,7 @@
 #define Gigabyte(x)                 (uint64_t)(x * 1024LL * 1024LL * 1024LL)
 #define Terabyte(x)                 (uint64_t)(x * 1024LL * 1024LL * 1024LL * 1024LL)
 
+struct Memory_Arena;
 inline static char* __shorten_path_length(char* original, int depth) {
     if (depth < 0) depth = 1;
     // assumed from __FILE__...
@@ -526,6 +527,64 @@ inline bool f32_close_enough_lte(f32 a, f32 b, f32 tolerance=DEFAULT_EPSILON) {
 inline bool f32_close_enough_gte(f32 a, f32 b, f32 tolerance=DEFAULT_EPSILON) {
     return (f32_close_enough(a, b, tolerance)) || (a > b);
 }
+
+struct Calendar_Time {
+    s32 year;
+    s32 day;
+    s32 day_of_the_week;
+    s32 month;
+
+    s32 hours;
+    s32 minutes;
+    s32 seconds;
+};
+
+static const char* day_strings[] = {
+    "SUN",
+    "MON",
+    "TUE",
+    "WED",
+    "THU",
+    "FRI",
+    "SAT",
+};
+
+static const char* month_strings[] = {
+    "JAN",
+    "FEB",
+    "MAR",
+    "APR",
+    "MAY",
+    "JUN",
+    "JUL",
+    "AUG",
+    "SEP",
+    "OCT",
+    "NOV",
+    "DEC",
+};
+
+u64           system_get_current_time(void);
+Calendar_Time calendar_time_from(s64 timestamp);
+Calendar_Time current_calendar_time(void);
+
+void OS_create_directory(string location);
+
+struct Directory_File {
+    char    name[260];
+    size_t  filesize;
+    bool    is_directory;
+    /* could add more info like timing stuff */
+};
+struct Directory_Listing {
+    char            basename[260];
+    s32             count;
+    Directory_File* files;
+};
+
+bool path_exists(string location); 
+bool is_path_directory(string location); 
+Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, string location); 
 
 #include "debug_ui.h"
 #include "duffcoroutine.h"

@@ -1225,6 +1225,38 @@ void Game::update_and_render_confirm_exit_to_windows(struct render_commands* com
     GameUI::end_frame();
 }
 
+void Game::update_and_render_replay_collection_menu(struct render_commands* commands, f32 dt) {
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+
+    GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+    GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+
+    GameUI::set_ui_id((char*)"ui_replay_collection_menu");
+    GameUI::begin_frame(commands);
+    {
+        f32 y = 100;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(50, y), string_literal("SOULSTORM - REPLAY COLLECTION"), color32f32(1, 1, 1, 1), 4);
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        y += 45;
+        if (GameUI::button(V2(100, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            switch_ui(state->last_ui_state);
+        }
+
+        {
+            
+        }
+
+        // NOTE:
+        // all the UI is the same with both interfaces, and fortunately because
+        // the game has extremely basic UI layout and design, I don't think there's
+        // anything crazy I need.
+        if (Action::is_pressed(ACTION_CANCEL)) {
+            switch_ui(state->last_ui_state);
+        }
+    }
+}
+
 void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
 
@@ -1283,6 +1315,11 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
 
         if (GameUI::button(V2(100, y), string_literal("Achievements"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(UI_STATE_ACHIEVEMENTS);
+        }
+        y += 30;
+
+        if (GameUI::button(V2(100, y), string_literal("Replays"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            switch_ui(UI_STATE_REPLAY_COLLECTION);
         }
         y += 30;
 
@@ -1692,6 +1729,9 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
             if (state->screen_mode != GAME_SCREEN_CREDITS && state->screen_mode != GAME_SCREEN_TITLE_SCREEN) {
                 GameUI::set_ui_id(0);
             }
+        } break;
+        case UI_STATE_REPLAY_COLLECTION: {
+            update_and_render_replay_collection_menu(commands, dt);
         } break;
         case UI_STATE_PAUSED: {
             update_and_render_pause_menu(commands, dt);

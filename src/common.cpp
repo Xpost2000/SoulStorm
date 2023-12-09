@@ -1,6 +1,15 @@
 #include "common.h"
 #include "file_buffer.h"
 #include "V2.h"
+#include "memory_arena.h"
+
+#undef UNICODE
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#ifndef __EMSCRIPTEN__
+#include <windows.h>
+#endif
+#endif
 
 rectangle_f32 rectangle_f32_centered(rectangle_f32 center_region, f32 width, f32 height) {
     return rectangle_f32(
@@ -112,4 +121,125 @@ void file_buffer_free(struct file_buffer* file) {
     } else if (file->buffer) {
         file->allocator.free(&file->allocator, file->buffer);
     }
+}
+
+u64 system_get_current_time(void) {
+    return time(0);
+}
+
+void OS_create_directory(string location) {
+#ifdef _WIN32 
+    string s = string_from_cstring(format_temp("%.*s", location.length, location.data));
+    CreateDirectory(s.data, NULL);
+#endif
+}
+
+Calendar_Time calendar_time_from(s64 timestamp) {
+    Calendar_Time result = { 0 };
+    time_t     current_time = timestamp; 
+    struct tm* time_info    = localtime(&current_time);
+
+    _debugprintf("%lld\n", timestamp);
+
+    if (time_info) {
+        result.year = time_info->tm_year + 1900;
+        result.month = time_info->tm_mon;
+        result.hours = time_info->tm_hour;
+        result.minutes = time_info->tm_min;
+        result.seconds = time_info->tm_sec;
+        result.day = time_info->tm_mday;
+        result.day_of_the_week = time_info->tm_wday;
+        return result;
+    } else {
+        return result;
+    }
+}
+
+Calendar_Time current_calendar_time(void) {
+    return calendar_time_from(system_get_current_time());
+}
+
+bool path_exists(string location) {
+#ifndef __EMSCRIPTEN__
+    char tmp_copy[260] = {};
+    for (s32 i = 0; i < location.length; ++i) {
+        tmp_copy[i] = location.data[i];
+    }
+    if (location.data[location.length-1] == '/' || location.data[location.length-1] == '\\') {
+        tmp_copy[location.length-1] = 0;
+    }
+
+    WIN32_FIND_DATA find_data = {};
+    HANDLE handle = FindFirstFile(tmp_copy, &find_data);
+
+
+    if (handle == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool is_path_directory(string location) {
+#ifndef __EMSCRIPTEN__
+    char tmp_copy[260] = {};
+    for (s32 i = 0; i < location.length; ++i) {
+        tmp_copy[i] = location.data[i];
+    }
+    if (location.data[location.length-1] == '/' || location.data[location.length-1] == '\\') {
+        tmp_copy[location.length-1] = 0;
+    }
+
+    WIN32_FIND_DATA find_data = {};
+    HANDLE handle = FindFirstFile(tmp_copy, &find_data);
+
+    if (handle == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+
+    if (find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        return true;
+    }
+
+    return false;
+#else
+    return false;
+#endif
+}
+
+Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, string location) {
+    Directory_Listing result = {};
+    cstring_copy(location.data, result.basename, 260);
+
+#ifndef __EMSCRIPTEN__
+    if (!is_path_directory(location)) {
+        return result;
+    }
+
+    WIN32_FIND_DATA find_data = {};
+    HANDLE handle = FindFirstFile(string_concatenate(arena, location, string_literal("/*")).data, &find_data);
+
+    if (handle == INVALID_HANDLE_VALUE) {
+        _debugprintf("no files found in directory (\"%s\")", location.data);
+        return result;
+    }
+
+    result.files = (Directory_File*)arena->push_unaligned(sizeof(*result.files));
+    _debugprintf("allocating files");
+
+    do {
+        Directory_File* current_file = &result.files[result.count++];
+
+        current_file->is_directory = (find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+        cstring_copy(find_data.cFileName, current_file->name, array_count(current_file->name));
+        current_file->filesize = (find_data.nFileSizeHigh * (MAXDWORD+1)) + find_data.nFileSizeLow;
+
+        _debugprintf("read file \"%s\"", find_data.cFileName);
+        arena->push_unaligned(sizeof(*result.files));
+    } while (FindNextFile(handle, &find_data));
+#endif
+
+    return result;
 }
