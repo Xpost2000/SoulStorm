@@ -83,6 +83,10 @@ V2 camera_project(struct camera* camera, V2 point, s32 screen_width, s32 screen_
 
 V2 camera_displacement_from_trauma(struct camera* camera) {
     struct random_state* rng           = camera->rng;
+    if (!rng) {
+        return V2(0, 0);
+    }
+
     f32                  trauma_factor = camera->trauma;
 
     f32 random_x = random_ranged_integer(rng, -MAX_TRAUMA_DISPLACEMENT_X * trauma_factor * TRAUMA_FACTOR_WEIGHT_X, MAX_TRAUMA_DISPLACEMENT_X * trauma_factor * TRAUMA_FACTOR_WEIGHT_X);

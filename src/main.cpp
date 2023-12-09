@@ -515,7 +515,7 @@ bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
 
     {
         lua_getglobal(L, "sound_volume");
-        preferences->music_volume = lua_tonumber(L, -1);
+        preferences->sound_volume = lua_tonumber(L, -1);
     }
     {
         lua_getglobal(L, "fullscreen");

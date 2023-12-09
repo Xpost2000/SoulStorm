@@ -132,15 +132,15 @@ local bool _framebuffer_scissor_cull(struct software_framebuffer* framebuffer, s
     if (framebuffer->scissor_w == 0 || framebuffer->scissor_h == 0) {
         return 
             (x < 0 ||
-             x > framebuffer->width ||
+             x >= framebuffer->width ||
              y < 0 ||
-             y > framebuffer->height);
+             y >= framebuffer->height);
     }
     
     if (x < framebuffer->scissor_x                        ||
         y < framebuffer->scissor_y                        ||
-        x > framebuffer->scissor_x+framebuffer->scissor_w ||
-        y > framebuffer->scissor_y+framebuffer->scissor_h) {
+        x >= framebuffer->scissor_x+framebuffer->scissor_w ||
+        y >= framebuffer->scissor_y+framebuffer->scissor_h) {
         return true;
     }
 

@@ -293,16 +293,16 @@ local char* format_temp(const char* fmt, ...) {
     local char temporary_text_buffer[TEMPORARY_STORAGE_BUFFER_COUNT][TEMPORARY_STORAGE_BUFFER_SIZE] = {};
 
     char* target_buffer = temporary_text_buffer[current_buffer++];
+    if (current_buffer >= TEMPORARY_STORAGE_BUFFER_COUNT) {
+        current_buffer = 0;
+    }
+
     zero_memory(target_buffer, TEMPORARY_STORAGE_BUFFER_SIZE);
     {
         va_list args;
         va_start(args, fmt);
         int written = vsnprintf(target_buffer, TEMPORARY_STORAGE_BUFFER_SIZE-1, fmt, args);
         va_end(args);
-    }
-
-    if (current_buffer >= TEMPORARY_STORAGE_BUFFER_COUNT) {
-        current_buffer = 0;
     }
 
     return target_buffer;

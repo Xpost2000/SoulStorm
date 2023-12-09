@@ -358,7 +358,10 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
 
 
     if (Action::is_pressed(ACTION_MENU)) {
-        if (this->state->ui_state == UI_STATE_STAGE_SELECT) {
+        if (this->state->ui_state == UI_STATE_STAGE_SELECT ||
+            main_menu_state.cutscene1.phase != 0          ||
+            main_menu_state.cutscene2.phase != 0
+        ) {
             
         } else {
             if (this->state->ui_state != UI_STATE_PAUSED) {

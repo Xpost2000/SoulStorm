@@ -505,11 +505,11 @@ void Game::init(Graphics_Driver* driver) {
         state->pickups                 = Fixed_Array<Pickup_Entity>(arena, MAX_PICKUP_ENTITIES);
         state->score_notifications     = Fixed_Array<Gameplay_UI_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
         state->hit_score_notifications = Fixed_Array<Gameplay_UI_Hitmark_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
-        state->particle_emitters       = Fixed_Array<Particle_Emitter>(arena, 1024 + MAX_ENEMIES + MAX_PICKUP_ENTITIES + MAX_BULLETS + MAX_LASER_HAZARDS);
+        state->particle_emitters       = Fixed_Array<Particle_Emitter>(arena, 256 + MAX_ENEMIES + MAX_PICKUP_ENTITIES + MAX_BULLETS + MAX_LASER_HAZARDS);
         state->prng                    = random_state();
         state->main_camera             = camera(V2(0, 0), 1.0);
         state->main_camera.rng         = &state->prng;
-        state->particle_pool.init(arena, 5000);
+        state->particle_pool.init(arena, 4096);
 
         // creation queues
         {
@@ -2157,6 +2157,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
         state->player.handle_grazing_behavior(game_state, dt);
     }
 #else
+    // Single-Threaded path for truth testing.
     {
         auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
         Game_State* game_state = packet->game_state;
