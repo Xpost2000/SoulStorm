@@ -305,6 +305,21 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
                     // until their master has been born otherwise they might fail
                     // early, or otherwise quite before they're supposed to operate.
                     // (They might not work the same way even though they do operate on valid objects)
+
+                    // NOTE: During dialogue, the tough thing is figuring out what to "pause"
+                    //       since not pausing some stuff, could potential make the game... Well break.
+                    //
+                    //       Particularly. Entity reliant tasks, should not be doing anything if there's
+                    //       dialogue.
+                    //
+                    //       (I mean, I think dialogue should be happening when there isn't any enemies, but this
+                    //       is a safe measure for boss fights where dialogue can just happen in the middle of the fight.)
+                    if (task.uid_type != 0) {
+                        if (state->dialogue_state.in_conversation) {
+                            continue;
+                        }
+                    }
+
                     switch (task.uid_type) {
                         case 0: {} break;
                         case 1: {
@@ -329,6 +344,23 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
                 case TASK_YIELD_REASON_WAIT_FOR_INTRODUCTION_SEQUENCE_TO_COMPLETE: {
                     if (state->gameplay_data.intro.stage != GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE) {
                         continue;
+                    }
+                } break;
+                case TASK_YIELD_REASON_WAIT_DIALOGUE_CONTINUE: {
+                    assert(state->dialogue_state.in_conversation && "This wait should not happen outside of a conversation!");
+                    if (state->dialogue_state.confirm_continue) {
+                        state->dialogue_state.confirm_continue = false;
+                        task.userdata.yielded.reason = TASK_YIELD_REASON_NONE; 
+                        state->dialogue_state.shown_characters = state->dialogue_state.length = 0;
+                    } else {
+                        continue;
+                    }
+                } break;
+                case TASK_YIELD_REASON_WAIT_DIALOGUE_FINISH: {
+                    if (state->dialogue_state.in_conversation) {
+                        continue;
+                    } else {
+                        task.userdata.yielded.reason = TASK_YIELD_REASON_NONE; 
                     }
                 } break;
                 case TASK_YIELD_REASON_WAIT_FOR_SECONDS: {

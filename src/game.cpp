@@ -2205,30 +2205,126 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
 void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     auto state = &this->state->gameplay_data;
 
-    if (state->recording.in_playback) {
-        if (gameplay_recording_file_has_more_frames(&state->recording)) {
-            // NOTE: 
-            state->current_input_packet = gameplay_recording_file_next_frame(&state->recording);
+    bool in_conversation = this->state->dialogue_state.in_conversation;
+
+    // conversations are not recorded into playback. This is fine. I hope.
+    if (!in_conversation) {
+        if (state->recording.in_playback) {
+            if (gameplay_recording_file_has_more_frames(&state->recording)) {
+                // NOTE: 
+                state->current_input_packet = gameplay_recording_file_next_frame(&state->recording);
+            } else {
+                // nop and exit to main menu.
+                // TODO: add a different message rather than stage completion.
+                state->triggered_stage_completion_cutscene = true;
+                state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
+                state->complete_stage.stage_timer = Timer(0.35f);
+                zero_memory(&state->current_input_packet, sizeof(state->current_input_packet));
+                _debugprintf("Out of frames.");
+                return;
+            }
         } else {
-            // nop and exit to main menu.
-            // TODO: add a different message rather than stage completion.
-            state->triggered_stage_completion_cutscene = true;
-            state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
-            state->complete_stage.stage_timer = Timer(0.35f);
-            zero_memory(&state->current_input_packet, sizeof(state->current_input_packet));
-            _debugprintf("Out of frames.");
-            return;
+            state->build_current_input_packet();
+            gameplay_recording_file_record_frame(&state->recording, state->current_input_packet);
         }
-    } else {
-        state->build_current_input_packet();
-        gameplay_recording_file_record_frame(&state->recording, state->current_input_packet);
     }
 
     this->state->coroutine_tasks.schedule_by_type(this->state, FIXED_TICKTIME, GAME_TASK_SOURCE_GAME_FIXED);
+    if (!in_conversation) {
 #if 1
-    Thread_Pool::add_job(
-        [](void* ctx) {
-            auto packet = (Entity_Loop_Update_Packet*) ctx;
+        Thread_Pool::add_job(
+            [](void* ctx) {
+                auto packet = (Entity_Loop_Update_Packet*) ctx;
+                Game_State* game_state = packet->game_state;
+                Gameplay_Data* state = &packet->game_state->gameplay_data;
+                f32 dt = packet->dt;
+
+                for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
+                    auto& h = state->explosion_hazards[i];
+                    h.update(game_state, dt);
+                }
+
+                return 0;
+            },
+            (void*)update_packet_data
+        );
+        Thread_Pool::synchronize_tasks();
+
+        Thread_Pool::add_job(
+            [](void* ctx) {
+                auto packet = (Entity_Loop_Update_Packet*) ctx;
+                Game_State* game_state = packet->game_state;
+                Gameplay_Data* state = &packet->game_state->gameplay_data;
+                f32 dt = packet->dt;
+
+                for (int i = 0; i < (int)state->bullets.size; ++i) {
+                    auto& b = state->bullets[i];
+                    b.update(packet->game_state, dt);
+                }
+
+                return 0;
+            },
+            (void*)update_packet_data
+        );
+        Thread_Pool::synchronize_tasks();
+
+        Thread_Pool::add_job(
+            [](void* ctx) {
+                auto packet = (Entity_Loop_Update_Packet*) ctx;
+                Game_State* game_state = packet->game_state;
+                Gameplay_Data* state = &packet->game_state->gameplay_data;
+                f32 dt = packet->dt;
+
+                for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
+                    auto& h = state->laser_hazards[i];
+                    h.update(game_state, dt);
+                }
+
+                return 0;
+            },
+            (void*)update_packet_data
+        );
+        Thread_Pool::synchronize_tasks();
+
+        Thread_Pool::add_job(
+            [](void* ctx) {
+                auto packet = (Entity_Loop_Update_Packet*) ctx;
+                Game_State* game_state = packet->game_state;
+                Gameplay_Data* state = &packet->game_state->gameplay_data;
+                f32 dt = packet->dt;
+
+                for (int i = 0; i < (s32)state->enemies.size; ++i) {
+                    auto& e = state->enemies[i];
+                    e.update(game_state, dt);
+                }
+
+                return 0;
+            },
+            (void*)update_packet_data
+        );
+
+        // NOTE: this is "hard" data dependency
+        // since it's kind of noticable if pickups deviate more.
+        Thread_Pool::synchronize_tasks();
+
+        {
+            auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
+            Game_State* game_state = packet->game_state;
+            Gameplay_Data* state = &packet->game_state->gameplay_data;
+            f32 dt = packet->dt;
+
+            for (int i = 0; i < (s32)state->pickups.size; ++i) {
+                auto& e = state->pickups[i];
+                e.update(game_state, dt);
+            }
+
+            state->player.update(game_state, dt);
+            state->player.handle_grazing_behavior(game_state, dt);
+        }
+#else
+        // Single-Threaded path for truth testing.
+        {
+            auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
             Game_State* game_state = packet->game_state;
             Gameplay_Data* state = &packet->game_state->gameplay_data;
             f32 dt = packet->dt;
@@ -2238,146 +2334,57 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
                 h.update(game_state, dt);
             }
 
-            return 0;
-        },
-        (void*)update_packet_data
-    );
-    Thread_Pool::synchronize_tasks();
-
-    Thread_Pool::add_job(
-        [](void* ctx) {
-            auto packet = (Entity_Loop_Update_Packet*) ctx;
-            Game_State* game_state = packet->game_state;
-            Gameplay_Data* state = &packet->game_state->gameplay_data;
-            f32 dt = packet->dt;
-
             for (int i = 0; i < (int)state->bullets.size; ++i) {
                 auto& b = state->bullets[i];
                 b.update(packet->game_state, dt);
             }
-
-            return 0;
-        },
-        (void*)update_packet_data
-    );
-    Thread_Pool::synchronize_tasks();
-
-    Thread_Pool::add_job(
-        [](void* ctx) {
-            auto packet = (Entity_Loop_Update_Packet*) ctx;
-            Game_State* game_state = packet->game_state;
-            Gameplay_Data* state = &packet->game_state->gameplay_data;
-            f32 dt = packet->dt;
 
             for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
                 auto& h = state->laser_hazards[i];
                 h.update(game_state, dt);
             }
 
-            return 0;
-        },
-        (void*)update_packet_data
-    );
-    Thread_Pool::synchronize_tasks();
-
-    Thread_Pool::add_job(
-        [](void* ctx) {
-            auto packet = (Entity_Loop_Update_Packet*) ctx;
-            Game_State* game_state = packet->game_state;
-            Gameplay_Data* state = &packet->game_state->gameplay_data;
-            f32 dt = packet->dt;
-
             for (int i = 0; i < (s32)state->enemies.size; ++i) {
                 auto& e = state->enemies[i];
                 e.update(game_state, dt);
             }
 
-            return 0;
-        },
-        (void*)update_packet_data
-    );
+            for (int i = 0; i < (s32)state->pickups.size; ++i) {
+                auto& e = state->pickups[i];
+                e.update(game_state, dt);
+            }
 
-    // NOTE: this is "hard" data dependency
-    // since it's kind of noticable if pickups deviate more.
-    Thread_Pool::synchronize_tasks();
-
-    {
-        auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
-        Game_State* game_state = packet->game_state;
-        Gameplay_Data* state = &packet->game_state->gameplay_data;
-        f32 dt = packet->dt;
-
-        for (int i = 0; i < (s32)state->pickups.size; ++i) {
-            auto& e = state->pickups[i];
-            e.update(game_state, dt);
+            state->player.update(game_state, dt);
+            state->player.handle_grazing_behavior(game_state, dt);
         }
-
-        state->player.update(game_state, dt);
-        state->player.handle_grazing_behavior(game_state, dt);
-    }
-#else
-    // Single-Threaded path for truth testing.
-    {
-        auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
-        Game_State* game_state = packet->game_state;
-        Gameplay_Data* state = &packet->game_state->gameplay_data;
-        f32 dt = packet->dt;
-
-        for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
-            auto& h = state->explosion_hazards[i];
-            h.update(game_state, dt);
-        }
-
-        for (int i = 0; i < (int)state->bullets.size; ++i) {
-            auto& b = state->bullets[i];
-            b.update(packet->game_state, dt);
-        }
-
-        for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
-            auto& h = state->laser_hazards[i];
-            h.update(game_state, dt);
-        }
-
-        for (int i = 0; i < (s32)state->enemies.size; ++i) {
-            auto& e = state->enemies[i];
-            e.update(game_state, dt);
-        }
-
-        for (int i = 0; i < (s32)state->pickups.size; ++i) {
-            auto& e = state->pickups[i];
-            e.update(game_state, dt);
-        }
-
-        state->player.update(game_state, dt);
-        state->player.handle_grazing_behavior(game_state, dt);
-    }
 #endif
 
-    handle_all_explosions(FIXED_TICKTIME);
-    handle_all_lasers(FIXED_TICKTIME);
-    handle_player_pickup_collisions(FIXED_TICKTIME);
-    handle_player_enemy_collisions(FIXED_TICKTIME);
-    handle_all_bullet_collisions(FIXED_TICKTIME);
-    handle_bomb_usage(FIXED_TICKTIME);
-    handle_all_dead_entities(FIXED_TICKTIME);
-    state->reify_all_creation_queues();
+        handle_all_explosions(FIXED_TICKTIME);
+        handle_all_lasers(FIXED_TICKTIME);
+        handle_player_pickup_collisions(FIXED_TICKTIME);
+        handle_player_enemy_collisions(FIXED_TICKTIME);
+        handle_all_bullet_collisions(FIXED_TICKTIME);
+        handle_bomb_usage(FIXED_TICKTIME);
+        handle_all_dead_entities(FIXED_TICKTIME);
+        state->reify_all_creation_queues();
 
-    // Update all particle emitters
-    // while we wait.
-    {
-        for (s32 particle_emitter_index = 0; particle_emitter_index < state->particle_emitters.size; ++particle_emitter_index) {
-            auto& particle_emitter = state->particle_emitters[particle_emitter_index];
-            particle_emitter.update(&state->particle_pool, &state->prng, FIXED_TICKTIME);
+        // Update all particle emitters
+        // while we wait.
+        {
+            for (s32 particle_emitter_index = 0; particle_emitter_index < state->particle_emitters.size; ++particle_emitter_index) {
+                auto& particle_emitter = state->particle_emitters[particle_emitter_index];
+                particle_emitter.update(&state->particle_pool, &state->prng, FIXED_TICKTIME);
 
-            if (!particle_emitter.active) {
-                state->particle_emitters.pop_and_swap(particle_emitter_index);
+                if (!particle_emitter.active) {
+                    state->particle_emitters.pop_and_swap(particle_emitter_index);
+                }
             }
+
+            state->particle_pool.update(this->state, FIXED_TICKTIME);
         }
 
-        state->particle_pool.update(this->state, FIXED_TICKTIME);
+        camera_update(&state->main_camera, FIXED_TICKTIME);
     }
-
-    camera_update(&state->main_camera, FIXED_TICKTIME);
 }
 
 void Game::simulate_game_frames_until(int nth_frame) {
@@ -2493,6 +2500,7 @@ void Game::update_and_render_dialogue_ui(struct render_commands* commands, f32 d
                 } else {
                     // allows the lua script to resume.
                     dialogue_state.confirm_continue = true;
+                    dialogue_state.shown_characters = dialogue_state.length = 0;
                 }
             }
 
@@ -2748,7 +2756,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
     bool in_conversation = this->state->dialogue_state.in_conversation;
     update_and_render_dialogue_ui(ui_render_commands, dt);
 
-    if (!in_conversation && !state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
+    if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
         auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
         update_packet_data->dt = FIXED_TICKTIME;
         update_packet_data->game_state = this->state;
@@ -2886,7 +2894,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 
       TODO: make background tasks also operate without "pausing"
     */
-    if (!in_conversation && !state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE) {
+    if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE) {
         state->scriptable_render_objects.zero();
     }
 }
@@ -4537,6 +4545,11 @@ int _lua_bind_kill_all_enemies(lua_State* L) {
 int _lua_bind_dialogue_start(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     auto&       dialogue_state = state->dialogue_state;
+    dialogue_state.in_conversation  = true;
+    dialogue_state.confirm_continue = false;
+    dialogue_state.shown_characters = 0;
+    dialogue_state.length           = 0;
+    dialogue_state.type_timer       = 0;
     return 0;
 }
 
@@ -4548,6 +4561,9 @@ int _lua_bind_dialogue_end(lua_State* L) {
 
     auto& task = state->coroutine_tasks.tasks[task_id];
     task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_DIALOGUE_FINISH;
+
+    // for now. Instant stop
+    dialogue_state.in_conversation = false;
     return lua_yield(L, 0);
 }
 
@@ -4559,36 +4575,63 @@ int _lua_bind_dialogue_say_line(lua_State* L) {
 
     auto& task = state->coroutine_tasks.tasks[task_id];
     task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_DIALOGUE_CONTINUE;
+    char* line_string = (char*)lua_tostring(L, 1);
+    cstring_copy(line_string, dialogue_state.current_line, sizeof(dialogue_state.current_line));
+    dialogue_state.length           = cstring_length(dialogue_state.current_line);
+    dialogue_state.shown_characters = 0;
+    dialogue_state.type_timer       = 0;
     return lua_yield(L, 0);
 }
 
 int _lua_bind_dialogue_speaker_set_visibility(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     auto&       dialogue_state = state->dialogue_state;
+    int         speaker_id     = luaL_checkinteger(L, 1);
+    bool        visibility     =  lua_toboolean(L, 2);
+    dialogue_state.speakers[speaker_id].visible = visibility;
     return 0;
 }
 
 int _lua_bind_dialogue_speaker_set_image_scale(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     auto&       dialogue_state = state->dialogue_state;
+    int         speaker_id     = luaL_checkinteger(L, 1);
+    dialogue_state.speakers[speaker_id].image_scale =
+        V2(luaL_checknumber(L, 2), luaL_checknumber(L, 3));
     return 0;
 }
 
 int _lua_bind_dialogue_speaker_set_image(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     auto&       dialogue_state = state->dialogue_state;
+    int         speaker_id     = luaL_checkinteger(L, 1);
+
+    auto img_id = graphics_assets_load_image(
+        &state->resources->graphics_assets,
+        string_from_cstring((char*)lua_tostring(L, 2))
+    );
+
+    // TODO: track.
+    dialogue_state.speakers[speaker_id].image = img_id;
+
     return 0;
 }
 
 int _lua_bind_dialogue_speaker_set_mirrored(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     auto&       dialogue_state = state->dialogue_state;
+    int         speaker_id     = luaL_checkinteger(L, 1);
+    bool        mirror         =  lua_toboolean(L, 2);
+    dialogue_state.speakers[speaker_id].mirrored = mirror;
     return 0;
 }
 
 int _lua_bind_dialogue_speaker_set_position_offset(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     auto&       dialogue_state = state->dialogue_state;
+    int         speaker_id     = luaL_checkinteger(L, 1);
+    dialogue_state.speakers[speaker_id].offset_position =
+        V2(luaL_checknumber(L, 2), luaL_checknumber(L, 3));
     return 0;
 }
 

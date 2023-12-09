@@ -447,8 +447,9 @@ struct Dialogue_State {
     int  length           = 0; 
     f32  type_timer       = 0.0f;
 
-    Fixed_Array<image_id>        tracked_images;
-    Fixed_Array<Audio::Sound_ID> tracked_sounds;
+    // TODO
+    /* Fixed_Array<image_id>        tracked_images; */
+    /* Fixed_Array<Audio::Sound_ID> tracked_sounds; */
 };
 
 struct Game_State {
