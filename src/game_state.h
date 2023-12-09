@@ -343,9 +343,8 @@ struct Gameplay_Demo_Viewer {
     // NOTE  this is kind of expensive to compute,
     // it would be nice to cache, but this doesn't really super duper
     // work afaik.
-    bool  paused        = false;
-    int   current_frame = 0;
-    float timescale     = 1.0f;
+    bool paused          = false;
+    int  timescale_index = 3;
 };
 
 struct Gameplay_Data {
@@ -354,6 +353,7 @@ struct Gameplay_Data {
     Particle_Pool particle_pool;
 
     Gameplay_Frame_Input_Packet current_input_packet;
+    Gameplay_Demo_Viewer        demo_viewer;
     Gameplay_Recording_File     recording;
 
     Fixed_Array<Bullet>                   to_create_player_bullets;
@@ -387,9 +387,6 @@ struct Gameplay_Data {
     bool queue_bomb_use = false;
 
     f32 fixed_tickrate_timer = 0.0f;
-
-    Gameplay_Demo_Viewer                   demo_viewer;
-
     Gameplay_Stage_Introduction_Sequence   intro;
     Gameplay_Stage_Complete_Stage_Sequence complete_stage;
 

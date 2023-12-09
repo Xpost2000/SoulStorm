@@ -21,6 +21,16 @@
 #define TICKRATE       (60)
 #define FIXED_TICKTIME (1.0f / TICKRATE)
 
+local float replay_timescale_choices[] = {
+    0.25f,
+    0.5f,
+    0.75f,
+    1.0f,
+    1.5f,
+    1.75f,
+    2.0f
+};
+
 // I kinda wanna draw a cute icon for each of the levels.
 local Stage stage_list[] = {
     #include "stage_list.h"
@@ -2291,7 +2301,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                                               font1,
                                               2,
                                               V2(play_area_x+play_area_width + 40,
-                                                 50 + normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
+                                                 50 + normalized_sinf(1-s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
                                               text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
                 }
             }
@@ -2328,6 +2338,95 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
             state->boss_health_displays.update(this->state, dt);
             state->boss_health_displays.render(ui_render_commands, this->state);
         }
+
+        // Replay_Demo_UI
+        if (state->recording.in_playback && this->state->ui_state == UI_STATE_INACTIVE) {
+            auto& viewer_ui = state->demo_viewer;
+            f32 y = play_area_height-150;
+
+            auto media_button_string =
+                (viewer_ui.paused) ?
+                string_literal("[PLAY]") :
+                string_literal("[PAUSE]");
+
+            GameUI::set_ui_id(0);
+            GameUI::begin_frame(ui_render_commands);
+            if (GameUI::button(V2(play_area_x+play_area_width + 20, y), string_literal("[RESTART]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+                // partial clean up of resources...
+                state->unload_all_script_loaded_resources(this->state, this->state->resources);
+                state->prng = state->recording.old_prng;
+                state->recording.playback_frame_index = 0;
+                state->recording.frames_run           = 0;
+                reset_stage_simulation_state();
+            }
+            y += 30;
+            if (GameUI::button(V2(play_area_x+play_area_width + 20, y), media_button_string, color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+                viewer_ui.paused ^= 1;
+            }
+            y += 30;
+            if (GameUI::button(V2(play_area_x+play_area_width + 20, y), string_from_cstring(format_temp("[TIMESCALE %f]", replay_timescale_choices[viewer_ui.timescale_index])), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+                viewer_ui.timescale_index += 1;
+                if (viewer_ui.timescale_index >= array_count(replay_timescale_choices)) {
+                    viewer_ui.timescale_index = 0;
+                }
+            }
+            y += 30;
+            GameUI::label(V2(play_area_x+play_area_width + 20, y), string_from_cstring(format_temp("FRAME %d/%d", state->recording.playback_frame_index+1, state->recording.frame_count)), color32f32(1, 1, 1, 1), 2);
+            y += 30;
+            if (viewer_ui.paused) {
+                int  desired_frame   = state->recording.playback_frame_index;
+                bool change_to_frame = false;
+
+
+                f32 width_of_biggest_button = font_cache_text_width(resources->get_font(MENU_FONT_COLOR_GOLD), string_literal("[-5]"), 2) * 1.2;
+                if (GameUI::button(V2(play_area_x+play_area_width + 20 + width_of_biggest_button * 0, y), string_literal("[-]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+                    desired_frame -= 1;
+                    change_to_frame = true;
+                }
+                if (GameUI::button(V2(play_area_x+play_area_width + 20 + width_of_biggest_button * 1, y), string_literal("[-5]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+                    desired_frame -= 5;
+                    change_to_frame = true;
+                }
+                if (GameUI::button(V2(play_area_x+play_area_width + 20 + width_of_biggest_button * 2, y), string_literal("[+5]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+                    desired_frame += 5;
+                    change_to_frame = true;
+                }
+                if (GameUI::button(V2(play_area_x+play_area_width + 20 + width_of_biggest_button * 3, y), string_literal("[+]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+                    desired_frame += 1;
+                    change_to_frame = true;
+                }
+
+                if (change_to_frame) {
+                    if (desired_frame >= state->recording.frame_count) {
+                        desired_frame = state->recording.frame_count-1;
+                    } else if (desired_frame < 0) {
+                        desired_frame = 0;
+                    }
+
+                    // reset simulation state and simulate until that frame point... RIP framerate :)
+                    {
+                        auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
+                        update_packet_data->dt = FIXED_TICKTIME;
+                        update_packet_data->game_state = this->state;
+
+                        // partial clean up of resources...
+                        state->unload_all_script_loaded_resources(this->state, this->state->resources);
+                        state->prng = state->recording.old_prng;
+                        state->recording.playback_frame_index = 0;
+                        state->recording.frames_run           = 0;
+                        reset_stage_simulation_state();
+
+                        while (desired_frame) {
+                            simulate_game_frame(update_packet_data);
+                            state->current_stage_timer  += FIXED_TICKTIME;
+                            desired_frame -= 1;
+                        }
+                    }
+                }
+            }
+            GameUI::end_frame();
+            GameUI::update(dt);
+        }
     }
 
     if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
@@ -2347,11 +2446,24 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         update_packet_data->dt = FIXED_TICKTIME;
         update_packet_data->game_state = this->state;
 
-        state->fixed_tickrate_timer += dt;
-        while (state->fixed_tickrate_timer >= FIXED_TICKTIME) {
-            simulate_game_frame(update_packet_data);
-            state->fixed_tickrate_timer -= FIXED_TICKTIME;
-            state->current_stage_timer  += FIXED_TICKTIME;
+        float timescale      = 1.0f;
+        bool  simulate_frame = true;
+
+        if (state->recording.in_playback) {
+            timescale = replay_timescale_choices[state->demo_viewer.timescale_index];
+            if (state->demo_viewer.paused) {
+                simulate_frame = false;
+            }
+        }
+
+        if (simulate_frame) {
+            state->fixed_tickrate_timer += dt * timescale;
+
+            while (state->fixed_tickrate_timer >= FIXED_TICKTIME) {
+                simulate_game_frame(update_packet_data);
+                state->fixed_tickrate_timer -= FIXED_TICKTIME;
+                state->current_stage_timer  += FIXED_TICKTIME;
+            }
         }
     }
 
@@ -3727,8 +3839,8 @@ bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memor
 }
 
 void gameplay_recording_file_start_playback(Gameplay_Recording_File* recording) {
-    recording->frames_run          = 0;
-    recording->in_playback = true;
+    recording->frames_run           = 0;
+    recording->in_playback          = true;
     recording->playback_frame_index = 0;
 }
 

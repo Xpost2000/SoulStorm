@@ -399,6 +399,12 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
 
                     switch_ui(UI_STATE_INACTIVE);
                     switch_screen(GAME_SCREEN_INGAME);
+
+                    // Reset Demo Viewer
+                    {
+                        state->gameplay_data.demo_viewer.paused          = false;
+                        state->gameplay_data.demo_viewer.timescale_index = 3;
+                    }
                     gameplay_recording_file_start_playback(
                         &state->gameplay_data.recording
                     );
