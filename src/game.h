@@ -87,6 +87,7 @@ private:
       This happens to be just fine when working with a controller though because
       you can't use a mouse to go through lots of stuff...
     */
+    void update_and_render_replay_save_menu(struct render_commands* commands, f32 dt);
     void update_and_render_replay_collection_menu(struct render_commands* commands, f32 dt);
     void update_and_render_pause_menu(struct render_commands* commands, f32 dt);
     void update_and_render_options_menu(struct render_commands* commands, f32 dt);
@@ -135,8 +136,10 @@ private:
     bool can_access_stage(s32 id);
 
     void setup_stage_start();
+
     void reset_stage_simulation_state();
     void cleanup_game_simulation();
+    void simulate_game_frames_until(int nth_frame);
     void simulate_game_frame(Entity_Loop_Update_Packet* update_params);
 
     // The game will only utilize one save file

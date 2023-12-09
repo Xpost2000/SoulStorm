@@ -375,21 +375,7 @@ void Game::cleanup_game_simulation() {
     state->gameplay_data.unload_all_script_loaded_resources(state, this->state->resources);
 
     // TODO: be careful with this.
-    if (!state->gameplay_data.recording.in_playback) {
-        if (state->gameplay_data.recording.memory_arena) {
-            _debugprintf("Writing recording... (%d recorded score)", state->gameplay_data.current_score);
-
-            auto serializer = open_write_file_serializer(string_literal("game.recording"));
-            serializer.expected_endianess = ENDIANESS_LITTLE;
-            gameplay_recording_file_serialize(
-                &state->gameplay_data.recording,
-                nullptr,
-                &serializer
-            );
-            serializer_finish(&serializer);
-            gameplay_recording_file_finish(&state->gameplay_data.recording);
-        }
-    } else {
+    if (state->gameplay_data.recording.in_playback) {
         _debugprintf("Finished playback.");
         _debugprintf(
             "Set OldPRNG to (%d, %d, %d, %d, %d)",
@@ -1147,25 +1133,7 @@ void Game::update_and_render_confirm_back_to_main_menu(struct render_commands* c
         y += 30;
 
         if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-            Transitions::do_shuteye_in(
-                color32f32(0, 0, 0, 1),
-                0.15f,
-                0.3f
-            );
-                
-
-            Transitions::register_on_finish(
-                [&](void*) {
-                    switch_ui(UI_STATE_INACTIVE);
-                    switch_screen(GAME_SCREEN_MAIN_MENU);
-
-                    Transitions::do_shuteye_out(
-                        color32f32(0, 0, 0, 1),
-                        0.15f,
-                        0.3f
-                    );
-                }
-            );
+            switch_ui(UI_STATE_REPLAY_ASK_TO_SAVE);
         }
         y += 30;
 
@@ -1228,6 +1196,176 @@ void Game::update_and_render_confirm_exit_to_windows(struct render_commands* com
     GameUI::end_frame();
 }
 
+// NOTE:
+// this function reroutes to handle all the "transition back to menu" stages
+// so it's sort of monolithic.
+void Game::update_and_render_replay_save_menu(struct render_commands* commands, f32 dt) {
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+
+    GameUI::set_ui_id((char*)"ui_replay_save_menu");
+    GameUI::begin_frame(commands);
+
+    GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+    GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+    int action = -1;
+
+    if (state->gameplay_data.recording.in_playback) {
+        action = 3; // just skip the prompt and don't do anything.
+    } else {
+        {
+            f32 y = 50;
+            GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+            GameUI::label(V2(50, y), string_literal("SAVE RECORDING?"), color32f32(1, 1, 1, 1), 4);
+            y += 45;
+            GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+            if (GameUI::button(V2(100, y), string_literal("Yes"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                action = 0;
+            }
+            y += 30;
+            if (GameUI::button(V2(100, y), string_literal("No"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                action = 1;
+            }
+        }
+    }
+
+    if (action != -1) {
+        Transitions::do_shuteye_in(
+            color32f32(0, 0, 0, 1),
+            0.15f,
+            0.3f
+        );
+
+        if (action == 0) {
+            // save recording
+            if (!state->gameplay_data.recording.in_playback) {
+                if (state->gameplay_data.recording.memory_arena) {
+                    _debugprintf("Writing recording... (%d recorded score)", state->gameplay_data.current_score);
+
+                    auto calendar_date   = current_calendar_time();
+                    string recordingpath = string_from_cstring(
+                        format_temp(
+                            "bh-%d-%d_%d-%d-%d-%d-%d-%d.recording",
+                            state->gameplay_data.recording.stage_id+1,
+                            state->gameplay_data.recording.level_id+1,
+                            calendar_date.day,
+                            calendar_date.month,
+                            calendar_date.year,
+                            calendar_date.hours,
+                            calendar_date.minutes,
+                            calendar_date.seconds
+                        )
+                    );
+
+                    auto serializer = open_write_file_serializer(string_concatenate(&Global_Engine()->scratch_arena, DEFAULT_REPLAY_LOCATION, recordingpath));
+
+                    serializer.expected_endianess = ENDIANESS_LITTLE;
+                    gameplay_recording_file_serialize(
+                        &state->gameplay_data.recording,
+                        nullptr,
+                        &serializer
+                    );
+                    serializer_finish(&serializer);
+                    gameplay_recording_file_finish(&state->gameplay_data.recording);
+                }
+            }
+        } else {
+            // no save
+            _debugprintf("Do not save a replay.");
+        }
+
+        Transitions::do_color_transition_in(
+            color32f32(0, 0, 0, 1.0),
+            0.25f,
+            0.5f
+        );
+
+        switch (state->last_completion_state) {
+            case GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE: {
+                Transitions::register_on_finish(
+                    [&](void*) mutable {
+                        state->ui_state    = UI_STATE_INACTIVE;
+                        switch_screen(GAME_SCREEN_MAIN_MENU);
+                        _debugprintf("Hi main menu. We can do some more stuff like demonstrate if we unlocked a new stage!");
+
+                        // Check for postgame cutscene playing
+                        {
+                            auto& main_menu_state = state->mainmenu_data;
+                            if (!main_menu_state.cutscene1.triggered && can_access_stage(3)) {
+                                main_menu_state.start_completed_maingame_cutscene(state);
+                            }
+                        }
+
+                        Transitions::do_shuteye_out(
+                            color32f32(0, 0, 0, 1),
+                            0.15f,
+                            0.3f
+                        );
+
+                        // Register save game on any level completion.
+                        save_game();
+                    }
+                );
+            } break;
+            case GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL: {
+                Transitions::register_on_finish(
+                    [&](void*) mutable {
+                        state->ui_state    = UI_STATE_INACTIVE;
+                        _debugprintf("Hi, booting you to the next level.");
+
+                        state->mainmenu_data.stage_id_level_in_stage_select += 1;
+                        setup_stage_start();
+                        Transitions::do_color_transition_out(
+                            color32f32(0, 0, 0, 1),
+                            0.15f,
+                            0.3f
+                        );
+
+                        // Register save game on any level completion.
+                        save_game();
+                    }
+                );
+            } break;
+            case GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY: {
+                Transitions::register_on_finish(
+                    [&](void*) mutable {
+                        state->ui_state    = UI_STATE_STAGE_SELECT;
+                        switch_screen(GAME_SCREEN_MAIN_MENU);
+
+                        Transitions::do_shuteye_out(
+                            color32f32(0, 0, 0, 1),
+                            0.15f,
+                            0.3f
+                        );
+
+                        // Register save game on any level completion.
+                        save_game();
+                    }
+                );
+            } break;
+            default: {
+                Transitions::register_on_finish(
+                    [&](void*) {
+                        switch_ui(UI_STATE_INACTIVE);
+                        switch_screen(GAME_SCREEN_MAIN_MENU);
+
+                        Transitions::do_shuteye_out(
+                            color32f32(0, 0, 0, 1),
+                            0.15f,
+                            0.3f
+                        );
+                        save_game();
+                    }
+                );
+            } break;
+        }
+
+        state->last_completion_state = -1;
+    }
+
+    GameUI::end_frame();
+    GameUI::update(dt);
+}
+
 void Game::update_and_render_replay_collection_menu(struct render_commands* commands, f32 dt) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
 
@@ -1267,7 +1405,7 @@ void Game::update_and_render_replay_collection_menu(struct render_commands* comm
             state->gameplay_data.demo_collection_ui.current_page = 0;
         }
 
-        if (replay_files.count <= 0) {
+        if (replay_files.count <= 2) {
             GameUI::label(V2(130, y), string_literal("No recordings. Go make some memories!"), color32f32(1, 1, 1, 1), 2);
         } else {
             s32 start_index = MAX_REPLAYS_PER_PAGE * state->gameplay_data.demo_collection_ui.current_page + 2; // skip ./ and ../
@@ -1623,27 +1761,8 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
 
         y += 30;
         if (GameUI::button(V2(50, y), string_literal("Give up"), color32f32(1, 1, 1, alpha), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-            Transitions::do_shuteye_in(
-                color32f32(0, 0, 0, 1.0),
-                0.15f,
-                0.30f
-            );
-
             state->gameplay_data.paused_from_death = false;
-
-            // Return back to the main menu.
-            Transitions::register_on_finish(
-                [&](void*) mutable {
-                    Transitions::do_shuteye_out(
-                        color32f32(0, 0, 0, 1.0),
-                        0.15f,
-                        0.30f
-                    );
-                    switch_ui(UI_STATE_INACTIVE);
-                    switch_screen(GAME_SCREEN_MAIN_MENU);
-                    save_game();
-                }
-            );
+            switch_ui(UI_STATE_REPLAY_ASK_TO_SAVE);
         }
         y += 30;
     }
@@ -1816,6 +1935,9 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
             if (state->screen_mode != GAME_SCREEN_CREDITS && state->screen_mode != GAME_SCREEN_TITLE_SCREEN) {
                 GameUI::set_ui_id(0);
             }
+        } break;
+        case UI_STATE_REPLAY_ASK_TO_SAVE: {
+            update_and_render_replay_save_menu(commands, dt);
         } break;
         case UI_STATE_REPLAY_COLLECTION: {
             update_and_render_replay_collection_menu(commands, dt);
@@ -2051,17 +2173,6 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                 _debugprintf("Okay. Transition bye?");
                 complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
 
-                /*
-                 * A neat thing to do would just be setup the main menu to preview
-                 *
-                 * the next portal
-                 * (maybe when I have particle effects during the polishing stage,
-                 *  zoom in on it and make it more stronger, maybe with an accompanying message.)
-                 *
-                 *
-                 * I mean trying to write any real sequence code in C++ is never really pretty :/
-                 */
-
                 s32 completion_type =  GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY;
 
                 if (!state->gameplay_data.recording.in_playback) {
@@ -2071,75 +2182,18 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                 }
 
                 Transitions::do_color_transition_in(
-                    color32f32(0, 0, 0, 1),
+                    color32f32(0, 0, 0, 0.5),
                     0.25f,
                     0.5f
                 );
 
-                switch (completion_type) {
-                    case GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE: {
-                        Transitions::register_on_finish(
-                            [&](void*) mutable {
-                                state->ui_state    = UI_STATE_INACTIVE;
-                                switch_screen(GAME_SCREEN_MAIN_MENU);
-                                _debugprintf("Hi main menu. We can do some more stuff like demonstrate if we unlocked a new stage!");
-
-                                // Check for postgame cutscene playing
-                                {
-                                    auto& main_menu_state = state->mainmenu_data;
-                                    if (!main_menu_state.cutscene1.triggered && can_access_stage(3)) {
-                                        main_menu_state.start_completed_maingame_cutscene(state);
-                                    }
-                                }
-
-                                Transitions::do_shuteye_out(
-                                    color32f32(0, 0, 0, 1),
-                                    0.15f,
-                                    0.3f
-                                );
-
-                                // Register save game on any level completion.
-                                save_game();
-                            }
-                        );
-                    } break;
-                    case GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL: {
-                        Transitions::register_on_finish(
-                            [&](void*) mutable {
-                                state->ui_state    = UI_STATE_INACTIVE;
-                                _debugprintf("Hi, booting you to the next level.");
-
-                                state->mainmenu_data.stage_id_level_in_stage_select += 1;
-                                setup_stage_start();
-                                Transitions::do_color_transition_out(
-                                    color32f32(0, 0, 0, 1),
-                                    0.15f,
-                                    0.3f
-                                );
-
-                                // Register save game on any level completion.
-                                save_game();
-                            }
-                        );
-                    } break;
-                    case GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY: {
-                        Transitions::register_on_finish(
-                            [&](void*) mutable {
-                                state->ui_state    = UI_STATE_STAGE_SELECT;
-                                switch_screen(GAME_SCREEN_MAIN_MENU);
-
-                                Transitions::do_shuteye_out(
-                                    color32f32(0, 0, 0, 1),
-                                    0.15f,
-                                    0.3f
-                                );
-
-                                // Register save game on any level completion.
-                                save_game();
-                            }
-                        );
-                    } break;
-                }
+                state->last_completion_state = completion_type;
+                Transitions::register_on_finish(
+                    [&](void*) mutable {
+                        switch_ui(UI_STATE_REPLAY_ASK_TO_SAVE);
+                        Transitions::clear_effect();
+                    }
+                );
             }
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE: {} break;
@@ -2326,6 +2380,48 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     camera_update(&state->main_camera, FIXED_TICKTIME);
 }
 
+void Game::simulate_game_frames_until(int nth_frame) {
+    auto state = &this->state->gameplay_data;
+
+    // partial clean up of resources...
+    state->unload_all_script_loaded_resources(this->state, this->state->resources);
+    state->prng = state->recording.old_prng;
+    state->recording.playback_frame_index = 0;
+    state->recording.frames_run           = 0;
+    reset_stage_simulation_state();
+
+    int  desired_frame = nth_frame;
+    {
+        auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
+        update_packet_data->dt = FIXED_TICKTIME;
+        update_packet_data->game_state = this->state;
+
+        // NOTE: only frames that come before require a full resimulation
+        // since the timeline runs from a lua coroutine, I need to maintain coroutine state
+        // which isn't possible in lua.
+        //
+        // Yeah.
+        if (desired_frame < state->recording.playback_frame_index) {
+            // partial clean up of resources...
+            state->unload_all_script_loaded_resources(this->state, this->state->resources);
+            state->prng = state->recording.old_prng;
+            state->recording.playback_frame_index = 0;
+            state->recording.frames_run = 0;
+            reset_stage_simulation_state();
+            _debugprintf("Restart to lead up to.");
+        } else {
+            desired_frame -= state->recording.playback_frame_index;
+            _debugprintf("Faster simulation?");
+        }
+
+        while (desired_frame) {
+            simulate_game_frame(update_packet_data);
+            state->current_stage_timer  += FIXED_TICKTIME;
+            desired_frame -= 1;
+        }
+    }
+}
+
 void Game::update_and_render_game_ingame(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
     auto state = &this->state->gameplay_data;
     V2 resolution = V2(game_render_commands->screen_width, game_render_commands->screen_height);
@@ -2502,43 +2598,9 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
             }
             y += 30;
             if (GameUI::button(V2(play_area_x+play_area_width + 20, y), string_literal("[TO END]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-                // partial clean up of resources...
-                state->unload_all_script_loaded_resources(this->state, this->state->resources);
-                state->prng = state->recording.old_prng;
-                state->recording.playback_frame_index = 0;
-                state->recording.frames_run           = 0;
-                reset_stage_simulation_state();
-
-                int  desired_frame   = state->recording.frame_count;
-                {
-                    auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
-                    update_packet_data->dt = FIXED_TICKTIME;
-                    update_packet_data->game_state = this->state;
-
-                    // NOTE: only frames that come before require a full resimulation
-                    // since the timeline runs from a lua coroutine, I need to maintain coroutine state
-                    // which isn't possible in lua.
-                    //
-                    // Yeah.
-                    if (desired_frame < state->recording.playback_frame_index) {
-                        // partial clean up of resources...
-                        state->unload_all_script_loaded_resources(this->state, this->state->resources);
-                        state->prng = state->recording.old_prng;
-                        state->recording.playback_frame_index = 0;
-                        state->recording.frames_run = 0;
-                        reset_stage_simulation_state();
-                    } else {
-                        desired_frame -= state->recording.playback_frame_index;
-                    }
-
-                    viewer_ui.arbitrary_frame_visit = true;
-                    while (desired_frame) {
-                        simulate_game_frame(update_packet_data);
-                        state->current_stage_timer  += FIXED_TICKTIME;
-                        desired_frame -= 1;
-                    }
-                    viewer_ui.arbitrary_frame_visit = false;
-                }
+                viewer_ui.arbitrary_frame_visit = true;
+                simulate_game_frames_until(state->recording.frame_count);
+                viewer_ui.arbitrary_frame_visit = false;
                 viewer_ui.paused = true;
             }
             y += 30;
@@ -2580,40 +2642,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 
                 if (change_to_frame) {
                     viewer_ui.arbitrary_frame_visit = true;
-                    if (desired_frame >= state->recording.frame_count) {
-                        desired_frame = state->recording.frame_count-1;
-                    } else if (desired_frame < 0) {
-                        desired_frame = 0;
-                    }
-
-                    // reset simulation state and simulate until that frame point... RIP framerate :)
-                    {
-                        auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
-                        update_packet_data->dt = FIXED_TICKTIME;
-                        update_packet_data->game_state = this->state;
-
-                        // NOTE: only frames that come before require a full resimulation
-                        // since the timeline runs from a lua coroutine, I need to maintain coroutine state
-                        // which isn't possible in lua.
-                        //
-                        // Yeah.
-                        if (desired_frame < state->recording.playback_frame_index) {
-                            // partial clean up of resources...
-                            state->unload_all_script_loaded_resources(this->state, this->state->resources);
-                            state->prng = state->recording.old_prng;
-                            state->recording.playback_frame_index = 0;
-                            state->recording.frames_run = 0;
-                            reset_stage_simulation_state();
-                        } else {
-                            desired_frame -= state->recording.playback_frame_index;
-                        }
-
-                        while (desired_frame) {
-                            simulate_game_frame(update_packet_data);
-                            state->current_stage_timer  += FIXED_TICKTIME;
-                            desired_frame -= 1;
-                        }
-                    }
+                    simulate_game_frames_until(desired_frame);
                     viewer_ui.arbitrary_frame_visit = false;
                 }
             }

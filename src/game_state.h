@@ -371,6 +371,7 @@ enum UI_State_Mode {
     UI_STATE_DEAD_MAYBE_RETRY,
     UI_STATE_ACHIEVEMENTS,
     UI_STATE_REPLAY_COLLECTION,
+    UI_STATE_REPLAY_ASK_TO_SAVE,
     UI_STATE_CONFIRM_BACK_TO_MAIN_MENU,
     UI_STATE_CONFIRM_EXIT_TO_WINDOWS,
     UI_STATE_COUNT,
@@ -408,6 +409,7 @@ struct Game_State {
     s32 last_screen_mode = GAME_SCREEN_TITLE_SCREEN;
     s32 ui_state         = UI_STATE_INACTIVE;
     s32 last_ui_state    = UI_STATE_INACTIVE;
+    s32 last_completion_state = -1;
 
     Controller_LED_State led_state;
 
