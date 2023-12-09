@@ -1151,8 +1151,8 @@ void Game::update_and_render_confirm_back_to_main_menu(struct render_commands* c
                 
 
             Transitions::register_on_finish(
-                [&](void*) mutable {
-                    state->ui_state    = UI_STATE_INACTIVE;
+                [&](void*) {
+                    switch_ui(UI_STATE_INACTIVE);
                     switch_screen(GAME_SCREEN_MAIN_MENU);
 
                     Transitions::do_shuteye_out(
@@ -1205,7 +1205,7 @@ void Game::update_and_render_confirm_exit_to_windows(struct render_commands* com
                 
 
             Transitions::register_on_finish(
-                [&](void*) mutable {
+                [&](void*) {
                     save_game();
                     Global_Engine()->die();
                 }
@@ -2440,18 +2440,6 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
     }
 
     if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
-        // Update Auto Score
-
-        /*
-          NOTE:
-
-          The gameplay needs to be about as deterministic as possible, so I need this
-          to be a fixed update.
-
-          Also, I'm aware that I should be interpolating between the last and current frame with an accumulator, but
-          I don't think it's necessary for a bullet hell game like this.
-        */
-
         auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
         update_packet_data->dt = FIXED_TICKTIME;
         update_packet_data->game_state = this->state;
@@ -2968,9 +2956,11 @@ void Game::handle_all_dead_entities(f32 dt) {
                     Transitions::register_on_finish(
                         [&](void*) {
                             auto state = &this->state->gameplay_data;
+                            _debugprintf("On finish death");
 
                             Audio::play(resources->hit_sounds[0]);
                             if (safely_resurrect_player()) {
+                                _debugprintf("Resurrected player?");
                             } else {
                                 // TODO: Will have to change if
                                 // I have "CONTINUES" support

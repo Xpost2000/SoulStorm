@@ -21,7 +21,7 @@
 #define STAGE_DRAW(name)                                                \
     void stage_##name##_draw(Stage_State* stage, f32 dt, struct render_commands* commands, Game_State* state)
 #define STAGE(name)                                     \
-    Stage_State stage_##name##(void)
+    Stage_State stage_##name(void)
 #define DEF_LEVEL_DATA(name) struct Stage_##name##_Data
 #define LEVEL_DATA(name, as) auto as = (struct Stage_##name##_Data*)(stage->stage_memory_buffer)
 #define STAGE_WAIT_CLEARED_WAVE() do { while (gameplay_state->any_living_danger()) {TASK_YIELD();} } while(0)

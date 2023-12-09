@@ -64,9 +64,9 @@ namespace Transitions {
         state->time                          = 0;
         state->delay_time                    = delay_timer;
         state->forwards                      = forwards;
-        register_on_delay_finish([](void*){});
-        register_on_finish([](void*){});
-        register_on_start([](void*){});
+        register_on_delay_finish([&](void*){});
+        register_on_finish([&](void*){});
+        register_on_start([&](void*){});
     }
 
     void do_horizontal_slide_in(color32f32 target_color, f32 delay_timer, f32 time) {
@@ -214,6 +214,8 @@ namespace Transitions {
     // I guess you can use inheritance for this but there's no reason imo.
     void update_and_render(struct render_commands* commands, f32 dt) {
         struct transition_fader_state* transition_state = &global_transition_fader_state;
+        auto                           on_delay_finish  = transition_state->on_delay_finish;
+        auto                           on_finish        = transition_state->on_finish;
 
         if (transition_state->type == TRANSITION_FADER_TYPE_NONE) {
             return;
@@ -256,8 +258,8 @@ namespace Transitions {
                 transition_state->time += dt;
 
                 if (transition_state->time >= transition_state->max_time) {
+                    on_finish(nullptr);
                     last_global_transition_fader_state = global_transition_fader_state;
-                    transition_state->on_finish(nullptr);
                 }
             } else {
                 /* ? */

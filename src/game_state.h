@@ -257,17 +257,17 @@ enum Scriptable_Render_Object_Layer {
 // NOTE: these are updated entirely through
 //       lua
 struct Scriptable_Render_Object {
-    s32           layer           = SCRIPTABLE_RENDER_OBJECT_LAYER_BACKGROUND;
+    s32 layer = SCRIPTABLE_RENDER_OBJECT_LAYER_BACKGROUND;
 
-    image_id      image_id        = {0};
-    V2            position        = V2(0, 0);
-    V2            scale           = V2(1, 1);
-    V2            rotation_center = V2(0,0);
-    rectangle_f32 src_rect        = RECTANGLE_F32_NULL;
-    color32u8     modulation      = color32u8(255,255,255,255);
-    s32           z_angle         = 0;
-    s32           y_angle         = 0;
-    s32           x_angle         = 0;
+    struct image_id image_id      = {0};
+    V2              position      = V2(0, 0);
+    V2              scale           = V2(1, 1);
+    V2              rotation_center = V2(0,0);
+    rectangle_f32   src_rect      = RECTANGLE_F32_NULL;
+    color32u8       modulation    = color32u8(255,255,255,255);
+    s32             z_angle       = 0;
+    s32             y_angle       = 0;
+    s32             x_angle       = 0;
 
     void render(Game_Resources* resources, struct render_commands* render_commands);
 };

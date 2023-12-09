@@ -1,6 +1,6 @@
 CC=g++
 # CC=clang++
-CFLAGS=-w -Wno-unused -Wno-unused-but-set-variable -std=c++11
+CFLAGS=-w -Wno-unused -Wno-unused-but-set-variable -std=c++17
 CLIBS=-lmingw32 -L./dependencies/x86-64/lib/ -L./dependencies/x86-64/bin/ -I./dependencies/ -I./dependencies/x86-64/include -I./dependencies/x86-64/include/SDL2 -lOpenGL32 -lglew32 -lSDL2main -lSDL2 -lSDL2_mixer -llua54 -msse4
 ITCHPROJECT=xpost2000/untitled-project
 

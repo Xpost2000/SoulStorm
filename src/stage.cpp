@@ -10,7 +10,7 @@ extern "C" {
 #undef STAGE
 // using X-macros
 #define STAGE(name)                                     \
-    Stage_State stage_##name##(void) {                  \
+    Stage_State stage_##name(void) {                  \
         Stage_State result = {};                        \
         {                                               \
             zero_memory(&result, sizeof(result));       \
