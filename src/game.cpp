@@ -2422,6 +2422,94 @@ void Game::simulate_game_frames_until(int nth_frame) {
     }
 }
 
+void Game::update_and_render_dialogue_ui(struct render_commands* commands, f32 dt) {
+    bool in_conversation = this->state->dialogue_state.in_conversation;
+    auto& dialogue_state = this->state->dialogue_state;
+    auto  font           = resources->get_font(MENU_FONT_COLOR_WHITE);
+    if (in_conversation) {
+        // render the characters
+        {
+            { // left hand side speaker
+                auto& speaker           = dialogue_state.speakers[0];
+                auto  speaker_img       = graphics_assets_get_image_by_id(&resources->graphics_assets, speaker.image);
+                V2    sprite_image_size = V2(speaker_img->width * speaker.image_scale.x,
+                                             speaker_img->height * speaker.image_scale.y);
+                V2    position          = V2(30, commands->screen_height - sprite_image_size.y) + speaker.offset_position;
+                auto destination_rect   = rectangle_f32(
+                    position.x,
+                    position.y,
+                    sprite_image_size.x,
+                    sprite_image_size.y
+                );
+                if (speaker.visible) {
+                    render_commands_push_image_ext2(
+                        commands,
+                        speaker_img,
+                        destination_rect,
+                        RECTANGLE_F32_NULL,
+                        speaker.modulation,
+                        V2(0.5, 0.5),
+                        0,
+                        0,
+                        // unused angle_x
+                        DRAW_IMAGE_FLIP_HORIZONTALLY * speaker.mirrored, // flags param not used
+                        // blend mode param not used
+                        BLEND_MODE_ALPHA
+                    );
+                }
+            }
+        }
+
+        // render the text itself
+        float dialogue_box_width    = commands->screen_width * 0.75;
+        float dialogue_box_height   = 120;
+        V2  dialogue_box_position = V2(40, commands->screen_height - (15 + dialogue_box_height));
+        {
+            auto text                 = string_slice(
+                string_from_cstring(dialogue_state.current_line),
+                0,
+                dialogue_state.shown_characters
+            );
+
+
+            render_commands_push_quad(
+                commands,
+                rectangle_f32(dialogue_box_position.x, dialogue_box_position.y,
+                              dialogue_box_width, dialogue_box_height),
+                color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA
+            );
+
+            render_commands_push_text(
+                commands, font, 2, dialogue_box_position + V2(10, 10),
+                text, color32f32(1,1,1,1), BLEND_MODE_ALPHA
+            ); 
+        }
+
+        // update some dialogue ui.
+        {
+            if (Action::is_pressed(ACTION_ACTION)) {
+                dialogue_state.shown_characters = dialogue_state.length;
+            }
+
+            if (dialogue_state.shown_characters < dialogue_state.length) {
+                if (dialogue_state.type_timer <= 0.0f) {
+                    dialogue_state.type_timer = DIALOGUE_TYPE_SPEED;
+                    dialogue_state.shown_characters += 1;
+                } else {
+                    dialogue_state.type_timer -= dt;
+                }
+            } else {
+                // show the continue dialogue line
+                // should animate nicely later
+                render_commands_push_text(
+                    commands, font, 2, dialogue_box_position + V2(dialogue_box_width - 100, dialogue_box_height - 20),
+                    string_literal("Continue"), color32f32(1,1,1,1), BLEND_MODE_ALPHA
+                ); 
+            }
+        }
+    }
+}
+
 void Game::update_and_render_game_ingame(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
     auto state = &this->state->gameplay_data;
     V2 resolution = V2(game_render_commands->screen_width, game_render_commands->screen_height);
@@ -2651,7 +2739,11 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         }
     }
 
-    if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
+    // Rendering Dialogue UI
+    bool in_conversation = this->state->dialogue_state.in_conversation;
+    update_and_render_dialogue_ui(ui_render_commands, dt);
+
+    if (!in_conversation && !state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
         auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
         update_packet_data->dt = FIXED_TICKTIME;
         update_packet_data->game_state = this->state;
@@ -2786,8 +2878,10 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
       NOTE: because these are per "task invocation" objects,
       I need these render objects to still exist when coroutines are paused, otherwise it'll
       look like the background disappeared!
-     */
-    if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE) {
+
+      TODO: make background tasks also operate without "pausing"
+    */
+    if (!in_conversation && !state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE) {
         state->scriptable_render_objects.zero();
     }
 }

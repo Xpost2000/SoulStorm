@@ -404,6 +404,52 @@ struct Controller_LED_State {
     // data based API.
 };
 
+/*
+ * This dialogue system is designed to work well with coroutine style
+ * systems
+ */
+#define DIALOGUE_TYPE_SPEED (0.0325f)
+enum Dialogue_Speaker_Animation {
+    DIALOGUE_SPEAKER_ANIMATION_FADE_IN,   // use for introduction
+    DIALOGUE_SPEAKER_ANIMATION_FADE_OUT,  // use for outro
+
+    DIALOGUE_SPEAKER_ANIMATION_SLIDE_IN,  // use for introduction
+    DIALOGUE_SPEAKER_ANIMATION_SLIDE_OUT, // use for outro
+
+    DIALOGUE_SPEAKER_ANIMATION_FOCUS_OUT, // darken, and shrink a little.
+    DIALOGUE_SPEAKER_ANIMATION_FOCUS_IN,  // inverse of the above.
+
+    DIALOGUE_SPEAKER_ANIMATION_SHAKE,     // param: amount of shakes, intensity
+    DIALOGUE_SPEAKER_ANIMATION_JUMP,      // param: amount of jumps, intensity
+};
+struct Dialogue_Speaker {
+    // Depends on how they're drawn
+    // that the scale might have to be changed.
+    image_id image;
+
+    V2 offset_position = V2(0, 0);
+    // NOTE: in units of 0.0 - 1.0
+    // different "mood" images should be in the same resolution
+    // so that nothing breaks.
+    V2 image_scale = V2(1, 1);
+    color32f32 modulation = color32f32(1, 1, 1, 1);
+    bool mirrored = false;
+    bool visible  = false;
+};
+struct Dialogue_State {
+    bool in_conversation = false;
+    // Only two characters would ever really be speaking.
+    Dialogue_Speaker speakers[2];
+    char             current_line[256];
+
+    int  shown_characters = 0;  // for typed out text
+    int  length           = 0; 
+    f32  type_timer       = 0.0f;
+
+    Fixed_Array<image_id>        tracked_images;
+    Fixed_Array<Audio::Sound_ID> tracked_sounds;
+};
+
 struct Game_State {
     s32 screen_mode      = GAME_SCREEN_TITLE_SCREEN;
     s32 last_screen_mode = GAME_SCREEN_TITLE_SCREEN;
@@ -417,6 +463,8 @@ struct Game_State {
     MainMenu_Data    mainmenu_data;
     TitleScreen_Data titlescreen_data;
     Achievement_Menu_Data achievement_menu;
+
+    Dialogue_State dialogue_state;
 
     Game_Task_Scheduler coroutine_tasks;
     Game_Resources* resources;

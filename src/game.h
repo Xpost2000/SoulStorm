@@ -97,6 +97,7 @@ private:
     void update_and_render_achievement_notifications(struct render_commands* commands, f32 dt);
     void update_and_render_confirm_back_to_main_menu(struct render_commands* commands, f32 dt);
     void update_and_render_confirm_exit_to_windows(struct render_commands* commands, f32 dt);
+    void update_and_render_dialogue_ui(struct render_commands* commands, f32 dt);
 
     // Game Modes
     void update_and_render_game_opening(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt);
