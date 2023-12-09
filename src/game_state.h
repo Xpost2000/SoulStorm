@@ -386,7 +386,8 @@ struct Gameplay_Data {
     bool triggered_stage_completion_cutscene = false;
     bool queue_bomb_use = false;
 
-    f32 fixed_tickrate_timer = 0.0f;
+    f32 fixed_tickrate_timer     = 0.0f;
+    f32 fixed_tickrate_remainder = 0.0f;
     Gameplay_Stage_Introduction_Sequence   intro;
     Gameplay_Stage_Complete_Stage_Sequence complete_stage;
 

@@ -364,6 +364,7 @@ void Game::reset_stage_simulation_state() {
         }
     }
     state->fixed_tickrate_timer = 0;
+    state->fixed_tickrate_remainder = 0;
 }
 
 void Game::cleanup_game_simulation() {
@@ -2473,6 +2474,8 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 state->fixed_tickrate_timer -= FIXED_TICKTIME;
                 state->current_stage_timer  += FIXED_TICKTIME;
             }
+
+            state->fixed_tickrate_remainder = state->fixed_tickrate_timer/(dt);
         }
     }
 

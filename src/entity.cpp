@@ -259,6 +259,14 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
 void Entity::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
     auto r = get_rect();
 
+    V2 interpolated_position = V2(
+        lerp_f32(last_position.x, position.x, state->gameplay_data.fixed_tickrate_remainder),
+        lerp_f32(last_position.y, position.y, state->gameplay_data.fixed_tickrate_remainder)
+    );
+
+    r.x = interpolated_position.x - scale.x;
+    r.y = interpolated_position.y - scale.y;
+
     if (sprite.id.index != 0) {
         // NOTE: entity updates are responsible for actually
         //       animating their own sprites!
@@ -307,9 +315,10 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         }
 
         V2 sprite_position = V2(
-            position.x + (sprite.offset.x - sprite_image_size.x/2),
-            position.y + (sprite.offset.y - sprite_image_size.y/2)
+            interpolated_position.x + (sprite.offset.x - sprite_image_size.x/2),
+            interpolated_position.y + (sprite.offset.y - sprite_image_size.y/2)
         );
+
         render_commands_push_image_ext(
             render_commands,
             sprite_img,
@@ -487,6 +496,7 @@ void Entity::update(Game_State* state, f32 dt) {
         }
     }
 
+    last_position       = position;
     position           += velocity * dt;
     t_since_spawn      += dt;
 }
@@ -947,6 +957,7 @@ Pickup_Entity pickup_entity_generic(Game_State* state, s32 type, V2 start, V2 en
 
     Pickup_Entity result;
     result.position = start;
+    result.last_position = result.position;
     result.scale    = V2(5, 10);
     result.type = type;
     result.value = value;
@@ -1137,6 +1148,7 @@ int _lua_bind_enemy_set_position(lua_State* L) {
     if (e) {
         e->position.x = luaL_checknumber(L, 2);
         e->position.y = luaL_checknumber(L, 3);
+        e->last_position = e->position;
     }
     return 0;
 }
@@ -1502,6 +1514,7 @@ int _lua_bind_bullet_set_position(lua_State* L) {
     if (e) {
         e->position.x = luaL_checknumber(L, 2);
         e->position.y = luaL_checknumber(L, 3);
+        e->last_position = e->position;
     }
     return 0;
 }

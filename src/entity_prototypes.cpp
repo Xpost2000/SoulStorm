@@ -50,6 +50,7 @@ Bullet bullet_generic(Game_State* state, V2 position, V2 scale, s32 source, Bull
     Bullet bullet = {};
     bullet.uid = UID::bullet_uid();
     bullet.position    = position;
+    bullet.last_position = bullet.position;
     bullet.scale       = scale;
     //bullet.lifetime    = Timer(3.0f);
     bullet.source_type = source;
@@ -135,9 +136,10 @@ Enemy_Entity enemy_generic(Game_State* state, V2 position, V2 scale, Enemy_Entit
     Enemy_Entity enemy = {};
     enemy.uid = UID::enemy_uid();
 
-    enemy.position = position;
-    enemy.scale    = scale;
-    enemy.die      = false;
+    enemy.last_position = enemy.position;
+    enemy.position      = position;
+    enemy.scale         = scale;
+    enemy.die           = false;
 
     enemy.velocity_function = velocity;
 

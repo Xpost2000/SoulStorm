@@ -78,6 +78,7 @@ struct Entity {
     u64 uid = 0;
     // primarily for collision purposes
     // a visual representation can be drawn separately
+    V2    last_position = V2(0, 0); // for interpolation purposes
     V2    position      = V2(0, 0);
     V2    scale         = V2(0, 0); 
 
