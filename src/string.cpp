@@ -328,3 +328,13 @@ string memory_arena_push_string(Memory_Arena* arena, string to_copy) {
     result.data[to_copy.length] = 0;
     return result;
 }
+
+string unixify_pathname(Memory_Arena* arena, string pathname) {
+    string result = memory_arena_push_string(arena, pathname);
+    for (int i = 0; i < result.length; ++i) {
+        if (result.data[i] == '\\') {
+            result.data[i] = '/';
+        }
+    }
+    return result;
+}

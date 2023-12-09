@@ -41,5 +41,6 @@ struct string_array {
 };
 struct string_array string_split(Memory_Arena* arena, string string, char separator);
 string memory_arena_push_string(Memory_Arena* arena, string to_copy);
+string unixify_pathname(Memory_Arena* arena, string pathname);
 
 #endif

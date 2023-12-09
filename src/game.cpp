@@ -21,6 +21,10 @@
 #define TICKRATE       (60)
 #define FIXED_TICKTIME (1.0f / TICKRATE)
 
+#define DEFAULT_REPLAY_LOCATION (string_literal(".\\replays\\"))
+#define MAX_REPLAYS_PER_PAGE   (4)
+local string save_file_name    = string_literal("game_save.save");
+
 local float replay_timescale_choices[] = {
     0.25f,
     0.5f,
@@ -827,7 +831,6 @@ void Gameplay_Data::add_enemy_entity(Enemy_Entity e) {
 }
 
 void Gameplay_Data::add_pickup_entity(Pickup_Entity s) {
-    return;
     to_create_pickups.push(s);
 }
 
@@ -1232,29 +1235,113 @@ void Game::update_and_render_replay_collection_menu(struct render_commands* comm
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
     GameUI::set_ui_id((char*)"ui_replay_collection_menu");
+
+    auto replay_files = directory_listing_list_all_files_in(&Global_Engine()->scratch_arena, DEFAULT_REPLAY_LOCATION);
+    int page_count = replay_files.count / MAX_REPLAYS_PER_PAGE;
+    int current_page_display_amount = replay_files.count % MAX_REPLAYS_PER_PAGE;
+
     GameUI::begin_frame(commands);
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
-        GameUI::label(V2(50, y), string_literal("SOULSTORM - REPLAY COLLECTION"), color32f32(1, 1, 1, 1), 4);
+        GameUI::label(V2(50, y),
+                      string_from_cstring(format_temp("REPLAY COLLECTION [%d / %d]", state->gameplay_data.demo_collection_ui.current_page+1, page_count)),
+                      color32f32(1, 1, 1, 1), 4);
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         y += 45;
-        if (GameUI::button(V2(100, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+        if (GameUI::button(V2(100, y), string_literal("Return"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(state->last_ui_state);
         }
 
-        {
-            
+        if (GameUI::button(V2(180, y), string_literal("Next"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            state->gameplay_data.demo_collection_ui.current_page += 1;
+        }
+        if (GameUI::button(V2(240, y), string_literal("Previous"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            state->gameplay_data.demo_collection_ui.current_page -= 1;
+        }
+        y += 30;
+
+        if (state->gameplay_data.demo_collection_ui.current_page < 0) {
+            state->gameplay_data.demo_collection_ui.current_page = page_count-1;
+        } else if (state->gameplay_data.demo_collection_ui.current_page >= page_count) {
+            state->gameplay_data.demo_collection_ui.current_page = 0;
         }
 
-        // NOTE:
-        // all the UI is the same with both interfaces, and fortunately because
-        // the game has extremely basic UI layout and design, I don't think there's
-        // anything crazy I need.
-        if (Action::is_pressed(ACTION_CANCEL)) {
-            switch_ui(state->last_ui_state);
+        if (replay_files.count <= 0) {
+            GameUI::label(V2(130, y), string_literal("No recordings. Go make some memories!"), color32f32(1, 1, 1, 1), 2);
+        } else {
+            s32 start_index = MAX_REPLAYS_PER_PAGE * state->gameplay_data.demo_collection_ui.current_page + 2; // skip ./ and ../
+            s32 end_index   = min<s32>(MAX_REPLAYS_PER_PAGE * (state->gameplay_data.demo_collection_ui.current_page+1) + 2, replay_files.count);
+
+            _debugprintf("%d, %d (%d)", start_index, end_index, replay_files.count);
+
+            for (s32 index = start_index; index < end_index; ++index) {
+                auto& file = replay_files.files[index];
+                if (file.is_directory) {
+                    continue;
+                }
+
+                string fullname =
+                    unixify_pathname(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("%s%s", replay_files.basename, file.name)));
+                    
+                if (GameUI::button(V2(130, y), fullname, color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                    {
+                        auto serializer = open_read_file_serializer(fullname);
+                        serializer.expected_endianess = ENDIANESS_LITTLE;
+
+                        gameplay_recording_file_serialize(
+                            &state->gameplay_data.recording,
+                            &Global_Engine()->main_arena,
+                            &serializer
+                        );
+                        serializer_finish(&serializer);
+
+                        Transitions::do_shuteye_in(
+                            color32f32(0, 0, 0, 1),
+                            0.15f,
+                            0.3f
+                        );
+
+                        Transitions::register_on_finish(
+                            [&](void*) mutable {
+                                this->state->mainmenu_data.stage_id_level_select          = state->gameplay_data.recording.stage_id;
+                                this->state->mainmenu_data.stage_id_level_in_stage_select = state->gameplay_data.recording.level_id;
+
+                                switch_ui(UI_STATE_INACTIVE);
+                                switch_screen(GAME_SCREEN_INGAME);
+
+                                // Reset Demo Viewer
+                                {
+                                    state->gameplay_data.demo_viewer.paused          = false;
+                                    state->gameplay_data.demo_viewer.timescale_index = 3;
+                                }
+                                gameplay_recording_file_start_playback(
+                                    &state->gameplay_data.recording
+                                );
+                                setup_stage_start();
+                                Transitions::do_shuteye_out(
+                                    color32f32(0, 0, 0, 1),
+                                    0.15f,
+                                    0.3f
+                                );
+                            }
+                        );
+                    }
+                }
+                y += 30;
+            }
+
+            // NOTE:
+            // all the UI is the same with both interfaces, and fortunately because
+            // the game has extremely basic UI layout and design, I don't think there's
+            // anything crazy I need.
+            if (Action::is_pressed(ACTION_CANCEL)) {
+                switch_ui(state->last_ui_state);
+            }
         }
     }
+    GameUI::end_frame();
+    GameUI::update(dt);
 }
 
 void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt) {
@@ -2079,29 +2166,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
             return;
         }
     } else {
-        // I cannot physically record gameplay data at a faster rate...
-        // NOTE:
-        // since the game demo functionality is only meant for recording the "game" itself
-        // and not to operate as full debug input, I only care about producing input packets here.
-        {
-            V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
-            if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
-
-            // (special case for building input packet on button press)
-            // this is primarily because I should only record the "pressed" status
-            // once, but this is not really possible to do since my input happens at a higher framerate
-            // than the game logic...
-            bool previous_bomb_press = (state->current_input_packet.actions & (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT)));
-
-            state->current_input_packet.actions=
-                (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT))  *Action::is_down(ACTION_ACTION) |
-                (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT))   *Action::is_down(ACTION_FOCUS)  |
-                (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))*Action::is_pressed(ACTION_USE_BOMB) * (!previous_bomb_press)
-                ;
-            state->current_input_packet.axes[0] = (s8)(axes[0] * 127.0f);
-            state->current_input_packet.axes[1] = (s8)(axes[1] * 127.0f);
-        }
-
+        state->build_current_input_packet();
         gameplay_recording_file_record_frame(&state->recording, state->current_input_packet);
     }
 
@@ -3449,6 +3514,9 @@ void Game::switch_ui(s32 ui) {
         case UI_STATE_ACHIEVEMENTS: {
             state->achievement_menu.page = 0;
         } break;
+        case UI_STATE_REPLAY_COLLECTION: {
+            state->gameplay_data.demo_collection_ui.current_page = 0;
+        } break;
     }
 }
 
@@ -3462,9 +3530,6 @@ void Game::notify_new_achievement(s32 id) {
     _debugprintf("okay, notify achievement (%d)", id);
     achievement_state.notifications.push(notification);
 }
-
-// save game information
-local string save_file_name = string_literal("game_save.save");
 
 bool Game::save_game() {
     _debugprintf("Attempting to save game.");
@@ -3911,120 +3976,9 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
     }
 }
 
-// Game demo functionality
-void gameplay_recording_file_start_recording(Gameplay_Recording_File* recording,
-                                             struct random_state prng_state,
-                                             Memory_Arena* arena) {
-    _debugprintf(
-        "Start recording:\n(prng: %d, %d, %d, %d,  %d)",
-        prng_state.constant, prng_state.multiplier, prng_state.state, prng_state.seed, prng_state.modulus
-    );
-
-    recording->version                    = GAMEPLAY_RECORDING_FILE_VERSION_1;
-    recording->tickrate                   = TICKRATE;
-    recording->prng                       = recording->start_prng = prng_state;
-    recording->frame_count                = 0;
-    recording->memory_arena               = arena;
-    recording->memory_arena_cursor        = arena->used;
-    recording->in_playback                = false;
-    recording->frames_run                 = 0;
-    recording->frames                     = (Gameplay_Frame_Input_Packet*)recording->memory_arena->push_unaligned(0);
-}
-
-void gameplay_recording_file_record_frame(Gameplay_Recording_File* recording, const Gameplay_Frame_Input_Packet& frame_input) {
-    assert(recording->memory_arena && "Cannot record frame without allocator");
-    recording->memory_arena->push_unaligned(sizeof(frame_input));
-    recording->frames[recording->frame_count++] = frame_input;
-    recording->frames_run += 1;
-}
-
-
-void gameplay_recording_file_finish(Gameplay_Recording_File* recording) {
-    if (recording->memory_arena) {
-        recording->memory_arena->used = recording->memory_arena_cursor;
-    }
-    recording->memory_arena = nullptr;
-    _debugprintf("Run through: %d frames of gameplay", recording->frames_run);
-    _debugprintf("Playback: %d/%d frames", recording->playback_frame_index, recording->frame_count);
-}
-void gameplay_recording_file_stop_recording(Gameplay_Recording_File* recording) {
-    // NOTE:
-    // memory is deliberately not reset.
-    // It is resident because the intention is to serialize if needed.
-    // IE: it is fine for the remainder of a frame.
-    gameplay_recording_file_finish(recording);
-    recording->prng = recording->start_prng;
-    _debugprintf("Recorded: %d frames", recording->frame_count);
-}
-
-bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memory_Arena* arena, struct binary_serializer* serializer) {
-    serialize_u16(serializer, &recording->version);
-    serialize_s16(serializer, &recording->tickrate);
-    serialize_s32(serializer, &recording->prng.constant);
-    serialize_s32(serializer, &recording->prng.multiplier);
-    serialize_s32(serializer, &recording->prng.state);
-    serialize_s32(serializer, &recording->prng.seed);
-    serialize_s32(serializer, &recording->prng.modulus);
-    serialize_s32(serializer, &recording->frame_count);
-    serialize_u8(serializer,  &recording->stage_id);
-    serialize_u8(serializer,  &recording->level_id);
-    _debugprintf("Serializing recording version: %d", recording->version);
-    _debugprintf("Serializing recording tickrate: %d", recording->tickrate);
-    _debugprintf(
-        "Serializing Recording PRNG:\n(prng: %d, %d, %d, %d, %d)",
-        recording->prng.constant, recording->prng.multiplier, recording->prng.state, recording->prng.seed, recording->prng.modulus
-    );
-
-    switch (recording->version) {
-        case GAMEPLAY_RECORDING_FILE_VERSION_1: {
-            if (arena) {
-                recording->memory_arena = arena;
-                recording->memory_arena_cursor = arena->used;
-                recording->frames =
-                    (Gameplay_Frame_Input_Packet*)recording->memory_arena->push_unaligned(recording->frame_count * sizeof(*recording->frames));
-            }
-
-            for (s32 index = 0; index < recording->frame_count; ++index) {
-                serialize_u8(serializer, &recording->frames[index].actions);
-                serialize_s8(serializer, &recording->frames[index].axes[0]);
-                serialize_s8(serializer, &recording->frames[index].axes[1]);
-            }
-
-            return true;
-        } break;
-        default: {
-            // TODO: should make this error more pleasantly in the future.
-            // Although the game has little to no UI to speak of.
-            assert(0 && "Unsupported version of replay.");
-        } break;
-    }
-
-    return false;
-}
-
-void gameplay_recording_file_start_playback(Gameplay_Recording_File* recording) {
-    recording->frames_run           = 0;
-    recording->in_playback          = true;
-    recording->playback_frame_index = 0;
-}
-
-bool gameplay_recording_file_has_more_frames(Gameplay_Recording_File* recording) {
-    return recording->playback_frame_index < recording->frame_count;
-}
-
-Gameplay_Frame_Input_Packet gameplay_recording_file_next_frame(Gameplay_Recording_File* recording) {
-    recording->frames_run += 1;
-    return recording->frames[recording->playback_frame_index++];
-}
-
-V2 gameplay_frame_input_packet_quantify_axes(const Gameplay_Frame_Input_Packet& input_packet) {
-    f32 x = (f32)input_packet.axes[0] / 127.0f;
-    f32 y = (f32)input_packet.axes[1] / 127.0f;
-    return V2(x, y);
-}
+#include "demo_recording.cpp"
 
 // Lua bindings
-
 int _lua_bind_Task_Yield_Wait(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     s32 task_id = state->coroutine_tasks.search_for_lua_task(L);

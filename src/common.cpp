@@ -222,12 +222,10 @@ Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, strin
     HANDLE handle = FindFirstFile(string_concatenate(arena, location, string_literal("/*")).data, &find_data);
 
     if (handle == INVALID_HANDLE_VALUE) {
-        _debugprintf("no files found in directory (\"%s\")", location.data);
         return result;
     }
 
     result.files = (Directory_File*)arena->push_unaligned(sizeof(*result.files));
-    _debugprintf("allocating files");
 
     do {
         Directory_File* current_file = &result.files[result.count++];
@@ -236,7 +234,6 @@ Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, strin
         cstring_copy(find_data.cFileName, current_file->name, array_count(current_file->name));
         current_file->filesize = (find_data.nFileSizeHigh * (MAXDWORD+1)) + find_data.nFileSizeLow;
 
-        _debugprintf("read file \"%s\"", find_data.cFileName);
         arena->push_unaligned(sizeof(*result.files));
     } while (FindNextFile(handle, &find_data));
 #endif
