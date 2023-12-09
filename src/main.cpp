@@ -620,9 +620,18 @@ int main(int argc, char** argv) {
     SetProcessDPIAware();
 #endif
     initialize();
+#define TARGET_TICKS_PER_SECOND (1000.0f / 60.0f)
     while (Global_Engine()->running) {
         u32 start_frame_time = SDL_GetTicks();
         engine_main_loop();
+
+        Global_Engine()->last_elapsed_delta_time = (SDL_GetTicks() - start_frame_time) / 1000.0f;
+
+        if (SDL_GetTicks()-start_frame_time < TARGET_TICKS_PER_SECOND) {
+            int sleep_time = TARGET_TICKS_PER_SECOND - (SDL_GetTicks() - start_frame_time);
+            SDL_Delay(sleep_time);
+        }
+
         Global_Engine()->last_elapsed_delta_time = (SDL_GetTicks() - start_frame_time) / 1000.0f;
         Global_Engine()->global_elapsed_time += Global_Engine()->last_elapsed_delta_time;
     }

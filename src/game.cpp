@@ -2409,12 +2409,21 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                         update_packet_data->dt = FIXED_TICKTIME;
                         update_packet_data->game_state = this->state;
 
-                        // partial clean up of resources...
-                        state->unload_all_script_loaded_resources(this->state, this->state->resources);
-                        state->prng = state->recording.old_prng;
-                        state->recording.playback_frame_index = 0;
-                        state->recording.frames_run           = 0;
-                        reset_stage_simulation_state();
+                        // NOTE: only frames that come before require a full resimulation
+                        // since the timeline runs from a lua coroutine, I need to maintain coroutine state
+                        // which isn't possible in lua.
+                        //
+                        // Yeah.
+                        if (desired_frame < state->recording.playback_frame_index) {
+                            // partial clean up of resources...
+                            state->unload_all_script_loaded_resources(this->state, this->state->resources);
+                            state->prng = state->recording.old_prng;
+                            state->recording.playback_frame_index = 0;
+                            state->recording.frames_run = 0;
+                            reset_stage_simulation_state();
+                        } else {
+                            desired_frame -= state->recording.playback_frame_index;
+                        }
 
                         while (desired_frame) {
                             simulate_game_frame(update_packet_data);
