@@ -311,6 +311,11 @@ struct Gameplay_Data {
     Play_Area play_area;
 
     random_state prng;
+
+    // this prng is not replicated. Used for currently only the dialogue system.
+    // as it's data is not saved.
+    random_state prng_unessential;
+
     camera       main_camera;
 
     bool paused_from_death = false;
@@ -409,29 +414,49 @@ struct Controller_LED_State {
  * systems
  */
 #define DIALOGUE_TYPE_SPEED (0.0325f)
-enum Dialogue_Speaker_Animation {
-    DIALOGUE_SPEAKER_ANIMATION_FADE_IN,   // use for introduction
-    DIALOGUE_SPEAKER_ANIMATION_FADE_OUT,  // use for outro
+enum Dialogue_Speaker_Animation_Type {
+    DIALOGUE_SPEAKER_ANIMATION_NONE      = 0,      // use for introduction
+    DIALOGUE_SPEAKER_ANIMATION_FADE_IN   = 1,   // use for introduction
+    DIALOGUE_SPEAKER_ANIMATION_FADE_OUT  = 2,  // use for outro
 
-    DIALOGUE_SPEAKER_ANIMATION_SLIDE_IN,  // use for introduction
-    DIALOGUE_SPEAKER_ANIMATION_SLIDE_OUT, // use for outro
+    DIALOGUE_SPEAKER_ANIMATION_SLIDE_IN  = 3,  // use for introduction
+    DIALOGUE_SPEAKER_ANIMATION_SLIDE_OUT = 4, // use for outro
 
-    DIALOGUE_SPEAKER_ANIMATION_FOCUS_OUT, // darken, and shrink a little.
-    DIALOGUE_SPEAKER_ANIMATION_FOCUS_IN,  // inverse of the above.
+    // NOTE: focus in and focus out
+    //       will set their own animation state
+    //
+    DIALOGUE_SPEAKER_ANIMATION_FOCUS_OUT = 5, // darken, and shrink a little.
+    DIALOGUE_SPEAKER_ANIMATION_FOCUS_IN  = 6,  // inverse of the above.
 
-    DIALOGUE_SPEAKER_ANIMATION_SHAKE,     // param: amount of shakes, intensity
-    DIALOGUE_SPEAKER_ANIMATION_JUMP,      // param: amount of jumps, intensity
+    DIALOGUE_SPEAKER_ANIMATION_SLIDE_FADE_IN  = 7,  // use for introduction
+    DIALOGUE_SPEAKER_ANIMATION_SLIDE_FADE_OUT  = 8,  // use for introduction
+
+    DIALOGUE_SPEAKER_ANIMATION_SHAKE     = 9,     // param: amount of shakes, intensity
+    DIALOGUE_SPEAKER_ANIMATION_JUMP      = 10,      // param: amount of jumps, intensity
+    DIALOGUE_SPEAKER_ANIMATION_COUNT     = 11,
+};
+struct Dialogue_Speaker_Animation {
+    u8 type;
+
+    s32 times;  // for shaking and jumping.
+    s32 param0; // height / intensity;
+
+    f32 t;
+    f32 max_t;
+
+    V2 shake_offset;
 };
 struct Dialogue_Speaker {
+    Dialogue_Speaker_Animation animation;
     // Depends on how they're drawn
     // that the scale might have to be changed.
     image_id image;
 
     V2 offset_position = V2(0, 0);
+    V2 image_scale = V2(1, 1);
     // NOTE: in units of 0.0 - 1.0
     // different "mood" images should be in the same resolution
     // so that nothing breaks.
-    V2 image_scale = V2(1, 1);
     color32f32 modulation = color32f32(1, 1, 1, 1);
     bool mirrored = false;
     bool visible  = false;

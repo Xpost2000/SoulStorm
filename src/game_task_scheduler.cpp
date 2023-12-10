@@ -351,12 +351,12 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
                     if (state->dialogue_state.confirm_continue) {
                         state->dialogue_state.confirm_continue = false;
                         task.userdata.yielded.reason = TASK_YIELD_REASON_NONE; 
-                        state->dialogue_state.shown_characters = state->dialogue_state.length = 0;
                     } else {
                         continue;
                     }
                 } break;
                 case TASK_YIELD_REASON_WAIT_DIALOGUE_FINISH: {
+                    // TODO: check me!
                     if (state->dialogue_state.in_conversation) {
                         continue;
                     } else {
