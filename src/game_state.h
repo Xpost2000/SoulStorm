@@ -472,7 +472,8 @@ struct Dialogue_State {
     int  length           = 0; 
     f32  type_timer       = 0.0f;
 
-    // TODO
+    int      tracked_image_count = 0;
+    image_id tracked_images[512];
     /* Fixed_Array<image_id>        tracked_images; */
     /* Fixed_Array<Audio::Sound_ID> tracked_sounds; */
 };

@@ -187,6 +187,7 @@ void graphics_assets_unload_image(struct graphics_assets* assets, image_id img) 
     auto img_buffer = graphics_assets_get_image_by_id(assets, img);
 
     if (assets->image_asset_status[index] != ASSET_STATUS_UNLOADED) {
+        _debugprintf("Unloading image id %d\n", img.index);
         image_buffer_free(img_buffer);
         assets->image_asset_status[index] = ASSET_STATUS_UNLOADED;
     }

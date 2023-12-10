@@ -4664,6 +4664,7 @@ int _lua_bind_dialogue_start(lua_State* L) {
     dialogue_state.shown_characters = 0;
     dialogue_state.length           = 0;
     dialogue_state.type_timer       = 0;
+    dialogue_state.tracked_image_count = 0;
     return 0;
 }
 
@@ -4678,6 +4679,14 @@ int _lua_bind_dialogue_end(lua_State* L) {
 
     // for now. Instant stop
     dialogue_state.in_conversation = false;
+
+    for (s32 tracked_image_index = 0;
+         tracked_image_index < dialogue_state.tracked_image_count;
+         ++tracked_image_index) {
+        graphics_assets_unload_image(&state->resources->graphics_assets, dialogue_state.tracked_images[tracked_image_index]);
+        dialogue_state.tracked_images[tracked_image_index].index = 0;
+    }
+
     return lua_yield(L, 0);
 }
 
@@ -4725,7 +4734,21 @@ int _lua_bind_dialogue_speaker_set_image(lua_State* L) {
         string_from_cstring((char*)lua_tostring(L, 2))
     );
 
-    // TODO: track.
+    bool found = false;
+    for (s32 tracked_image_index = 0;
+         tracked_image_index < dialogue_state.tracked_image_count;
+         ++tracked_image_index) {
+        if (img_id.index == dialogue_state.tracked_images[tracked_image_index].index) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        // NOTE: watch out for overflow.
+        dialogue_state.tracked_images[dialogue_state.tracked_image_count++] = img_id;
+    }
+
     dialogue_state.speakers[speaker_id].image = img_id;
 
     return 0;
