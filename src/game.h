@@ -15,6 +15,12 @@
 
 #include "game_preferences.h"
 
+#define TICKRATE       (60)
+#define FIXED_TICKTIME (1.0f / TICKRATE)
+#define DEFAULT_REPLAY_LOCATION (string_literal(".\\replays\\"))
+#define MAX_REPLAYS_PER_PAGE   (4)
+local string save_file_name = string_literal("game_save.save");
+
 // forward decl some opaque types
 struct Game_State;
 struct Game_Resources;

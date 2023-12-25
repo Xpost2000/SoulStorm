@@ -240,9 +240,11 @@
     <ClCompile Include="..\src\debug_ui.cpp" />
     <ClCompile Include="..\src\engine.cpp" />
     <ClCompile Include="..\src\entity.cpp" />
+    <ClCompile Include="..\src\entity_lua_bindings.cpp" />
     <ClCompile Include="..\src\entity_prototypes.cpp" />
     <ClCompile Include="..\src\fade_transition.cpp" />
     <ClCompile Include="..\src\game.cpp" />
+    <ClCompile Include="..\src\game_lua_bindings.cpp" />
     <ClCompile Include="..\src\game_task_scheduler.cpp" />
     <ClCompile Include="..\src\game_ui.cpp" />
     <ClCompile Include="..\src\graphics_driver.cpp">
@@ -278,6 +280,7 @@
     <ClCompile Include="..\src\v2.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
     </ClCompile>
+    <ClCompile Include="..\src\v2_lua_bindings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\achievements.h" />
