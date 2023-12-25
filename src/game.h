@@ -70,15 +70,19 @@ public:
     ~Game();
 
     void init(Graphics_Driver* driver);
+
+    // NOTE: all **global/permenant** graphics data initialization is here
+    // submodes can feel free to store handles to their own "private" stuff
+    // if they want.
     void init_graphics_resources(Graphics_Driver* driver);
     void init_audio_resources();
     void deinit();
 
-    // NOTE: I should probably avoid having an explicit reference to
-    //       a software framebuffer. Honestly there's little to no reason why this should
-    //       be here...
-    void update_and_render(Graphics_Driver* driver, f32 dt);
+    // Submode initialization
+    void mainmenu_data_initialize(Graphics_Driver* driver);
+    void opening_data_initialize(Graphics_Driver* driver);
 
+    void update_and_render(Graphics_Driver* driver, f32 dt);
 
     Game_Preferences preferences;
 private: 

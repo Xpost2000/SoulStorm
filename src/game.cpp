@@ -151,16 +151,17 @@ Game::~Game() {
     
 }
 
-
 void Game::init_graphics_resources(Graphics_Driver* driver) {
     if (!initialized) {
         return;
     }
 
+    // TODO: get a way to simplify the "Graphics Driver" update path
+    // Graphics assets might need to store a pointer to the graphics driver so that way they can
+    // directly report assets...
     for (unsigned index = 0; index < array_count(menu_font_variation_string_names); ++index) {
         string current = menu_font_variation_string_names[index];
         resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
-        driver->upload_font(&resources->graphics_assets, resources->menu_fonts[index]);
     }
 
     resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
@@ -168,8 +169,6 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
     resources->ui_vignette_borders[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_left.png"));
     resources->ui_vignette_borders[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_bottom.png"));
-
-    driver->upload_texture(&resources->graphics_assets, resources->circle);
 
     // Sprites have their timings automatically done, so
     // so they don't store auto timing information.
@@ -249,6 +248,10 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->circle_sprite), 0);
         frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
         frame->source_rect = RECTANGLE_F32_NULL;
+    }
+
+    {
+        
     }
 }
 
@@ -510,203 +513,18 @@ void Game::init(Graphics_Driver* driver) {
         state->script_loaded_sounds          = Fixed_Array<Audio::Sound_ID>(arena, MAX_TRACKED_SCRIPT_LOADABLE_SOUNDS);
     }
 
+
+    /*
+     * NOTE: all state initialization data is here for now
+     * since it's easier for me to just add to this,
+     *
+     * but most certainly moving these to their own file might make more sense.
+     */
     // mainmenu_data initialize
-    {
-        auto state = &this->state->mainmenu_data;
-        auto resolution = driver->resolution();
+    mainmenu_data_initialize(driver);
 
-        state->particle_pool.init(arena, 2500);
-        
-        state->player.position      = V2(resolution.x / 2, resolution.y / 2);
-        state->player.scale         = V2(15, 15);
-        state->player.velocity      = V2(0, 0);
-        // I need to utilize a camera effect which relies on centering
-        // for polish reasons.
-        state->main_camera          = camera(V2(resolution.x/2, resolution.y/2), 1.0);
-        state->main_camera.centered = true;
-        state->prng                    = random_state();
-        state->main_camera.rng       = &state->prng;
-
-        state->screen_messages = Fixed_Array<MainMenu_ScreenMessage>(arena, 32);
-        state->portals = Fixed_Array<MainMenu_Stage_Portal>(arena, 4);
-        {
-            // initialize all portals here for the main menu
-            // portals should be spaced differently based on what's unlocked
-            // but I'll just place them manually
-            {
-                auto& portal = state->portals[0]; 
-                portal.stage_id = 0;
-                portal.scale = V2(15, 15);
-                portal.position = V2(100-30, 100);
-                for (int i = 0; i < array_count(portal.prerequisites); ++i) {
-                    portal.prerequisites[i] = -1;
-                }
-                portal.visible = true;
-
-                {
-                    auto& emitter = portal.emitter_main;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
-                    emitter.scale  = 1.0f;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
-                    emitter.lifetime = 1.0f;
-                    emitter.velocity_x_variance = V2(-100, 100);
-                    emitter.velocity_y_variance = V2(-100, 100);
-                    emitter.acceleration_x_variance = V2(-100, 100);
-                    emitter.acceleration_y_variance = V2(-100, 100);
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.emission_max_timer = 0.025f;
-                }
-
-                {
-                    auto& emitter = portal.emitter_vortex;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
-                    emitter.scale  = 0.5f;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 100.0f);
-                    emitter.lifetime = 2.0f;
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.use_attraction_point = true;
-                    emitter.attraction_point     = portal.position;
-                    emitter.attraction_force     = 100.0f;
-                    emitter.emission_max_timer = 0.025f;
-                }
-            }
-
-            {
-                auto& portal = state->portals[1]; 
-                portal.stage_id = 1;
-                portal.scale = V2(15, 15);
-                portal.position = V2(350-30, 100);
-                for (int i = 0; i < array_count(portal.prerequisites); ++i) {
-                    portal.prerequisites[i] = -1;
-                }
-                portal.prerequisites[0] = 0;
-                portal.visible = true;
-
-                {
-                    auto& emitter = portal.emitter_main;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
-                    emitter.scale  = 1.0f;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
-                    emitter.lifetime = 1.0f;
-                    emitter.velocity_x_variance = V2(-100, 100);
-                    emitter.velocity_y_variance = V2(-100, 100);
-                    emitter.acceleration_x_variance = V2(-100, 100);
-                    emitter.acceleration_y_variance = V2(-100, 100);
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.emission_max_timer = 0.025f;
-                }
-
-                {
-                    auto& emitter = portal.emitter_vortex;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
-                    emitter.scale  = 0.5;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
-                    emitter.lifetime = 2.0f;
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.use_attraction_point = true;
-                    emitter.attraction_point     = portal.position;
-                    emitter.attraction_force     = 100.0f;
-                    emitter.emission_max_timer = 0.025f;
-                }
-            }
-
-            {
-                auto& portal = state->portals[2]; 
-                portal.stage_id = 2;
-                portal.scale = V2(15, 15);
-                portal.position = V2(550-30, 100);
-                for (int i = 0; i < array_count(portal.prerequisites); ++i) {
-                    portal.prerequisites[i] = -1;
-                }
-                portal.prerequisites[0] = 0;
-                portal.prerequisites[1] = 1;
-                portal.visible = true;
-
-                {
-                    auto& emitter = portal.emitter_main;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
-                    emitter.scale  = 1.0f;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
-                    emitter.lifetime = 1.0f;
-                    emitter.velocity_x_variance = V2(-100, 100);
-                    emitter.velocity_y_variance = V2(-100, 100);
-                    emitter.acceleration_x_variance = V2(-100, 100);
-                    emitter.acceleration_y_variance = V2(-100, 100);
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.emission_max_timer = 0.025f;
-                }
-
-                {
-                    auto& emitter = portal.emitter_vortex;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
-                    emitter.scale  = 0.5f;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 50.0f);
-                    emitter.lifetime = 2.0f;
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.use_attraction_point = true;
-                    emitter.attraction_point     = portal.position;
-                    emitter.attraction_force     = 100.0f;
-                    emitter.emission_max_timer = 0.025f;
-                }
-            }
-
-            // NOTE: postgame portal.
-            {
-                auto& portal = state->portals[3]; 
-                portal.stage_id = 3;
-                portal.scale = V2(15, 15);
-                portal.position = V2(350-30, 400);
-                for (int i = 0; i < array_count(portal.prerequisites); ++i) {
-                    portal.prerequisites[i] = -1;
-                }
-                portal.prerequisites[0] = 0;
-                portal.prerequisites[1] = 1;
-                portal.prerequisites[2] = 2;
-
-                {
-                    auto& emitter = portal.emitter_main;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
-                    emitter.scale  = 1.0f;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
-                    emitter.lifetime = 1.0f;
-                    emitter.velocity_x_variance = V2(-100, 100);
-                    emitter.velocity_y_variance = V2(-100, 100);
-                    emitter.acceleration_x_variance = V2(-100, 100);
-                    emitter.acceleration_y_variance = V2(-100, 100);
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.emission_max_timer = 0.025f;
-                }
-
-                {
-                    auto& emitter = portal.emitter_vortex;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
-                    emitter.scale  = 0.5;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
-                    emitter.lifetime = 2.0f;
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.use_attraction_point = true;
-                    emitter.attraction_point     = portal.position;
-                    emitter.attraction_force     = 100.0f;
-                    emitter.emission_max_timer = 0.025f;
-                }
-            }
-
-            state->portals.size = 4;
-        }
-
-        // initializing all the stars' positions
-        {
-            auto bkg_slow_stars = state->star_positions[0];
-            auto bkg_faster_stars = state->star_positions[1];
-            auto& prng = this->state->mainmenu_data.prng;
-            for (int i = 0; i < MAX_MAINMENU_OUTERSPACE_STARS; ++i) {
-                bkg_slow_stars[i] = V2(random_ranged_float(&prng, -640, 640),
-                                       random_ranged_float(&prng, -480, 480));
-                bkg_faster_stars[i] = V2(random_ranged_float(&prng, -640, 640),
-                                         random_ranged_float(&prng, -480, 480));
-            }
-        }
-    }
+    // opening_data initialize
+    opening_data_initialize(driver);
 
     Achievements::init_achievements(arena, make_slice<Achievement>(achievement_list, array_count(achievement_list)));
     GameUI::initialize(arena);

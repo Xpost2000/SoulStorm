@@ -147,7 +147,13 @@ enum Game_Screen_Modes {
      * Honestly, if I wanted to play with it more I could add some interactivity.
      */
     GAME_SCREEN_CREDITS   = 4,
-    GAME_SCREEN_COUNT     = 5
+    GAME_SCREEN_COUNT     = 5,
+
+/* #ifndef RELEASE */
+/*     GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_TITLE_SCREEN, */
+/* #else */
+    GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_OPENING,
+/* #endif */
 };
 
 #include "stages.h"
@@ -155,6 +161,7 @@ enum Game_Screen_Modes {
 
 #include "title_screen_mode.h"
 #include "main_menu_mode.h"
+#include "opening_mode.h"
 
 // I do like using state machines for this kind of thing
 // at least when you have to write code for animation.
@@ -479,8 +486,8 @@ struct Dialogue_State {
 };
 
 struct Game_State {
-    s32 screen_mode      = GAME_SCREEN_TITLE_SCREEN;
-    s32 last_screen_mode = GAME_SCREEN_TITLE_SCREEN;
+    s32 screen_mode      = GAME_SCREEN_DEFAULT_MODE;
+    s32 last_screen_mode = GAME_SCREEN_DEFAULT_MODE;
     s32 ui_state         = UI_STATE_INACTIVE;
     s32 last_ui_state    = UI_STATE_INACTIVE;
     s32 last_completion_state = -1;
@@ -490,6 +497,7 @@ struct Game_State {
     Gameplay_Data    gameplay_data;
     MainMenu_Data    mainmenu_data;
     TitleScreen_Data titlescreen_data;
+    OpeningMode_Data opening_data;
     Achievement_Menu_Data achievement_menu;
 
     Dialogue_State dialogue_state;

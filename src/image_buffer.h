@@ -12,6 +12,8 @@ struct image_buffer {
         u8* pixels;
         u32* pixels_u32;
     };
+
+    // TODO: add graphics_driver specific information.
 };
 
 #endif
