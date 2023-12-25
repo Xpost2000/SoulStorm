@@ -25,22 +25,47 @@ void Game::opening_data_initialize(Graphics_Driver* driver) {
     {
         auto& slide = state.slides[state.slide_count++];
         slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test2.png"));
-        slide.slide_caption = string_literal("Was a little boy");
+        slide.slide_caption = string_literal("Was a small, little boy.");
+    }
+    {
+        auto& slide = state.slides[state.slide_count++];
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test2.png"));
+        slide.slide_caption = string_literal("Alone with nothing but his thoughts.");
     }
     {
         auto& slide = state.slides[state.slide_count++];
         slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test3.png"));
-        slide.slide_caption = string_literal("Who loved playing with the stars");
+        slide.slide_caption = string_literal("He loved staring at the far-off stars");
     }
     {
         auto& slide = state.slides[state.slide_count++];
         slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test4.png"));
-        slide.slide_caption = string_literal("And his many pets that he adored");
+        slide.slide_caption = string_literal("Eventually he would find friends in the void");
     }
     {
         auto& slide = state.slides[state.slide_count++];
         slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test4.png"));
-        slide.slide_caption = string_literal("However, suddenly portals appeared taking his pets away");
+        slide.slide_caption = string_literal("He loved playing with his extrastellar friends");
+    }
+    {
+        auto& slide = state.slides[state.slide_count++];
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test4.png"));
+        slide.slide_caption = string_literal("However, one day mysterious portals appeared");
+    }
+    {
+        auto& slide = state.slides[state.slide_count++];
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test4.png"));
+        slide.slide_caption = string_literal("His animal friends, curious and naive");
+    }
+    {
+        auto& slide = state.slides[state.slide_count++];
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test2.png"));
+        slide.slide_caption = string_literal("Got absorbed into the portals");
+    }
+    {
+        auto& slide = state.slides[state.slide_count++];
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test2.png"));
+        slide.slide_caption = string_literal("And so the boy set on an adventure to rescue them.");
     }
     // Extra non-text slides are okay.
 }
@@ -48,7 +73,7 @@ void Game::opening_data_initialize(Graphics_Driver* driver) {
 void OpeningMode_Data::update_slide(OpeningMode_SlideData* slide, f32 dt) {
     switch (slide->display_phase) {
         case OPENING_MODE_SLIDE_DATA_PHASE_DISPLAY_DELAY: {
-            if (slide->timer >= 0.35f) {
+            if (slide->timer >= OPENING_MODE_SLIDE_DATA_PHASE_DISPLAY_DELAY) {
                 slide->display_phase = OPENING_MODE_SLIDE_DATA_PHASE_TYPE_TEXT;
                 slide->timer = 0.0f;
             } else {
@@ -69,7 +94,7 @@ void OpeningMode_Data::update_slide(OpeningMode_SlideData* slide, f32 dt) {
             }
         } break;
         case OPENING_MODE_SLIDE_DATA_PHASE_READ_DELAY: {
-            if (slide->timer >= 0.55f) {
+            if (slide->timer >= OPENING_MODE_DISPLAY_READ_DELAY_TIME) {
                 slide->display_phase = OPENING_MODE_SLIDE_DATA_PHASE_FADE_TEXT;
                 slide->timer = 0.0f;
             } else {
@@ -77,7 +102,7 @@ void OpeningMode_Data::update_slide(OpeningMode_SlideData* slide, f32 dt) {
             }
         } break;
         case OPENING_MODE_SLIDE_DATA_PHASE_FADE_TEXT: {
-            if (slide->timer >= 0.45f) {
+            if (slide->timer >= OPENING_MODE_DISPLAY_FADE_TEXT_TIME) {
                 slide->display_phase = OPENING_MODE_SLIDE_DATA_PHASE_FADE_DELAY;
                 slide->timer = 0.0f;
             } else {
@@ -85,7 +110,7 @@ void OpeningMode_Data::update_slide(OpeningMode_SlideData* slide, f32 dt) {
             }
         } break;
         case OPENING_MODE_SLIDE_DATA_PHASE_FADE_DELAY: {
-            if (slide->timer >= 0.15f) {
+            if (slide->timer >= OPENING_MODE_DISPLAY_FADE_DELAY_TIME) {
                 slide->display_phase = OPENING_MODE_SLIDE_DATA_PHASE_CROSSFADE;
                 slide->timer = 0.0f;
             } else {
@@ -93,7 +118,7 @@ void OpeningMode_Data::update_slide(OpeningMode_SlideData* slide, f32 dt) {
             }
         } break;
         case OPENING_MODE_SLIDE_DATA_PHASE_CROSSFADE: {
-            if (slide->timer >= 0.35f) {
+            if (slide->timer >= OPENING_MODE_DISPLAY_FADE_CROSSFADE_TIME) {
                 slide->display_phase = OPENING_MODE_SLIDE_DATA_PHASE_CROSSFADE;
                 slide->timer = 0.0f;
 
@@ -115,7 +140,7 @@ void Game::update_and_render_game_opening(struct render_commands* game_render_co
 
     OpeningMode_SlideData* first_slide = &state.slides[state.slide_index];
     OpeningMode_SlideData* next_slide  = &state.slides[state.slide_index+1];
-    if (state.slide_index >= state.slide_count) {
+    if (state.slide_index+1 >= state.slide_count) {
         next_slide = nullptr;
     }
 
@@ -147,12 +172,12 @@ void Game::update_and_render_game_opening(struct render_commands* game_render_co
             s32 shown_characters = first_slide->shown_characters;
 
             if (first_slide->display_phase == OPENING_MODE_SLIDE_DATA_PHASE_CROSSFADE) {
-                alpha = 1 - clamp<f32>(first_slide->timer/1.25f, 0.0f, 1.0f);
+                alpha = 1 - clamp<f32>(first_slide->timer/OPENING_MODE_DISPLAY_FADE_CROSSFADE_TIME, 0.0f, 1.0f);
             }
 
             if (first_slide->display_phase >= OPENING_MODE_SLIDE_DATA_PHASE_FADE_TEXT) {
                 if (first_slide->display_phase == OPENING_MODE_SLIDE_DATA_PHASE_FADE_TEXT) {
-                    text_alpha = 1 - clamp<f32>(first_slide->timer/1.0f, 0.0f, 1.0f);
+                    text_alpha = 1 - clamp<f32>(first_slide->timer/OPENING_MODE_DISPLAY_FADE_TEXT_TIME, 0.0f, 1.0f);
                 } else {
                     text_alpha = 0.0f;
                 }
@@ -172,18 +197,32 @@ void Game::update_and_render_game_opening(struct render_commands* game_render_co
 
             {
                 auto   font           = resources->get_font(MENU_FONT_COLOR_WHITE);
-                float  text_height    = font_cache_text_height(font) * 2;
+                f32 font_scale = 2;
+                float  text_height    = font_cache_text_height(font) * font_scale;
                 string displayed_text = string_slice(first_slide->slide_caption, 0, first_slide->shown_characters);
-                V2     text_xy        = V2(30, ui_render_commands->screen_height - text_height*1.25);
-                render_commands_push_text(
-                    ui_render_commands,
-                    font,
-                    2.0f,
-                    text_xy,
-                    displayed_text,
-                    color32f32(1, 1, 1, text_alpha),
-                    BLEND_MODE_ALPHA
-                );
+                f32    text_ascent   = text_height*3.5;
+                V2     text_xy        = V2(30, ui_render_commands->screen_height - text_ascent);
+
+                {
+                    // background for text to make it easier to read.
+                    render_commands_push_quad(
+                        ui_render_commands,
+                        rectangle_f32(0, ui_render_commands->screen_height - text_ascent-5, ui_render_commands->screen_width, text_height+5),
+                        color32u8(0,0,0, 96),
+                        BLEND_MODE_ALPHA
+                    );
+                }
+                {
+                    render_commands_push_text(
+                        ui_render_commands,
+                        font,
+                        font_scale,
+                        text_xy,
+                        displayed_text,
+                        color32f32(1, 1, 1, text_alpha),
+                        BLEND_MODE_ALPHA
+                    );
+                }
             }
         }
     }
@@ -194,7 +233,7 @@ void Game::update_and_render_game_opening(struct render_commands* game_render_co
             f32 alpha = clamp<f32>(state.fade_timer / OPENING_MODE_FADE_TIMER_MAX, 0.0f, 1.0f);
             render_commands_push_quad(
                 ui_render_commands,
-                RECTANGLE_F32_NULL,
+                rectangle_f32(0, 0, ui_render_commands->screen_width, ui_render_commands->screen_height),
                 color32u8(0,0,0, (1.0f - alpha) * 255),
                 BLEND_MODE_ALPHA
             );
@@ -210,15 +249,15 @@ void Game::update_and_render_game_opening(struct render_commands* game_render_co
             state.update_slide(first_slide, dt);
         } break;
         case OPENING_MODE_PHASE_FADE_OUT: {
-            f32 alpha = clamp<f32>(state.fade_timer / OPENING_MODE_FADE_TIMER_MAX, 0.0f, 1.0f);
+            f32 alpha = clamp<f32>(state.fade_timer / OPENING_MODE_FADE_TIMER_ENDING_MAX, 0.0f, 1.0f);
             render_commands_push_quad(
                 ui_render_commands,
-                RECTANGLE_F32_NULL,
+                rectangle_f32(0, 0, ui_render_commands->screen_width, ui_render_commands->screen_height),
                 color32u8(0,0,0, alpha * 255),
                 BLEND_MODE_ALPHA
             );
 
-            if (state.fade_timer >= (OPENING_MODE_FADE_TIMER_MAX+0.35)) {
+            if (state.fade_timer >= (OPENING_MODE_FADE_TIMER_ENDING_MAX+0.35)) {
                 state.phase = OPENING_MODE_PHASE_SLIDESHOW;
                 state.fade_timer = 0.0;
                 switch_screen(GAME_SCREEN_TITLE_SCREEN);
