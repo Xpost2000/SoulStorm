@@ -1201,10 +1201,20 @@ void Game::update_and_render_replay_save_menu(struct render_commands* commands, 
 
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
-    int action = -1;
+
+    enum {
+        REPLAY_SAVE_MENU_ACTION_PENDING               = -1,
+        REPLAY_SAVE_MENU_ACTION_SAVE_RECORDING        = 0,
+        REPLAY_SAVE_MENU_ACTION_DO_NOT_SAVE_RECORDING = 1,
+    };
+    int action = REPLAY_SAVE_MENU_ACTION_PENDING;
 
     if (state->gameplay_data.recording.in_playback) {
-        action = 3; // just skip the prompt and don't do anything.
+        if (state->last_completion_state != -1) {
+            // NOTE: last_completion_state will be set to negative one
+            // after the callbacks are setup below.
+            action = REPLAY_SAVE_MENU_ACTION_DO_NOT_SAVE_RECORDING; // just skip the prompt and don't do anything.
+        }
     } else {
         {
             f32 y = 50;
@@ -1213,23 +1223,23 @@ void Game::update_and_render_replay_save_menu(struct render_commands* commands, 
             y += 45;
             GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
             if (GameUI::button(V2(100, y), string_literal("Yes"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-                action = 0;
+                action = REPLAY_SAVE_MENU_ACTION_SAVE_RECORDING;
             }
             y += 30;
             if (GameUI::button(V2(100, y), string_literal("No"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-                action = 1;
+                action = REPLAY_SAVE_MENU_ACTION_DO_NOT_SAVE_RECORDING;
             }
         }
     }
 
-    if (action != -1) {
+    if (action != REPLAY_SAVE_MENU_ACTION_PENDING) {
         Transitions::do_shuteye_in(
             color32f32(0, 0, 0, 1),
             0.15f,
             0.3f
         );
 
-        if (action == 0) {
+        if (action == REPLAY_SAVE_MENU_ACTION_SAVE_RECORDING) {
             // save recording
             if (!state->gameplay_data.recording.in_playback) {
                 if (state->gameplay_data.recording.memory_arena) {
@@ -1265,6 +1275,7 @@ void Game::update_and_render_replay_save_menu(struct render_commands* commands, 
         } else {
             // no save
             _debugprintf("Do not save a replay.");
+            gameplay_recording_file_finish(&state->gameplay_data.recording);
         }
 
         Transitions::do_color_transition_in(
@@ -1273,11 +1284,12 @@ void Game::update_and_render_replay_save_menu(struct render_commands* commands, 
             0.5f
         );
 
+        save_game(); // redundantly save the game, so that it does not rely on the transition to actually save.
         switch (state->last_completion_state) {
             case GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE: {
                 Transitions::register_on_finish(
                     [&](void*) mutable {
-                        state->ui_state    = UI_STATE_INACTIVE;
+                        switch_ui(UI_STATE_INACTIVE);
                         switch_screen(GAME_SCREEN_MAIN_MENU);
                         _debugprintf("Hi main menu. We can do some more stuff like demonstrate if we unlocked a new stage!");
 
@@ -1294,16 +1306,13 @@ void Game::update_and_render_replay_save_menu(struct render_commands* commands, 
                             0.15f,
                             0.3f
                         );
-
-                        // Register save game on any level completion.
-                        save_game();
                     }
                 );
             } break;
             case GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL: {
                 Transitions::register_on_finish(
                     [&](void*) mutable {
-                        state->ui_state    = UI_STATE_INACTIVE;
+                        switch_ui(UI_STATE_INACTIVE);
                         _debugprintf("Hi, booting you to the next level.");
 
                         state->mainmenu_data.stage_id_level_in_stage_select += 1;
@@ -1313,16 +1322,13 @@ void Game::update_and_render_replay_save_menu(struct render_commands* commands, 
                             0.15f,
                             0.3f
                         );
-
-                        // Register save game on any level completion.
-                        save_game();
                     }
                 );
             } break;
             case GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY: {
                 Transitions::register_on_finish(
                     [&](void*) mutable {
-                        state->ui_state    = UI_STATE_STAGE_SELECT;
+                        switch_ui(UI_STATE_STAGE_SELECT);
                         switch_screen(GAME_SCREEN_MAIN_MENU);
 
                         Transitions::do_shuteye_out(
@@ -1330,9 +1336,6 @@ void Game::update_and_render_replay_save_menu(struct render_commands* commands, 
                             0.15f,
                             0.3f
                         );
-
-                        // Register save game on any level completion.
-                        save_game();
                     }
                 );
             } break;
@@ -1347,7 +1350,6 @@ void Game::update_and_render_replay_save_menu(struct render_commands* commands, 
                             0.15f,
                             0.3f
                         );
-                        save_game();
                     }
                 );
             } break;
@@ -3743,6 +3745,7 @@ void Game::switch_screen(s32 screen) {
         case GAME_SCREEN_TITLE_SCREEN: 
         case GAME_SCREEN_OPENING: 
         case GAME_SCREEN_MAIN_MENU: {
+            save_game(); // save game on every main menu invocation
             cleanup_game_simulation();
         } break;
         case GAME_SCREEN_INGAME: {
