@@ -1521,7 +1521,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
     GameUI::update(dt);
 
     if (cancel) {
-        switch_ui(state->last_ui_state);
+        switch_ui(UI_STATE_INACTIVE);
 
         if (!camera_already_interpolating_for(&state->mainmenu_data.main_camera, V2(commands->screen_width/2, commands->screen_height/2), 1.0)) {
             camera_set_point_to_interpolate(
@@ -1574,7 +1574,21 @@ void Game::update_and_render_stage_pet_select_menu(struct render_commands* comma
             GameUI::label(V2(50, y), pet_data->description, color32f32(1, 1, 1, 1), 2);
             y += 45;
 
+
             y += 150;
+
+            {
+                f32 y_data_show = y;
+                GameUI::label(V2(commands->screen_width - 300, y_data_show),
+                              string_from_cstring(format_temp("Max Lives: %d", pet_data->maximum_lives)), color32f32(1, 1, 1, 1), 2);
+                y_data_show += 22;
+                GameUI::label(V2(commands->screen_width - 300, y_data_show),
+                              string_from_cstring(format_temp("Score Modifier: %.2f", pet_data->score_modifier)), color32f32(1, 1, 1, 1), 2);
+                y_data_show += 22;
+                GameUI::label(V2(commands->screen_width - 300, y_data_show),
+                              string_from_cstring(format_temp("Speed Modifier: %.2f", pet_data->speed_modifier)), color32f32(1, 1, 1, 1), 2);
+            }
+
             if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 load_game = true;
                 gameplay_data.selected_pet = pet_id_list[state->mainmenu_data.stage_pet_selection];
