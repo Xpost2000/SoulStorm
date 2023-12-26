@@ -447,7 +447,9 @@ namespace Input {
     bool is_key_down_with_repeat(s32 keyid);
     bool is_key_pressed(s32 keyid);
     bool any_key_down(void);
+    bool any_key_pressed(void);
     bool controller_any_button_down(struct game_controller* controller);
+    bool controller_any_button_pressed(struct game_controller* controller);
 
     void get_mouse_location(s32* mx, s32* my);
     void get_mouse_buttons(bool* left, bool* middle, bool* right);

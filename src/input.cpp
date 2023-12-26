@@ -289,7 +289,30 @@ namespace Input {
 
     bool any_key_down(void) {
         for (unsigned index = 0; index < array_count(global_input.current_state.keys); ++index) {
+            if (global_input.current_state.keys[index]) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool any_key_pressed(void) {
+        for (unsigned index = 0; index < array_count(global_input.current_state.keys); ++index) {
             if (!global_input.last_state.keys[index] && global_input.current_state.keys[index]) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool controller_any_button_pressed(struct game_controller* controller) {
+        if (!controller)
+            return false;
+
+        for (unsigned index = 0; index < array_count(controller->buttons); ++index) {
+            if (!controller->last_buttons[index] && controller->buttons[index]) {
                 return true;
             }
         }
@@ -302,7 +325,7 @@ namespace Input {
             return false;
 
         for (unsigned index = 0; index < array_count(controller->buttons); ++index) {
-            if (!controller->last_buttons[index] && controller->buttons[index]) {
+            if (controller->buttons[index]) {
                 return true;
             }
         }
