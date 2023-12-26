@@ -20,6 +20,47 @@
 
 struct MainMenu_Data;
 
+/*
+  NOTE: all pets will basically do the same thing on the
+  main menu, since they're solely designed to be "flavor" objects.
+
+  Unfortunately the reality of programming games or anything means that even
+  "small" things take probably more code than anyone would like to ever admit.
+*/
+enum MainMenu_Pet_Action_Type {
+    /* Three Idle Animations at most */
+    MAIN_MENU_PET_ACTION_IDLE       = 0,
+    MAIN_MENU_PET_ACTION_IDLE1      = 1,
+    MAIN_MENU_PET_ACTION_IDLE2      = 2,
+
+    MAIN_MENU_PET_ACTION_MOVING     = 3,
+    MAIN_MENU_PET_ACTION_MAKE_NOISE = 4,
+
+    // Petting the animals will override all other actions.
+    // also they should make a sound.
+    // NOTE: I'm going to currently crash on these.
+    MAIN_MENU_PET_ACTION_APPRECIATE_INTERACTION = 5,
+};
+
+#define MAIN_MENU_PET_INTERACTION_RADIUS_PX (64)
+struct MainMenu_Pet {
+    s8 type; /* Refer to Game_State_Pet_Type in game_state.h */
+    u8 current_action;
+
+    f32 action_timer;
+    f32 velocity_speed;
+
+    V2 position; // spawn randomly in the main menu
+    V2 current_direction;
+    V2 sprite_scale = V2(1, 1);
+
+    void draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources);
+    void update(MainMenu_Data* state, f32 dt);
+
+    // All pets will have a fixed rectangle size since we don't really need collision detection...
+    rectangle_f32 get_rect();
+};
+
 struct MainMenu_Player {
     bool visible = false;
     V2 position;

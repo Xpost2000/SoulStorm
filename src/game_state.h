@@ -159,6 +159,14 @@ enum Game_Screen_Modes {
 #include "stages.h"
 #include "stage.h"
 
+enum Game_State_Pet_Type {
+    GAME_PET_ID_NONE  = -1,
+    GAME_PET_ID_CAT   = 0,
+    GAME_PET_ID_DOG   = 1,
+    GAME_PET_ID_FISH  = 2,
+    GAME_PET_ID_COUNT = 3,
+};
+
 #include "title_screen_mode.h"
 #include "main_menu_mode.h"
 #include "opening_mode.h"
@@ -281,6 +289,15 @@ struct Scriptable_Render_Object {
 
 #include "demo_recording.h"
 
+struct Gameplay_Data_Pet_Information {
+    string name;
+    string description;
+    s8     difficulty_modifier;
+    s8     maximum_lives;
+    s8     attack_pattern_id;
+    f32    score_modifier;
+};
+
 struct Gameplay_Data {
     bool stage_completed;
     Stage_State stage_state;
@@ -334,6 +351,7 @@ struct Gameplay_Data {
     Gameplay_Stage_Introduction_Sequence   intro;
     Gameplay_Stage_Complete_Stage_Sequence complete_stage;
 
+    s32 selected_pet;
     s32 tries = MAX_BASE_TRIES;
     s32 current_score = 0;
     f32 current_stage_timer = 0;
