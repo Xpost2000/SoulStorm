@@ -45,7 +45,7 @@ enum MainMenu_Pet_Action_Type {
 #define MAIN_MENU_PET_INTERACTION_RADIUS_PX (64)
 struct MainMenu_Pet {
     s8 type; /* Refer to Game_State_Pet_Type in game_state.h */
-    u8 current_action;
+    u8 current_action = MAIN_MENU_PET_ACTION_IDLE;
 
     f32 action_timer;
     f32 velocity_speed;
@@ -56,9 +56,10 @@ struct MainMenu_Pet {
 
     void draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources);
     void update(MainMenu_Data* state, f32 dt);
+    void decide_new_action(random_state* prng);
 
     // All pets will have a fixed rectangle size since we don't really need collision detection...
-    rectangle_f32 get_rect();
+    rectangle_f32 get_rect(void);
 };
 
 struct MainMenu_Player {
@@ -127,6 +128,7 @@ struct MainMenu_Data {
 
     struct camera   main_camera;
     MainMenu_Player player;
+    MainMenu_Pet    pets[3];
 
     random_state prng;
 

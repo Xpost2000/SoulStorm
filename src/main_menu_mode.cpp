@@ -205,6 +205,7 @@ rectangle_f32 MainMenu_Stage_Portal::get_rect() {
     );
 }
 
+// MainMenu_Player
 rectangle_f32 MainMenu_Player::get_rect() {
     return rectangle_f32(
         position.x - scale.x,
@@ -246,6 +247,27 @@ void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
 
     position += velocity * dt;
 }
+
+// MainMenu_Player End
+
+// MainMenu_Pet
+void MainMenu_Pet::draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources) {
+    
+}
+
+void MainMenu_Pet::update(MainMenu_Data* state, f32 dt) {
+    
+}
+
+void MainMenu_Pet::decide_new_action(random_state* prng) {
+    
+}
+
+rectangle_f32 MainMenu_Pet::get_rect(void) {
+    
+}
+
+// MainMenu_Pet End
 
 void MainMenu_Data::start_completed_maingame_cutscene(Game_State* game_state) {
     if (!cutscene1.triggered) {
@@ -481,6 +503,18 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                                          random_ranged_float(&prng, -480, 480));
             }
         }
+
+        // initialize pets
+        {
+            // regardless of whether they've been "spawned/visible" I'll seed all of their initial actions
+            auto prng = &this->state->mainmenu_data.prng;
+            for (int i = 0; i < array_count(state->pets); ++i) {
+                state->pets[i].type = i;
+                state->pets[i].decide_new_action(prng);
+                state->pets[i].position = V2(random_ranged_float(prng, 130.0f, 360.0f),
+                                             random_ranged_float(prng, 130.0f, 360.0f));
+            }
+        }
     }
 }
 
@@ -573,6 +607,10 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
 
     if (state->ui_state == UI_STATE_INACTIVE && !main_menu_state.cutscene_active()) {
         main_menu_state.player.update(&main_menu_state, dt);
+
+        for (int i = 0; i < this->state->gameplay_data.unlocked_pets; ++i) {
+            main_menu_state.pets[i].update(&main_menu_state, dt);
+        }
     }
 
     for (int i = 0; i < main_menu_state.portals.size; ++i) {
@@ -590,6 +628,11 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
     }
 
     main_menu_state.particle_pool.draw(game_render_commands, resources);
+
+    for (int i = 0; i < this->state->gameplay_data.unlocked_pets; ++i) {
+        main_menu_state.pets[i].draw(&main_menu_state, game_render_commands, resources);
+    }
+
     main_menu_state.player.draw(&main_menu_state, game_render_commands, resources);
     handle_ui_update_and_render(ui_render_commands, dt);
 
