@@ -251,20 +251,133 @@ void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
 // MainMenu_Player End
 
 // MainMenu_Pet
+// Appreciate interaction cannot be randomly decided.
+local f32 pet_weight_actions_by_type[GAME_PET_ID_COUNT][5] = {
+    // cat
+    { // Should be lazier and move less.
+        0.2,
+        0.1,
+        0.2,
+        0.3,
+        0.2
+    },
+    // dog
+    {
+        0.1,
+        0.1,
+        0.1,
+        0.5,
+        0.2
+    },  
+    // fish
+    {
+        0.3,
+        0.1,
+        0.2,
+        0.2,
+        0.2
+    }   
+};
+
+// Everything is assumed to be +/- 0.10 seconds
+local f32 pet_action_lengths[GAME_PET_ID_COUNT][5] = {
+    // cat
+    {
+        5,
+        5,
+        5,
+        2.0f,
+        0.10f
+    },
+    // dog
+    {
+        3,
+        3,
+        3,
+        2.0f,
+        0.10f
+    },
+    // fish
+    {
+        1.5,
+        1.7,
+        1.5,
+        4.5f,
+        0.15f,
+    }
+};
+
+local f32 pet_velocities[GAME_PET_ID_COUNT] = {
+    100,
+    120,
+    50
+};
+
 void MainMenu_Pet::draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources) {
-    
+    // pets are always visible.
+    auto r = get_rect();
+
+    // black rectangles for default
+    render_commands_push_quad_ext(
+        commands,
+        rectangle_f32(r.x, r.y, r.w, r.h),
+        color32u8(255, 0, 0, 255),
+        V2(0, 0), 0,
+        BLEND_MODE_ALPHA);
 }
 
 void MainMenu_Pet::update(MainMenu_Data* state, f32 dt) {
-    
+    switch (current_action) {
+        case MAIN_MENU_PET_ACTION_IDLE: {
+            // nothing.
+        } break;
+        case MAIN_MENU_PET_ACTION_IDLE1: {
+            // nothing.
+        } break;
+        case MAIN_MENU_PET_ACTION_IDLE2: {
+            // nothing.
+        } break;
+        case MAIN_MENU_PET_ACTION_MOVING: {
+            position += current_direction * pet_velocities[type] * dt;
+        } break;
+        case MAIN_MENU_PET_ACTION_MAKE_NOISE: {
+            if (action_timer <= 0.0f) {
+                _debugprintf("woof.");
+            }
+        } break;
+        case MAIN_MENU_PET_ACTION_APPRECIATE_INTERACTION: {
+            // smile :)
+            // spawn a heart or something.
+            // otherwise nothing.
+        } break;
+    }
+
+    if (action_timer <= 0.0f) {
+        decide_new_action(&state->prng);
+    } else {
+        action_timer -= dt;
+    }
 }
 
 void MainMenu_Pet::decide_new_action(random_state* prng) {
-    
+    current_action = random_weighted_selection(
+        prng,
+        pet_weight_actions_by_type[type],
+        5
+    );
+
+    action_timer = pet_action_lengths[type][current_action] + random_ranged_float(prng, -0.1, 0.1);
+
+    current_direction = V2_direction_from_degree(random_ranged_float(prng, -360.0f, 360.0f));
 }
 
 rectangle_f32 MainMenu_Pet::get_rect(void) {
-    
+    return rectangle_f32(
+        position.x - 16,
+        position.y - 16,
+        32,
+        32
+    );
 }
 
 // MainMenu_Pet End
@@ -605,8 +718,10 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
         }
     }
 
-    if (state->ui_state == UI_STATE_INACTIVE && !main_menu_state.cutscene_active()) {
-        main_menu_state.player.update(&main_menu_state, dt);
+    if (state->ui_state == UI_STATE_INACTIVE) {
+        if (!main_menu_state.cutscene_active()) {
+            main_menu_state.player.update(&main_menu_state, dt);
+        }
 
         for (int i = 0; i < this->state->gameplay_data.unlocked_pets; ++i) {
             main_menu_state.pets[i].update(&main_menu_state, dt);
@@ -640,10 +755,20 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
     {
         s32 screen_width = game_render_commands->screen_width;
         s32 screen_height = game_render_commands->screen_height;
+
         if ((main_menu_state.player.position.x) < 0)                 main_menu_state.player.position.x = screen_width;
         if ((main_menu_state.player.position.x) > screen_width) main_menu_state.player.position.x = 0;
         if ((main_menu_state.player.position.y) < 0)                 main_menu_state.player.position.y = screen_height;
         if ((main_menu_state.player.position.y) > screen_height) main_menu_state.player.position.y = 0;
+
+        // wrap all pets to edges as well
+        for (int i = 0; i < this->state->gameplay_data.unlocked_pets; ++i) {
+            auto& pet = main_menu_state.pets[i];
+            if ((pet.position.x) < 0)            pet.position.x = screen_width;
+            if ((pet.position.x) > screen_width) pet.position.x = 0;
+            if ((pet.position.y) < 0)            pet.position.y = screen_height;
+            if ((pet.position.y) > screen_height)pet.position.y = 0;
+        }
     }
 
     // do a fancy camera zoom in effect

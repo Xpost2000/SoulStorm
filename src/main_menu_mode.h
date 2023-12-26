@@ -48,7 +48,6 @@ struct MainMenu_Pet {
     u8 current_action = MAIN_MENU_PET_ACTION_IDLE;
 
     f32 action_timer;
-    f32 velocity_speed;
 
     V2 position; // spawn randomly in the main menu
     V2 current_direction;
