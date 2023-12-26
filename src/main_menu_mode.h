@@ -35,11 +35,13 @@ enum MainMenu_Pet_Action_Type {
 
     MAIN_MENU_PET_ACTION_MOVING     = 3,
     MAIN_MENU_PET_ACTION_MAKE_NOISE = 4,
+    MAIN_MENU_PET_ACTION_POOP       = 5,
+    MAIN_MENU_PET_MAIN_ACTIONS      = 6,
 
     // Petting the animals will override all other actions.
     // also they should make a sound.
     // NOTE: I'm going to currently crash on these.
-    MAIN_MENU_PET_ACTION_APPRECIATE_INTERACTION = 5,
+    MAIN_MENU_PET_ACTION_APPRECIATE_INTERACTION = 7,
 };
 
 #define MAIN_MENU_PET_INTERACTION_RADIUS_PX (64)
@@ -112,6 +114,22 @@ struct MainMenu_ScreenMessage {
     string text;
 };
 
+#define MAIN_MENU_POOP_LIFETIME (5.0f)
+
+// This is just cause I think it would be more visually interesting to have
+// on the main menu.
+// All of the pets can poop. Some of the pets should have a more special action
+// depending on what they are.
+// Like you can throw a ball and the dog will try and catch it or whatever.
+struct MainMenu_Clutter_Poop {
+    V2  position;
+    f32 lifetime = MAIN_MENU_POOP_LIFETIME;
+    bool dead = false;
+
+    void update(f32 dt);
+    void draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources);
+};
+
 struct MainMenu_Data {
     Particle_Pool particle_pool;
 
@@ -119,6 +137,7 @@ struct MainMenu_Data {
     MainMenu_Introduction_Cutscene_Data       cutscene2;
 
     Fixed_Array<MainMenu_ScreenMessage> screen_messages;
+    Fixed_Array<MainMenu_Clutter_Poop>  clutter_poops;
     // For the background allowing you to read the messages.
     f32                                 screen_message_fade_t;
     
@@ -140,6 +159,9 @@ struct MainMenu_Data {
     // runtime data
     // for the camera focus
     MainMenu_Stage_Portal* last_focus_portal = nullptr;
+
+    void spawn_poop(V2 where);
+    void cleanup_all_dead_poops(void);
 
     void start_completed_maingame_cutscene(Game_State* game_state);
     void start_introduction_cutscene(Game_State* game_state, bool fasttrack);

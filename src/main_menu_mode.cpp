@@ -252,14 +252,15 @@ void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
 
 // MainMenu_Pet
 // Appreciate interaction cannot be randomly decided.
-local f32 pet_weight_actions_by_type[GAME_PET_ID_COUNT][5] = {
+local f32 pet_weight_actions_by_type[GAME_PET_ID_COUNT][MAIN_MENU_PET_MAIN_ACTIONS] = {
     // cat
     { // Should be lazier and move less.
         0.2,
         0.1,
         0.2,
         0.3,
-        0.2
+        0.2,
+        0.07
     },
     // dog
     {
@@ -267,7 +268,8 @@ local f32 pet_weight_actions_by_type[GAME_PET_ID_COUNT][5] = {
         0.1,
         0.1,
         0.5,
-        0.2
+        0.2,
+        0.07
     },  
     // fish
     {
@@ -275,19 +277,21 @@ local f32 pet_weight_actions_by_type[GAME_PET_ID_COUNT][5] = {
         0.1,
         0.2,
         0.2,
-        0.2
+        0.2,
+        0.07
     }   
 };
 
 // Everything is assumed to be +/- 0.10 seconds
-local f32 pet_action_lengths[GAME_PET_ID_COUNT][5] = {
+local f32 pet_action_lengths[GAME_PET_ID_COUNT][MAIN_MENU_PET_MAIN_ACTIONS] = {
     // cat
     {
         5,
         5,
         5,
         2.0f,
-        0.10f
+        0.10f,
+        0.10f,
     },
     // dog
     {
@@ -295,7 +299,8 @@ local f32 pet_action_lengths[GAME_PET_ID_COUNT][5] = {
         3,
         3,
         2.0f,
-        0.10f
+        0.10f,
+        0.10f,
     },
     // fish
     {
@@ -304,6 +309,7 @@ local f32 pet_action_lengths[GAME_PET_ID_COUNT][5] = {
         1.5,
         4.5f,
         0.15f,
+        0.10f,
     }
 };
 
@@ -345,6 +351,12 @@ void MainMenu_Pet::update(MainMenu_Data* state, f32 dt) {
                 _debugprintf("woof.");
             }
         } break;
+        case MAIN_MENU_PET_ACTION_POOP: {
+            if (action_timer <= 0.0f) {
+                _debugprintf("dumpy.");
+                state->spawn_poop(position);
+            }
+        } break;
         case MAIN_MENU_PET_ACTION_APPRECIATE_INTERACTION: {
             // smile :)
             // spawn a heart or something.
@@ -363,7 +375,7 @@ void MainMenu_Pet::decide_new_action(random_state* prng) {
     current_action = random_weighted_selection(
         prng,
         pet_weight_actions_by_type[type],
-        5
+        MAIN_MENU_PET_MAIN_ACTIONS
     );
 
     action_timer = pet_action_lengths[type][current_action] + random_ranged_float(prng, -0.1, 0.1);
@@ -381,6 +393,49 @@ rectangle_f32 MainMenu_Pet::get_rect(void) {
 }
 
 // MainMenu_Pet End
+
+// MainMenu_Clutter_Poop
+void MainMenu_Clutter_Poop::update(f32 dt) {
+    if (lifetime <= 0.0f) {
+        dead = true;
+    } else {
+        lifetime -= dt;
+    }
+}
+
+void MainMenu_Clutter_Poop::draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources) {
+    if (dead) return;
+
+    auto r = rectangle_f32(
+        position.x - 8,
+        position.y - 8,
+        16,
+        16
+    );
+
+    render_commands_push_quad_ext(
+        commands,
+        rectangle_f32(r.x, r.y, r.w, r.h),
+        color32u8(0, 0, 255, 255),
+        V2(0, 0), 0,
+        BLEND_MODE_ALPHA
+    );
+}
+// MainMenu_Clutter_Poop end
+
+void MainMenu_Data::spawn_poop(V2 where) {
+    MainMenu_Clutter_Poop poop;
+    poop.position = where;
+    clutter_poops.push(poop);
+}
+
+void MainMenu_Data::cleanup_all_dead_poops(void) {
+    for (int i = 0; i < clutter_poops.size; ++i) {
+        if (clutter_poops[i].dead) {
+            clutter_poops.pop_and_swap(i);
+        }
+    }
+}
 
 void MainMenu_Data::start_completed_maingame_cutscene(Game_State* game_state) {
     if (!cutscene1.triggered) {
@@ -438,6 +493,7 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
         state->main_camera.rng       = &state->prng;
 
         state->screen_messages = Fixed_Array<MainMenu_ScreenMessage>(arena, 32);
+        state->clutter_poops   = Fixed_Array<MainMenu_Clutter_Poop>(arena, 64);
         state->portals = Fixed_Array<MainMenu_Stage_Portal>(arena, 4);
         {
             // initialize all portals here for the main menu
@@ -726,7 +782,13 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
         for (int i = 0; i < this->state->gameplay_data.unlocked_pets; ++i) {
             main_menu_state.pets[i].update(&main_menu_state, dt);
         }
+
+        for (int i = 0; i < main_menu_state.clutter_poops.size; ++i) {
+            main_menu_state.clutter_poops[i].update(dt);
+        }
     }
+
+    main_menu_state.cleanup_all_dead_poops();
 
     for (int i = 0; i < main_menu_state.portals.size; ++i) {
         auto& p = main_menu_state.portals[i];
@@ -746,6 +808,10 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
 
     for (int i = 0; i < this->state->gameplay_data.unlocked_pets; ++i) {
         main_menu_state.pets[i].draw(&main_menu_state, game_render_commands, resources);
+    }
+
+    for (int i = 0; i < main_menu_state.clutter_poops.size; ++i) {
+        main_menu_state.clutter_poops[i].draw(&main_menu_state, game_render_commands, resources);
     }
 
     main_menu_state.player.draw(&main_menu_state, game_render_commands, resources);
