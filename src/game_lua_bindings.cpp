@@ -649,6 +649,13 @@ int _lua_bind_dialogue_speaker_animation_focus_in(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_game_difficulty_binding(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto pet_data = game_get_pet_data(state->gameplay_data.selected_pet);
+    lua_pushinteger(L, pet_data->difficulty_modifier);
+    return 1;
+}
+
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     /*
@@ -777,7 +784,7 @@ lua_State* Game_State::alloc_lua_bindings() {
         lua_register(L, "kill_all_enemies", _lua_bind_kill_all_enemies);
 #endif
     }
-
+    {lua_register(L, "get_difficulty_modifier", _lua_bind_game_difficulty_binding);}
     {bind_v2_lualib(L); }
     {bind_entity_lualib(L); }
     {

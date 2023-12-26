@@ -233,6 +233,10 @@ function clamp(x, a, b)
    return x;
 end
 
+-- Some enemy prototypes here
+-- NOTE: Please... avoid touching these because editting them a lot might
+-- significantly break older levels...
+
 --
 -- Linearly Moves to a position
 -- and fires a basic burst. Allows extra bursts which
@@ -318,6 +322,20 @@ function Make_Enemy_Burst360_1_1_2(
    );
 
    return e;
+end
+
+-- Basic selector function for difficulty settings
+function difficulty(a, b, c, d)
+   local modifier = get_difficulty_modifier();
+   if modifier == 0 then
+      return a;
+   elseif modifier == 1 then
+      return b;
+   elseif modifier == 2 then
+      return c;
+   elseif modifier == 3 then
+      return d;
+   end
 end
 
 --
