@@ -602,6 +602,7 @@ f32 Player::get_grazing_score_modifier(s32 amount) {
 void Player::update(Game_State* state, f32 dt) {
     const auto& play_area    = state->gameplay_data.play_area;
     const auto& input_packet = state->gameplay_data.current_input_packet;
+    auto pet_data            = game_get_pet_data(state->gameplay_data.selected_pet);
     // unfortunately the action mapper system doesn't exist
     // here like it did in the last project, so I'll have to use key inputs
     // and gamepad power.
@@ -612,7 +613,7 @@ void Player::update(Game_State* state, f32 dt) {
     under_focus = focusing;
 
     V2 axes = gameplay_frame_input_packet_quantify_axes(input_packet);
-    float UNIT_SPEED = (under_focus) ? 225 : 325;
+    float UNIT_SPEED = ((under_focus) ? 225 : 325) * pet_data->speed_modifier;
 
     velocity.x = axes[0] * UNIT_SPEED;
     velocity.y = axes[1] * UNIT_SPEED;
@@ -621,41 +622,46 @@ void Player::update(Game_State* state, f32 dt) {
 
     handle_play_area_edge_behavior(play_area);
 
-    firing_cooldown = (under_focus) ? (DEFAULT_FIRING_COOLDOWN/2) : DEFAULT_FIRING_COOLDOWN;
+    switch (pet_data->attack_pattern_id) {
+        // for now I'll only use one attack pattern, if I want more... I'll
+        // think about it.
+        default: {
+            firing_cooldown = (under_focus) ? (DEFAULT_FIRING_COOLDOWN/2) : DEFAULT_FIRING_COOLDOWN;
 
-    if (firing) {
-        // okay these are normal real bullets
-        if (attack()) {
-            auto resources = state->resources;
+            if (firing) {
+                // okay these are normal real bullets
+                if (attack()) {
+                    auto resources = state->resources;
 
-            state->set_led_target_color_anim(
-                color32u8(255, 0, 0, 255),
-                DEFAULT_FIRING_COOLDOWN/4,
-                false,
-                true
-            );
-            Audio::play(
-                resources->random_attack_sound(
-                    &state->gameplay_data.prng
-                )
-            );
+                    state->set_led_target_color_anim(
+                        color32u8(255, 0, 0, 255),
+                        DEFAULT_FIRING_COOLDOWN/4,
+                        false,
+                        true
+                    );
+                    Audio::play(
+                        resources->random_attack_sound(
+                            &state->gameplay_data.prng
+                        )
+                    );
 
-            controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
-            if (under_focus) {
-                spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 1000.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_DISK);
+                    controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
+                    if (under_focus) {
+                        spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 1000.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_DISK);
+                    } else {
+                        // spawn_bullet_line_pattern1(state, position, 1, 20.0f, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
+                        spawn_bullet_arc_pattern1(state, position, 3, 45, V2(5, 5), V2(0, -1), 650.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_ELECTRIC);
+                    }
+                } else {
+                }
             } else {
-                // spawn_bullet_line_pattern1(state, position, 1, 20.0f, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
-                
-                spawn_bullet_arc_pattern1(state, position, 3, 45, V2(5, 5), V2(0, -1), 650.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_ELECTRIC);
+                stop_attack();
             }
-        } else {
-        }
-    } else {
-        stop_attack();
+
+        } break;
     }
 
     if (use_bomb) {
-        _debugprintf("Use bomb!");
         state->gameplay_data.queue_bomb_use = true;
     }
 }

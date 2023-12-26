@@ -289,13 +289,22 @@ struct Scriptable_Render_Object {
 
 #include "demo_recording.h"
 
+enum Difficulty_Modifier_ID {
+    DIFFICULTY_NORMAL  = 0,
+    DIFFICULTY_EASY    = 1,
+    DIFFICULTY_HARD    = 2,
+    DIFFICULTY_HARDEST = 3,
+};
 struct Gameplay_Data_Pet_Information {
     string name;
     string description;
-    s8     difficulty_modifier;
+    s8     difficulty_modifier; // NOTE: does not inherently do anything. Only used in level scripts.
     s8     maximum_lives;
-    s8     attack_pattern_id;
+    s8     attack_pattern_id; // this will be checked in the player code for things.
     f32    score_modifier;
+    // Not really sure how much I want this
+    // but I'll have it here anyway.
+    f32    speed_modifier;
 };
 
 struct Gameplay_Data {
@@ -351,7 +360,8 @@ struct Gameplay_Data {
     Gameplay_Stage_Introduction_Sequence   intro;
     Gameplay_Stage_Complete_Stage_Sequence complete_stage;
 
-    s32 selected_pet;
+    s32 selected_pet = GAME_PET_ID_NONE;
+    s32 unlocked_pets = 0;
     s32 tries = MAX_BASE_TRIES;
     s32 current_score = 0;
     f32 current_stage_timer = 0;
@@ -591,5 +601,7 @@ struct Game_Resources {
         return font;
     }
 };
+
+Gameplay_Data_Pet_Information* game_get_pet_data(s32 id);
 
 #endif

@@ -33,6 +33,22 @@ local Stage stage_list[] = {
     #include "stage_list.h"
 };
 
+// mainly for difficulty information
+local Gameplay_Data_Pet_Information pets_data[] = {
+    #include "pets_data.h"
+};
+
+Gameplay_Data_Pet_Information* game_get_pet_data(s32 id) {
+    switch (id) {
+        case GAME_PET_ID_NONE:
+            return &pets_data[0];
+        default:
+            return &pets_data[id+1];
+    }
+
+    return nullptr;
+}
+
 // Should not change in the future.
 enum Achievement_ID_List {
     ACHIEVEMENT_ID_STAGE1,
@@ -279,6 +295,11 @@ void Game::reset_stage_simulation_state() {
     auto state = &this->state->gameplay_data;
     s32 stage_id = this->state->mainmenu_data.stage_id_level_select;
     s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
+    // s32 pet_id   = this->state->
+
+
+    // NOTE: need to save this to the savefile data.
+    s32 pet_id   = state->selected_pet;
 
     // TODO: recording playbacks should not count as attempts or completions!
     // or high scores or anything!
@@ -341,7 +362,11 @@ void Game::reset_stage_simulation_state() {
     state->to_create_enemies.zero();
     state->to_create_pickups.zero();
 
-    state->tries = MAX_BASE_TRIES;
+    {
+        auto pet_data = game_get_pet_data(pet_id);
+        state->tries = pet_data->maximum_lives;
+    }
+
     state->current_score = 0;
     state->paused_from_death = false;
     state->current_stage_timer = 0.0f;
@@ -779,7 +804,8 @@ bool Gameplay_Data::any_living_danger() const {
 }
 
 void Gameplay_Data::notify_score(s32 amount, bool interesting) {
-    current_score += amount;
+    auto pet_data = game_get_pet_data(selected_pet);
+    current_score += amount * pet_data->score_modifier;
 
     if (!interesting)
         return;
