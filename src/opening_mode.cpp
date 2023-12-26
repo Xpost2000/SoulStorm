@@ -120,12 +120,12 @@ void OpeningMode_Data::update_slide(OpeningMode_SlideData* slide, f32 dt) {
         case OPENING_MODE_SLIDE_DATA_PHASE_CROSSFADE: {
             if (slide->timer >= OPENING_MODE_DISPLAY_FADE_CROSSFADE_TIME) {
                 slide->display_phase = OPENING_MODE_SLIDE_DATA_PHASE_CROSSFADE;
-                slide->timer = 0.0f;
 
                 if (slide_index+1 >= slide_count) {
                     fade_timer = 0.0f;
                     phase = OPENING_MODE_PHASE_FADE_OUT;
                 } else {
+                    slide->timer = 0.0f;
                     slide_index += 1;
                 }
             } else {
@@ -169,10 +169,16 @@ void Game::update_and_render_game_opening(struct render_commands* game_render_co
         {
             f32 alpha = 1.0f;
             f32 text_alpha = 1.0f;
+            f32 box_alpha  = 1.0f;
             s32 shown_characters = first_slide->shown_characters;
 
             if (first_slide->display_phase == OPENING_MODE_SLIDE_DATA_PHASE_CROSSFADE) {
-                alpha = 1 - clamp<f32>(first_slide->timer/OPENING_MODE_DISPLAY_FADE_CROSSFADE_TIME, 0.0f, 1.0f);
+                f32 target_alpha = 1 - clamp<f32>(first_slide->timer/OPENING_MODE_DISPLAY_FADE_CROSSFADE_TIME, 0.0f, 1.0f);
+                if (next_slide) {
+                    alpha = target_alpha;
+                } else {
+                    box_alpha = target_alpha;
+                }
             }
 
             if (first_slide->display_phase >= OPENING_MODE_SLIDE_DATA_PHASE_FADE_TEXT) {
@@ -198,6 +204,11 @@ void Game::update_and_render_game_opening(struct render_commands* game_render_co
             {
                 auto   font           = resources->get_font(MENU_FONT_COLOR_WHITE);
                 f32 font_scale = 2;
+
+                if (!is_4_by_3_resolution(ui_render_commands->screen_width, ui_render_commands->screen_height)) {
+                    font_scale = 3.0f;
+                }
+
                 float  text_height    = font_cache_text_height(font) * font_scale;
                 string displayed_text = string_slice(first_slide->slide_caption, 0, first_slide->shown_characters);
                 f32    text_ascent   = text_height*3.5;
@@ -207,8 +218,8 @@ void Game::update_and_render_game_opening(struct render_commands* game_render_co
                     // background for text to make it easier to read.
                     render_commands_push_quad(
                         ui_render_commands,
-                        rectangle_f32(0, ui_render_commands->screen_height - text_ascent-5, ui_render_commands->screen_width, text_height+5),
-                        color32u8(0,0,0, 96),
+                        rectangle_f32(0, ui_render_commands->screen_height - text_ascent-10, ui_render_commands->screen_width, text_height+10),
+                        color32u8(0,0,0, 96 * box_alpha),
                         BLEND_MODE_ALPHA
                     );
                 }

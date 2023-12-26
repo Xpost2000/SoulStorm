@@ -570,6 +570,25 @@ Calendar_Time current_calendar_time(void);
 
 void OS_create_directory(string location);
 
+inline local float safe_ratio(int x, int y) {
+    if (y == 0) return 0.0f;
+    return (f32)x / (f32)y;
+}
+
+inline local bool is_16_by_10_resolution(int x, int y) {
+    local const float ratio = 16.0f/10.0f;
+    return f32_close_enough(safe_ratio(x, y), ratio, 0.01f);
+}
+
+inline local bool is_16_by_9_resolution(int x, int y) {
+    local const float ratio = 16.0f/9.0f;
+    return f32_close_enough(safe_ratio(x, y), ratio, 0.01f);
+}
+inline local bool is_4_by_3_resolution(int x, int y) {
+    local const float ratio = 4.0f/3.0f;
+    return f32_close_enough(safe_ratio(x, y), ratio, 0.01f); 
+}
+
 struct Directory_File {
     char    name[260];
     size_t  filesize;
