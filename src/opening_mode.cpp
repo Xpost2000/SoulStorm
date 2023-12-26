@@ -135,6 +135,77 @@ void OpeningMode_Data::update_slide(OpeningMode_SlideData* slide, f32 dt) {
     }
 }
 
+void OpeningMode_Data::update_and_render_skipper_box(f32 dt, Game_Resources* resources, struct render_commands* ui_render_commands) {
+    if (phase < OPENING_MODE_PHASE_FADE_OUT) {
+        f32 skip_box_x = 35;
+        f32 skip_box_y = 20;
+        f32 skip_box_w = 90;
+        f32 skip_box_h = 15;
+
+        f32 alpha    = clamp<f32>(skipper_visibility_t / OPENING_MODE_DATA_SKIPPER_VISIBILITY_MAX_T, 0.0f, 1.0f);
+        f32 progress = clamp<f32>(skipper_progress_t / OPENING_MODE_DATA_SKIPPER_PROGRESS_MAX_T, 0.0f, 1.0f);
+
+        render_commands_push_quad(
+            ui_render_commands,
+            rectangle_f32(skip_box_x, skip_box_y, skip_box_w, skip_box_h),
+            color32u8(0,0,0, alpha * 255),
+            BLEND_MODE_ALPHA
+        );
+
+        f32 inner_diameter = 4;
+        render_commands_push_quad(
+            ui_render_commands,
+            rectangle_f32(skip_box_x+inner_diameter/2, skip_box_y+inner_diameter/2, (skip_box_w - inner_diameter) * progress, skip_box_h - inner_diameter),
+            color32u8(255, 255, 255, alpha * 255),
+            BLEND_MODE_ALPHA
+        );
+
+        auto font       = resources->get_font(MENU_FONT_COLOR_ORANGE);
+        f32  font_scale = 1;
+        render_commands_push_text(
+            ui_render_commands,
+            font,
+            font_scale,
+            V2(skip_box_x, 10),
+            string_literal("Any input to skip"),
+            color32f32(1, 1, 1, alpha),
+            BLEND_MODE_ALPHA
+        );
+
+        {
+            game_controller* controller = Input::get_game_controller(0); 
+
+            bool controller_input = controller && Input::controller_any_button_down(controller);
+            bool keyboard_input   = Input::any_key_down();
+
+            if (controller_input || keyboard_input) {
+                if (skipper_visibility_t < (OPENING_MODE_DATA_SKIPPER_VISIBILITY_MAX_T+0.15)) {
+                    skipper_visibility_t += dt;
+                }
+
+                if (skipper_visibility_t > 0.0f) {
+                    if (skipper_progress_t < OPENING_MODE_DATA_SKIPPER_PROGRESS_MAX_T + 0.10) {
+                        skipper_progress_t += dt;
+                    }
+                }
+            } else {
+                if (skipper_visibility_t > 0.0f) {
+                    skipper_visibility_t -= dt;
+                }
+
+                if (skipper_progress_t > 0.0f) {
+                    skipper_progress_t -= dt;
+                }
+            }
+
+            if (skipper_progress_t >= (OPENING_MODE_DATA_SKIPPER_PROGRESS_MAX_T + 0.10)) {
+                phase = OPENING_MODE_PHASE_FADE_OUT;
+                return;
+            }
+        }
+    }
+}
+
 void Game::update_and_render_game_opening(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
     auto& state = this->state->opening_data;
 
@@ -277,6 +348,10 @@ void Game::update_and_render_game_opening(struct render_commands* game_render_co
             }
         } break;
     }
+
+
+    state.update_and_render_skipper_box(dt, resources, ui_render_commands);
+    ui_render_commands->should_clear_buffer = true;
 }
 
 void OpeningMode_Data::unload_all_assets(Game_Resources* resources) {
