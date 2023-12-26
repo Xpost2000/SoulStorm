@@ -1434,6 +1434,7 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
 }
 
 void Game::update_and_render_stage_select_menu(struct render_commands* commands, f32 dt) {
+    bool cancel = false;
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
 
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
@@ -1486,17 +1487,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
             }
 
             if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-                switch_ui(UI_STATE_INACTIVE);
-
-                // undo the camera zoom
-
-                if (!camera_already_interpolating_for(&state->mainmenu_data.main_camera, V2(commands->screen_width/2, commands->screen_height/2), 1.0)) {
-                    camera_set_point_to_interpolate(
-                        &state->mainmenu_data.main_camera,
-                        V2(commands->screen_width/2, commands->screen_height/2),
-                        1.0
-                    );
-                }
+                cancel = true;
             }
             y += 30;
 
@@ -1518,38 +1509,130 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
 
             if (enter_level != -1) {
                 state->mainmenu_data.stage_id_level_in_stage_select = enter_level;
-                Transitions::do_shuteye_in(
-                    color32f32(0, 0, 0, 1),
-                    0.15f,
-                    0.3f
-                );
-
-                /*
-                 * this looks a little funny. Too promise-like.
-                 */
-                Transitions::register_on_finish(
-                    [&](void*) mutable {
-                        _debugprintf("I would load stage-level : (%d - %d)'s script and get ready to play!", stage_id, enter_level);
-                        switch_ui(UI_STATE_INACTIVE);
-                        switch_screen(GAME_SCREEN_INGAME);
-                        setup_stage_start();
-                        _debugprintf("off to the game you go!");
-                        Transitions::do_shuteye_out(
-                            color32f32(0, 0, 0, 1),
-                            0.15f,
-                            0.3f
-                        );
-                    }
-                );
+                switch_ui(UI_STATE_PET_SELECT);
             }
         }
 
         if (Action::is_pressed(ACTION_CANCEL)) {
-            switch_ui(state->last_ui_state);
+            cancel = true;
         }
     }
     GameUI::end_frame();
     GameUI::update(dt);
+
+    if (cancel) {
+        switch_ui(state->last_ui_state);
+
+        if (!camera_already_interpolating_for(&state->mainmenu_data.main_camera, V2(commands->screen_width/2, commands->screen_height/2), 1.0)) {
+            camera_set_point_to_interpolate(
+                &state->mainmenu_data.main_camera,
+                V2(commands->screen_width/2, commands->screen_height/2),
+                1.0
+            );
+        }
+    }
+}
+
+void Game::update_and_render_stage_pet_select_menu(struct render_commands* commands, f32 dt) {
+    auto& gameplay_data = state->gameplay_data;
+    bool load_game = false;
+
+    // no options.
+    // just load game immediately.
+    if (gameplay_data.unlocked_pets == 0 && !Transitions::fading()) {
+        load_game = true;
+    }
+
+    local s32 pet_id_list[] = {
+        GAME_PET_ID_NONE,
+        GAME_PET_ID_CAT,
+        GAME_PET_ID_DOG,
+        GAME_PET_ID_FISH,
+    };
+
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+
+    GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+    GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+
+    bool cancel = false;
+
+    GameUI::set_ui_id((char*)"ui_stage_pet_select_menu");
+    GameUI::begin_frame(commands);
+
+    f32 y = 50;
+    if (gameplay_data.unlocked_pets > 0) {
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(50, y), string_literal("PET SELECT"), color32f32(1, 1, 1, 1), 4);
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        y += 45;
+        {
+            auto pet_data = game_get_pet_data(pet_id_list[state->mainmenu_data.stage_pet_selection]);
+
+            GameUI::label(V2(50, y), pet_data->name, color32f32(1, 1, 1, 1), 2);
+            y += 45;
+            GameUI::label(V2(50, y), pet_data->description, color32f32(1, 1, 1, 1), 2);
+            y += 45;
+
+            y += 150;
+            if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                load_game = true;
+                gameplay_data.selected_pet = pet_id_list[state->mainmenu_data.stage_pet_selection];
+                _debugprintf("%.*s\n", pet_data->name.length, pet_data->name.data);
+            }
+
+            y += 30;
+            if (GameUI::button(V2(100, y), string_literal("Next"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                state->mainmenu_data.stage_pet_selection += 1;
+                if (state->mainmenu_data.stage_pet_selection >= gameplay_data.unlocked_pets+1) {
+                    state->mainmenu_data.stage_pet_selection = 0;
+                }
+            }
+            y += 30;
+            if (GameUI::button(V2(100, y), string_literal("Previous"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                state->mainmenu_data.stage_pet_selection -= 1;
+
+                if (state->mainmenu_data.stage_pet_selection < 0) {
+                    state->mainmenu_data.stage_pet_selection = gameplay_data.unlocked_pets;
+                }
+            }
+            y += 30;
+            if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                cancel = true;
+            }
+
+            if (Action::is_pressed(ACTION_CANCEL)) {
+                cancel = true;
+            }
+        }
+    }
+    GameUI::end_frame();
+    GameUI::update(dt);
+
+    if (load_game) {
+        Transitions::do_shuteye_in(
+            color32f32(0, 0, 0, 1),
+            0.15f,
+            0.3f
+        );
+
+        Transitions::register_on_finish(
+            [&](void*) mutable {
+                switch_ui(UI_STATE_INACTIVE);
+                switch_screen(GAME_SCREEN_INGAME);
+                setup_stage_start();
+                Transitions::do_shuteye_out(
+                    color32f32(0, 0, 0, 1),
+                    0.15f,
+                    0.3f
+                );
+            }
+        );
+    } else {
+        if (cancel) {
+            switch_ui(state->last_ui_state);
+        }
+    }
 }
 
 bool Game::can_resurrect() {
@@ -1796,6 +1879,9 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
         } break;
         case UI_STATE_STAGE_SELECT: {
             update_and_render_stage_select_menu(commands, dt); 
+        } break;
+        case UI_STATE_PET_SELECT: {
+            update_and_render_stage_pet_select_menu(commands, dt);
         } break;
         case UI_STATE_DEAD_MAYBE_RETRY: {
             update_and_render_game_death_maybe_retry_menu(commands, dt);
@@ -3603,6 +3689,9 @@ void Game::switch_ui(s32 ui) {
     switch (ui) {
         case UI_STATE_ACHIEVEMENTS: {
             state->achievement_menu.page = 0;
+        } break;
+        case UI_STATE_PET_SELECT: {
+            state->mainmenu_data.stage_pet_selection = 0;
         } break;
         case UI_STATE_REPLAY_COLLECTION: {
             state->gameplay_data.demo_collection_ui.current_page = 0;

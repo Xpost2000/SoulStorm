@@ -101,6 +101,7 @@ private:
     void update_and_render_replay_collection_menu(struct render_commands* commands, f32 dt);
     void update_and_render_pause_menu(struct render_commands* commands, f32 dt);
     void update_and_render_options_menu(struct render_commands* commands, f32 dt);
+    void update_and_render_stage_pet_select_menu(struct render_commands* commands, f32 dt);
     void update_and_render_stage_select_menu(struct render_commands* commands, f32 dt);
     void update_and_render_achievements_menu(struct render_commands* commands, f32 dt);
     void update_and_render_game_death_maybe_retry_menu(struct render_commands* commands, f32 dt);
