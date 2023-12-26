@@ -3684,6 +3684,9 @@ Save_File Game::construct_save_data() {
         {
             save_data.first_load = 1;
         }
+        {
+            save_data.pets_unlocked = state->gameplay_data.unlocked_pets;
+        }
     }
 
     return save_data;
@@ -3761,6 +3764,7 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
             case SAVE_FILE_VERSION_PRERELEASE0:
             case SAVE_FILE_VERSION_PRERELEASE1:
             case SAVE_FILE_VERSION_PRERELEASE2:
+            case SAVE_FILE_VERSION_PRERELEASE3:
             {
                 _debugprintf("Rejecting prerelease save file");
                 return save_data;
@@ -3782,6 +3786,7 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
                 serialize_u8(serializer, &save_data.post_game);
                 serialize_f32(serializer, &save_data.playtime);
                 serialize_s32(serializer, &save_data.first_load);
+                serialize_s32(serializer, &save_data.pets_unlocked);
 
                 // serialize all achievements
                 // NOTE: slices are writable in my "library of code" so I'm
