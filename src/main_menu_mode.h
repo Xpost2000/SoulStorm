@@ -168,10 +168,15 @@ struct MainMenu_Data {
     void start_introduction_cutscene(Game_State* game_state, bool fasttrack);
     
     void update_and_render_cutscene1(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt);
+    void adjust_entities_for_screen_resolution(int screen_width, int screen_height);
     bool cutscene_active();
 
     bool screen_messages_finished();
     void screen_message_add(string message);
+
+    // for camera sync
+    int last_screen_width = -1;
+    int last_screen_height = -1;
 };
 
 #endif

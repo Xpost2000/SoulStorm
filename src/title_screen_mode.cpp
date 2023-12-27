@@ -41,20 +41,21 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
 
                 Transitions::register_on_finish(
                     [&](void*) mutable {
-                        switch_ui(UI_STATE_INACTIVE);
-                        switch_screen(GAME_SCREEN_MAIN_MENU);
-
                         Transitions::do_shuteye_out(
                             color32f32(0, 0, 0, 1),
                             0.15f,
                             0.3f
                         );
 
+                        switch_ui(UI_STATE_INACTIVE);
+                        switch_screen(GAME_SCREEN_MAIN_MENU);
+
                         // no save file? Going to start
                         if (!load_game()) {
                             // first time, we'll load the full cutscene...
                             auto state = &this->state->mainmenu_data;
                             state->start_introduction_cutscene(this->state, false);
+                            save_game();
                         } else {
                             auto state = &this->state->mainmenu_data;
                             state->start_introduction_cutscene(this->state, true);

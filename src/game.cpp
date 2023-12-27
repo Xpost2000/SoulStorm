@@ -1808,16 +1808,22 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
 
             auto& achievement = achievements[actual_i];
 
-            rectangle_f32 rectangle = rectangle_f32(30, i * 65 + 80, 300, 60);
-            render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
+            rectangle_f32 rectangle = rectangle_f32(30, i * 65 + 80, 500, 60);
+            render_commands_push_quad(commands, rectangle, color32u8(25, 25, 25, 255), BLEND_MODE_ALPHA);
             {
                 string text = achievement.name;
+                if (achievement.hidden && !achievement.achieved) {
+                    text = string_literal("???");
+                }
                 render_commands_push_text(commands,
                                           (achievement.achieved) ? unlocked_title_font : locked_title_font,
                                           2, V2(rectangle.x+10, rectangle.y+10), text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
             {
                 string text = achievement.description;
+                if (achievement.hidden && !achievement.achieved) {
+                    text = string_literal("???????");
+                }
                 render_commands_push_text(commands, description_font, 2, V2(rectangle.x+10, rectangle.y+35), text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
         }
@@ -1829,7 +1835,7 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
         GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
-        GameUI::label(V2(0, 0), string_literal("ACHIEVEMENTS"), color32f32(1, 1, 1, 1), 4);
+        GameUI::label(V2(15, 15), string_literal("ACHIEVEMENTS"), color32f32(1, 1, 1, 1), 4);
 
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
 
@@ -3686,11 +3692,14 @@ void Game::switch_screen(s32 screen) {
     // special case setup code will be here
 
     switch (screen) {
-        case GAME_SCREEN_TITLE_SCREEN: 
-        case GAME_SCREEN_OPENING: 
+        case GAME_SCREEN_TITLE_SCREEN:
+        case GAME_SCREEN_OPENING: {
+        } break;
         case GAME_SCREEN_MAIN_MENU: {
-            save_game(); // save game on every main menu invocation
-            cleanup_game_simulation();
+            if (state->last_screen_mode == GAME_SCREEN_INGAME) {
+                save_game();
+                cleanup_game_simulation();
+            }
         } break;
         case GAME_SCREEN_INGAME: {
         } break;

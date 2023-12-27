@@ -361,7 +361,7 @@ struct Gameplay_Data {
     Gameplay_Stage_Complete_Stage_Sequence complete_stage;
 
     s32 selected_pet = GAME_PET_ID_NONE;
-    s32 unlocked_pets = 3;
+    s32 unlocked_pets = 0; // [0,3]
     s32 tries = MAX_BASE_TRIES;
     s32 current_score = 0;
     f32 current_stage_timer = 0;

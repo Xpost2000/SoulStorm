@@ -152,6 +152,7 @@ void cutscene_introduction_firsttime_task(jdr_duffcoroutine_t* co) {
         JDR_Coroutine_YieldNR();
     }
 
+    TASK_WAIT(1.0f);
     camera_set_point_to_interpolate(&camera, V2(resolution.x/2, resolution.y/2), 1.0);
 
     while (camera_interpolating(&camera)) {
@@ -450,6 +451,7 @@ void MainMenu_Data::start_introduction_cutscene(Game_State* game_state, bool fas
     if (!cutscene2.triggered) {
         cutscene2.phase     = 1;
         cutscene2.triggered = true;
+        _debugprintf("Triggering cutscene introduction");
 
         if (fasttrack) {
             game_state->coroutine_tasks.add_task(game_state, cutscene_introduction_fasttrack_task);
@@ -489,8 +491,8 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
         // for polish reasons.
         state->main_camera          = camera(V2(resolution.x/2, resolution.y/2), 1.0);
         state->main_camera.centered = true;
-        state->prng                    = random_state();
-        state->main_camera.rng       = &state->prng;
+        state->main_camera.rng      = &state->prng;
+        state->prng                 = random_state();
 
         state->screen_messages = Fixed_Array<MainMenu_ScreenMessage>(arena, 32);
         state->clutter_poops   = Fixed_Array<MainMenu_Clutter_Poop>(arena, 64);
@@ -503,7 +505,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                 auto& portal = state->portals[0]; 
                 portal.stage_id = 0;
                 portal.scale = V2(15, 15);
-                portal.position = V2(100-30, 100);
                 for (int i = 0; i < array_count(portal.prerequisites); ++i) {
                     portal.prerequisites[i] = -1;
                 }
@@ -513,7 +514,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     auto& emitter = portal.emitter_main;
                     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
                     emitter.scale  = 1.0f;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
                     emitter.lifetime = 1.0f;
                     emitter.velocity_x_variance = V2(-100, 100);
                     emitter.velocity_y_variance = V2(-100, 100);
@@ -527,7 +527,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     auto& emitter = portal.emitter_vortex;
                     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
                     emitter.scale  = 0.5f;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 100.0f);
                     emitter.lifetime = 2.0f;
                     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
                     emitter.use_attraction_point = true;
@@ -541,7 +540,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                 auto& portal = state->portals[1]; 
                 portal.stage_id = 1;
                 portal.scale = V2(15, 15);
-                portal.position = V2(350-30, 100);
                 for (int i = 0; i < array_count(portal.prerequisites); ++i) {
                     portal.prerequisites[i] = -1;
                 }
@@ -552,7 +550,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     auto& emitter = portal.emitter_main;
                     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
                     emitter.scale  = 1.0f;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
                     emitter.lifetime = 1.0f;
                     emitter.velocity_x_variance = V2(-100, 100);
                     emitter.velocity_y_variance = V2(-100, 100);
@@ -566,7 +563,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     auto& emitter = portal.emitter_vortex;
                     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
                     emitter.scale  = 0.5;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
                     emitter.lifetime = 2.0f;
                     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
                     emitter.use_attraction_point = true;
@@ -580,7 +576,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                 auto& portal = state->portals[2]; 
                 portal.stage_id = 2;
                 portal.scale = V2(15, 15);
-                portal.position = V2(550-30, 100);
                 for (int i = 0; i < array_count(portal.prerequisites); ++i) {
                     portal.prerequisites[i] = -1;
                 }
@@ -592,7 +587,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     auto& emitter = portal.emitter_main;
                     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
                     emitter.scale  = 1.0f;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
                     emitter.lifetime = 1.0f;
                     emitter.velocity_x_variance = V2(-100, 100);
                     emitter.velocity_y_variance = V2(-100, 100);
@@ -606,7 +600,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     auto& emitter = portal.emitter_vortex;
                     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
                     emitter.scale  = 0.5f;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 50.0f);
                     emitter.lifetime = 2.0f;
                     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
                     emitter.use_attraction_point = true;
@@ -617,6 +610,7 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
             }
 
             // NOTE: postgame portal.
+            // NOTE: unused, I do not have time to make more levels :(
             {
                 auto& portal = state->portals[3]; 
                 portal.stage_id = 3;
@@ -633,7 +627,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     auto& emitter = portal.emitter_main;
                     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
                     emitter.scale  = 1.0f;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
                     emitter.lifetime = 1.0f;
                     emitter.velocity_x_variance = V2(-100, 100);
                     emitter.velocity_y_variance = V2(-100, 100);
@@ -647,7 +640,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     auto& emitter = portal.emitter_vortex;
                     emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
                     emitter.scale  = 0.5;
-                    emitter.shape = particle_emit_shape_circle(portal.position, 25.0f);
                     emitter.lifetime = 2.0f;
                     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
                     emitter.use_attraction_point = true;
@@ -687,10 +679,42 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
     }
 }
 
+void MainMenu_Data::adjust_entities_for_screen_resolution(int new_screen_width, int new_screen_height) {
+    auto& main_menu_state = *this;
+    {
+        if (main_menu_state.last_screen_width  != new_screen_width ||
+            main_menu_state.last_screen_height != new_screen_height) {
+            main_menu_state.last_screen_width   = new_screen_width;
+            main_menu_state.last_screen_height  = new_screen_height;
+            main_menu_state.main_camera.xy = V2(new_screen_width/2, new_screen_height/2);
+        }
+
+        // Also portals will be fitted to be at the same "relative" place
+        // based on resolution.
+
+        // There is no way to hook into resolution changes, and there is no other way
+        // to make the "playable" main menu look nice without hacking this in anyway.
+
+        // NOTE: only the three playable portals (there is a fourth postgame portal that I'm just disabling, and
+        // unlikely to re-enable. Ever.)
+        {
+            f32 screen_width = (new_screen_width);
+            f32 screen_third = (screen_width*0.9f / 3.0f);
+            for (int i = 0; i < 3; ++i) {
+                auto& portal = main_menu_state.portals[i];
+                portal.position             = V2(screen_width * 0.1f + (screen_third*1.15) * i, 80);
+                portal.emitter_main.shape   = particle_emit_shape_circle(portal.position, 25.0f);
+                portal.emitter_vortex.shape = particle_emit_shape_circle(portal.position, 100.0f);
+            }
+        }
+    }
+}
+
 void Game::update_and_render_game_main_menu(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
     auto& main_menu_state = state->mainmenu_data;
     game_render_commands->camera = main_menu_state.main_camera;
 
+    main_menu_state.adjust_entities_for_screen_resolution(game_render_commands->screen_width, game_render_commands->screen_height);
     // TODO: Fix Draw_Main_Menu_Stars
     //       this looks bad sometimes when the resolution is adjusted or something similar
     //       so I need to be careful!
@@ -714,10 +738,10 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
             // uh. I hope this looks fine.
             for (int i = 0; i < MAX_MAINMENU_OUTERSPACE_STARS; ++i) {
                 bkg_slow_stars[i].x += dt * 10.0f * (normalized_sinf(i)+0.25);
-                bkg_slow_stars[i].y += dt * 10.0f * (normalized_sinf(Global_Engine()->global_elapsed_time)+0.25);
+                bkg_slow_stars[i].y += dt * 15.0f * (normalized_sinf(Global_Engine()->global_elapsed_time)+0.25);
 
                 bkg_faster_stars[i].x += dt * 250.0f * (normalized_sinf(i*25)+0.15);
-                bkg_faster_stars[i].y += dt * 250.0f * (sinf(Global_Engine()->global_elapsed_time)/4+0.25);
+                bkg_faster_stars[i].y += dt * 200.0f * (sinf(Global_Engine()->global_elapsed_time)/2+0.25);
 
                 if (bkg_faster_stars[i].x > game_render_commands->screen_width*1.5f)  bkg_faster_stars[i].x = -150;
                 if (bkg_faster_stars[i].y > game_render_commands->screen_height*1.5f) bkg_faster_stars[i].y = -150;
@@ -728,8 +752,8 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
             // Need to make these have different sizes.
             for (int i = 0; i < MAX_MAINMENU_OUTERSPACE_STARS; ++i) {
                 auto r = rectangle_f32(bkg_slow_stars[i].x, bkg_slow_stars[i].y, 1, 1);
-                auto r1 = rectangle_f32(bkg_faster_stars[i].x, bkg_faster_stars[i].y, 0.5, 0.5);
-                auto r2 = rectangle_f32(bkg_faster_stars[i].x-45, bkg_faster_stars[i].y-45, 0.5, 0.5);
+                auto r1 = rectangle_f32(bkg_faster_stars[i].x-30, bkg_faster_stars[i].y+20, 0.5, 0.5);
+                auto r2 = rectangle_f32(bkg_faster_stars[i].x-5, bkg_faster_stars[i].y-45, 0.5, 0.5);
 
                 render_commands_push_quad_ext(
                     game_render_commands,

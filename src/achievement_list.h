@@ -56,15 +56,15 @@
 {
         ACHIEVEMENT_ID_UNTOUCHABLE,
         ACHIEVEMENT_PROGRESS_TYPE_BOOL,
-        0, 0,
+        1, 0,
         string_literal("ACHIEVEMENT_ID_UNTOUCHABLE"),
         string_literal("Untouchable"),
-        string_literal("Completed all stages without dying! Great job!"),
+        string_literal("Completed all stages without dying! What a pro!"),
 },
 {
         ACHIEVEMENT_ID_KILLER,
         ACHIEVEMENT_PROGRESS_TYPE_INT,
-        0, 0,
+        1, 0,
         string_literal("ACHIEVEMENT_ID_KILLER"),
         string_literal("Fighter"),
         string_literal("Eliminated 1500 enemies cumulatively."),
@@ -94,10 +94,10 @@
 {
         ACHIEVEMENT_ID_PLATINUM,
         ACHIEVEMENT_PROGRESS_TYPE_BOOL,
-        1, 0,
+        0, 0,
         string_literal("ACHIEVEMENT_ID_PLATINUM"),
         string_literal("Little Big Hero"),
-        string_literal("Completed every other achievement. Congratulations!"),
+        string_literal("Completed every achievement. Congratulations!"),
 }
 
 #endif
