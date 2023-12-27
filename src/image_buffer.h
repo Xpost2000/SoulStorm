@@ -14,6 +14,7 @@ struct image_buffer {
     };
 
     // TODO: add graphics_driver specific information.
+    void* _driver_userdata;
 };
 
 #endif

@@ -1,3 +1,4 @@
+#include "graphics_driver.h"
 #include "graphics_assets.h"
 #include "memory_arena.h"
 
@@ -135,9 +136,6 @@ struct graphics_assets graphics_assets_create(Memory_Arena* arena, u32 font_limi
     assets.fonts              = (font_cache*)arena->push_unaligned(sizeof(*assets.fonts)  * font_limit);
     assets.sprites            = (Sprite*)arena->push_unaligned(sizeof(*assets.sprites) * sprite_limit);
 
-    assets.image_device_context_ptrs = (void*)arena->push_unaligned(sizeof(void*) * image_limit);
-    assets.font_device_context_ptrs  = (void*)arena->push_unaligned(sizeof(void*) * font_limit);
-
     return assets;
 }
 
@@ -179,6 +177,9 @@ image_id graphics_assets_load_image(struct graphics_assets* assets, string path)
     *new_image                               = image_buffer_load_from_file(*new_filepath_string);
     *status_field                            = ASSET_STATUS_LOADED;
 
+    assert(assets->graphics_driver && "Hmm, how do you have no graphics driver?");
+    assets->graphics_driver->upload_texture(assets, new_id);
+
     return new_id;
 }
 
@@ -190,6 +191,9 @@ void graphics_assets_unload_image(struct graphics_assets* assets, image_id img) 
         _debugprintf("Unloading image id %d\n", img.index);
         image_buffer_free(img_buffer);
         assets->image_asset_status[index] = ASSET_STATUS_UNLOADED;
+
+        assert(assets->graphics_driver && "Hmm, how do you have no graphics driver?");
+        assets->graphics_driver->unload_texture(assets, img);
     }
 }
 
@@ -198,6 +202,9 @@ font_id graphics_assets_load_bitmap_font(struct graphics_assets* assets, string 
 
     struct font_cache* new_font   = &assets->fonts[assets->font_count++];
     *new_font                     = font_cache_load_bitmap_font(path, tile_width, tile_height, atlas_rows, atlas_columns);
+
+    assert(assets->graphics_driver && "Hmm, how do you have no graphics driver?");
+    assets->graphics_driver->upload_font(assets, new_id);
 
     return new_id;
 }
@@ -219,6 +226,16 @@ struct image_buffer* graphics_assets_get_image_by_id(struct graphics_assets* ass
     }
 
     return &assets->images[index];
+}
+
+void graphics_assets_update_graphics_driver(struct graphics_assets* assets, Graphics_Driver* driver) {
+    if (assets->graphics_driver != driver && assets->graphics_driver) {
+        _debugprintf("Updating from previous graphics driver");
+        _debugprintf("NOTE: reupload all resources to new driver.");
+    } else {
+        _debugprintf("First graphics driver initialization. Nothing to do");
+    }
+    assets->graphics_driver = driver;
 }
 
 image_id graphics_assets_get_image_by_filepath(struct graphics_assets* assets, string filepath) {

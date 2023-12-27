@@ -454,14 +454,6 @@ void Game::init(Graphics_Driver* driver) {
     this->state = (Game_State*)arena->push_unaligned(sizeof(*this->state)); (new (this->state) Game_State);
     this->state->resources = resources;
 
-    if (load_preferences_from_disk(&preferences, string_literal("preferences.lua"))) {
-        confirm_preferences(&preferences);
-    } else {
-        // the main code will provide us with a default
-        // preferences struct.
-    }
-    update_preferences(&temp_preferences, &preferences);
-
     if (!Action::load(string_literal("controls.lua"))) {
         // setup input
         {
@@ -502,7 +494,17 @@ void Game::init(Graphics_Driver* driver) {
         Action::save(string_literal("controls.lua"));
     }
 
-    resources->graphics_assets   = graphics_assets_create(arena, 16, 256, 512);
+    resources->graphics_assets   = graphics_assets_create(arena, 16, 512, 512);
+    if (load_preferences_from_disk(&preferences, string_literal("preferences.lua"))) {
+        confirm_preferences(&preferences, resources);
+    }
+    else {
+        // the main code will provide us with a default
+        // preferences struct.
+    }
+    update_preferences(&temp_preferences, &preferences);
+
+    
     // initialize achievement notifier
     {
         achievement_state.notifications = Fixed_Array<Achievement_Notification>(arena, ACHIEVEMENT_ID_COUNT);
@@ -931,7 +933,7 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
          */
         if (GameUI::button(V2(100, y), string_literal("Apply"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             update_preferences(&preferences, &temp_preferences);
-            confirm_preferences(&preferences);
+            confirm_preferences(&preferences, resources);
 
             // NOTE: readjust the camera.
             {
@@ -943,7 +945,7 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
         if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(state->last_ui_state);
             update_preferences(&preferences, &temp_preferences);
-            confirm_preferences(&preferences);
+            confirm_preferences(&preferences, resources);
             save_preferences_to_disk(&preferences, string_literal("preferences.lua"));
 
             // NOTE: readjust the camera.

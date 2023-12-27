@@ -43,3 +43,11 @@ Slice<Resolution_Mode> Graphics_Driver::get_display_modes() {
 void Graphics_Driver::change_resolution(s32 new_resolution_x, s32 new_resolution_y) {
     SDL_SetWindowSize(game_window, new_resolution_x, new_resolution_y);
 }
+
+void Graphics_Driver::unload_texture(struct graphics_assets* assets, image_id image) {
+    _debugprintf("Default unload_texture is NOP");
+}
+
+void Graphics_Driver::unload_font(struct graphics_assets* assets, font_id image) {
+    _debugprintf("Default unload_font is NOP");
+}

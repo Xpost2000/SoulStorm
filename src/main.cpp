@@ -28,6 +28,7 @@
 #include "thread_pool.h"
 #include "engine.h"
 #include "game.h"
+#include "game_state.h"
 
 #include "graphics_driver.h"
 
@@ -453,7 +454,7 @@ void update_preferences(Game_Preferences* a, Game_Preferences* b) {
     a->height         = display_mode.height;
 }
 
-void confirm_preferences(Game_Preferences* preferences) {
+void confirm_preferences(Game_Preferences* preferences, Game_Resources* resources) {
     REAL_SCREEN_WIDTH  = preferences->width;
     REAL_SCREEN_HEIGHT = preferences->height;
     set_fullscreen(preferences->fullscreen);
@@ -468,6 +469,8 @@ void confirm_preferences(Game_Preferences* preferences) {
     global_graphics_driver->get_display_modes(); // update internal list of display modes.
     preferences->resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences->width, preferences->height);
     _use_controller_rumble = preferences->controller_vibration;
+
+    graphics_assets_update_graphics_driver(&resources->graphics_assets, global_graphics_driver);
 }
 
 /*

@@ -53,6 +53,8 @@ enum asset_status {
     ASSET_STATUS_UNLOADED,
     ASSET_STATUS_LOADED,
 };
+
+class Graphics_Driver;
 struct graphics_assets {
     Memory_Arena* arena;
 
@@ -69,8 +71,7 @@ struct graphics_assets {
     u32                  sprite_count;
     Sprite*              sprites;
 
-    void*                image_device_context_ptrs;
-    void*                font_device_context_ptrs;
+    Graphics_Driver* graphics_driver;
 };
 
 struct font_cache   font_cache_load_bitmap_font(string filepath, s32 tile_width, s32 tile_height, s32 atlas_rows, s32 atlas_columns);
@@ -92,6 +93,8 @@ Sprite_Frame*          sprite_get_frame(Sprite* sprite, s32 index);
 void                   graphics_assets_finish(struct graphics_assets* assets);
 image_id               graphics_assets_load_image(struct graphics_assets* assets, string path);
 void                   graphics_assets_unload_image(struct graphics_assets* assets, image_id img);
+
+void                   graphics_assets_update_graphics_driver(struct graphics_assets* assets, Graphics_Driver* driver);
 
 image_id               graphics_assets_get_image_by_filepath(struct graphics_assets* assets, string filepath);
 font_id                graphics_assets_load_bitmap_font(struct graphics_assets* assets, string path, s32 tile_width, s32 tile_height, s32 atlas_rows, s32 atlas_columns);

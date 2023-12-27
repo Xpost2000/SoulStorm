@@ -24,7 +24,8 @@ struct Game_Preferences {
 
 // NOTE: implemented in main.cpp, since it's kind of platform layer code
 // with the way I organized everything.
-void confirm_preferences(Game_Preferences* preferences);
+struct Game_Resources;
+void confirm_preferences(Game_Preferences* preferences, Game_Resources* resources);
 void update_preferences(Game_Preferences* a, Game_Preferences* b);
 bool save_preferences_to_disk(Game_Preferences* preferences, string path);
 bool load_preferences_from_disk(Game_Preferences* preferences, string path);
