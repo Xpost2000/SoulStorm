@@ -317,6 +317,7 @@ struct Gameplay_Data_Pet_Information {
 
 struct Gameplay_Data {
     bool stage_completed;
+    bool playing_practice_mode;
     Stage_State stage_state;
     Particle_Pool particle_pool;
     // TODO: allow player name configuration

@@ -90,6 +90,7 @@ local Achievement achievement_list[] = {
 enum Game_Complete_Stage_Type {
     GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY,
     GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL,
+    GAME_COMPLETE_STAGE_CONTINUE_TO_NEXT_LEVEL,
     GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE,
 };
 
@@ -118,7 +119,7 @@ local void game_register_stage_attempt(s32 stage_index, s32 level_index) {
     level.attempts += 1;
 }
 
-local int game_complete_stage_level(s32 stage_id, s32 level_id) {
+local int game_complete_stage_level(s32 stage_id, s32 level_id, bool practicing_stage) {
     auto& stage  = stage_list[stage_id];
     s32   result = 0;
     {
@@ -130,20 +131,26 @@ local int game_complete_stage_level(s32 stage_id, s32 level_id) {
           Whether I do this or not is a good question, but it's not too much code to
           fix up.
         */
-        if ((level_id+1) >= stage.unlocked_levels) {
-            /*
-             * NOTE:
-             *
-             *  This will increment on the last level to unlock a "stage 4" which doesn't
-             *  exist, but will just be used as a marker for allowing the next stage to be unlocked.
-             */
-            _debugprintf("Completed stage (%d-%d) and unlocked the next stage!", stage_id+1, level_id+1);
-            stage.unlocked_levels += 1;
-
-            result = GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL;
-        } else {
-            _debugprintf("Completed stage (%d-%d) another time!", stage_id+1, level_id+1);
+        if (practicing_stage) {
+            _debugprintf("Practice stage complete");
             result = GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY; 
+        } else {
+            if ((level_id+1) >= stage.unlocked_levels) {
+                /*
+                 * NOTE:
+                 *
+                 *  This will increment on the last level to unlock a "stage 4" which doesn't
+                 *  exist, but will just be used as a marker for allowing the next stage to be unlocked.
+                 */
+                _debugprintf("Completed stage (%d-%d) and unlocked the next stage!", stage_id+1, level_id+1);
+                stage.unlocked_levels += 1;
+
+                result = GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL;
+            } else {
+                _debugprintf("Completed stage (%d-%d) another time!", stage_id+1, level_id+1);
+                result = GAME_COMPLETE_STAGE_CONTINUE_TO_NEXT_LEVEL; 
+                // result = GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY; 
+            }
         }
     }
 
@@ -1167,6 +1174,7 @@ void Game::update_and_render_replay_save_menu(struct render_commands* commands, 
                     }
                 );
             } break;
+            case GAME_COMPLETE_STAGE_CONTINUE_TO_NEXT_LEVEL:
             case GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL: {
                 Transitions::register_on_finish(
                     [&](void*) mutable {
@@ -1489,17 +1497,29 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                     name = string_literal("???");
                 }
 
-                auto s = format_temp("%d - %d: %.*s", (stage_id+1), (i+1), name.length, name.data);
+                auto s = format_temp("[PRACTICE] %d - %d: %.*s", (stage_id+1), (i+1), name.length, name.data);
+
+#ifndef RELEASE
+                s = format_temp("[DEBUG] %d - %d", (stage_id+1), (i+1));
+                is_unlocked = true;
+#endif
+
                 s32 button_status = (GameUI::button(V2(100, y), string_from_cstring(s), color32f32(1, 1, 1, 1), 2, is_unlocked && !Transitions::fading()));
                 y += 30;
 
                 if (button_status == WIDGET_ACTION_ACTIVATE) {
                     enter_level = i;
+                    state->gameplay_data.playing_practice_mode = true;
                 } else if (button_status == WIDGET_ACTION_HOT) {
                     display_level_icon = i;
                 }
             }
 
+            if (GameUI::button(V2(100, y), string_literal("Play Stage"), color32f32(1, 1, 1, 1), 2, !Transitions::fading() && met_all_prerequisites) == WIDGET_ACTION_ACTIVATE) {
+                enter_level = 0;
+                state->gameplay_data.playing_practice_mode = false;
+            }
+            y += 30;
             if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 cancel = true;
             }
@@ -1518,7 +1538,11 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
                 render_commands_push_text(commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2.0f, V2(commands->screen_width - 250, commands->screen_height/2 - 170), string_from_cstring(format_temp("Last Score: %d", level.last_score)), color, BLEND_MODE_ALPHA);
                 render_commands_push_text(commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2.0f, V2(commands->screen_width - 250, commands->screen_height/2 - 140), string_from_cstring(format_temp("Attempts: %d", level.attempts)), color, BLEND_MODE_ALPHA);
                 render_commands_push_text(commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2.0f, V2(commands->screen_width - 250, commands->screen_height/2 - 110), string_from_cstring(format_temp("Completions: %d", level.completions)), color, BLEND_MODE_ALPHA);
-                render_commands_push_text(commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2.0f, V2(commands->screen_width - 250, commands->screen_height/2), level.subtitle, color, BLEND_MODE_ALPHA);
+#if 0
+                // To be honest, getting these to show up is probably more trouble than it's worth
+                // regarding UI layout.
+                render_commands_push_text(commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2.0f, V2(commands->screen_width - (font_cache_text_width(resources->get_font(MENU_FONT_COLOR_GOLD), level.subtitle, 2.0f)*1.2), commands->screen_height/2), level.subtitle, color, BLEND_MODE_ALPHA);
+#endif
             }
 
             if (enter_level != -1) {
@@ -2138,7 +2162,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                 if (!state->gameplay_data.recording.in_playback) {
                     game_update_stage_score(stage_id, level_id, state->gameplay_data.current_score);
                     game_register_stage_completion(stage_id, level_id);
-                    completion_type = game_complete_stage_level(stage_id, level_id);
+                    completion_type = game_complete_stage_level(stage_id, level_id, state->gameplay_data.playing_practice_mode);
                 }
 
                 Transitions::do_color_transition_in(

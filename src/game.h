@@ -18,7 +18,7 @@
 #define TICKRATE       (60)
 #define FIXED_TICKTIME (1.0f / TICKRATE)
 #define DEFAULT_REPLAY_LOCATION (string_literal(".\\replays\\"))
-#define MAX_REPLAYS_PER_PAGE   (4)
+#define MAX_REPLAYS_PER_PAGE   (6)
 local string save_file_name = string_literal("game_save.save");
 
 // forward decl some opaque types
