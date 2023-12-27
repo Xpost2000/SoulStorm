@@ -102,6 +102,7 @@ struct MainMenu_Introduction_Cutscene_Data {
 };
 
 #define MAX_MAINMENU_OUTERSPACE_STARS (2048)
+#define MAX_MAINMENU_SPARKLING_STARS (64)
 
 enum MainMenu_ScreenMessage_Phase {
     MAIN_MENU_SCREEN_MESSAGE_APPEAR,
@@ -130,6 +131,15 @@ struct MainMenu_Clutter_Poop {
     void draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources);
 };
 
+struct MainMenu_Sparkling_Star_Data {
+    bool hide = true;
+    int frame_index; // manually animated (8 frames)
+    f32 anim_timer;
+    f32 visibility_delay_timer;
+    V2  position;
+    f32 scale; /* [1.0, 1.5] */
+};
+
 struct MainMenu_Data {
     Particle_Pool particle_pool;
 
@@ -143,6 +153,7 @@ struct MainMenu_Data {
     
     // For now I'll just use a basic outerspacy sort of theme.
     V2 star_positions[2][MAX_MAINMENU_OUTERSPACE_STARS];
+    MainMenu_Sparkling_Star_Data sparkling_stars[MAX_MAINMENU_SPARKLING_STARS];
 
     struct camera   main_camera;
     MainMenu_Player player;

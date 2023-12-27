@@ -27,6 +27,11 @@ PROJECTILE_SPRITE_HOT_PINK_DISK  = 17;
 PROJECTILE_SPRITE_NEGATIVE_DISK  = 18;
 PROJECTILE_SPRITE_GREEN_DISK     = 19;
 
+-- NOTE: this sprite has... different requirements when
+-- being used as a projectile since it's "very" small in it's sprite sheet
+-- probably make it 1/4th the size of other projectiles (or like 2px in game terms.)
+PROJECTILE_SPRITE_SPARKLING_STAR = 20;
+
 BULLET_SOURCE_NEUTRAL = 0;
 BULLET_SOURCE_PLAYER  = 1;
 BULLET_SOURCE_ENEMY   = 2;

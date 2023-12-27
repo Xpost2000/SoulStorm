@@ -205,10 +205,11 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         1,
         1,
         1,
+        8
     };
 
     // NOTE: I would like these to become sprite atlases at some point.
-    local string projectile_sprite_locations[PROJECTILE_SPRITE_TYPES][8] = {
+    local string projectile_sprite_locations[PROJECTILE_SPRITE_TYPES][16] = {
         {string_literal("projectiles/projectile1.png")},
         {string_literal("projectiles/projectile1.png"), string_literal("projectiles/projectile1_1.png"),},
         {string_literal("projectiles/projectile1.png"), string_literal("projectiles/projectile1_1.png"), string_literal("projectiles/projectile1_1_2.png"), string_literal("projectiles/projectile1_2.png")},
@@ -236,6 +237,17 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         {string_literal("projectiles/projectile1_hp_flat.png")},
         {string_literal("projectiles/projectile1_inv_flat.png")},
         {string_literal("projectiles/projectile1_g_flat.png")},
+
+        {
+            string_literal("projectiles/star_sparkle_1.png"),
+            string_literal("projectiles/star_sparkle_2.png"),
+            string_literal("projectiles/star_sparkle_3.png"),
+            string_literal("projectiles/star_sparkle_4.png"),
+            string_literal("projectiles/star_sparkle_5.png"),
+            string_literal("projectiles/star_sparkle_4.png"),
+            string_literal("projectiles/star_sparkle_3.png"),
+            string_literal("projectiles/star_sparkle_2.png"),
+        }
     };
 
     for (int projectile_sprite_id = 0; projectile_sprite_id < PROJECTILE_SPRITE_TYPES; ++projectile_sprite_id) {

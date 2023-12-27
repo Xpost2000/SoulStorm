@@ -82,6 +82,14 @@ enum Projectile_Sprite_Type {
     PROJECTILE_SPRITE_NEGATIVE_DISK,
     PROJECTILE_SPRITE_GREEN_DISK,
 
+    /*
+     * NOTE: this is technically only being used for the "visual" parts
+     *
+     * however, I'm sorely lacking in projectile variety so I'm gladly going to
+     * reuse this if I can.
+     */
+    PROJECTILE_SPRITE_SPARKLING_STAR,
+
     PROJECTILE_SPRITE_TYPES
 };
 
