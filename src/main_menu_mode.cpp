@@ -454,8 +454,10 @@ void MainMenu_Data::start_introduction_cutscene(Game_State* game_state, bool fas
         _debugprintf("Triggering cutscene introduction");
 
         if (fasttrack) {
+            _debugprintf("Fast track intro");
             game_state->coroutine_tasks.add_task(game_state, cutscene_introduction_fasttrack_task);
         } else {
+            _debugprintf("Standard intro");
             game_state->coroutine_tasks.add_task(game_state, cutscene_introduction_firsttime_task);
         }
     }

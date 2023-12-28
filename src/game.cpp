@@ -2232,7 +2232,6 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
             },
             (void*)update_packet_data
         );
-        Thread_Pool::synchronize_tasks();
 
         Thread_Pool::add_job(
             [](void* ctx) {
@@ -2250,7 +2249,6 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
             },
             (void*)update_packet_data
         );
-        Thread_Pool::synchronize_tasks();
 
         Thread_Pool::add_job(
             [](void* ctx) {
@@ -2268,7 +2266,6 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
             },
             (void*)update_packet_data
         );
-        Thread_Pool::synchronize_tasks();
 
         Thread_Pool::add_job(
             [](void* ctx) {
@@ -2287,9 +2284,9 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
             (void*)update_packet_data
         );
 
+        Thread_Pool::synchronize_tasks();
         // NOTE: this is "hard" data dependency
         // since it's kind of noticable if pickups deviate more.
-        Thread_Pool::synchronize_tasks();
 
         {
             auto packet = (Entity_Loop_Update_Packet*) update_packet_data;
@@ -2341,17 +2338,8 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
             state->player.update(game_state, dt);
             state->player.handle_grazing_behavior(game_state, dt);
         }
+
 #endif
-
-        handle_all_explosions(FIXED_TICKTIME);
-        handle_all_lasers(FIXED_TICKTIME);
-        handle_player_pickup_collisions(FIXED_TICKTIME);
-        handle_player_enemy_collisions(FIXED_TICKTIME);
-        handle_all_bullet_collisions(FIXED_TICKTIME);
-        handle_bomb_usage(FIXED_TICKTIME);
-        handle_all_dead_entities(FIXED_TICKTIME);
-        state->reify_all_creation_queues();
-
         // Update all particle emitters
         // while we wait.
         {
@@ -2366,6 +2354,16 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
 
             state->particle_pool.update(this->state, FIXED_TICKTIME);
         }
+
+        handle_all_explosions(FIXED_TICKTIME);
+        handle_all_lasers(FIXED_TICKTIME);
+        handle_player_pickup_collisions(FIXED_TICKTIME);
+        handle_player_enemy_collisions(FIXED_TICKTIME);
+        handle_all_bullet_collisions(FIXED_TICKTIME);
+        handle_bomb_usage(FIXED_TICKTIME);
+        handle_all_dead_entities(FIXED_TICKTIME);
+        state->reify_all_creation_queues();
+
 
         camera_update(&state->main_camera, FIXED_TICKTIME);
     }
@@ -3426,7 +3424,6 @@ void Game::handle_all_dead_entities(f32 dt) {
             }
             return 0;
         }, state);
-    Thread_Pool::synchronize_tasks();
 
     Thread_Pool::add_job(
         [](void* ctx) {
@@ -3437,7 +3434,6 @@ void Game::handle_all_dead_entities(f32 dt) {
             }
             return 0;
         }, state);
-    Thread_Pool::synchronize_tasks();
 
     Thread_Pool::add_job(
         [](void* ctx) {
@@ -3448,7 +3444,6 @@ void Game::handle_all_dead_entities(f32 dt) {
             }
             return 0;
         }, state);
-    Thread_Pool::synchronize_tasks();
 
     Thread_Pool::add_job(
         [](void* ctx) {
@@ -3459,7 +3454,6 @@ void Game::handle_all_dead_entities(f32 dt) {
             }
             return 0;
         }, state);
-    Thread_Pool::synchronize_tasks();
 
     Thread_Pool::add_job(
         [](void* ctx) {

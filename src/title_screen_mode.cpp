@@ -56,9 +56,11 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
                             auto state = &this->state->mainmenu_data;
                             state->start_introduction_cutscene(this->state, false);
                             save_game();
+                            _debugprintf("First time cutscene load");
                         } else {
                             auto state = &this->state->mainmenu_data;
                             state->start_introduction_cutscene(this->state, true);
+                            _debugprintf("Found save file, loading regular continuation cutscene");
                         }
                     }
                 );

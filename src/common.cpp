@@ -71,7 +71,7 @@ string file_buffer_as_string(struct file_buffer* buffer) {
 }
 
 bool OS_file_exists(string path) {
-    FILE* f = fopen(format_temp("%.*s\n", path.length, path.data), "r");
+    FILE* f = fopen(format_temp("%.*s", path.length, path.data), "r");
 
     if (f) {
         fclose(f);
