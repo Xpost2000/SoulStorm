@@ -111,6 +111,7 @@ void bigfile_archive_write_to_file(string filename, string* files_to_embed, u64 
     for (unsigned file_index = 0; file_index < files_to_embed_length; ++file_index) {
         auto& file_buffer = file_buffers[file_index];
         serialize_bytes(&file_serializer, file_buffer.buffer, file_buffer.length);
+        _debugprintf("Serialized %d bytes\n", file_buffer.length);
     }
 
     // bye

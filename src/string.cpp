@@ -204,11 +204,12 @@ string string_concatenate(Memory_Arena* arena, string a, string b) {
 
 string string_clone(Memory_Arena* arena, string a) {
     string result = {};
-    result.data    = (char*)arena->push_unaligned(a.length);
+    result.data    = (char*)arena->push_unaligned(a.length+1);
     result.length  = a.length;
     for (s32 index = 0; index < a.length; ++index) {
         result.data[index] = a.data[index];
     }
+    result.data[a.length] = 0;
     return result;
 }
 

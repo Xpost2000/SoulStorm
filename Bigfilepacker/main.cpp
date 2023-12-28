@@ -29,7 +29,7 @@ static void add_files(string* files, int* write, string pathname) {
     if (is_path_directory(pathname)) {
         auto listing = directory_listing_list_all_files_in(&bigarena, pathname);
         for (int i = 2; i < listing.count; ++i) {
-            string clone = string_clone(&bigarena, string_from_cstring(format_temp("%s%s", listing.basename, listing.files[i].name)));
+            string clone = string_clone(&bigarena, string_from_cstring(format_temp("%s/%s", listing.basename, listing.files[i].name)));
             add_files(files, write, clone);
         }
     } else {
@@ -39,7 +39,7 @@ static void add_files(string* files, int* write, string pathname) {
 }
 
 int main(int argc, char** argv) {
-    bigarena = Memory_Arena((char*)"bigarena", Kilobyte(16));
+    bigarena = Memory_Arena((char*)"bigarena", Megabyte(128)); // go crazy man.
     if (argc <= 2)  {
         printf("bigfilemake <outname> <... filenames>");
         return 1;
@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
 
         int files_to_embed_count = argc-2;
         string* files_to_embed = new string[20000]; // lol
+        zero_memory(files_to_embed, 20000 * sizeof(*files_to_embed));
         int write = 0;
         for (int i = 2; i < argc; ++i) {
             add_files(files_to_embed, &write, string_from_cstring(argv[i]));

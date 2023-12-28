@@ -71,7 +71,7 @@ string file_buffer_as_string(struct file_buffer* buffer) {
 }
 
 bool OS_file_exists(string path) {
-    FILE* f = fopen(path.data, "r");
+    FILE* f = fopen(format_temp("%.*s\n", path.length, path.data), "r");
 
     if (f) {
         fclose(f);
@@ -82,16 +82,17 @@ bool OS_file_exists(string path) {
 }
 
 size_t OS_file_length(string path) {
-    _debugprintf("Reading file length of \"%.*s\"", path.length, path.data);
     size_t result = 0;
     FILE*  file   = fopen(path.data, "rb+");
 
     if (file) {
         fseek(file, 0, SEEK_END);
         result = ftell(file);
+        _debugprintf("Success in reading \"%.*s\"!", path.length, path.data);
         fclose(file);
     }
 
+    _debugprintf("Reading file length of \"%.*s\" (%lld bytes)", path.length, path.data, result);
     return result;
 }
 
