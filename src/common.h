@@ -591,6 +591,14 @@ inline local bool is_4_by_3_resolution(int x, int y) {
     return f32_close_enough(safe_ratio(x, y), ratio, 0.01f); 
 }
 
+inline local bool is_pot64(u64 x) {
+    return ((x & (x-1)) == 0) && x > 0;
+}
+
+inline local bool is_pot32(u32 x) {
+    return ((x & (x-1)) == 0) && x > 0;
+}
+
 inline local s64 nearest_pot64(s64 x) {
     for (int i = 0; i < 64; ++i) {
         s64 candidate = (1LL << i);

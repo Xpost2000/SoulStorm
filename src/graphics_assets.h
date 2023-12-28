@@ -15,6 +15,30 @@ typedef struct image_id { s32 index=0; } image_id;
 typedef struct font_id  { s32 index=0; } font_id;
 typedef struct sprite_id { s32 index=0; } sprite_id;
 
+struct Texture_Atlas_Sub_Image {
+    image_id original_asset;     // Should be unloaded (not paged in memory), but metadata is still present
+    rectangle_f32 subrectangle;
+};
+
+// Obtain subrectangles by using the original asset as a key. This allows me to gradually migrate the code
+// to start using the atlases.
+
+/*
+  NOTE:
+
+  These are not intended to be a separate asset type. This is just "semantic" information
+  attached to an image_id.
+
+  Which is a bit unusual, but I do not see the need to complicate the implementation of graphics
+  driver by separating textures and atlases.
+*/
+struct Texture_Atlas { 
+    image_id                 atlas_image_id;
+    s32                      subimage_count;
+    Texture_Atlas_Sub_Image* subimages;
+
+    rectangle_f32 get_subrect(image_id subimage);
+};
 
 // This is new code, compared to the stuff below, LOL
 struct Sprite_Frame {
@@ -52,6 +76,7 @@ Sprite_Instance sprite_instance(sprite_id id);
 enum asset_status {
     ASSET_STATUS_UNLOADED,
     ASSET_STATUS_LOADED,
+    ASSET_STATUS_PERMENANTLY_LOADED,
 };
 
 class Graphics_Driver;
@@ -80,6 +105,7 @@ f32                 font_cache_text_height(struct font_cache* font_cache);
 f32                 font_cache_text_width(struct font_cache* font_cache, string text, f32 scale);
 f32                 font_cache_calculate_height_of(struct font_cache* font_cache, string str, f32 width_bounds, f32 scale);
 
+struct image_buffer image_buffer_create_blank(u32 width, u32 height);
 struct image_buffer image_buffer_load_from_file(string file_path);
 void                image_buffer_pad_to_POT(struct image_buffer* image);
 void                image_buffer_write_to_disk(struct image_buffer* image, string as);
@@ -101,5 +127,22 @@ image_id               graphics_assets_get_image_by_filepath(struct graphics_ass
 font_id                graphics_assets_load_bitmap_font(struct graphics_assets* assets, string path, s32 tile_width, s32 tile_height, s32 atlas_rows, s32 atlas_columns);
 struct font_cache*     graphics_assets_get_font_by_id(struct graphics_assets* assets, font_id font);
 struct image_buffer*   graphics_assets_get_image_by_id(struct graphics_assets* assets, image_id image);
+
+// Texture Atlas procedures
+/*
+ * NOTE: in reality, I should've also made Sprites work the same way, however it's annoying to change this right now,
+ * and it's not needed. However, I would probably just keep graphics_assets to basically only images and fonts, since those are distinct
+ * enough to really matter.
+ *
+ * Most other assets are compound assets so they would not matter so much.
+ *
+ * NOTE: unloading a texture atlas is undefined since this is intended to be used on 
+ *       permenant assets, which are never unloaded.
+ *
+ *       It is possible to reload an atlas technically as long as you keep the original atlas object, but
+ *       that would be very odd to use.
+ */
+Texture_Atlas          graphics_assets_construct_texture_atlas_image(struct graphics_assets* assets, image_id* images, size_t image_count);
+void                   graphics_assets_texture_atlas_unload_original_subimages(struct graphics_assets* assets, const Texture_Atlas& texture_atlas);
 
 #endif

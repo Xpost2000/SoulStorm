@@ -25,6 +25,11 @@
 void image_buffer_pad_to_POT(struct image_buffer* image) {
     assert(image->pixels && "This should only be called on an existing image.");
 
+    if (image->pot_square_size != 0) {
+        _debugprintf("Image already POT & square, no need to pad");
+        return;
+    }
+
     image->pot_square_size = max<u32>(
         nearest_pot32(image->width),
         nearest_pot32(image->height)
@@ -48,6 +53,23 @@ void image_buffer_pad_to_POT(struct image_buffer* image) {
 
     free(image->pixels);
     image->pixels = rescaled_image_buffer;
+}
+
+local void _image_buffer_auto_fill_pot_square_size(struct image_buffer* image) {
+    if (image->width == image->height && is_pot32(image->width)) {
+        image->pot_square_size = image->width;
+    }
+}
+
+struct image_buffer image_buffer_create_blank(u32 width, u32 height) {
+    struct image_buffer result;
+    result.width = width;
+    result.height = height;
+    result.pixels = (u8*)malloc(width * height * 4);
+    result.pot_square_size = 0;
+    zero_memory(result.pixels, width * height * 4);
+    _image_buffer_auto_fill_pot_square_size(&result);
+    return result;
 }
 
 struct image_buffer image_buffer_load_from_file(string filepath) {
@@ -81,6 +103,7 @@ struct image_buffer image_buffer_load_from_file(string filepath) {
     result.width  = width;
     result.height = height;
     result.pot_square_size = 0;
+    _image_buffer_auto_fill_pot_square_size(&result);
     return result;
 }
 
@@ -231,6 +254,11 @@ void graphics_assets_unload_image(struct graphics_assets* assets, image_id img) 
     s32 index = img.index-1;
     auto img_buffer = graphics_assets_get_image_by_id(assets, img);
 
+    if (assets->image_asset_status[index] == ASSET_STATUS_PERMENANTLY_LOADED) {
+        _debugprintf("Cannot unload image id %d, because it is a PERMENANT asset", img.index);
+        return;
+    }
+
     if (assets->image_asset_status[index] != ASSET_STATUS_UNLOADED) {
         _debugprintf("Unloading image id %d\n", img.index);
         image_buffer_free(img_buffer);
@@ -338,5 +366,113 @@ void Sprite_Instance::animate(struct graphics_assets* graphics_assets, f32 dt, f
             frame = start;  
         } 
         frame_timer = 0;
+    }
+}
+
+rectangle_f32 Texture_Atlas::get_subrect(image_id subimage) {
+    for (s32 index = 0; index < subimage_count; ++index) {
+        if (subimages[index].original_asset.index == subimage.index) {
+            return subimages[index].subrectangle;
+        }
+    } 
+
+    return RECTANGLE_F32_NULL;
+}
+
+Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_assets* assets, image_id* images, size_t image_count) {
+    _debugprintf("Constructing texture atlas from %d images", image_count);
+
+    // I will try to tightly fit these, but otherwise just assemble the atlas in a "not so smart" way
+    Texture_Atlas result;
+
+    result.atlas_image_id;
+    result.subimage_count = image_count;
+    result.subimages      = (Texture_Atlas_Sub_Image*)assets->arena->push_unaligned(sizeof(*result.subimages) * image_count);
+
+    u32 image_pot_size = (1 << 8); // 256 default size test...
+
+    u32 write_x = 0;
+    u32 write_y = 0;
+
+    {
+        bool complete = false;
+        while (!complete) {
+            write_x = 0;
+            write_y = 0;
+
+            for (u32 index = 0; index < image_count; ++index) {
+                struct image_buffer* img = graphics_assets_get_image_by_id(assets, images[index]);
+                write_x += img->width;
+
+                if (write_x >= image_pot_size) {
+                    write_x = 0;
+                    write_y += img->height;
+                }
+            }
+
+            if (write_y > image_pot_size) {
+                image_pot_size = nearest_pot32(write_y);
+            } else {
+                complete = true;
+                _debugprintf("Texture atlas simplest fit determined to be %dx%d", image_pot_size);
+            }
+        }
+    }
+
+    _debugprintf("Assembling final atlas");
+
+    {
+        write_x = 0;
+        write_y = 0;
+
+        image_id             new_id    = image_id { .index = (s32)assets->image_count + 1 };
+        struct image_buffer* new_image = &assets->images[assets->image_count];
+        u8*                  status_field        = &assets->image_asset_status[assets->image_count];
+        string*              new_filepath_string = &assets->image_file_strings[assets->image_count++];
+
+        *new_filepath_string                     = memory_arena_push_string(assets->arena, string_from_cstring(format_temp("$(atlas%d)$", assets->image_count-1)));
+        *new_image                               = image_buffer_create_blank(image_pot_size, image_pot_size);
+        *status_field                            = ASSET_STATUS_PERMENANTLY_LOADED;
+
+        for (u32 index = 0; index < image_count; ++index) {
+            struct image_buffer* img             = graphics_assets_get_image_by_id(assets, images[index]);
+            auto&               subimage_object = result.subimages[index];
+
+            subimage_object.original_asset = images[index];
+            subimage_object.subrectangle   = rectangle_f32(write_x, write_y, img->width, img->height);
+
+            {
+                for (u32 y = 0; y < img->height; ++y) {
+                    u32 final_write_y = write_y + y;
+                    for (u32 x = 0; x < img->width; ++x) {
+                        u32 final_write_x = write_x + x;
+
+                        new_image->pixels[final_write_y * image_pot_size*4 + (final_write_x*4) + 0] = img->pixels[y * img->width*4 + (x * 4) + 0];
+                        new_image->pixels[final_write_y * image_pot_size*4 + (final_write_x*4) + 1] = img->pixels[y * img->width*4 + (x * 4) + 1];
+                        new_image->pixels[final_write_y * image_pot_size*4 + (final_write_x*4) + 2] = img->pixels[y * img->width*4 + (x * 4) + 2];
+                        new_image->pixels[final_write_y * image_pot_size*4 + (final_write_x*4) + 3] = img->pixels[y * img->width*4 + (x * 4) + 3];
+                    }
+                }
+            }
+
+            write_x += img->width;
+            if (write_x >= image_pot_size) {
+                write_x = 0;
+                write_y += img->height;
+            }
+        }
+
+        result.atlas_image_id = new_id;
+    }
+
+    _debugprintf("Atlas writing completed");
+    return result;
+}
+
+void graphics_assets_texture_atlas_unload_original_subimages(struct graphics_assets* assets, const Texture_Atlas& texture_atlas) {
+    _debugprintf("Unloading all original assets to reduce redundancy");
+    for (s32 index = 0; index < texture_atlas.subimage_count; ++index) {
+        auto& subimage = texture_atlas.subimages[index];
+        graphics_assets_unload_image(assets, subimage.original_asset);
     }
 }
