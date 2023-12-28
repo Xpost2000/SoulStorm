@@ -41,3 +41,8 @@ void Null_Graphics_Driver::upload_font(struct graphics_assets* assets, font_id f
 void Null_Graphics_Driver::screenshot(char* where) {
     _debugprintf("Null driver screenshot is nop");
 }
+
+
+const char* Null_Graphics_Driver::get_name(void) {
+    return "(NULL Graphics Driver)";
+}

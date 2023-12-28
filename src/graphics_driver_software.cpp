@@ -81,3 +81,7 @@ void Software_Renderer_Graphics_Driver::screenshot(char* where) {
     //stbi_write_bmp(where, default_framebuffer.width, default_framebuffer.height, 1, default_framebuffer.pixels);
   //  stbi_write_jpg(where, default_framebuffer.width, default_framebuffer.height, 0, default_framebuffer.pixels, 0);
 }
+
+const char* Software_Renderer_Graphics_Driver::get_name(void) {
+    return "(Software Renderer)";
+}

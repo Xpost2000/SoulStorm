@@ -80,6 +80,8 @@ public:
     //                     if it is an enumerable display mode.
     s32                    find_index_of_resolution(s32 w, s32 h);
     virtual void screenshot(char* where) = 0;
+
+    virtual const char* get_name(void);
 protected:
     SDL_Window* game_window = nullptr;
 private:

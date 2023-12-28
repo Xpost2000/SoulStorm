@@ -591,8 +591,11 @@ void engine_main_loop() {
 
     {
         f32 average_frametime = get_average_frametime();
-        snprintf(window_name_title_buffer, 256, "BH(%s) - instant fps: %d, (%f ms)", _build_flags, (int)(1.0/(f32)average_frametime), average_frametime);
-        SDL_SetWindowTitle(global_game_window, window_name_title_buffer);
+        // snprintf(window_name_title_buffer, 256, "BH(%s) - instant fps: %d, (%f ms)", _build_flags, (int)(1.0/(f32)average_frametime), average_frametime);
+        SDL_SetWindowTitle(
+            global_game_window,
+            format_temp("BH(%s) - fps: %d, (%f ms) RENDER: %s", _build_flags, (int)(1.0/(f32)average_frametime), average_frametime, global_graphics_driver->get_name())
+        );
     }
 
     Global_Engine()->scratch_arena.clear();

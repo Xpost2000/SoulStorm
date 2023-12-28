@@ -51,3 +51,7 @@ void Graphics_Driver::unload_texture(struct graphics_assets* assets, image_id im
 void Graphics_Driver::unload_font(struct graphics_assets* assets, font_id image) {
     _debugprintf("Default unload_font is NOP");
 }
+
+const char* Graphics_Driver::get_name(void) {
+    return "(Generic Graphics Driver)";
+}

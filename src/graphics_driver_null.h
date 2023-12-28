@@ -20,6 +20,7 @@ public:
     void upload_texture(struct graphics_assets* assets, image_id image);
     void upload_font(struct graphics_assets* assets, font_id font);
     void screenshot(char* where);
+    const char* get_name(void);
 };
 
 #endif
