@@ -8,6 +8,12 @@
 struct image_buffer {
     u32 width;
     u32 height;
+    
+    // rescale when needed for
+    // targets that only work POT
+    // like OpenGL ES or WebGL...
+    u32 pot_square_size; // This is a dumb POT scale. No rectangular textures here though. Bye bye memory!
+
     union {
         u8* pixels;
         u32* pixels_u32;

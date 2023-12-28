@@ -11,7 +11,45 @@
 
 // Image Buffer
 
+// NOTE: I wish I could get these to work with the memory arena system
+// but for now that would require changing a lot of code. If I feel like it, I will
+// change this in the future.
+//
+// However, it's really more important that persistent game state uses the arena since it's
+// not really deallocated. A lot of this is primarily cruft from Legends anyway, but it does work
+// and relatively well enough considering that was more complicated than this, which is why I'm not
+// changing much...
+
 /* doesn't take an allocator because of the way stb image works... */
+
+void image_buffer_pad_to_POT(struct image_buffer* image) {
+    assert(image->pixels && "This should only be called on an existing image.");
+
+    image->pot_square_size = max<u32>(
+        nearest_pot32(image->width),
+        nearest_pot32(image->height)
+    );
+
+    assert(image->pot_square_size >= image->width &&
+           image->pot_square_size >= image->height &&
+           "Uh, I'm not sure how this happened, but the padded image should be bigger.");
+
+    u8* rescaled_image_buffer = (u8*)malloc(image->pot_square_size * image->pot_square_size * 4);
+
+    zero_memory(rescaled_image_buffer, image->pot_square_size * image->pot_square_size * 4);
+    for (u32 y = 0; y < image->height; ++y) {
+        for (u32 x = 0; x < image->width; ++x) {
+            rescaled_image_buffer[y * (image->pot_square_size*4) + (x*4) + 0] = image->pixels[y * (image->height * 4) + (x * 4) + 0];
+            rescaled_image_buffer[y * (image->pot_square_size*4) + (x*4) + 1] = image->pixels[y * (image->height * 4) + (x * 4) + 1];
+            rescaled_image_buffer[y * (image->pot_square_size*4) + (x*4) + 2] = image->pixels[y * (image->height * 4) + (x * 4) + 2];
+            rescaled_image_buffer[y * (image->pot_square_size*4) + (x*4) + 3] = image->pixels[y * (image->height * 4) + (x * 4) + 3];
+        }
+    }
+
+    free(image->pixels);
+    image->pixels = rescaled_image_buffer;
+}
+
 struct image_buffer image_buffer_load_from_file(string filepath) {
     s32 width;
     s32 height;
@@ -42,6 +80,7 @@ struct image_buffer image_buffer_load_from_file(string filepath) {
     result.pixels = image_buffer;
     result.width  = width;
     result.height = height;
+    result.pot_square_size = 0;
     return result;
 }
 

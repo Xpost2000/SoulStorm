@@ -81,6 +81,7 @@ f32                 font_cache_text_width(struct font_cache* font_cache, string 
 f32                 font_cache_calculate_height_of(struct font_cache* font_cache, string str, f32 width_bounds, f32 scale);
 
 struct image_buffer image_buffer_load_from_file(string file_path);
+void                image_buffer_pad_to_POT(struct image_buffer* image);
 void                image_buffer_write_to_disk(struct image_buffer* image, string as);
 void                image_buffer_free(struct image_buffer* image);
 

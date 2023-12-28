@@ -351,6 +351,9 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
     s32 stride       = framebuffer->width;
     s32 image_stride = image->width;
 
+    if (image->pot_square_size) {
+        image_stride = image->pot_square_size;
+    }
 
     f32 c = cosf(degree_to_radians(angle));
     f32 s = sinf(degree_to_radians(angle));
