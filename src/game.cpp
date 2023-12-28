@@ -506,12 +506,13 @@ void Game::init(Graphics_Driver* driver) {
 
     resources->graphics_assets   = graphics_assets_create(arena, 16, 512, 512);
     if (load_preferences_from_disk(&preferences, string_literal("preferences.lua"))) {
-        confirm_preferences(&preferences, resources);
     }
     else {
         // the main code will provide us with a default
         // preferences struct.
+        save_preferences_to_disk(&preferences, string_literal("preferences.lua"));
     }
+    confirm_preferences(&preferences, resources);
     update_preferences(&temp_preferences, &preferences);
 
     

@@ -606,9 +606,11 @@ local void set_graphics_device(s32 id) {
 
     switch (id) {
         case GRAPHICS_DEVICE_SOFTWARE: {
+            _debugprintf("Using software graphics device");
             global_graphics_driver = &global_software_renderer_driver;
         } break;
         case GRAPHICS_DEVICE_OPENGL: {
+            _debugprintf("Using opengl graphics device");
             unimplemented("not here yet.");
         } break;
     }

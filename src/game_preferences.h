@@ -10,16 +10,16 @@
 struct Game_Preferences {
     // NOTE: these are computed
     //       from the resolution_option_index + graphics_driver.
-    s32  width;
-    s32  height;
+    s32  width = 1024;
+    s32  height = 768;
 
     s32  resolution_option_index;
 
-    f32 music_volume;
-    f32 sound_volume;
+    f32 music_volume = 0.5;
+    f32 sound_volume = 0.5;
 
-    bool fullscreen;
-    bool controller_vibration;
+    bool fullscreen = false;
+    bool controller_vibration = true;
 };
 
 // NOTE: implemented in main.cpp, since it's kind of platform layer code
