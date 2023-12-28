@@ -26,5 +26,6 @@ typedef struct IAllocator {
 
 struct Memory_Arena; // forward decl
 IAllocator memory_arena_allocator(Memory_Arena* allocator);
+IAllocator heap_allocator(void);
 
 #endif

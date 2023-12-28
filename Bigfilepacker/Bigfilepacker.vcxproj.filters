@@ -27,6 +27,9 @@
     <ClInclude Include="..\src\serializer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="bigfile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -45,6 +48,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\serializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\allocators.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bigfile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

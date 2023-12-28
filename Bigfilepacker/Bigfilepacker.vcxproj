@@ -141,13 +141,16 @@
     <ClInclude Include="..\src\common.h" />
     <ClInclude Include="..\src\file_buffer.h" />
     <ClInclude Include="..\src\serializer.h" />
+    <ClInclude Include="bigfile.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\allocators.cpp" />
     <ClCompile Include="..\src\common.cpp" />
     <ClCompile Include="..\src\memory_arena.cpp" />
     <ClCompile Include="..\src\serializer.cpp" />
     <ClCompile Include="..\src\string.cpp" />
     <ClCompile Include="..\src\v2.cpp" />
+    <ClCompile Include="bigfile.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
