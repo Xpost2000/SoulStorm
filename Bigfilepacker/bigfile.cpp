@@ -1,26 +1,37 @@
 #include "bigfile.h"
 
-Bigfile_Archive::Bigfile_Archive() {
-    
+Bigfile_Archive::Bigfile_Archive() :
+    raw_data(nullptr),
+    raw_data_length(0),
+    entry_count(0),
+    entries(nullptr),
+    blob_data(nullptr)
+{
 }
 
 Bigfile_Archive::~Bigfile_Archive() {
     
 }
 
-void Bigfile_Archive::open(string filepath) {
-    struct file_buffer filebuffer = OS_read_entire_file(heap_allocator(), filepath);
-    raw_data                      = filebuffer.buffer; // take ownership of the blob
-    raw_data_length               = filebuffer.length;
+bool Bigfile_Archive::open(string filepath) {
+    if (OS_file_exists(filepath)) {
+        struct file_buffer filebuffer = OS_read_entire_file(heap_allocator(), filepath);
+        raw_data                      = filebuffer.buffer; // take ownership of the blob
+        raw_data_length               = filebuffer.length;
 
-    {
-        u8* read_pointer = raw_data;
-        entry_count = *((u64*)(read_pointer));
-        read_pointer += sizeof(u64);
-        entries   = (Bigfile_Entry*)read_pointer;
-        read_pointer += sizeof(Bigfile_Entry) * entry_count;
-        blob_data = (u8*)read_pointer;
+        {
+            u8* read_pointer = raw_data;
+            entry_count = *((u64*)(read_pointer));
+            read_pointer += sizeof(u64);
+            entries   = (Bigfile_Entry*)read_pointer;
+            read_pointer += sizeof(Bigfile_Entry) * entry_count;
+            blob_data = (u8*)read_pointer;
+        }
+
+        return true;
     }
+
+    return false;
 }
 
 local string unixify_pathname(string original) {

@@ -29,7 +29,7 @@ public:
     Bigfile_Archive();
     ~Bigfile_Archive();
 
-    void           open(string filepath);
+    bool           open(string filepath);
     Bigfile_Entry* find(string name);
     void           finish(void);
     u8*            get_blob_bytes(u64 offset_to_start);

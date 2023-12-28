@@ -17,6 +17,7 @@
 #include "game_ui.h"
 
 #include "action_mapper.h"
+#include "virtual_file_system.h"
 
 local float replay_timescale_choices[] = {
     0.25f,
@@ -460,6 +461,8 @@ void Game::init(Graphics_Driver* driver) {
     this->resources = (Game_Resources*)arena->push_unaligned(sizeof(*this->resources));
     this->state = (Game_State*)arena->push_unaligned(sizeof(*this->state)); (new (this->state) Game_State);
     this->state->resources = resources;
+
+    VFS_mount_archive(string_literal("./data.bigfile"));
 
     if (!Action::load(string_literal("controls.lua"))) {
         // setup input
