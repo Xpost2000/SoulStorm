@@ -1,5 +1,6 @@
 #include "game_state.h"
 #include "stage.h"
+#include "virtual_file_system.h"
 
 extern "C" {
     #include <lua.h>
@@ -23,7 +24,14 @@ extern "C" {
 Stage_State stage_load_from_lua(Game_State* state, const char* lua_filename) {
     Stage_State result = {};
     result.L = state->alloc_lua_bindings();
+
+#ifdef EXPERIMENTAL_VFS
+    auto scripttext = VFS_read_entire_file(heap_allocator(), string_from_cstring((char*)lua_filename));
+    s32 error = (luaL_dostring(result.L, (const char*)scripttext.buffer));
+    file_buffer_free(&scripttext);
+#else
     s32 error = (luaL_dofile(result.L, lua_filename));
+#endif
     switch (error) {
         case 0: { } break;
         default: {
