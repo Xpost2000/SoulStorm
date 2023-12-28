@@ -591,6 +591,28 @@ inline local bool is_4_by_3_resolution(int x, int y) {
     return f32_close_enough(safe_ratio(x, y), ratio, 0.01f); 
 }
 
+inline local s64 nearest_pot64(s64 x) {
+    for (int i = 0; i < 64; ++i) {
+        s64 candidate = (1LL << i);
+
+        if (candidate >= x)
+            return candidate;
+    }
+
+    return -1; // ???
+}
+
+inline local s32 nearest_pot32(s32 x) {
+    for (int i = 0; i < 32; ++i) {
+        s32 candidate = (1 << i);
+
+        if (candidate >= x)
+            return candidate;
+    }
+
+    return -1; // ???
+}
+
 struct Directory_File {
     char    name[260];
     size_t  filesize;
