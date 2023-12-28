@@ -16,7 +16,7 @@
   Simpler than the previous format used in legends as that format intended to be more
   general purpose.
 */
-#define MAX_BIGFILE_PATHNAME_LENGTH (260)
+#define MAX_BIGFILE_PATHNAME_LENGTH (128)
 struct Bigfile_Entry {
     char name[MAX_BIGFILE_PATHNAME_LENGTH];
     u64  offset_to_start; // relative to the blob_data. Not from the raw_data.

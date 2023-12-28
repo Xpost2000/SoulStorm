@@ -230,6 +230,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Bigfilepacker\bigfile.cpp" />
     <ClCompile Include="..\src\achievements.cpp" />
     <ClCompile Include="..\src\action_mapper.cpp" />
     <ClCompile Include="..\src\allocators.cpp" />
@@ -283,11 +284,13 @@
     <ClCompile Include="..\src\v2_lua_bindings.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Bigfilepacker\bigfile.h" />
     <ClInclude Include="..\src\achievements.h" />
     <ClInclude Include="..\src\achievement_list.h" />
     <ClInclude Include="..\src\action_mapper.h" />
     <ClInclude Include="..\src\allocators.h" />
     <ClInclude Include="..\src\audio.h" />
+    <ClInclude Include="..\src\bigfile.h" />
     <ClInclude Include="..\src\color.h" />
     <ClInclude Include="..\src\common.h" />
     <ClInclude Include="..\src\debug_ui.h" />

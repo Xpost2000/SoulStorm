@@ -82,6 +82,7 @@ bool OS_file_exists(string path) {
 }
 
 size_t OS_file_length(string path) {
+    _debugprintf("Reading file length of \"%.*s\"", path.length, path.data);
     size_t result = 0;
     FILE*  file   = fopen(path.data, "rb+");
 
@@ -96,12 +97,14 @@ size_t OS_file_length(string path) {
 
 void OS_read_entire_file_into_buffer(string path, u8* buffer, size_t buffer_length) {
     FILE* file = fopen(path.data, "rb+");
-    fread(buffer, 1, buffer_length, file);
-    fclose(file);
+    if (file) {
+        fread(buffer, 1, buffer_length, file);
+        fclose(file);
+    }
 }
 
 struct file_buffer OS_read_entire_file(IAllocator allocator, string path) {
-    _debugprintf("file buffer create!");
+    _debugprintf("file buffer create (\"%.*s\")", path.length, path.data);
     size_t file_size   = OS_file_length(path);
     u8*    file_buffer = (u8*)allocator.alloc(&allocator, file_size+1);
     OS_read_entire_file_into_buffer(path, file_buffer, file_size);

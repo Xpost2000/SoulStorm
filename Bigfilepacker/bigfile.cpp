@@ -23,7 +23,37 @@ void Bigfile_Archive::open(string filepath) {
     }
 }
 
+local string unixify_pathname(string original) {
+    static char buffer[MAX_BIGFILE_PATHNAME_LENGTH];
+
+    int write = 0;
+    int i = 0;
+
+    while (i < original.length) {
+        switch (original.data[i]) {
+            case '/':
+            case '\\': {
+                buffer[write++] = '/';
+                while (original.data[i] == '\\' ||
+                       original.data[i] == '/'  &&
+                       i < original.length) {
+                    i++;
+                }
+
+            } break;
+            default: {
+                buffer[write++] = original.data[i++];
+            } break;
+        }
+    }
+
+    buffer[write++] = '\0';
+    return string_from_cstring(buffer);
+}
+
 Bigfile_Entry* Bigfile_Archive::find(string name) {
+    name = unixify_pathname(name);
+
     for (unsigned index = 0; index < entry_count; ++index) {
         auto&  entry      = entries[index];
         string entry_name = string_from_cstring(entry.name);
@@ -65,8 +95,10 @@ void bigfile_archive_write_to_file(string filename, string* files_to_embed, u64 
         string entry_name = files_to_embed[file_index];
         auto&  entry      = entries_array[file_index];
 
+        assert(entry_name.data);
         file_buffers[file_index] = OS_read_entire_file(heap_allocator(), entry_name);
-        copy_string_into_cstring(entry_name, entry.name, MAX_BIGFILE_PATHNAME_LENGTH);
+        zero_array(entry.name);
+        copy_string_into_cstring(unixify_pathname(entry_name), entry.name, MAX_BIGFILE_PATHNAME_LENGTH);
         entry.offset_to_start = write_offset;
         entry.length          = file_buffers[file_index].length;
 
