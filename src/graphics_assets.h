@@ -145,4 +145,6 @@ struct image_buffer*   graphics_assets_get_image_by_id(struct graphics_assets* a
 Texture_Atlas          graphics_assets_construct_texture_atlas_image(struct graphics_assets* assets, image_id* images, size_t image_count);
 void                   graphics_assets_texture_atlas_unload_original_subimages(struct graphics_assets* assets, const Texture_Atlas& texture_atlas);
 
+void                   DEBUG_graphics_assets_dump_all_images(struct graphics_assets* assets, string directory);
+
 #endif

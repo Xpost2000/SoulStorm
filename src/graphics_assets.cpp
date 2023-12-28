@@ -207,6 +207,8 @@ struct graphics_assets graphics_assets_create(Memory_Arena* arena, u32 font_limi
 }
 
 void graphics_assets_finish(struct graphics_assets* assets) {
+    DEBUG_graphics_assets_dump_all_images(assets, string_literal("DEBUG_dump_graphics_assets/"));
+
     for (unsigned image_index = 0; image_index < assets->image_count; ++image_index) {
         struct image_buffer* image = assets->images + image_index;
         _debugprintf("destroying img: %p (%d) (%dx%d %p)", image, image_index, image->width, image->height, image->pixels);
@@ -430,7 +432,7 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
         u8*                  status_field        = &assets->image_asset_status[assets->image_count];
         string*              new_filepath_string = &assets->image_file_strings[assets->image_count++];
 
-        *new_filepath_string                     = memory_arena_push_string(assets->arena, string_from_cstring(format_temp("$(atlas%d)$", assets->image_count-1)));
+        *new_filepath_string                     = memory_arena_push_string(assets->arena, string_from_cstring(format_temp("___atlasid%d", assets->image_count-1)));
         *new_image                               = image_buffer_create_blank(image_pot_size, image_pot_size);
         *status_field                            = ASSET_STATUS_PERMENANTLY_LOADED;
 
@@ -475,4 +477,26 @@ void graphics_assets_texture_atlas_unload_original_subimages(struct graphics_ass
         auto& subimage = texture_atlas.subimages[index];
         graphics_assets_unload_image(assets, subimage.original_asset);
     }
+}
+
+// I need this to verify that the texture atlas is actually doing what it's supposed to...
+void DEBUG_graphics_assets_dump_all_images(struct graphics_assets* assets, string directory) {
+#ifdef RELEASE
+#else
+    _debugprintf("dumping all loaded image assets.");
+
+    for (unsigned index = 0; index < assets->image_count; ++index) {
+        auto& image = assets->images[index];
+        auto file_string = assets->image_file_strings[index];
+        image_buffer_write_to_disk(
+            &image,
+            string_from_cstring(
+                format_temp("%.*s/%.*s.png",
+                            directory.length, directory.data,
+                            file_string.length, file_string.data
+                )
+            )
+        );
+    }
+#endif
 }
