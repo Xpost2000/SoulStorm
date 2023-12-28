@@ -32,6 +32,7 @@ public:
     void           open(string filepath);
     Bigfile_Entry* find(string name);
     void           finish(void);
+    u8*            get_blob_bytes(u64 offset_to_start);
 private:
     u8* raw_data;
     u64 raw_data_length;

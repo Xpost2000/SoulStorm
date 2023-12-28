@@ -76,6 +76,10 @@ void Bigfile_Archive::finish(void) {
     raw_data = nullptr;
 }
 
+u8* Bigfile_Archive::get_blob_bytes(u64 offset_to_start) {
+    return (blob_data + offset_to_start);
+}
+
 void bigfile_archive_write_to_file(string filename, string* files_to_embed, u64 files_to_embed_length) {
     struct binary_serializer file_serializer     = open_write_file_serializer(filename);
     struct file_buffer*      file_buffers        = nullptr;

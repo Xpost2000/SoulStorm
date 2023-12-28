@@ -293,6 +293,7 @@
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
     </ClCompile>
     <ClCompile Include="..\src\v2_lua_bindings.cpp" />
+    <ClCompile Include="..\src\virtual_file_system.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Bigfilepacker\bigfile.h" />
@@ -342,6 +343,7 @@
     <ClInclude Include="..\src\thread_pool.h" />
     <ClInclude Include="..\src\title_screen_mode.h" />
     <ClInclude Include="..\src\v2.h" />
+    <ClInclude Include="..\src\virtual_file_system.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
