@@ -484,7 +484,7 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
         auto state = &this->state->mainmenu_data;
         auto resolution = driver->resolution();
 
-        state->particle_pool.init(arena, 2500);
+        state->particle_pool.init(arena, 1024);
         
         state->player.position      = V2(resolution.x / 2, resolution.y / 2);
         state->player.scale         = V2(15, 15);

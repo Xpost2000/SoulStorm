@@ -8,6 +8,8 @@
 // NOTE: I know there's a lot of redundantly compiled
 // things because I static inline a lot of small functions.
 
+#define EXPERIMENTAL_VFS
+
 // C stuff
 #include <cstdarg>
 #include <cstdio>

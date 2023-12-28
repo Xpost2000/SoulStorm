@@ -16,14 +16,14 @@
 #include "game_task_scheduler.h"
 
 #define MAX_PICKUP_ENTITIES     (10000)
-#define MAX_BULLETS             (5000)
+#define MAX_BULLETS             (3000)
 #define MAX_SCORE_NOTIFICATIONS (5000)
 #define MAX_ENEMIES             (128)
 #define MAX_EXPLOSION_HAZARDS   (32)
 #define MAX_LASER_HAZARDS       (32)
-#define MAX_SCRIPTABLE_RENDER_OBJECTS (1024)
-#define MAX_TRACKED_SCRIPT_LOADABLE_IMAGES (256)
-#define MAX_TRACKED_SCRIPT_LOADABLE_SOUNDS (256)
+#define MAX_SCRIPTABLE_RENDER_OBJECTS (1000)
+#define MAX_TRACKED_SCRIPT_LOADABLE_IMAGES (64)
+#define MAX_TRACKED_SCRIPT_LOADABLE_SOUNDS (64)
 
 static string menu_font_variation_string_names[] = {
     string_literal("res/fonts/gnsh-bitmapfont-colour1.png"),

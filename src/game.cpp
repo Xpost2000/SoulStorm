@@ -581,6 +581,7 @@ void Game::init(Graphics_Driver* driver) {
 }
 
 void Game::deinit() {
+    VFS_finish();
 }
 
 // Scriptable_Render_Object 

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "engine.h" // for memory arena access
+#include "virtual_file_system.h"
 
 #include "audio.h"
 
@@ -48,7 +49,14 @@ namespace Audio {
                     load_required = false;
 
                     if (loaded_streams[index] == NULL) {
-                        loaded_streams[index] = Mix_LoadMUS(filepath);
+#ifndef EXPERIMENTAL_VFS
+                        struct file_buffer filebuffer = VFS_read_entire_file(memory_arena_allocator(&game_arena), string_from_cstring((char*)filepath));
+                        SDL_RWops*         rw         = SDL_RWFromConstMem(filebuffer.buffer, filebuffer.length);
+                        Mix_Music* new_stream = Mix_LoadMUS_RW(rw, 1);
+#else
+                        Mix_Music* new_stream = Mix_LoadMUS(filepath);
+#endif
+                        loaded_streams[index] = new_stream;
                     }
 
                     break;
@@ -56,10 +64,13 @@ namespace Audio {
             }
 
             if (load_required) {
-                // struct file_buffer filebuffer = read_entire_file(memory_arena_allocator(&game_arena), filepath);
-                // SDL_RWops*         rw         = SDL_RWFromConstMem(filebuffer.buffer, filebuffer.length);
+#ifndef EXPERIMENTAL_VFS
+                struct file_buffer filebuffer = VFS_read_entire_file(memory_arena_allocator(&game_arena), string_from_cstring((char*)filepath));
+                SDL_RWops*         rw         = SDL_RWFromConstMem(filebuffer.buffer, filebuffer.length);
+                Mix_Music* new_stream = Mix_LoadMUS_RW(rw, 1);
+#else
                 Mix_Music* new_stream = Mix_LoadMUS(filepath);
-                // Mix_Music* new_stream = Mix_LoadMUS_RW(rw, 1);
+#endif
 
                 if (new_stream) {
                     _debugprintf("new stream: %p", new_stream);
@@ -79,7 +90,14 @@ namespace Audio {
                     load_required = false;
 
                     if (loaded_samples[index] == NULL) {
-                        loaded_samples[index] = Mix_LoadWAV(filepath);
+#ifndef EXPERIMENTAL_VFS
+                        Mix_Chunk* new_chunk = Mix_LoadWAV(filepath);
+#else
+                        struct file_buffer filebuffer = VFS_read_entire_file(heap_allocator(), string_from_cstring((char*)filepath));
+                        SDL_RWops*         rw         = SDL_RWFromConstMem(filebuffer.buffer, filebuffer.length);
+                        Mix_Chunk* new_chunk = Mix_LoadWAV_RW(rw, 1);
+#endif
+                        loaded_samples[index] = new_chunk;
                     }
 
                     break;
@@ -87,10 +105,13 @@ namespace Audio {
             }
 
             if (load_required) {
-                // struct file_buffer filebuffer = read_entire_file(memory_arena_allocator(&scratch_arena), filepath);
-                // SDL_RWops*         rw         = SDL_RWFromConstMem(filebuffer.buffer, filebuffer.length);
+#ifndef EXPERIMENTAL_VFS
                 Mix_Chunk* new_chunk = Mix_LoadWAV(filepath);
-                // Mix_Chunk* new_chunk = Mix_LoadWAV_RW(rw, 1);
+#else
+                struct file_buffer filebuffer = VFS_read_entire_file(heap_allocator(), string_from_cstring((char*)filepath));
+                SDL_RWops*         rw         = SDL_RWFromConstMem(filebuffer.buffer, filebuffer.length);
+                Mix_Chunk* new_chunk = Mix_LoadWAV_RW(rw, 1);
+#endif
 
                 if (new_chunk) {
                     _debugprintf("new sample: %p", new_chunk);

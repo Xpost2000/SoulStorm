@@ -131,7 +131,7 @@ struct Entity {
     bool  firing        = false;
 
     s32   score_value      = DEFAULT_ENTITY_SCORE_VALUE_PER_HIT;
-    s32   death_multiplier = DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER;
+    s16   death_multiplier = DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER;
 
     bool attack();
     void stop_attack();
@@ -155,10 +155,10 @@ struct Entity {
     bool kill();
 
     // -1 means we'll follow the stage area
-    s32 edge_top_behavior_override = -1;
-    s32 edge_bottom_behavior_override = -1;
-    s32 edge_left_behavior_override = -1;
-    s32 edge_right_behavior_override = -1;
+    s8 edge_top_behavior_override = -1;
+    s8 edge_bottom_behavior_override = -1;
+    s8 edge_left_behavior_override = -1;
+    s8 edge_right_behavior_override = -1;
 
 protected:
     bool touching_left_border(const Play_Area& play_area, bool as_point=false);

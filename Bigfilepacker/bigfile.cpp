@@ -40,6 +40,13 @@ local string unixify_pathname(string original) {
     int write = 0;
     int i = 0;
 
+    if (original.length >= 2) {
+        if (original.data[0] == '.' && (original.data[1] == '\\' || original.data[1] == '/')) {
+            //relative paths might be kind of evil so be careful.
+            i += 2;
+        }
+    }
+
     while (i < original.length) {
         switch (original.data[i]) {
             case '/':
