@@ -530,7 +530,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     emitter.lifetime = 2.0f;
                     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
                     emitter.use_attraction_point = true;
-                    emitter.attraction_point     = portal.position;
                     emitter.attraction_force     = 100.0f;
                     emitter.emission_max_timer = 0.025f;
                 }
@@ -566,7 +565,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     emitter.lifetime = 2.0f;
                     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
                     emitter.use_attraction_point = true;
-                    emitter.attraction_point     = portal.position;
                     emitter.attraction_force     = 100.0f;
                     emitter.emission_max_timer = 0.025f;
                 }
@@ -603,7 +601,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     emitter.lifetime = 2.0f;
                     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
                     emitter.use_attraction_point = true;
-                    emitter.attraction_point     = portal.position;
                     emitter.attraction_force     = 100.0f;
                     emitter.emission_max_timer = 0.025f;
                 }
@@ -643,7 +640,6 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     emitter.lifetime = 2.0f;
                     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
                     emitter.use_attraction_point = true;
-                    emitter.attraction_point     = portal.position;
                     emitter.attraction_force     = 100.0f;
                     emitter.emission_max_timer = 0.025f;
                 }
@@ -705,6 +701,7 @@ void MainMenu_Data::adjust_entities_for_screen_resolution(int new_screen_width, 
                 auto& portal = main_menu_state.portals[i];
                 portal.position             = V2(screen_width * 0.1f + (screen_third*1.15) * i, 80);
                 portal.emitter_main.shape   = particle_emit_shape_circle(portal.position, 25.0f);
+                portal.emitter_vortex.attraction_point     = portal.position;
                 portal.emitter_vortex.shape = particle_emit_shape_circle(portal.position, 100.0f);
             }
         }

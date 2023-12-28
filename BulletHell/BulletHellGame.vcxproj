@@ -32,6 +32,7 @@
     <ProjectGuid>{012cd720-f1d0-467f-9efc-b79c310d06c9}</ProjectGuid>
     <RootNamespace>SoulStormGame</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Game</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -102,18 +103,20 @@
     <IncludePath>$(SolutionDir)..\dependencies\;$(SolutionDir)..\dependencies\msvc-x86-64\include;$(SolutionDir)..\lua54src\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\dependencies\msvc-x86-64\lib\x64;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\../</OutDir>
-    <TargetName>$(ProjectName)_Devel</TargetName>
+    <TargetName>game_devel</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(SolutionDir)..\dependencies\;$(SolutionDir)..\dependencies\msvc-x86-64\include;$(SolutionDir)..\lua54src\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\dependencies\msvc-x86-64\lib\x64;$(SolutionDir)..\SoulStormGame\x64\Release;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\../</OutDir>
+    <TargetName>game</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelaseWithDebugInfo|x64'">
     <IncludePath>$(SolutionDir)..\dependencies\;$(SolutionDir)..\dependencies\msvc-x86-64\include;$(SolutionDir)..\lua54src\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\dependencies\msvc-x86-64\lib\x64;$(SolutionDir)..\SoulStormGame\x64\Release;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\../</OutDir>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>game-reldebug</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -203,6 +206,14 @@
       <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Users\xpost\project-repositories\git\SoulStorm\dependencies\msvc-x86-64\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelaseWithDebugInfo|x64'">
     <ClCompile>
