@@ -41,6 +41,7 @@ struct UI_State {
     font_cache* active_font = nullptr;
 
     struct render_commands* commands = nullptr;
+    struct graphics_assets* assets = nullptr;
 
     Fixed_Array<Widget> widgets;
     bool in_frame;
@@ -399,17 +400,147 @@ namespace GameUI {
             render_commands_push_quad(global_ui_state->commands, inner_rect, color, BLEND_MODE_ALPHA);
         }
     }
+    
+    V2 ninepatch_dimensions(const GameUI_Ninepatch& ninepatch, u32 width, u32 height) {
+        V2 result;
+        result.x = ninepatch.tile_width * (width + 2);
+        result.y = ninepatch.tile_height * (width + 2);
+        return result;
+    }
+
+    void ninepatch(const GameUI_Ninepatch& np, V2 where, u32 width, u32 height, color32f32 modulation, f32 scale) {
+        ninepatch(nullptr, np, where, width, height, modulation, scale);
+    }
+
+    void ninepatch(const Texture_Atlas* texture_atlas, const GameUI_Ninepatch& np, V2 where, u32 width, u32 height, color32f32 modulation, f32 scale) {
+        auto estimated_dimensions = ninepatch_dimensions(np, width, height) * scale;
+        V2 top_left_tile_position = where;
+        V2 top_right_tile_position = where + V2(estimated_dimensions.x - (np.tile_width * scale), 0);
+        V2 bottom_left_tile_position = where + V2(0, estimated_dimensions.y - (np.tile_height * scale));
+        V2 bottom_right_tile_position = where + V2(estimated_dimensions.x - (np.tile_width * scale), estimated_dimensions.y - (np.tile_height * scale));
+        
+        auto commands = global_ui_state->commands;
+        {
+            struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
+            struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.top_left);
+            render_commands_push_image(
+                commands,
+                image,
+                rectangle_f32(top_left_tile_position.x, top_left_tile_position.y, np.tile_width * scale, np.tile_height * scale),
+                source_rectangle,
+                modulation, NO_FLAGS, BLEND_MODE_ALPHA);
+        }
+        {
+            struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
+            struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.top_right);
+            render_commands_push_image(
+                commands,
+                image,
+                rectangle_f32(top_right_tile_position.x, top_right_tile_position.y, np.tile_width * scale, np.tile_height * scale),
+                source_rectangle,
+                modulation, NO_FLAGS, BLEND_MODE_ALPHA);
+        }
+        {
+            struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
+            struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.bottom_left);
+            render_commands_push_image(
+                commands,
+                image,
+                rectangle_f32(bottom_left_tile_position.x, bottom_left_tile_position.y, np.tile_width * scale, np.tile_height * scale),
+                source_rectangle,
+                modulation, NO_FLAGS, BLEND_MODE_ALPHA);
+        }
+        {
+            struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
+            struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.bottom_right);
+            render_commands_push_image(
+                commands,
+                image,
+                rectangle_f32(bottom_right_tile_position.x, bottom_right_tile_position.y, np.tile_width * scale, np.tile_height * scale),
+                source_rectangle,
+                modulation, NO_FLAGS, BLEND_MODE_ALPHA);
+        }
+
+        for (unsigned i = 0; i < height; ++i) {
+            {
+                struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
+                struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.left);
+                render_commands_push_image(
+                    commands,
+                    image,
+                    rectangle_f32(top_left_tile_position.x, ((i+1) * (np.tile_height*scale)) + where.y, np.tile_width * scale, np.tile_height * scale),
+                    source_rectangle,
+                    modulation, NO_FLAGS, BLEND_MODE_ALPHA);
+            }
+            {
+                struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
+                struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.right);
+                render_commands_push_image(
+                    commands,
+                    image,
+                    rectangle_f32(top_right_tile_position.x, ((i+1) * (np.tile_height*scale)) + where.y, np.tile_width * scale, np.tile_height * scale),
+                    source_rectangle,
+                    modulation, NO_FLAGS, BLEND_MODE_ALPHA);
+            }
+
+        }
+
+        for (unsigned i = 0; i < width; ++i) {
+            {
+                struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
+                struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.top);
+                render_commands_push_image(
+                    commands,
+                    image,
+                    rectangle_f32(((i+1) * np.tile_width*scale) + where.x, top_left_tile_position.y, np.tile_width * scale, np.tile_height * scale),
+                    source_rectangle,
+                    modulation, NO_FLAGS, BLEND_MODE_ALPHA);
+            }
+            {
+                struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
+                struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.bottom);
+                render_commands_push_image(
+                    commands,
+                    image,
+                    rectangle_f32(((i+1) * np.tile_width * scale) + where.x, bottom_right_tile_position.y, np.tile_width * scale, np.tile_height * scale),
+                    source_rectangle,
+                    modulation, NO_FLAGS, BLEND_MODE_ALPHA);
+            }
+
+        }
+
+        for (int y = 0; y < ((s32)height); ++y) {
+            for (int x = 0; x < ((s32)width); ++x) {
+                {
+                    struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
+                    struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.center);
+                    render_commands_push_image(
+                        commands,
+                        image,
+                        rectangle_f32(
+                            ((x+1) * np.tile_width * scale) + where.x,
+                            ((y+1) * np.tile_height * scale) + where.y,
+                            np.tile_width * scale,
+                            np.tile_height * scale
+                        ),
+                        source_rectangle,
+                        modulation, NO_FLAGS, BLEND_MODE_ALPHA);
+                }
+            }
+        }
+    }
 
     void initialize(Memory_Arena* arena) {
         global_ui_state         = (UI_State*)arena->push_unaligned(sizeof(*global_ui_state));
         global_ui_state->widgets = Fixed_Array<Widget>(arena, 256);
     }
 
-    void begin_frame(struct render_commands* commands) {
+    void begin_frame(struct render_commands* commands, struct graphics_assets* assets) {
         global_ui_state->widgets.clear();
         global_ui_state->in_frame = true;
         global_ui_state->commands = commands;
         global_ui_state->ate_any_mouse_lefts = false;
+        global_ui_state->assets = assets;
     }
 
     void end_frame() {

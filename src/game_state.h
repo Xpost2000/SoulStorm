@@ -14,6 +14,7 @@
 #include "audio.h"
 
 #include "game_task_scheduler.h"
+#include "game_ui.h"
 
 #define MAX_PICKUP_ENTITIES     (10000)
 #define MAX_BULLETS             (3000)
@@ -561,18 +562,6 @@ inline static Game_State* lua_binding_get_gamestate(lua_State* L) {
     lua_remove(L, lua_gettop(L));
     return state;
 }
-
-struct GameUI_Ninepatch {
-    image_id top_left;
-    image_id top_right;
-    image_id bottom_left;
-    image_id bottom_right;
-    image_id left;
-    image_id right;
-    image_id center;
-    image_id bottom;
-    image_id top;
-};
 
 enum Trophy_Icon_Frame {
     TROPHY_ICON_BLANK  = 0,

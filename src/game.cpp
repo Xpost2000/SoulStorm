@@ -299,6 +299,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         ui_chunky.bottom       = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/bottom.png"));
         ui_chunky.top          = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/top.png"));
         ui_chunky.center       = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/center.png"));
+        ui_chunky.tile_width = ui_chunky.tile_height = 16;
 
         string locked_trophy_paths[] = {
             string_literal("res/img/ui/icons/trophy_locked.png"),
@@ -983,7 +984,7 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
     GameUI::set_ui_id((char*)"ui_options_menu");
-    GameUI::begin_frame(commands);
+    GameUI::begin_frame(commands, &resources->graphics_assets);
     {
 
         f32 y = 100;
@@ -1068,7 +1069,7 @@ void Game::update_and_render_confirm_back_to_main_menu(struct render_commands* c
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
     GameUI::set_ui_id((char*)"ui_confirm_back_to_main_menu");
-    GameUI::begin_frame(commands);
+    GameUI::begin_frame(commands, &resources->graphics_assets);
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -1100,7 +1101,7 @@ void Game::update_and_render_confirm_exit_to_windows(struct render_commands* com
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
     GameUI::set_ui_id((char*)"ui_confirm_exit_to_windows");
-    GameUI::begin_frame(commands);
+    GameUI::begin_frame(commands, &resources->graphics_assets);
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -1149,7 +1150,7 @@ void Game::update_and_render_replay_save_menu(struct render_commands* commands, 
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
 
     GameUI::set_ui_id((char*)"ui_replay_save_menu");
-    GameUI::begin_frame(commands);
+    GameUI::begin_frame(commands, &resources->graphics_assets);
 
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -1327,7 +1328,7 @@ void Game::update_and_render_replay_collection_menu(struct render_commands* comm
     int page_count = replay_files.count / MAX_REPLAYS_PER_PAGE;
     int current_page_display_amount = replay_files.count % MAX_REPLAYS_PER_PAGE;
 
-    GameUI::begin_frame(commands);
+    GameUI::begin_frame(commands, &resources->graphics_assets);
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -1438,7 +1439,7 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
     GameUI::set_ui_id((char*)"ui_pause_menu");
-    GameUI::begin_frame(commands);
+    GameUI::begin_frame(commands, &resources->graphics_assets);
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -1550,7 +1551,7 @@ void Game::update_and_render_stage_select_menu(struct render_commands* commands,
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
     GameUI::set_ui_id((char*)"ui_stage_select_menu");
-    GameUI::begin_frame(commands);
+    GameUI::begin_frame(commands, &resources->graphics_assets);
     {
         s32   stage_id = state->mainmenu_data.stage_id_level_select;
         auto& stage    = stage_list[stage_id];
@@ -1683,7 +1684,7 @@ void Game::update_and_render_stage_pet_select_menu(struct render_commands* comma
     bool cancel = false;
 
     GameUI::set_ui_id((char*)"ui_stage_pet_select_menu");
-    GameUI::begin_frame(commands);
+    GameUI::begin_frame(commands, &resources->graphics_assets);
 
     f32 y = 50;
     if (gameplay_data.unlocked_pets > 0) {
@@ -1805,7 +1806,7 @@ void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands*
         render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     }
     GameUI::set_ui_id((char*)"ui_gameover_menu");
-    GameUI::begin_frame(commands);
+    GameUI::begin_frame(commands, &resources->graphics_assets);
     {
         
         f32 alpha = 1.0f;
@@ -1954,7 +1955,7 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
         }
     }
 
-    GameUI::begin_frame(commands);
+    GameUI::begin_frame(commands, &resources->graphics_assets);
     {
         GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
         GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -2870,7 +2871,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 string_literal("[PAUSE]");
 
             GameUI::set_ui_id(0);
-            GameUI::begin_frame(ui_render_commands);
+            GameUI::begin_frame(ui_render_commands, &resources->graphics_assets);
             if (GameUI::button(V2(play_area_x+play_area_width + 20, y), string_literal("[RESTART]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
                 // partial clean up of resources...
                 state->unload_all_script_loaded_resources(this->state, this->state->resources);

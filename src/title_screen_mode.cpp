@@ -23,7 +23,7 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
         GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
         GameUI::set_ui_id((char*)"ui_titlescreen_menu");
-        GameUI::begin_frame(commands);
+        GameUI::begin_frame(commands, &resources->graphics_assets);
         {
             f32 y = 100;
             GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -101,6 +101,7 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
             if (GameUI::button(V2(100, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(UI_STATE_CONFIRM_EXIT_TO_WINDOWS);
             }
+            GameUI::ninepatch(resources->ui_chunky, V2(100, 100), 3, 3, color32f32(0,0,1,1), 3);
         }
         GameUI::end_frame();
     }

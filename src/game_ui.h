@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "render_commands.h"
+#include "graphics_assets.h"
 #include "memory_arena.h"
 
 /*
@@ -30,6 +31,20 @@ enum Widget_Action {
     WIDGET_ACTION_HOT      = 2,
 };
 
+struct GameUI_Ninepatch {
+    image_id top_left;
+    image_id top_right;
+    image_id bottom_left;
+    image_id bottom_right;
+    image_id left;
+    image_id right;
+    image_id center;
+    image_id bottom;
+    image_id top;
+    u32 tile_width;
+    u32 tile_height; // nothing enforced, but this is basically only going to work if the tiles are square.
+};
+
 /*
   Since this is an IMGUI in the simplest sense, I don't store
   previous UI screen state (usually you'd use a stack to do this, but this game
@@ -54,9 +69,19 @@ namespace GameUI {
     void f32_slider(V2 where, string text, color32f32 modulation, f32 scale, f32* ptr, f32 min_value, f32 max_value, f32 slider_width_px, bool active=true);
 
     void initialize(Memory_Arena* arena);
-    void begin_frame(struct render_commands* commands);
+    void begin_frame(struct render_commands* commands, struct graphics_assets* assets);
     void end_frame();
     void update(f32 dt);
+
+    /*
+      NOTE: texture atlas is optional
+     */
+    V2   ninepatch_dimensions(const GameUI_Ninepatch& ninepatch, u32 width, u32 height);
+    // NOTE: the four corners are "implicit", so you're really only counting the "centers"
+    // so the ninepatch does not support anything "smaller" than (3x3) (width&height == 0)
+    // this is fine because I'm not drawing any UI that small since it would be literally unreadable.
+    void ninepatch(const GameUI_Ninepatch& ninepatch, V2 where, u32 width, u32 height, color32f32 modulation, f32 scale=1);
+    void ninepatch(const Texture_Atlas* texture_atlas, const GameUI_Ninepatch& ninepatch, V2 where, u32 width, u32 height, color32f32 modulation, f32 scale=1);
 
     /*
       NOTE:
