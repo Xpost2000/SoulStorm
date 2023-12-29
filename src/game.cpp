@@ -582,6 +582,7 @@ void Game::init(Graphics_Driver* driver) {
 }
 
 void Game::deinit() {
+    graphics_assets_finish(&resources->graphics_assets);
     VFS_finish();
 }
 

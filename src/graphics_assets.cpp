@@ -113,10 +113,13 @@ void image_buffer_write_to_disk(struct image_buffer* image, string as) {
     snprintf(filename, 256, "%s.bmp", as.data);
     stbi_write_bmp(filename, image->width, image->height, 4, image->pixels);
 #else
-    snprintf(filename, 256, "%s.jpg", as.data);
-    stbi_write_jpg(filename, image->width, image->height, 4, image->pixels, 3);
+    // snprintf(filename, 256, "%s.jpg", as.data);
+    // stbi_write_jpg(filename, image->width, image->height, 4, image->pixels, 0);
+
+    snprintf(filename, 256, "%s.png", as.data);
+    stbi_write_png(filename, image->width, image->height, 4, image->pixels, image->width*4);
 #endif
-    _debugprintf("screenshot produced.");
+    _debugprintf("wrote \"%.*s\"", as.length, as.data);
 }
 
 void image_buffer_free(struct image_buffer* image) {
@@ -207,6 +210,7 @@ struct graphics_assets graphics_assets_create(Memory_Arena* arena, u32 font_limi
 }
 
 void graphics_assets_finish(struct graphics_assets* assets) {
+    _debugprintf("freeing all assets");
     DEBUG_graphics_assets_dump_all_images(assets, string_literal("DEBUG_dump_graphics_assets/"));
 
     for (unsigned image_index = 0; image_index < assets->image_count; ++image_index) {
@@ -484,16 +488,38 @@ void DEBUG_graphics_assets_dump_all_images(struct graphics_assets* assets, strin
 #ifdef RELEASE
 #else
     _debugprintf("dumping all loaded image assets.");
+    OS_create_directory(directory);
 
     for (unsigned index = 0; index < assets->image_count; ++index) {
         auto& image = assets->images[index];
         auto file_string = assets->image_file_strings[index];
+
+        char finalpath[260];
+        {
+            int  write = 0;
+            int  i = 0;
+
+            while (i < file_string.length) {
+                switch (file_string.data[i]) {
+                    case '\\':
+                    case '/':
+                        finalpath[write++] = '_';
+                        i++;
+                        break;
+                    default:
+                        finalpath[write++] = file_string.data[i++];
+                        break;
+                }
+            }
+            finalpath[write++] = '\0';
+        }
+
         image_buffer_write_to_disk(
             &image,
             string_from_cstring(
-                format_temp("%.*s/%.*s.png",
+                format_temp("%.*s/%s",
                             directory.length, directory.data,
-                            file_string.length, file_string.data
+                            finalpath
                 )
             )
         );

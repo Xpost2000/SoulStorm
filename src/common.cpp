@@ -132,6 +132,7 @@ u64 system_get_current_time(void) {
 }
 
 void OS_create_directory(string location) {
+    _debugprintf("Making directory %.*s", location.length, location.data);
 #ifdef _WIN32 
     string s = string_from_cstring(format_temp("%.*s", location.length, location.data));
     CreateDirectory(s.data, NULL);
