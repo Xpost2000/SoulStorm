@@ -188,7 +188,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
     }
 
-    resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
+    resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle64.png"));
     resources->ui_marquee_bkrnd = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee1.png"));
 
     resources->ui_vignette_borders[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_left.png"));
@@ -282,12 +282,27 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     {
         resources->circle_sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 1);
         auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->circle_sprite), 0);
-        frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
+        frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle64.png"));
         frame->source_rect = RECTANGLE_F32_NULL;
     }
 
     {
-        
+        // build projectile atlas?
+        int i = 0;
+        image_id images[500];
+
+        images[i++] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle64.png"));
+        images[i++] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/player.png"));
+        for (int projectile_sprite_id = 0; projectile_sprite_id < PROJECTILE_SPRITE_TYPES; ++projectile_sprite_id) {
+            int   frames_to_alloc = projectile_sprite_frame_count[projectile_sprite_id];
+            for (int frame_index = 0; frame_index < frames_to_alloc; ++frame_index) {
+                string frame_img_name     = projectile_sprite_locations[projectile_sprite_id][frame_index];
+                string frame_img_location = string_from_cstring(format_temp("res/img/%.*s", frame_img_name.length, frame_img_name.data));
+                images[i++] = graphics_assets_load_image(&resources->graphics_assets, frame_img_location);
+            }
+        }
+
+        auto test = graphics_assets_construct_texture_atlas_image(&resources->graphics_assets, images, i);
     }
 }
 
@@ -528,6 +543,7 @@ void Game::init(Graphics_Driver* driver) {
     }
 
     initialized = true;
+
     init_graphics_resources(driver);
     init_audio_resources();
 

@@ -3,6 +3,8 @@
 #include "memory_arena.h"
 #include "virtual_file_system.h"
 
+#include "engine.h"
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
@@ -405,22 +407,57 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
         while (!complete) {
             write_x = 0;
             write_y = 0;
+            bool request_resize = false;
 
+            bool new_row = false;
             for (u32 index = 0; index < image_count; ++index) {
-                struct image_buffer* img = graphics_assets_get_image_by_id(assets, images[index]);
-                write_x += img->width;
+                struct image_buffer* img             = graphics_assets_get_image_by_id(assets, images[index]);
+                auto&                subimage_object = result.subimages[index];
 
-                if (write_x >= image_pot_size) {
-                    write_x = 0;
+                subimage_object.subrectangle   = rectangle_f32(write_x, write_y, img->width, img->height);
+
+                if (new_row) {
+                    _debugprintf("Make new row");
+
+                    // Slow? Probably. Correct? More probably.
+                    // This only really needs to happen once so I'm not too concerned about this...
+                    for (u32 index1 = 0; index1 < index; ++index1) {
+                        if (index == index1) continue;
+                        auto& subimage_object1 = result.subimages[index1];
+
+                        if (rectangle_f32_intersect(subimage_object1.subrectangle, subimage_object.subrectangle)) {
+                            write_x += subimage_object1.subrectangle.w;
+                            subimage_object.subrectangle.x = write_x;
+                            // work against any collisions...
+                        }
+                    }
+                    new_row = false;
+                }
+
+                if (((s32)image_pot_size-(s32)write_x) <= (s32)img->width) {
                     write_y += img->height;
+                    write_x = 0;
+                    new_row = true;
+                } else {
+                    write_x += img->width;
+                    if (write_x >= image_pot_size) {
+                        write_y += img->height;
+                        write_x = 0;
+                        new_row = true;
+                    }
+                }
+
+                if (subimage_object.subrectangle.y >= image_pot_size ||
+                    subimage_object.subrectangle.y + subimage_object.subrectangle.h > image_pot_size) {
+                    request_resize = true;
                 }
             }
 
-            if (write_y > image_pot_size) {
-                image_pot_size = nearest_pot32(write_y);
+            if (request_resize) {
+                image_pot_size = nearest_pot32(write_y+1);
             } else {
                 complete = true;
-                _debugprintf("Texture atlas simplest fit determined to be %dx%d", image_pot_size);
+                _debugprintf("Texture atlas simplest fit determined to be %dx%d", image_pot_size, image_pot_size);
             }
         }
     }
@@ -428,9 +465,7 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
     _debugprintf("Assembling final atlas");
 
     {
-        write_x = 0;
-        write_y = 0;
-
+#if 1
         image_id             new_id    = image_id { .index = (s32)assets->image_count + 1 };
         struct image_buffer* new_image = &assets->images[assets->image_count];
         u8*                  status_field        = &assets->image_asset_status[assets->image_count];
@@ -445,13 +480,16 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
             auto&               subimage_object = result.subimages[index];
 
             subimage_object.original_asset = images[index];
-            subimage_object.subrectangle   = rectangle_f32(write_x, write_y, img->width, img->height);
 
             {
                 for (u32 y = 0; y < img->height; ++y) {
-                    u32 final_write_y = write_y + y;
+                    u32 final_write_y = subimage_object.subrectangle.y + y;
+                    assert(final_write_y < image_pot_size);
+
                     for (u32 x = 0; x < img->width; ++x) {
-                        u32 final_write_x = write_x + x;
+                        u32 final_write_x = subimage_object.subrectangle.x + x;
+
+                        assert(final_write_x < image_pot_size);
 
                         new_image->pixels[final_write_y * image_pot_size*4 + (final_write_x*4) + 0] = img->pixels[y * img->width*4 + (x * 4) + 0];
                         new_image->pixels[final_write_y * image_pot_size*4 + (final_write_x*4) + 1] = img->pixels[y * img->width*4 + (x * 4) + 1];
@@ -460,15 +498,10 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
                     }
                 }
             }
-
-            write_x += img->width;
-            if (write_x >= image_pot_size) {
-                write_x = 0;
-                write_y += img->height;
-            }
         }
 
         result.atlas_image_id = new_id;
+#endif
     }
 
     _debugprintf("Atlas writing completed");

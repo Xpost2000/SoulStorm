@@ -115,11 +115,17 @@ local void initialize_framebuffer(void) {
     V2 framebuffer_resolution = get_scaled_screen_resolution(V2(REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT));
 
     // /* I know these sound like constants. They really aren't... */
+    u32 last_screen_width  = SCREEN_WIDTH;
+    u32 last_screen_height = SCREEN_HEIGHT;
     SCREEN_WIDTH  = framebuffer_resolution.x;
     SCREEN_HEIGHT = ENGINE_BASE_VERTICAL_RESOLUTION;
-    _debugprintf("framebuffer resolution is: (%d, %d) vs (%d, %d) real resolution", SCREEN_WIDTH, SCREEN_HEIGHT, REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
+    if (last_screen_width == SCREEN_WIDTH && last_screen_height == SCREEN_HEIGHT) {
+        _debugprintf("Framebuffer did not change resolutions. No change needed.");
+    } else {
+        _debugprintf("framebuffer resolution is: (%d, %d) vs (%d, %d) real resolution", SCREEN_WIDTH, SCREEN_HEIGHT, REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
 
-    global_graphics_driver->initialize(global_game_window, framebuffer_resolution.x, framebuffer_resolution.y);
+        global_graphics_driver->initialize(global_game_window, framebuffer_resolution.x, framebuffer_resolution.y);
+    }
 }
 
 local const f32 r16by9Ratio  = 16/9.0f;
@@ -419,8 +425,11 @@ void initialize() {
 #endif
     SDL_ShowWindow(global_game_window);
 
-    // set_graphics_device(GRAPHICS_DEVICE_NULL);
     set_graphics_device(GRAPHICS_DEVICE_SOFTWARE);
+
+    // NOTE:
+    // this will construct the framebuffer **twice**
+    // which is... not nice but I guess it's okay.
     initialize_framebuffer();
 
     // initialize game_preferences structure here.
@@ -459,8 +468,6 @@ void confirm_preferences(Game_Preferences* preferences, Game_Resources* resource
     REAL_SCREEN_HEIGHT = preferences->height;
     set_fullscreen(preferences->fullscreen);
 
-    // rebuild the back buffer or framebuffer again.
-    initialize_framebuffer();
     global_graphics_driver->change_resolution(REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
 
     Audio::set_volume_sound(preferences->sound_volume);
