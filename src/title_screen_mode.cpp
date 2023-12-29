@@ -101,7 +101,7 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
             if (GameUI::button(V2(100, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(UI_STATE_CONFIRM_EXIT_TO_WINDOWS);
             }
-            GameUI::ninepatch(resources->ui_chunky, V2(100, 100), 3, 3, color32f32(0,0,1,1), 3);
+            GameUI::ninepatch(&resources->ui_texture_atlas, resources->ui_chunky, V2(100, 100), 3, 3, color32f32(0,0,1,1), 3);
         }
         GameUI::end_frame();
     }

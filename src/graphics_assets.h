@@ -37,7 +37,7 @@ struct Texture_Atlas {
     s32                      subimage_count;
     Texture_Atlas_Sub_Image* subimages;
 
-    rectangle_f32 get_subrect(image_id subimage);
+    const rectangle_f32 get_subrect(const image_id subimage) const;
 };
 
 // This is new code, compared to the stuff below, LOL

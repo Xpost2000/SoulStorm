@@ -377,7 +377,7 @@ void Sprite_Instance::animate(struct graphics_assets* graphics_assets, f32 dt, f
     }
 }
 
-rectangle_f32 Texture_Atlas::get_subrect(image_id subimage) {
+const rectangle_f32 Texture_Atlas::get_subrect(const image_id subimage) const {
     for (s32 index = 0; index < subimage_count; ++index) {
         if (subimages[index].original_asset.index == subimage.index) {
             return subimages[index].subrectangle;

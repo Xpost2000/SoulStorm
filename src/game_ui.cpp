@@ -421,8 +421,17 @@ namespace GameUI {
         
         auto commands = global_ui_state->commands;
         {
-            struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
-            struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.top_left);
+            struct rectangle_f32 source_rectangle;
+            struct image_buffer* image;
+
+            if (texture_atlas) {
+                source_rectangle = texture_atlas->get_subrect(np.top_left);
+                image            = graphics_assets_get_image_by_id(global_ui_state->assets, texture_atlas->atlas_image_id);
+            } else {
+                source_rectangle = RECTANGLE_F32_NULL;
+                image = graphics_assets_get_image_by_id(global_ui_state->assets, np.top_left);
+            }
+
             render_commands_push_image(
                 commands,
                 image,
@@ -431,8 +440,17 @@ namespace GameUI {
                 modulation, NO_FLAGS, BLEND_MODE_ALPHA);
         }
         {
-            struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
-            struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.top_right);
+            struct rectangle_f32 source_rectangle;
+            struct image_buffer* image;
+            
+            if (texture_atlas) {
+                source_rectangle = texture_atlas->get_subrect(np.top_right);
+                image            = graphics_assets_get_image_by_id(global_ui_state->assets, texture_atlas->atlas_image_id);
+            } else {
+                source_rectangle = RECTANGLE_F32_NULL;
+                image = graphics_assets_get_image_by_id(global_ui_state->assets, np.top_right);
+            }
+
             render_commands_push_image(
                 commands,
                 image,
@@ -441,8 +459,17 @@ namespace GameUI {
                 modulation, NO_FLAGS, BLEND_MODE_ALPHA);
         }
         {
-            struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
-            struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.bottom_left);
+            struct rectangle_f32 source_rectangle;
+            struct image_buffer* image;
+
+            if (texture_atlas) {
+                source_rectangle = texture_atlas->get_subrect(np.bottom_left);
+                image            = graphics_assets_get_image_by_id(global_ui_state->assets, texture_atlas->atlas_image_id);
+            } else {
+                source_rectangle = RECTANGLE_F32_NULL;
+                image = graphics_assets_get_image_by_id(global_ui_state->assets, np.bottom_left);
+            }
+
             render_commands_push_image(
                 commands,
                 image,
@@ -451,8 +478,17 @@ namespace GameUI {
                 modulation, NO_FLAGS, BLEND_MODE_ALPHA);
         }
         {
-            struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
-            struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.bottom_right);
+            struct rectangle_f32 source_rectangle;
+            struct image_buffer* image;
+            
+            if (texture_atlas) {
+                source_rectangle = texture_atlas->get_subrect(np.bottom_right);
+                image            = graphics_assets_get_image_by_id(global_ui_state->assets, texture_atlas->atlas_image_id);
+            } else {
+                source_rectangle = RECTANGLE_F32_NULL;
+                image = graphics_assets_get_image_by_id(global_ui_state->assets, np.bottom_right);
+            }
+
             render_commands_push_image(
                 commands,
                 image,
@@ -463,8 +499,17 @@ namespace GameUI {
 
         for (unsigned i = 0; i < height; ++i) {
             {
-                struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
-                struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.left);
+                struct rectangle_f32 source_rectangle;
+                struct image_buffer* image;
+                
+                if (texture_atlas) {
+                    source_rectangle = texture_atlas->get_subrect(np.left);
+                    image            = graphics_assets_get_image_by_id(global_ui_state->assets, texture_atlas->atlas_image_id);
+                } else {
+                    source_rectangle = RECTANGLE_F32_NULL;
+                    image = graphics_assets_get_image_by_id(global_ui_state->assets, np.left);
+                }
+
                 render_commands_push_image(
                     commands,
                     image,
@@ -473,8 +518,17 @@ namespace GameUI {
                     modulation, NO_FLAGS, BLEND_MODE_ALPHA);
             }
             {
-                struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
-                struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.right);
+                struct rectangle_f32 source_rectangle;
+                struct image_buffer* image;
+                
+                if (texture_atlas) {
+                    source_rectangle = texture_atlas->get_subrect(np.right);
+                    image            = graphics_assets_get_image_by_id(global_ui_state->assets, texture_atlas->atlas_image_id);
+                } else {
+                    source_rectangle = RECTANGLE_F32_NULL;
+                    image = graphics_assets_get_image_by_id(global_ui_state->assets, np.right);
+                }
+
                 render_commands_push_image(
                     commands,
                     image,
@@ -487,8 +541,17 @@ namespace GameUI {
 
         for (unsigned i = 0; i < width; ++i) {
             {
-                struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
-                struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.top);
+                struct rectangle_f32 source_rectangle;
+                struct image_buffer* image;
+                
+                if (texture_atlas) {
+                    source_rectangle = texture_atlas->get_subrect(np.top);
+                    image            = graphics_assets_get_image_by_id(global_ui_state->assets, texture_atlas->atlas_image_id);
+                } else {
+                    source_rectangle = RECTANGLE_F32_NULL;
+                    image = graphics_assets_get_image_by_id(global_ui_state->assets, np.top);
+                }
+
                 render_commands_push_image(
                     commands,
                     image,
@@ -497,8 +560,17 @@ namespace GameUI {
                     modulation, NO_FLAGS, BLEND_MODE_ALPHA);
             }
             {
-                struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
-                struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.bottom);
+                struct rectangle_f32 source_rectangle;
+                struct image_buffer* image;
+                
+                if (texture_atlas) {
+                    source_rectangle = texture_atlas->get_subrect(np.bottom);
+                    image            = graphics_assets_get_image_by_id(global_ui_state->assets, texture_atlas->atlas_image_id);
+                } else {
+                    source_rectangle = RECTANGLE_F32_NULL;
+                    image = graphics_assets_get_image_by_id(global_ui_state->assets, np.bottom);
+                }
+
                 render_commands_push_image(
                     commands,
                     image,
@@ -512,8 +584,17 @@ namespace GameUI {
         for (int y = 0; y < ((s32)height); ++y) {
             for (int x = 0; x < ((s32)width); ++x) {
                 {
-                    struct rectangle_f32 source_rectangle = RECTANGLE_F32_NULL;
-                    struct image_buffer* image = graphics_assets_get_image_by_id(global_ui_state->assets, np.center);
+                    struct rectangle_f32 source_rectangle;
+                    struct image_buffer* image;
+
+                    if (texture_atlas) {
+                        source_rectangle = texture_atlas->get_subrect(np.center);
+                        image            = graphics_assets_get_image_by_id(global_ui_state->assets, texture_atlas->atlas_image_id);
+                    } else {
+                        source_rectangle = RECTANGLE_F32_NULL;
+                        image = graphics_assets_get_image_by_id(global_ui_state->assets, np.center);
+                    }
+
                     render_commands_push_image(
                         commands,
                         image,
