@@ -397,7 +397,7 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
     result.subimage_count = image_count;
     result.subimages      = (Texture_Atlas_Sub_Image*)assets->arena->push_unaligned(sizeof(*result.subimages) * image_count);
 
-    u32 image_pot_size = (1 << 8); // 256 default size test...
+    u32 image_pot_size = (1 << 7); // 128 default size test...
 
     u32 write_x = 0;
     u32 write_y = 0;
@@ -434,10 +434,13 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
                     new_row = false;
                 }
 
+                _debugprintf("rectangle(%d) (%d, %d, %d, %d)", index, write_x, write_y, img->width, img->height);
+
                 if (((s32)image_pot_size-(s32)write_x) <= (s32)img->width) {
                     write_y += img->height;
                     write_x = 0;
                     new_row = true;
+                    index-=1; // try to replace sprite since it obviously doesn't fit here.
                 } else {
                     write_x += img->width;
                     if (write_x >= image_pot_size) {
@@ -454,7 +457,9 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
             }
 
             if (request_resize) {
+                u32 last_image_pot_size = image_pot_size;
                 image_pot_size = nearest_pot32(write_y+1);
+                _debugprintf("Requesting resisze from %d to %d", last_image_pot_size, image_pot_size);
             } else {
                 complete = true;
                 _debugprintf("Texture atlas simplest fit determined to be %dx%d", image_pot_size, image_pot_size);
@@ -482,13 +487,13 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
             subimage_object.original_asset = images[index];
 
             {
+                _debugprintf("writing: %d, %d, %d, %d", (s32)subimage_object.subrectangle.x, (s32)subimage_object.subrectangle.y,(s32)subimage_object.subrectangle.w,(s32)subimage_object.subrectangle.h);
                 for (u32 y = 0; y < img->height; ++y) {
                     u32 final_write_y = subimage_object.subrectangle.y + y;
                     assert(final_write_y < image_pot_size);
 
                     for (u32 x = 0; x < img->width; ++x) {
                         u32 final_write_x = subimage_object.subrectangle.x + x;
-
                         assert(final_write_x < image_pot_size);
 
                         new_image->pixels[final_write_y * image_pot_size*4 + (final_write_x*4) + 0] = img->pixels[y * img->width*4 + (x * 4) + 0];
@@ -525,6 +530,9 @@ void DEBUG_graphics_assets_dump_all_images(struct graphics_assets* assets, strin
 
     for (unsigned index = 0; index < assets->image_count; ++index) {
         auto& image = assets->images[index];
+        if (assets->image_asset_status[index] == ASSET_STATUS_UNLOADED) {
+            continue;
+        }
         auto file_string = assets->image_file_strings[index];
 
         char finalpath[260];
