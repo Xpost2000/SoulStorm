@@ -562,18 +562,50 @@ inline static Game_State* lua_binding_get_gamestate(lua_State* L) {
     return state;
 }
 
+struct GameUI_Ninepatch {
+    image_id top_left;
+    image_id top_right;
+    image_id bottom_left;
+    image_id bottom_right;
+    image_id left;
+    image_id right;
+    image_id center;
+    image_id bottom;
+    image_id top;
+};
+
+enum Trophy_Icon_Frame {
+    TROPHY_ICON_BLANK  = 0,
+    TROPHY_ICON_SHINE1 = 1,
+    TROPHY_ICON_SHINE2 = 2,
+    TROPHY_ICON_SHINE3 = 3,
+    TROPHY_ICON_SHINE4 = 4,
+    TROPHY_ICON_SHINE5 = 5,
+    TROPHY_ICON_COUNT  = 6,
+};
+
 struct Game_Resources {
     struct graphics_assets graphics_assets;
     font_id         menu_fonts[MENU_FONT_COUNT];
     image_id        circle;
 
-
     sprite_id       projectile_sprites[PROJECTILE_SPRITE_TYPES];
     sprite_id       player_sprite;
     sprite_id       circle_sprite;
 
+
     image_id        ui_marquee_bkrnd;
     image_id        ui_vignette_borders[2];
+
+    GameUI_Ninepatch ui_chunky;
+    image_id         trophies_locked[TROPHY_ICON_COUNT];
+    image_id         trophies_unlocked[TROPHY_ICON_COUNT];
+    sprite_id        locked_trophy_sprite;
+    sprite_id        unlocked_trophy_sprite;
+    // Only one of these needs to exist since all of them will animate at the same rate.
+    Sprite_Instance  locked_trophy_sprite_instance;
+    Sprite_Instance  unlocked_trophy_sprite_instance;
+    Texture_Atlas    ui_texture_atlas;
 
     // I should have more of these...
     Audio::Sound_ID        attack_sounds[2];

@@ -286,6 +286,70 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         frame->source_rect = RECTANGLE_F32_NULL;
     }
 
+    #if 1
+    {
+        // build UI atlas
+        auto& ui_chunky        = resources->ui_chunky;
+        ui_chunky.top_left     = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/top-left.png"));
+        ui_chunky.top_right    = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/top-right.png"));
+        ui_chunky.bottom_left  = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/bottom-left.png"));
+        ui_chunky.bottom_right = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/bottom-right.png"));
+        ui_chunky.left         = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/left.png"));
+        ui_chunky.right        = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/right.png"));
+        ui_chunky.bottom       = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/bottom.png"));
+        ui_chunky.top          = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/top.png"));
+        ui_chunky.center       = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/center.png"));
+
+        string locked_trophy_paths[] = {
+            string_literal("res/img/ui/icons/trophy_locked.png"),
+            string_literal("res/img/ui/icons/trophy_locked_shine1.png"),
+            string_literal("res/img/ui/icons/trophy_locked_shine2.png"),
+            string_literal("res/img/ui/icons/trophy_locked_shine3.png"),
+            string_literal("res/img/ui/icons/trophy_locked_shine4.png"),
+            string_literal("res/img/ui/icons/trophy_locked_shine5.png")
+        };
+        
+        string unlocked_trophy_paths[] = {
+            string_literal("res/img/ui/icons/trophy_blank.png"),
+            string_literal("res/img/ui/icons/trophy_shine1.png"),
+            string_literal("res/img/ui/icons/trophy_shine2.png"),
+            string_literal("res/img/ui/icons/trophy_shine3.png"),
+            string_literal("res/img/ui/icons/trophy_shine4.png"),
+            string_literal("res/img/ui/icons/trophy_shine5.png")
+        };
+
+        for (int i = 0; i < TROPHY_ICON_COUNT; ++i) {
+            resources->trophies_locked[i]   = graphics_assets_load_image(&resources->graphics_assets, locked_trophy_paths[i]);
+            resources->trophies_unlocked[i] = graphics_assets_load_image(&resources->graphics_assets, unlocked_trophy_paths[i]);
+        }
+
+        // all main assets loaded, now try to build atlas.
+        {
+            int i = 0;
+            image_id images[500];
+            images[i++] = ui_chunky.top_left;
+            images[i++] = ui_chunky.top_right;
+            images[i++] = ui_chunky.bottom_left;
+            images[i++] = ui_chunky.bottom_right;
+            images[i++] = ui_chunky.left;
+            images[i++] = ui_chunky.right;
+            images[i++] = ui_chunky.bottom;
+            images[i++] = ui_chunky.top;
+            images[i++] = ui_chunky.center;
+            for (int j = 0; j < TROPHY_ICON_COUNT; ++j) {
+                images[i++] = resources->trophies_locked[j];
+            }
+            for (int j = 0; j < TROPHY_ICON_COUNT; ++j) {
+                images[i++] = resources->trophies_unlocked[j];
+            }
+
+            resources->ui_texture_atlas = graphics_assets_construct_texture_atlas_image(&resources->graphics_assets, images, i);
+            graphics_assets_texture_atlas_unload_original_subimages(&resources->graphics_assets, resources->ui_texture_atlas);
+        }
+    }
+#endif
+
+#if 0
     {
         // build projectile atlas?
         int i = 0;
@@ -304,6 +368,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
         auto test = graphics_assets_construct_texture_atlas_image(&resources->graphics_assets, images, i);
     }
+#endif
 }
 
 void Game::init_audio_resources() {
