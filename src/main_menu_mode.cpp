@@ -838,6 +838,7 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
         {
             // uh. I hope this looks fine.
             for (int i = 0; i < MAX_MAINMENU_OUTERSPACE_STARS; ++i) {
+                if (dt >= 1) break; // significant frame drop? Do not update (mostly when changing resolution)
                 bkg_slow_stars[i].x += dt * 10.0f * (normalized_sinf(i)+0.25);
                 bkg_slow_stars[i].y += dt * 15.0f * (normalized_sinf(Global_Engine()->global_elapsed_time)+0.25);
 
