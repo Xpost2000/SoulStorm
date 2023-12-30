@@ -180,9 +180,6 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         return;
     }
 
-    // TODO: get a way to simplify the "Graphics Driver" update path
-    // Graphics assets might need to store a pointer to the graphics driver so that way they can
-    // directly report assets...
     for (unsigned index = 0; index < array_count(menu_font_variation_string_names); ++index) {
         string current = menu_font_variation_string_names[index];
         resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
@@ -443,8 +440,6 @@ void Game::reset_stage_simulation_state() {
     // NOTE: need to save this to the savefile data.
     s32 pet_id   = state->selected_pet;
 
-    // TODO: recording playbacks should not count as attempts or completions!
-    // or high scores or anything!
     {
         assertion(stage_id >= 0 && level_id >= 0 && "Something bad happened");
         _debugprintf("%d, %d", stage_id, level_id);
@@ -537,7 +532,6 @@ void Game::reset_stage_simulation_state() {
 void Game::cleanup_game_simulation() {
     state->gameplay_data.unload_all_script_loaded_resources(state, this->state->resources);
 
-    // TODO: be careful with this.
     if (state->gameplay_data.recording.in_playback) {
         _debugprintf("Finished playback.");
         _debugprintf(
@@ -756,7 +750,6 @@ void Gameplay_Data::unload_all_script_loaded_resources(Game_State* game_state, G
     for (s32 image_index = 0; image_index < script_loaded_images.size; ++image_index) {
         auto img_id = script_loaded_images[image_index];
         graphics_assets_unload_image(&resources->graphics_assets, img_id);
-        // TODO: free graphics driver resources
     }
 
     Audio::stop_sounds();
@@ -2415,8 +2408,6 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
                 // NOTE: 
                 state->current_input_packet = gameplay_recording_file_next_frame(&state->recording);
             } else {
-                // nop and exit to main menu.
-                // TODO: add a different message rather than stage completion.
                 state->triggered_stage_completion_cutscene = true;
                 state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
                 state->complete_stage.stage_timer = Timer(0.35f);
@@ -3596,6 +3587,12 @@ void Game::on_player_death() {
 void Game::handle_all_dead_entities(f32 dt) {
     auto state = &this->state->gameplay_data;
 
+    /*
+     * TODO:
+     *
+     * Accidental inconsistency point
+     * just rewrite special case animations for this...
+     */
     if (state->player.die) {
         if (state->recording.in_playback &&
             (state->demo_viewer.arbitrary_frame_visit ||
