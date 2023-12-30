@@ -1889,27 +1889,34 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
     f32 y_cursor_from_bottom = 0;
     auto subtitle_font = resources->get_font(MENU_FONT_COLOR_GOLD);
 
+    u32 notification_tile_h = 1;
+    u32 notification_tile_w = 17;
     for (s32 index = notifications.size-1; index >= 0; index--) {
         auto& notification = notifications[index];
         auto  achievement  = Achievements::get(notification.id);
 
         // achievements will be from bottom left.
         // NOTE: adjust visual box size
-        rectangle_f32 rectangle = rectangle_f32(
-            0, commands->screen_height - (y_cursor_from_bottom + 60), 150, 60);
+        f32 final_y = commands->screen_height - (y_cursor_from_bottom + 50);
+        rectangle_f32 rectangle = rectangle_f32(0, final_y, 150, 60);
 
+        auto modulation_color = color32f32_DEFAULT_UI_COLOR;
+        auto border_color = color32f32_WHITE;
         // insert description somehow;
         switch (notification.phase) {
             case ACHIEVEMENT_NOTIFICATION_PHASE_APPEAR: {
                 const f32 MAX_PHASE_TIME = 0.35f;
-                f32 percentage_t = notification.timer / MAX_PHASE_TIME;
-                f32 rect_y = lerp_f32(commands->screen_height - (y_cursor_from_bottom), commands->screen_height - (y_cursor_from_bottom + 60), percentage_t);
+                f32 percentage_t = clamp<f32>(notification.timer / MAX_PHASE_TIME, 0.0f, 1.0f);
+                f32 rect_y = lerp_f32(commands->screen_height - (y_cursor_from_bottom), final_y, percentage_t);
 
                 rectangle.y = rect_y;
-                render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255 * percentage_t), BLEND_MODE_ALPHA);
+                // render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255 * percentage_t), BLEND_MODE_ALPHA);
+                modulation_color.a = border_color.a = (percentage_t);
+                game_ui_draw_bordered_box(V2(rectangle.x, rectangle.y), notification_tile_w, notification_tile_h, modulation_color, border_color);
+                game_ui_draw_achievement_icon(*achievement, commands, V2(rectangle.x, rectangle.y-7), 1, percentage_t);
                 {
                     string text = achievement->name;
-                    render_commands_push_text(commands, subtitle_font, 4, V2(rectangle.x+10, rectangle.y+10), text, color32f32(1, 1, 1, percentage_t), BLEND_MODE_ALPHA);
+                    render_commands_push_text(commands, subtitle_font, 2, V2(rectangle.x + 65, rectangle.y+13), text, color32f32(1, 1, 1, percentage_t), BLEND_MODE_ALPHA);
                 }
 
                 if (notification.timer >= MAX_PHASE_TIME) {
@@ -1919,13 +1926,15 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
                 y_cursor_from_bottom += 60;
             } break;
             case ACHIEVEMENT_NOTIFICATION_PHASE_LINGER: {
-                const f32 MAX_PHASE_TIME = 0.55f;
-                f32 percentage_t = notification.timer / MAX_PHASE_TIME;
+                const f32 MAX_PHASE_TIME = 1.25f;
+                f32 percentage_t = clamp<f32>(notification.timer / MAX_PHASE_TIME, 0.0f, 1.0f);
 
-                render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
+                // render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
+                game_ui_draw_bordered_box(V2(rectangle.x, rectangle.y), notification_tile_w, notification_tile_h, modulation_color, border_color);
+                game_ui_draw_achievement_icon(*achievement, commands, V2(rectangle.x, rectangle.y-7), 1);
                 {
                     string text = achievement->name;
-                    render_commands_push_text(commands, subtitle_font, 4, V2(rectangle.x+10, rectangle.y+10), text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+                    render_commands_push_text(commands, subtitle_font, 2, V2(rectangle.x+65, rectangle.y+13), text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
                 }
 
                 if (notification.timer >= MAX_PHASE_TIME) {
@@ -1939,12 +1948,15 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
                 if (notification.timer >= MAX_PHASE_TIME) {
                     notifications.erase(index);
                 } else {
-                    f32 percentage_t = notification.timer / MAX_PHASE_TIME;
+                    f32 percentage_t = clamp<f32>(notification.timer / MAX_PHASE_TIME, 0.0f, 1.0f);
 
-                    render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255 * (1 - percentage_t)), BLEND_MODE_ALPHA);
+                    // render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255 * (1 - percentage_t)), BLEND_MODE_ALPHA);
+                    modulation_color.a = border_color.a = (1 - percentage_t);
+                    game_ui_draw_bordered_box(V2(rectangle.x, rectangle.y), notification_tile_w, notification_tile_h, modulation_color, border_color);
+                    game_ui_draw_achievement_icon(*achievement, commands, V2(rectangle.x, rectangle.y-7), 1, 1-percentage_t);
                     {
                         string text = achievement->name;
-                        render_commands_push_text(commands, subtitle_font, 4, V2(rectangle.x+10, rectangle.y+10), text, color32f32(1, 1, 1, 1 - percentage_t), BLEND_MODE_ALPHA);
+                        render_commands_push_text(commands, subtitle_font, 2, V2(rectangle.x+65, rectangle.y+13), text, color32f32(1, 1, 1, 1 - percentage_t), BLEND_MODE_ALPHA);
                     }
 
                     y_cursor_from_bottom += 60;
@@ -1979,6 +1991,40 @@ local color32f32 _get_color_based_on_achievement_rank(s8 rank) {
     return color32f32_BLACK;
 }
 
+void Game::game_ui_draw_achievement_icon(const Achievement& achievement, struct render_commands* commands, V2 where, f32 scale, f32 alpha) {
+    Sprite* sprite = nullptr;
+    Sprite_Instance* sprite_instance = nullptr;
+    auto modulation_color = _get_color_based_on_achievement_rank(achievement.rank); 
+    auto ui_color = color32f32_DEFAULT_UI_COLOR;
+    if (achievement.achieved) {
+        sprite = graphics_get_sprite_by_id(&resources->graphics_assets, resources->unlocked_trophy_sprite);
+        sprite_instance = &resources->unlocked_trophy_sprite_instance;
+    } else {
+        sprite = graphics_get_sprite_by_id(&resources->graphics_assets, resources->locked_trophy_sprite);
+        sprite_instance = &resources->locked_trophy_sprite_instance;
+        f32 darkness_factor = 2.0f;
+        modulation_color.r /= darkness_factor;
+        modulation_color.g /= darkness_factor;
+        modulation_color.b /= darkness_factor;
+        ui_color.r /= darkness_factor;
+        ui_color.g /= darkness_factor;
+        ui_color.b /= darkness_factor;
+    }
+    ui_color.a = alpha;
+    modulation_color.a = alpha;
+
+    auto  sprite_frame      = sprite_get_frame(sprite, sprite_instance->frame);
+    auto  sprite_img        = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
+    V2    sprite_image_size = V2(16, 16) * scale;
+
+    {
+        u32 outline_box_size = sprite_image_size.x * 2 + 5 * scale;
+        render_commands_push_quad(commands,  rectangle_f32(where.x + 13, where.y + 13, outline_box_size, outline_box_size), color32u8(255, 255, 255, 255 * alpha), BLEND_MODE_ALPHA);
+        render_commands_push_quad(commands,  rectangle_f32(where.x + 14, where.y + 14, outline_box_size-2, outline_box_size-2), color32u8(0, 0, 0, 255 * alpha), BLEND_MODE_ALPHA);
+    }
+    render_commands_push_image(commands, sprite_img, rectangle_f32(where.x + 16, where.y + 16, sprite_image_size.x*2, sprite_image_size.y*2), sprite_frame->source_rect, modulation_color, NO_FLAGS, BLEND_MODE_ALPHA);
+}
+
 void Game::update_and_render_achievements_menu(struct render_commands* commands, f32 dt) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     auto achievements = Achievements::get_all();
@@ -1989,11 +2035,6 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
     auto& achievement_menu = state->achievement_menu;
     GameUI::set_ui_id((char*)"ui_achievements_menu");
 
-
-    {
-        resources->locked_trophy_sprite_instance.animate(&resources->graphics_assets, dt, 0.10f);
-        resources->unlocked_trophy_sprite_instance.animate(&resources->graphics_assets, dt, 0.10f);
-    }
 
     // render achievement boxes.
     // Will need to make some nice UI for all of this but at least that's art stuff.
@@ -2009,42 +2050,21 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
             if (actual_i >= achievements.length) break;
 
             auto& achievement = achievements[actual_i];
-
-            Sprite* sprite = nullptr;
-            Sprite_Instance* sprite_instance = nullptr;
-            auto modulation_color = _get_color_based_on_achievement_rank(achievement.rank); 
             auto ui_color = color32f32_DEFAULT_UI_COLOR;
-            if (achievement.achieved) {
-                sprite = graphics_get_sprite_by_id(&resources->graphics_assets, resources->unlocked_trophy_sprite);
-                sprite_instance = &resources->unlocked_trophy_sprite_instance;
-            } else {
-                sprite = graphics_get_sprite_by_id(&resources->graphics_assets, resources->locked_trophy_sprite);
-                sprite_instance = &resources->locked_trophy_sprite_instance;
+            if (!achievement.achieved) {
                 f32 darkness_factor = 2.0f;
-                modulation_color.r /= darkness_factor;
-                modulation_color.g /= darkness_factor;
-                modulation_color.b /= darkness_factor;
                 ui_color.r /= darkness_factor;
                 ui_color.g /= darkness_factor;
                 ui_color.b /= darkness_factor;
             }
-
-            auto  sprite_frame      = sprite_get_frame(sprite, sprite_instance->frame);
-            auto  sprite_img        = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
-            V2    sprite_image_size = V2(16, 16);
 
             rectangle_f32 rectangle = rectangle_f32(30, i * 75 + 80, 500, 60);
             {
                 auto units_width  = (570 - 32) / resources->ui_chunky.tile_width;
                 auto units_height = 2;
                 game_ui_draw_bordered_box(V2(rectangle.x, rectangle.y), units_width, units_height, ui_color);
+                game_ui_draw_achievement_icon(achievement, commands, V2(rectangle.x, rectangle.y), 1);
             }
-            {
-                u32 outline_box_size = sprite_image_size.x * 2 + 5;
-                render_commands_push_quad(commands,  rectangle_f32(rectangle.x + 13, rectangle.y + 13, outline_box_size, outline_box_size), color32u8(255, 255, 255, 255), BLEND_MODE_ALPHA);
-                render_commands_push_quad(commands,  rectangle_f32(rectangle.x + 14, rectangle.y + 14, outline_box_size-2, outline_box_size-2), color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
-            }
-            render_commands_push_image(commands, sprite_img, rectangle_f32(rectangle.x + 16, rectangle.y + 16, sprite_image_size.x*2, sprite_image_size.y*2), sprite_frame->source_rect, modulation_color, NO_FLAGS, BLEND_MODE_ALPHA);
             rectangle.x += 50;
             {
                 string text = achievement.name;
@@ -3272,6 +3292,11 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
 
         // Polling based achievement updating.
         {
+            // also updating the achievement sprites while I'm at it.
+            {
+                resources->locked_trophy_sprite_instance.animate(&resources->graphics_assets, dt, 0.10f);
+                resources->unlocked_trophy_sprite_instance.animate(&resources->graphics_assets, dt, 0.10f);
+            }
             for (s32 i = 0; i < array_count(achievement_list); ++i) {
                 auto achievement = Achievements::get(i);
                 if (achievement->complete() && achievement->notify_unlock()) {
