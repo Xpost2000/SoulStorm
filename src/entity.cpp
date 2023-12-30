@@ -503,8 +503,8 @@ void Entity::update(Game_State* state, f32 dt) {
 
 rectangle_f32 Entity::get_rect() {
     return rectangle_f32(
-        position.x - scale.x,
-        position.y - scale.y,
+        (position.x + relative_position.x) - scale.x,
+        (position.y + relative_position.y) - scale.y,
         scale.x*2,
         scale.y*2
     );

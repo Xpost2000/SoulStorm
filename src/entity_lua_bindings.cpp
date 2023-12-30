@@ -62,6 +62,28 @@ int _lua_bind_enemy_set_position(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_enemy_set_relative_position(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->relative_position.x = luaL_checknumber(L, 2);
+        e->relative_position.y = luaL_checknumber(L, 3);
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_reset_relative_position(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        e->relative_position.x = 0;
+        e->relative_position.y = 0;
+    }
+    return 0;
+}
+
 int _lua_bind_enemy_set_scale(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
@@ -153,6 +175,28 @@ int _lua_bind_enemy_position_y(lua_State* L) {
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
         lua_pushnumber(L, e->position.y);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_relative_position_x(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        lua_pushnumber(L, e->relative_position.x);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_enemy_relative_position_y(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        lua_pushnumber(L, e->relative_position.y);
         return 1;
     }
     return 0;
@@ -428,6 +472,30 @@ int _lua_bind_bullet_set_position(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_bullet_set_relative_position(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->relative_position.x = luaL_checknumber(L, 2);
+        e->relative_position.y = luaL_checknumber(L, 3);
+        // e->last_position = e->position;
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_reset_relative_position(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        e->relative_position.x = 0;
+        e->relative_position.y = 0;
+        // e->last_position = e->position;
+    }
+    return 0;
+}
+
 int _lua_bind_bullet_set_scale(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
@@ -545,6 +613,28 @@ int _lua_bind_bullet_position_y(lua_State* L) {
     auto e = state->gameplay_data.lookup_bullet(uid);
     if (e) {
         lua_pushnumber(L, e->position.y);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_relative_position_x(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushnumber(L, e->relative_position.x);
+        return 1;
+    }
+    return 0;
+}
+
+int _lua_bind_bullet_relative_position_y(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushnumber(L, e->relative_position.y);
         return 1;
     }
     return 0;
@@ -823,6 +913,8 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "enemy_new", _lua_bind_enemy_new);
         lua_register(L, "enemy_valid", _lua_bind_enemy_valid);
         lua_register(L, "enemy_set_position", _lua_bind_enemy_set_position);
+        lua_register(L, "enemy_set_relative_position", _lua_bind_enemy_set_relative_position);
+        lua_register(L, "enemy_reset_relative_position", _lua_bind_enemy_reset_relative_position);
         lua_register(L, "enemy_set_scale", _lua_bind_enemy_set_scale);
         lua_register(L, "enemy_set_velocity", _lua_bind_enemy_set_velocity);
         lua_register(L, "enemy_set_acceleration", _lua_bind_enemy_set_acceleration);
@@ -846,6 +938,8 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "enemy_time_since_spawn", _lua_bind_enemy_time_since_spawn);
         lua_register(L, "enemy_position_x", _lua_bind_enemy_position_x);
         lua_register(L, "enemy_position_y", _lua_bind_enemy_position_y);
+        lua_register(L, "enemy_relative_position_x", _lua_bind_enemy_relative_position_x);
+        lua_register(L, "enemy_relative_position_y", _lua_bind_enemy_relative_position_y);
         lua_register(L, "enemy_velocity_x", _lua_bind_enemy_velocity_x);
         lua_register(L, "enemy_velocity_y", _lua_bind_enemy_velocity_y);
         lua_register(L, "enemy_acceleration_x", _lua_bind_enemy_acceleration_x);
@@ -872,6 +966,8 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "bullet_stop_trail", _lua_bind_bullet_stop_trail);
         lua_register(L, "bullet_set_visual", _lua_bind_bullet_set_visual);
         lua_register(L, "bullet_set_task", _lua_bind_bullet_set_task);
+        lua_register(L, "bullet_set_relative_position", _lua_bind_bullet_set_relative_position);
+        lua_register(L, "bullet_reset_relative_position", _lua_bind_bullet_reset_relative_position);
         lua_register(L, "bullet_set_max_speed", _lua_bind_bullet_set_max_speed);
         lua_register(L, "bullet_get_max_speed", _lua_bind_bullet_get_max_speed);
         lua_register(L, "bullet_kill", _lua_bind_bullet_kill);
@@ -881,6 +977,8 @@ void bind_entity_lualib(lua_State* L) {
         // These might be okay to read for a bullet.
         lua_register(L, "bullet_position_x", _lua_bind_bullet_position_x);
         lua_register(L, "bullet_position_y", _lua_bind_bullet_position_y);
+        lua_register(L, "bullet_relative_position_x", _lua_bind_bullet_relative_position_x);
+        lua_register(L, "bullet_relative_position_y", _lua_bind_bullet_relative_position_y);
         lua_register(L, "bullet_velocity_x", _lua_bind_bullet_velocity_x);
         lua_register(L, "bullet_velocity_y", _lua_bind_bullet_velocity_y);
         lua_register(L, "bullet_lifetime", _lua_bind_bullet_lifetime);
