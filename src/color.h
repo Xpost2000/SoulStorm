@@ -35,6 +35,8 @@ color32u8 multi_linear_gradient_blend(Slice<color32u8> gradients, f32 normalized
 #define color32f32_WHITE color32f32(1,1,1,1)
 #define color32f32_BLACK color32f32(0,0,0,1)
 
-#define color32f32_DEFAULT_UI_COLOR (color32f32(34/255.0f, 37/255.0f, 143/255.0f, 1.0))
+#define color32f32_LEGENDS_AQUAGREEN (color32f32(17/255.0f, 112/255.0f, 76/255.0f, 1.0))
+#define color32f32_LEGENDS_BLUE      (color32f32(34/255.0f, 37/255.0f, 143/255.0f, 1.0))
+#define color32f32_DEFAULT_UI_COLOR  color32f32_LEGENDS_AQUAGREEN
 
 #endif

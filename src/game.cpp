@@ -371,28 +371,44 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
             resources->ui_texture_atlas = graphics_assets_construct_texture_atlas_image(&resources->graphics_assets, images, i);
             graphics_assets_texture_atlas_unload_original_subimages(&resources->graphics_assets, resources->ui_texture_atlas);
-        }
-    }
-#endif
 
-#if 0
-    {
-        // build projectile atlas?
-        int i = 0;
-        image_id images[500];
-
-        images[i++] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle64.png"));
-        images[i++] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/player.png"));
-        for (int projectile_sprite_id = 0; projectile_sprite_id < PROJECTILE_SPRITE_TYPES; ++projectile_sprite_id) {
-            int   frames_to_alloc = projectile_sprite_frame_count[projectile_sprite_id];
-            for (int frame_index = 0; frame_index < frames_to_alloc; ++frame_index) {
-                string frame_img_name     = projectile_sprite_locations[projectile_sprite_id][frame_index];
-                string frame_img_location = string_from_cstring(format_temp("res/img/%.*s", frame_img_name.length, frame_img_name.data));
-                images[i++] = graphics_assets_load_image(&resources->graphics_assets, frame_img_location);
+            {
+                {
+                    auto& sprite = resources->locked_trophy_sprite;
+                    sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 8);
+                    for (int frame_index = 0; frame_index < 5; ++frame_index) {
+                        auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), frame_index);
+                        frame->img = resources->ui_texture_atlas.atlas_image_id;
+                        frame->source_rect = resources->ui_texture_atlas.get_subrect(resources->trophies_locked[frame_index+1]);
+                        frame->frame_length = 0.15;
+                    }
+                    for (int frame_index = 0; frame_index < 3; ++frame_index) {
+                        auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), frame_index+5);
+                        frame->img = resources->ui_texture_atlas.atlas_image_id;
+                        frame->source_rect = resources->ui_texture_atlas.get_subrect(resources->trophies_locked[0]);
+                        frame->frame_length = 0.15;
+                    }
+                }
+                {
+                    auto& sprite = resources->unlocked_trophy_sprite;
+                    sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 8);
+                    for (int frame_index = 0; frame_index < 5; ++frame_index) {
+                        auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), frame_index);
+                        frame->img = resources->ui_texture_atlas.atlas_image_id;
+                        frame->source_rect = resources->ui_texture_atlas.get_subrect(resources->trophies_unlocked[frame_index+1]);
+                        frame->frame_length = 0.15;
+                    }
+                    for (int frame_index = 0; frame_index < 3; ++frame_index) {
+                        auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), frame_index+5);
+                        frame->img = resources->ui_texture_atlas.atlas_image_id;
+                        frame->source_rect = resources->ui_texture_atlas.get_subrect(resources->trophies_unlocked[0]);
+                        frame->frame_length = 0.15;
+                    }
+                }
+                resources->locked_trophy_sprite_instance = sprite_instance(resources->locked_trophy_sprite);
+                resources->unlocked_trophy_sprite_instance = sprite_instance(resources->unlocked_trophy_sprite);
             }
         }
-
-        auto test = graphics_assets_construct_texture_atlas_image(&resources->graphics_assets, images, i);
     }
 #endif
 }
@@ -686,6 +702,13 @@ void Game::init(Graphics_Driver* driver) {
     Achievements::init_achievements(arena, make_slice<Achievement>(achievement_list, array_count(achievement_list)));
     GameUI::initialize(arena);
 
+    // NOTE: loading save game here so that way the achievement menu
+    // is correctly synched with the savefile (since achievements are stored with the save file)
+    //
+    // The game will actually load properly in the title screen "PLAY button".
+    {
+        load_game();
+    }
 }
 
 void Game::deinit() {
@@ -1864,8 +1887,6 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
     auto& notifications = achievement_state.notifications;
 
     f32 y_cursor_from_bottom = 0;
-
-
     auto subtitle_font = resources->get_font(MENU_FONT_COLOR_GOLD);
 
     for (s32 index = notifications.size-1; index >= 0; index--) {
@@ -1935,9 +1956,27 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
     }
 }
 
-void Game::game_ui_draw_bordered_box(V2 where, s32 width, s32 height) {
-    GameUI::ninepatch(&resources->ui_texture_atlas, resources->ui_chunky, where, width, height, color32f32_DEFAULT_UI_COLOR, 1);
-    GameUI::ninepatch(&resources->ui_texture_atlas, resources->ui_chunky_outline, where, width, height, color32f32_WHITE, 1);
+void Game::game_ui_draw_bordered_box(V2 where, s32 width, s32 height, color32f32 main_color, color32f32 border_color) {
+    GameUI::ninepatch(&resources->ui_texture_atlas, resources->ui_chunky, where, width, height, main_color, 1);
+    GameUI::ninepatch(&resources->ui_texture_atlas, resources->ui_chunky_outline, where, width, height, border_color, 1);
+}
+
+local color32f32 _get_color_based_on_achievement_rank(s8 rank) {
+    switch (rank) {
+        case ACHIEVEMENT_RANK_BRONZE:
+            return color32f32(205/255.0f, 127/255.0f, 50/255.0f, 1.0f);
+            break;
+        case ACHIEVEMENT_RANK_SILVER:
+            return color32f32_WHITE;
+            break;
+        case ACHIEVEMENT_RANK_GOLD:
+            return color32f32(255.0f / 255.0f, 215.0f / 255.0f, 0, 1.0f);
+            break;
+        case ACHIEVEMENT_RANK_PLATINUM:
+            return color32f32(70.0f / 255.0f, 130.0f / 255.0f, 180/255.0f, 1.0f);
+            break;
+    }
+    return color32f32_BLACK;
 }
 
 void Game::update_and_render_achievements_menu(struct render_commands* commands, f32 dt) {
@@ -1949,6 +1988,12 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
 
     auto& achievement_menu = state->achievement_menu;
     GameUI::set_ui_id((char*)"ui_achievements_menu");
+
+
+    {
+        resources->locked_trophy_sprite_instance.animate(&resources->graphics_assets, dt, 0.10f);
+        resources->unlocked_trophy_sprite_instance.animate(&resources->graphics_assets, dt, 0.10f);
+    }
 
     // render achievement boxes.
     // Will need to make some nice UI for all of this but at least that's art stuff.
@@ -1965,13 +2010,42 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
 
             auto& achievement = achievements[actual_i];
 
+            Sprite* sprite = nullptr;
+            Sprite_Instance* sprite_instance = nullptr;
+            auto modulation_color = _get_color_based_on_achievement_rank(achievement.rank); 
+            auto ui_color = color32f32_DEFAULT_UI_COLOR;
+            if (achievement.achieved) {
+                sprite = graphics_get_sprite_by_id(&resources->graphics_assets, resources->unlocked_trophy_sprite);
+                sprite_instance = &resources->unlocked_trophy_sprite_instance;
+            } else {
+                sprite = graphics_get_sprite_by_id(&resources->graphics_assets, resources->locked_trophy_sprite);
+                sprite_instance = &resources->locked_trophy_sprite_instance;
+                f32 darkness_factor = 2.0f;
+                modulation_color.r /= darkness_factor;
+                modulation_color.g /= darkness_factor;
+                modulation_color.b /= darkness_factor;
+                ui_color.r /= darkness_factor;
+                ui_color.g /= darkness_factor;
+                ui_color.b /= darkness_factor;
+            }
+
+            auto  sprite_frame      = sprite_get_frame(sprite, sprite_instance->frame);
+            auto  sprite_img        = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
+            V2    sprite_image_size = V2(16, 16);
+
             rectangle_f32 rectangle = rectangle_f32(30, i * 75 + 80, 500, 60);
             {
-                auto units_width  = (500 - 32) / resources->ui_chunky.tile_width;
+                auto units_width  = (570 - 32) / resources->ui_chunky.tile_width;
                 auto units_height = 2;
-                game_ui_draw_bordered_box(V2(rectangle.x, rectangle.y), units_width, units_height);
+                game_ui_draw_bordered_box(V2(rectangle.x, rectangle.y), units_width, units_height, ui_color);
             }
-            // render_commands_push_quad(commands, rectangle, color32u8(25, 25, 25, 255), BLEND_MODE_ALPHA);
+            {
+                u32 outline_box_size = sprite_image_size.x * 2 + 5;
+                render_commands_push_quad(commands,  rectangle_f32(rectangle.x + 13, rectangle.y + 13, outline_box_size, outline_box_size), color32u8(255, 255, 255, 255), BLEND_MODE_ALPHA);
+                render_commands_push_quad(commands,  rectangle_f32(rectangle.x + 14, rectangle.y + 14, outline_box_size-2, outline_box_size-2), color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
+            }
+            render_commands_push_image(commands, sprite_img, rectangle_f32(rectangle.x + 16, rectangle.y + 16, sprite_image_size.x*2, sprite_image_size.y*2), sprite_frame->source_rect, modulation_color, NO_FLAGS, BLEND_MODE_ALPHA);
+            rectangle.x += 50;
             {
                 string text = achievement.name;
                 if (achievement.hidden && !achievement.achieved) {

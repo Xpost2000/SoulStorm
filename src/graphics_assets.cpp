@@ -352,9 +352,7 @@ Sprite_Instance sprite_instance(sprite_id id) {
 }
 
 void Sprite_Instance::animate(struct graphics_assets* graphics_assets, f32 dt, f32 anim_t, s32 start, s32 end) {
-    if (id.index == 0) {
-        return;
-    }
+    assert(id.index != 0 && "You should have a valid sprite when calling this.");
 
     auto sprite_object = graphics_get_sprite_by_id(graphics_assets, id);
 

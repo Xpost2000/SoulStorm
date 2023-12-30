@@ -41,11 +41,19 @@ enum Achievement_Progress_Type {
     ACHIEVEMENT_PROGRESS_TYPE_FLOAT,
 };
 
+enum Achievement_Rank {
+    ACHIEVEMENT_RANK_BRONZE,
+    ACHIEVEMENT_RANK_SILVER,
+    ACHIEVEMENT_RANK_GOLD,
+    ACHIEVEMENT_RANK_PLATINUM,
+};
+
 struct Achievement {
     s16    id; // should link to an achievement table name in the game code
     s8     progress_type;
     s8     hidden;
     s8     achieved;
+    s8     rank;
 
     string id_name;
     string name;
@@ -73,6 +81,7 @@ struct Achievement {
     // NOTE: this will report true once.
     //       use only when completing an achievement for the first time.
     bool notify_unlock();
+    void _deunlock(); // NOTE: for debugging the Achievement UI.
 };
 
 /* Personally, I like namespaces over static classes. But that's just me. */

@@ -84,3 +84,17 @@ bool Achievement::notify_unlock() {
 
     return false;
 }
+
+void Achievement::_deunlock() {
+    _debugprintf("delocking an achievement.");
+    notified_of_unlock = false;
+    achieved = false;
+    switch (progress_type) {
+        case ACHIEVEMENT_PROGRESS_TYPE_INT: {
+            progress.as_int.current = 0;
+        } break;
+        case ACHIEVEMENT_PROGRESS_TYPE_FLOAT: {
+            progress.as_float.current = 0;
+        } break;
+    }
+}

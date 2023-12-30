@@ -782,6 +782,18 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
         }
     }
 
+#ifndef RELEASE
+    if (Input::is_key_pressed(KEY_U)) {
+        Achievements::get(ACHIEVEMENT_ID_STAGE3)->report();
+        Achievements::get(ACHIEVEMENT_ID_STAGE2)->report();
+        Achievements::get(ACHIEVEMENT_ID_STAGE1)->report();
+    }
+    if (Input::is_key_pressed(KEY_I)) {
+        Achievements::get(ACHIEVEMENT_ID_STAGE3)->_deunlock();
+        Achievements::get(ACHIEVEMENT_ID_STAGE2)->_deunlock();
+        Achievements::get(ACHIEVEMENT_ID_STAGE1)->_deunlock();
+    }
+#endif
 
     if (Action::is_pressed(ACTION_MENU)) {
         if (this->state->ui_state == UI_STATE_STAGE_SELECT ||
