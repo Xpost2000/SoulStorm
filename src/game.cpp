@@ -210,7 +210,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         1,
         1,
         1,
-        8
+        9
     };
 
     // NOTE: I would like these to become sprite atlases at some point.
@@ -252,6 +252,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             string_literal("projectiles/star_sparkle_4.png"),
             string_literal("projectiles/star_sparkle_3.png"),
             string_literal("projectiles/star_sparkle_2.png"),
+            string_literal("projectiles/star_sparkle_1.png")
         }
     };
 
