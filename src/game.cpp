@@ -1541,7 +1541,7 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
         }
         y += 30;
 
-        if (GameUI::button(V2(100, y), string_literal("Replays"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+        if (GameUI::button(V2(100, y), string_literal("Replays"), color32f32(1, 1, 1, 1), 2, !Transitions::fading() && state->screen_mode != GAME_SCREEN_INGAME) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(UI_STATE_REPLAY_COLLECTION);
         }
         y += 30;
