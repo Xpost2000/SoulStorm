@@ -156,6 +156,8 @@ private:
     void simulate_game_frames_until(int nth_frame);
     void simulate_game_frame(Entity_Loop_Update_Packet* update_params);
 
+    void game_ui_draw_bordered_box(V2 where, s32 width, s32 height);
+
     // The game will only utilize one save file
     // and auto save so this makes so much way easier.
     // the save file format is not very complicated honestly, since it just

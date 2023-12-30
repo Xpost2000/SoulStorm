@@ -289,17 +289,32 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     #if 1
     {
         // build UI atlas
-        auto& ui_chunky        = resources->ui_chunky;
-        ui_chunky.top_left     = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/top-left.png"));
-        ui_chunky.top_right    = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/top-right.png"));
-        ui_chunky.bottom_left  = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/bottom-left.png"));
-        ui_chunky.bottom_right = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/bottom-right.png"));
-        ui_chunky.left         = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/left.png"));
-        ui_chunky.right        = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/right.png"));
-        ui_chunky.bottom       = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/bottom.png"));
-        ui_chunky.top          = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/top.png"));
-        ui_chunky.center       = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/center.png"));
-        ui_chunky.tile_width = ui_chunky.tile_height = 16;
+        {
+            auto& ui_chunky        = resources->ui_chunky;
+            ui_chunky.top_left     = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/top-left.png"));
+            ui_chunky.top_right    = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/top-right.png"));
+            ui_chunky.bottom_left  = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/bottom-left.png"));
+            ui_chunky.bottom_right = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/bottom-right.png"));
+            ui_chunky.left         = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/left.png"));
+            ui_chunky.right        = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/right.png"));
+            ui_chunky.bottom       = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/bottom.png"));
+            ui_chunky.top          = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/top.png"));
+            ui_chunky.center       = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky/center.png"));
+            ui_chunky.tile_width = ui_chunky.tile_height = 16;
+        }
+        {
+            auto& ui_chunky        = resources->ui_chunky_outline;
+            ui_chunky.top_left     = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky_outline/top-left.png"));
+            ui_chunky.top_right    = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky_outline/top-right.png"));
+            ui_chunky.bottom_left  = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky_outline/bottom-left.png"));
+            ui_chunky.bottom_right = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky_outline/bottom-right.png"));
+            ui_chunky.left         = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky_outline/left.png"));
+            ui_chunky.right        = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky_outline/right.png"));
+            ui_chunky.bottom       = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky_outline/bottom.png"));
+            ui_chunky.top          = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky_outline/top.png"));
+            ui_chunky.center       = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/chunky_outline/center.png"));
+            ui_chunky.tile_width = ui_chunky.tile_height = 16;
+        }
 
         string locked_trophy_paths[] = {
             string_literal("res/img/ui/icons/trophy_locked.png"),
@@ -328,15 +343,25 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         {
             int i = 0;
             image_id images[500];
-            images[i++] = ui_chunky.top_left;
-            images[i++] = ui_chunky.top_right;
-            images[i++] = ui_chunky.bottom_left;
-            images[i++] = ui_chunky.bottom_right;
-            images[i++] = ui_chunky.left;
-            images[i++] = ui_chunky.right;
-            images[i++] = ui_chunky.bottom;
-            images[i++] = ui_chunky.top;
-            images[i++] = ui_chunky.center;
+            images[i++] = resources->ui_chunky.top_left;
+            images[i++] = resources->ui_chunky.top_right;
+            images[i++] = resources->ui_chunky.bottom_left;
+            images[i++] = resources->ui_chunky.bottom_right;
+            images[i++] = resources->ui_chunky.left;
+            images[i++] = resources->ui_chunky.right;
+            images[i++] = resources->ui_chunky.bottom;
+            images[i++] = resources->ui_chunky.top;
+            images[i++] = resources->ui_chunky.center;
+
+            images[i++] = resources->ui_chunky_outline.top_left;
+            images[i++] = resources->ui_chunky_outline.top_right;
+            images[i++] = resources->ui_chunky_outline.bottom_left;
+            images[i++] = resources->ui_chunky_outline.bottom_right;
+            images[i++] = resources->ui_chunky_outline.left;
+            images[i++] = resources->ui_chunky_outline.right;
+            images[i++] = resources->ui_chunky_outline.bottom;
+            images[i++] = resources->ui_chunky_outline.top;
+            images[i++] = resources->ui_chunky_outline.center;
             for (int j = 0; j < TROPHY_ICON_COUNT; ++j) {
                 images[i++] = resources->trophies_locked[j];
             }
@@ -1910,6 +1935,11 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
     }
 }
 
+void Game::game_ui_draw_bordered_box(V2 where, s32 width, s32 height) {
+    GameUI::ninepatch(&resources->ui_texture_atlas, resources->ui_chunky, where, width, height, color32f32_DEFAULT_UI_COLOR, 1);
+    GameUI::ninepatch(&resources->ui_texture_atlas, resources->ui_chunky_outline, where, width, height, color32f32_WHITE, 1);
+}
+
 void Game::update_and_render_achievements_menu(struct render_commands* commands, f32 dt) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     auto achievements = Achievements::get_all();
@@ -1922,6 +1952,7 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
 
     // render achievement boxes.
     // Will need to make some nice UI for all of this but at least that's art stuff.
+    GameUI::begin_frame(commands, &resources->graphics_assets);
     {
 
         auto locked_title_font       = resources->get_font(MENU_FONT_COLOR_STEEL);
@@ -1934,8 +1965,13 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
 
             auto& achievement = achievements[actual_i];
 
-            rectangle_f32 rectangle = rectangle_f32(30, i * 65 + 80, 500, 60);
-            render_commands_push_quad(commands, rectangle, color32u8(25, 25, 25, 255), BLEND_MODE_ALPHA);
+            rectangle_f32 rectangle = rectangle_f32(30, i * 75 + 80, 500, 60);
+            {
+                auto units_width  = (500 - 32) / resources->ui_chunky.tile_width;
+                auto units_height = 2;
+                game_ui_draw_bordered_box(V2(rectangle.x, rectangle.y), units_width, units_height);
+            }
+            // render_commands_push_quad(commands, rectangle, color32u8(25, 25, 25, 255), BLEND_MODE_ALPHA);
             {
                 string text = achievement.name;
                 if (achievement.hidden && !achievement.achieved) {
@@ -1955,7 +1991,6 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
         }
     }
 
-    GameUI::begin_frame(commands, &resources->graphics_assets);
     {
         GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
         GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));

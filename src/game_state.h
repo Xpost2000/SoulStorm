@@ -587,6 +587,8 @@ struct Game_Resources {
     image_id        ui_vignette_borders[2];
 
     GameUI_Ninepatch ui_chunky;
+    GameUI_Ninepatch ui_chunky_outline;
+
     image_id         trophies_locked[TROPHY_ICON_COUNT];
     image_id         trophies_unlocked[TROPHY_ICON_COUNT];
     sprite_id        locked_trophy_sprite;

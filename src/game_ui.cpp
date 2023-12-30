@@ -404,7 +404,7 @@ namespace GameUI {
     V2 ninepatch_dimensions(const GameUI_Ninepatch& ninepatch, u32 width, u32 height) {
         V2 result;
         result.x = ninepatch.tile_width * (width + 2);
-        result.y = ninepatch.tile_height * (width + 2);
+        result.y = ninepatch.tile_height * (height + 2);
         return result;
     }
 
@@ -581,6 +581,7 @@ namespace GameUI {
 
         }
 
+#if 1
         for (int y = 0; y < ((s32)height); ++y) {
             for (int x = 0; x < ((s32)width); ++x) {
                 {
@@ -609,6 +610,7 @@ namespace GameUI {
                 }
             }
         }
+#endif
     }
 
     void initialize(Memory_Arena* arena) {
