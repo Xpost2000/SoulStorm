@@ -100,19 +100,19 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)..\dependencies\;$(SolutionDir)..\dependencies\msvc-x86-64\include;$(SolutionDir)..\lua54src\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\dependencies\;$(SolutionDir)..\dependencies\msvc-x86-64\include;$(SolutionDir)..\lua54src\include;$(SolutionDir)..\glad\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\dependencies\msvc-x86-64\lib\x64;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\../</OutDir>
     <TargetName>game_devel</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)..\dependencies\;$(SolutionDir)..\dependencies\msvc-x86-64\include;$(SolutionDir)..\lua54src\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\dependencies\;$(SolutionDir)..\dependencies\msvc-x86-64\include;$(SolutionDir)..\lua54src\include;$(SolutionDir)..\glad\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\dependencies\msvc-x86-64\lib\x64;$(SolutionDir)..\SoulStormGame\x64\Release;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\../</OutDir>
     <TargetName>game</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelaseWithDebugInfo|x64'">
-    <IncludePath>$(SolutionDir)..\dependencies\;$(SolutionDir)..\dependencies\msvc-x86-64\include;$(SolutionDir)..\lua54src\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\dependencies\;$(SolutionDir)..\dependencies\msvc-x86-64\include;$(SolutionDir)..\lua54src\include;$(SolutionDir)..\glad\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\dependencies\msvc-x86-64\lib\x64;$(SolutionDir)..\SoulStormGame\x64\Release;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\../</OutDir>
     <LinkIncremental>false</LinkIncremental>
@@ -179,7 +179,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;OpenGL32.lib;d3d11.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Users\xpost\project-repositories\git\SoulStorm\dependencies\msvc-x86-64\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -203,7 +203,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;OpenGL32.lib;d3d11.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Users\xpost\project-repositories\git\SoulStorm\dependencies\msvc-x86-64\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
@@ -236,12 +236,13 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;OpenGL32.lib;d3d11.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Users\xpost\project-repositories\git\SoulStorm\dependencies\msvc-x86-64\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Bigfilepacker\bigfile.cpp" />
+    <ClCompile Include="..\glad\src\glad.c" />
     <ClCompile Include="..\src\achievements.cpp" />
     <ClCompile Include="..\src\action_mapper.cpp" />
     <ClCompile Include="..\src\allocators.cpp" />
@@ -263,7 +264,9 @@
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</BasicRuntimeChecks>
     </ClCompile>
+    <ClCompile Include="..\src\graphics_driver_d3d11.cpp" />
     <ClCompile Include="..\src\graphics_driver_null.cpp" />
+    <ClCompile Include="..\src\graphics_driver_opengl.cpp" />
     <ClCompile Include="..\src\graphics_driver_software.cpp" />
     <ClCompile Include="..\src\particle_system.cpp" />
     <ClCompile Include="..\src\software_renderer.cpp">
@@ -321,7 +324,9 @@
     <ClInclude Include="..\src\game_ui.h" />
     <ClInclude Include="..\src\game_uid_generator.h" />
     <ClInclude Include="..\src\graphics_driver.h" />
+    <ClInclude Include="..\src\graphics_driver_d3d11.h" />
     <ClInclude Include="..\src\graphics_driver_null.h" />
+    <ClInclude Include="..\src\graphics_driver_opengl.h" />
     <ClInclude Include="..\src\graphics_driver_software.h" />
     <ClInclude Include="..\src\main_menu_mode.h" />
     <ClInclude Include="..\src\particle_system.h" />

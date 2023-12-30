@@ -12,14 +12,29 @@
  * Most of the other code is otherwise pretty independent.
  *
  */
+#define JDR_COROUTINE_IMPLEMENTATION
+#include "common.h"
+
 #ifdef _WIN32
+/*
+* Ugh... C++ got modules too late for it to really do any good.
+* 
+* I'm honestly, not sure at what point I reinclude windows.h somewhere else, which is mildly concerning
+* but I'm more concerned by the fact that d3d11.h will break if it isn't included directly after windows.h
+*/
 #include <Windows.h>
+#include "graphics_driver_d3d11.h"
+#undef near
+#undef far
 #endif
 
 #include <SDL2/SDL.h>
 
-#define JDR_COROUTINE_IMPLEMENTATION
-#include "common.h"
+#include "graphics_driver.h"
+#include "graphics_driver_opengl.h"
+#include "graphics_driver_software.h"
+#include "graphics_driver_null.h"
+
 #include "audio.h"
 #include "input.h"
 #include "sdl_scancode_table.h"
@@ -29,11 +44,6 @@
 #include "engine.h"
 #include "game.h"
 #include "game_state.h"
-
-#include "graphics_driver.h"
-
-#include "graphics_driver_software.h"
-#include "graphics_driver_null.h"
 
 extern "C" {
 #include <lua.h>
@@ -45,14 +55,19 @@ enum graphics_device_type {
     GRAPHICS_DEVICE_NULL,
     GRAPHICS_DEVICE_SOFTWARE,
     GRAPHICS_DEVICE_OPENGL,
-    // GRAPHICS_DEVICE_D3D11,
+#ifdef _WIN32
+    GRAPHICS_DEVICE_D3D11,
+#endif
 };
 local void set_graphics_device(s32 id);
 
 Software_Renderer_Graphics_Driver global_software_renderer_driver;
 Null_Graphics_Driver              global_null_renderer_driver;
+OpenGL_Graphics_Driver            global_opengl_renderer_driver;
+#ifdef _WIN32
+Direct3D11_Graphics_Driver        global_direct3d11_renderer_driver;
+#endif
 Graphics_Driver* global_graphics_driver = &global_null_renderer_driver;
-
 const char* _build_flags =
 #ifdef USE_SIMD_OPTIMIZATIONS
     "using simd,"
@@ -427,11 +442,6 @@ void initialize() {
 
     set_graphics_device(GRAPHICS_DEVICE_SOFTWARE);
 
-    // NOTE:
-    // this will construct the framebuffer **twice**
-    // which is... not nice but I guess it's okay.
-    initialize_framebuffer();
-
     // initialize game_preferences structure here.
     {
         auto& preferences = game.preferences;
@@ -621,11 +631,16 @@ local void set_graphics_device(s32 id) {
         } break;
         case GRAPHICS_DEVICE_OPENGL: {
             _debugprintf("Using opengl graphics device");
-            unimplemented("not here yet.");
+            global_graphics_driver = &global_opengl_renderer_driver;
+        } break;
+        case GRAPHICS_DEVICE_D3D11: {
+            _debugprintf("Using DirectX11 graphics device");
+            global_graphics_driver = &global_direct3d11_renderer_driver;
         } break;
     }
 
     // reinitialize game assets (reuploading stuff basically)
+    initialize_framebuffer();
     game.init_graphics_resources(global_graphics_driver);
     Global_Engine()->driver = global_graphics_driver;
 }
