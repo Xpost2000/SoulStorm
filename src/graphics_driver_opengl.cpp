@@ -12,7 +12,7 @@ inline local void _rotate_f32_xy_as_pseudo_zyx(f32* x, f32* y, f32 c=0, f32 s=0,
     *x = floor(c * (_x) - s * (_y));
     *y = floor(s * (_x) + c * (_y));
 
-#if 1
+#if 0
     // y rot
     *y = floor(c1 * (*y));
     // x rot
@@ -379,7 +379,7 @@ void OpenGL_Graphics_Driver::set_blend_mode(u8 new_blend_mode) {
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             } break;
             case BLEND_MODE_ADDITIVE: {
-                glBlendFunc(GL_ONE, GL_ONE);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE);
             } break;
             case BLEND_MODE_MULTIPLICATIVE: {
                 // NOTE: this relies on premultiplied alpha
@@ -449,30 +449,22 @@ void OpenGL_Graphics_Driver::push_render_quad_vertices(
     f32 c1 = cosf(degree_to_radians(angle_y));
     f32 s1 = sinf(degree_to_radians(angle_y));
 
+    // rotate the basis axes
+    // instead, since I cannot rotate each vertex.
+
+    // although I do still have to rotate the top left vertex based on the basis differences.
+    V2 down_basis    = V2(0, destination.h);
+    V2 right_basis = V2(destination.w, 0);
+
     OpenGL_Vertex_Format top_left;
     {
         top_left.position = V2(destination.x, destination.y);
         top_left.color    = color;
     }
-    OpenGL_Vertex_Format top_right;
-    {
-        top_right.position = V2(destination.x + destination.w, destination.y);
-        top_right.color    = color;
-    }
-    OpenGL_Vertex_Format bottom_left;
-    {
-        bottom_left.position = V2(destination.x, destination.y + destination.h);
-        bottom_left.color    = color;
-    }
-    OpenGL_Vertex_Format bottom_right;
-    {
-        bottom_right.position = V2(destination.x + destination.w, destination.y + destination.h);
-        bottom_right.color    = color;
-    }
 
-    // center for rotation.
     {
-        V2 displacement = V2(destination.x + (rotation_origin.x * destination.w), destination.y + (rotation_origin.y * destination.h));
+        V2 displacement = V2(destination.x + ((rotation_origin.x) * destination.w), destination.y + ((rotation_origin.y) * destination.h));
+#if 0
 
         top_left.position     -= displacement;
         top_right.position    -= displacement;
@@ -488,7 +480,32 @@ void OpenGL_Graphics_Driver::push_render_quad_vertices(
         top_right.position    += displacement;
         bottom_left.position  += displacement;
         bottom_right.position += displacement;
+#else
+        top_left.position     -= displacement;
+        _rotate_f32_xy_as_pseudo_zyx(&top_left.position.x,     &top_left.position.y,     c, s, c1, s1);
+        top_left.position     += displacement;
+
+        _rotate_f32_xy_as_pseudo_zyx(&down_basis.x,     &down_basis.y,     c, s, c1, s1);
+        _rotate_f32_xy_as_pseudo_zyx(&right_basis.x,    &right_basis.y,     c, s, c1, s1);
+#endif
     }
+
+    OpenGL_Vertex_Format top_right;
+    {
+        top_right.position = top_left.position + right_basis;
+        top_right.color    = color;
+    }
+    OpenGL_Vertex_Format bottom_left;
+    {
+        bottom_left.position = top_left.position + down_basis;
+        bottom_left.color    = color;
+    }
+    OpenGL_Vertex_Format bottom_right;
+    {
+        bottom_right.position = top_left.position + right_basis + down_basis;
+        bottom_right.color    = color;
+    }
+
 
 #if 1
     top_left.texcoord     = V2(source.x, source.y);
