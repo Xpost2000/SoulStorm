@@ -253,6 +253,11 @@ void OpenGL_Graphics_Driver::initialize_default_rendering_state(void) {
         glBindVertexArray(0);
     }
     initialized_default_shader = true;
+
+    glEnable(GL_BLEND);
+
+
+
 }
 
 bool OpenGL_Graphics_Driver::find_first_free_texture_id(unsigned int* result) {
@@ -347,20 +352,112 @@ void OpenGL_Graphics_Driver::finish() {
     zero_array(texture_ids);
 }
 
+void OpenGL_Graphics_Driver::set_blend_mode(u8 new_blend_mode) {
+    if (current_blend_mode != new_blend_mode) {
+        // Previous objects are assumed to be in a different blend mode.
+        flush_and_render_quads();
+        flush_and_render_lines();
+        current_blend_mode = new_blend_mode;
+
+        switch (current_blend_mode) {
+            case BLEND_MODE_NONE: {
+                glBlendFunc(GL_ONE, GL_ZERO);
+            } break;
+            case BLEND_MODE_ALPHA: {
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            } break;
+            case BLEND_MODE_ADDITIVE: {
+                glBlendFunc(GL_ONE, GL_ONE);
+            } break;
+            case BLEND_MODE_MULTIPLICATIVE: {
+                // NOTE: this relies on premultiplied alpha
+                // which I don't think I do,
+                // but I also never use multiplicative blending in the game code.
+                // pretty sure in the one case I might've used this for like shadowing
+                // I'd just do color modulation myself or multitexturing or any of the other
+                // solutions that basically look the same...
+                glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+            } break;
+        }
+    }
+}
+
 void OpenGL_Graphics_Driver::clear_color_buffer(color32u8 color) {
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f);
 }
 
+void OpenGL_Graphics_Driver::push_render_quad_vertices(rectangle_f32 destination, rectangle_f32 source, color32f32 color, struct image_buffer* image) {
+    if (image) {
+        u32 image_width   = (image->pot_square_size) ? image->pot_square_size : image->width;
+        u32 image_height  = (image->pot_square_size) ? image->pot_square_size : image->height;
+        // normalize coordinates.
+        source.x         /= image_width;
+        source.y         /= image_height;
+        source.w         /= image_width;
+        source.h         /= image_height;
+    }
+
+    OpenGL_Vertex_Format top_left;
+    {
+        top_left.position = V2(destination.x, destination.y);
+        top_left.texcoord = V2(source.x, source.y);
+        top_left.color    = color;
+    }
+    OpenGL_Vertex_Format top_right;
+    {
+        top_right.position = V2(destination.x + destination.w, destination.y);
+        top_right.texcoord = V2(source.x + source.w, source.y);
+        top_right.color    = color;
+    }
+    OpenGL_Vertex_Format bottom_left;
+    {
+        bottom_left.position = V2(destination.x, destination.y + destination.h);
+        bottom_left.texcoord = V2(source.x, source.y + source.h);
+        bottom_left.color    = color;
+    }
+    OpenGL_Vertex_Format bottom_right;
+    {
+        bottom_right.position = V2(destination.x + destination.w, destination.y + destination.h);
+        bottom_right.texcoord = V2(source.x + source.w, source.y + source.h);
+        bottom_right.color    = color;
+    }
+
+    quad_vertices.push(top_left);
+    quad_vertices.push(top_right);
+    quad_vertices.push(bottom_left);
+    quad_vertices.push(bottom_left);
+    quad_vertices.push(top_right);
+    quad_vertices.push(bottom_right);
+
+    if (quad_vertices.size >= quad_vertices.capacity) {
+        flush_and_render_quads();
+    }
+}
+
 void OpenGL_Graphics_Driver::render_command_draw_quad(const render_command& rc) {
-    
+    flush_and_render_lines();
+    auto destination_rect = rc.destination;
+    auto source_rect      = rc.source;
+    auto color            = rc.modulation_u8;
+    auto image_buffer     = rc.image;
+    set_blend_mode(rc.blend_mode);
+    push_render_quad_vertices(destination_rect, source_rect, color32u8_to_color32f32(color), image_buffer);
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_image(const render_command& rc) {
-    
+    flush_and_render_lines();
+    auto destination_rect = rc.destination;
+    auto source_rect      = rc.source;
+    auto color            = rc.modulation_u8;
+    auto image_buffer     = rc.image;
+    // same thing but I just need an image.
+    set_blend_mode(rc.blend_mode);
+    push_render_quad_vertices(destination_rect, source_rect, color32u8_to_color32f32(color), image_buffer);
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_line(const render_command& rc) {
+    flush_and_render_quads();
     // NOTE: will flush all quad buffers, in order to ensure that
     // draw order is perserved.
     // NOTE: this is for simplification for now, but I should draw lines as more quads.
@@ -368,15 +465,48 @@ void OpenGL_Graphics_Driver::render_command_draw_line(const render_command& rc) 
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_text(const render_command& rc) {
-    
+    auto font     = rc.font;
+    auto scale    = rc.scale;
+    auto position = rc.xy;
+    auto text     = rc.text;
+    auto color    = rc.modulation_u8;
+    set_blend_mode(rc.blend_mode);
+
+    {
+        f32 x_cursor = position.x;
+        f32 y_cursor = position.y;
+        for (unsigned index = 0; index < text.length; ++index) {
+            if (text.data[index] == '\n') {
+                y_cursor += font->tile_height * scale;
+                x_cursor =  position.x;
+            } else {
+                s32 character_index = text.data[index] - 32;
+                char character = text.data[index];
+                auto destination_rect = rectangle_f32(
+                    x_cursor, y_cursor,
+                    font->tile_width  * scale,
+                    font->tile_height * scale
+                );
+
+                auto source_rect = rectangle_f32(
+                    (character % font->atlas_cols) * font->tile_width,
+                    (character / font->atlas_cols) * font->tile_height,
+                    font->tile_width, font->tile_height
+                );
+
+                push_render_quad_vertices(destination_rect, source_rect, color32u8_to_color32f32(color), (struct image_buffer*)font);
+                x_cursor += font->tile_width * scale;
+            }
+        }
+    }
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_set_scissor(const render_command& rc) {
-    
+    unimplemented("set scissor not implemented");
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_clear_scissor(const render_command& rc) {
-    
+    unimplemented("clear scissor not implemented");
 }
 
 void OpenGL_Graphics_Driver::flush_and_render_quads(void) {
@@ -386,6 +516,7 @@ void OpenGL_Graphics_Driver::flush_and_render_quads(void) {
 void OpenGL_Graphics_Driver::flush_and_render_lines(void) {
     
 }
+
 void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* commands) {
     // NOTE:
     // unlike the software renderer this doesn't try to clip anything
@@ -419,6 +550,8 @@ void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* com
         clear_color_buffer(commands->clear_buffer_color);
     }
 
+    glViewport(0, 0, real_resolution.x, real_resolution.y);
+    set_blend_mode(BLEND_MODE_ALPHA); // good default.
     for (unsigned command_index = 0; command_index < commands->command_count; ++command_index) {
         auto& command = commands->commands[command_index];
 

@@ -39,7 +39,10 @@ public:
     void screenshot(char* where);
     const char* get_name(void);
 private:
+    void push_render_quad_vertices(rectangle_f32 destination, rectangle_f32 source, color32f32 color, struct image_buffer* image);
+    void set_blend_mode(u8 new_blend_mode);
     // Batching State
+    u8 current_blend_mode;
     GLuint quad_vertex_buffer;
     GLuint quad_vertex_array_object;
     Fixed_Array<OpenGL_Vertex_Format> quad_vertices;
