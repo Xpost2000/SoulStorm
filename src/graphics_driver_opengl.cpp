@@ -1,5 +1,45 @@
 #include "graphics_driver_opengl.h"
 
+local const char* gl_error_string(GLenum error) {
+    switch (error) {
+        case GL_NO_ERROR: {
+            return "GL_NO_ERROR";
+        } break;
+        case GL_INVALID_ENUM: {
+            return "GL_INVALID_ENUM";
+        } break;
+        case GL_INVALID_VALUE: {
+            return "GL_INVALID_VALUE";
+        } break;
+        case GL_INVALID_OPERATION: {
+            return "GL_INVALID_OPERATION";
+        } break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION: {
+            return "GL_INVALID_FRAMEBUFFER_OPERATION";
+        } break;
+        case GL_OUT_OF_MEMORY: {
+            return "GL_OUT_OF_MEMORY";
+        } break;
+        case GL_STACK_UNDERFLOW: {
+            return "GL_STACK_UNDERFLOW";
+        } break;
+        case GL_STACK_OVERFLOW: {
+            return "GL_STACK_OVERFLOW";
+        } break;
+    }
+
+    return "(unknown error)";
+}
+
+#define GL_CheckError(description)                                      \
+    do {                                                                \
+        auto error = glGetError();                                      \
+        if (error != GL_NO_ERROR) {                                     \
+            _debugprintf("[%s] Error Type: %s", description, gl_error_string(error)); \
+            assertion(error == GL_NO_ERROR && "OpenGL error found, please fix."); \
+        }                                                               \
+    } while (0)
+
 local const char* default_vertex_shader_source = R"shader(
 #version 330 core
 
@@ -47,10 +87,12 @@ local GLuint opengl_build_shader(const char* shader_source, GLenum type) {
     {
         GLint compile_status;
         glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_status);
+        GL_CheckError("Shader compile status");
 #ifndef RELEASE
         local char shader_info_buffer[4096];
         zero_memory(shader_info_buffer, sizeof(shader_info_buffer));
         glGetShaderInfoLog(shader, sizeof(shader_info_buffer), 0, shader_info_buffer);
+        GL_CheckError("Shader info log");
         _debugprintf("GLSL compile log: %s", shader_info_buffer);
 #endif
         assertion(compile_status == GL_TRUE && "Failure to compile shader?");
@@ -87,18 +129,86 @@ local GLuint opengl_build_shader_program(GLuint* shaders, unsigned int shader_co
 
     return shader_program;
 }
+
+local GLuint opengl_build_texture2d_object(struct image_buffer* image_buffer) {
+    GLuint texture_object;
+    glGenTextures(1, &texture_object);
+    glBindTexture(GL_TEXTURE_2D, texture_object);
+    {
+        GLsizei image_width  = (image_buffer->pot_square_size)  ? image_buffer->pot_square_size : image_buffer->width;
+        GLsizei image_height = (image_buffer->pot_square_size) ? image_buffer->pot_square_size : image_buffer->height;
+        assertion(image_width > 0 && image_height > 0 && "It should be impossible to generate a texture like this...");
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0, 
+            GL_RGBA, 
+            image_width, 
+            image_height, 
+            0, 
+            GL_RGBA, 
+            GL_UNSIGNED_BYTE, 
+            image_buffer->pixels
+        );
+        GL_CheckError("glTexImage2D called with parameters.");
+        assertion(glGetError() == GL_NO_ERROR && "No OpenGL error");
+        /*
+            NOTE: technically I have the facilities to make my own rudimentary mipmaps (since I have a working rotozoomer in this engine...),
+            but it's easier to use this, and in a 2D game it's unnoticable (I mean also indie tier 3D games as
+            well...)
+        */
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        GL_CheckError("Set texture parameters for current texture");
+        glGenerateMipmap(GL_TEXTURE_2D);
+        GL_CheckError("Generate mipmap with glGenerateMipmap");
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return texture_object;
+}
 // End OpenGL specific helpers
 
 void OpenGL_Graphics_Driver::initialize_default_rendering_state(void) {
     if (initialized_default_shader) {
         return;
     }
+    zero_array(texture_ids);
+
     GLuint shaders[] = {
-    opengl_build_shader(default_vertex_shader_source, GL_VERTEX_SHADER),
-    opengl_build_shader(default_pixel_shader_source, GL_FRAGMENT_SHADER)
+        opengl_build_shader(default_vertex_shader_source, GL_VERTEX_SHADER),
+        opengl_build_shader(default_pixel_shader_source, GL_FRAGMENT_SHADER)
     };
     default_shader_program = opengl_build_shader_program(shaders, array_count(shaders));
+    projection_matrix_uniform_location = glGetUniformLocation(default_shader_program, "u_projection_matrix");
+    view_matrix_uniform_location       = glGetUniformLocation(default_shader_program, "u_view_matrix");
+
+    {
+        GLfloat identity4x4[] = {
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        };
+
+        glUseProgram(default_shader_program);
+        glUniformMatrix4fv(projection_matrix_uniform_location, 1, false, identity4x4);
+        glUniformMatrix4fv(view_matrix_uniform_location, 1, false, identity4x4);
+        glUseProgram(0);
+    }
+
     initialized_default_shader = true;
+}
+
+bool OpenGL_Graphics_Driver::find_first_free_texture_id(unsigned int* result) {
+    for (unsigned index = 0; index < array_count(texture_ids); ++index) {
+        if (texture_ids[index] == 0) {
+            *result = index;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void OpenGL_Graphics_Driver::initialize(SDL_Window* window, int width, int height) {
@@ -133,7 +243,13 @@ void OpenGL_Graphics_Driver::swap_and_present() {
 
 void OpenGL_Graphics_Driver::finish() {
     _debugprintf("OpenGL Driver Finish");
-    unimplemented("Not done");
+    _debugprintf("Deleting shader program and textures.");
+    initialized_default_shader = false;
+    glDeleteProgram(default_shader_program);
+    for (unsigned index = 0; index < array_count(texture_ids); ++index) {
+        glDeleteTextures(1, &texture_ids[index]);
+    }
+    zero_array(texture_ids);
 }
 
 void OpenGL_Graphics_Driver::clear_color_buffer(color32u8 color) {
@@ -151,12 +267,34 @@ V2 OpenGL_Graphics_Driver::resolution() {
 
 void OpenGL_Graphics_Driver::upload_texture(struct graphics_assets* assets, image_id image) {
     _debugprintf("OpenGL driver upload texture is nop");
- //   unimplemented("Not done");
+    auto backing_image_buffer         = graphics_assets_get_image_by_id(assets, image);
+    auto  image_buffer_driver_resource = (GLuint*)(backing_image_buffer->_driver_userdata);
+
+    if (image_buffer_driver_resource) {
+        _debugprintf("Existing driver resource found. Do not need to reload.");
+        return;
+    }
+
+    _debugprintf("Loading new driver resource");
+    unsigned int free_texture_id;
+    assertion(find_first_free_texture_id(&free_texture_id) && "No more free texture ids. Bump the number.");
+    texture_ids[free_texture_id] = opengl_build_texture2d_object(backing_image_buffer);
+    backing_image_buffer->_driver_userdata = &texture_ids[free_texture_id];
+    _debugprintf("Loaded texture2d resource");
 }
 
 void OpenGL_Graphics_Driver::upload_font(struct graphics_assets* assets, font_id font) {
-    _debugprintf("OpenGL driver upload font is nop");
+    _debugprintf("OpenGL driver upload font is nop, all things are sampled as textures.");
  //   unimplemented("Not done");
+}
+
+void OpenGL_Graphics_Driver::unload_texture(struct graphics_assets* assets, image_id image) {
+    auto backing_image_buffer         = graphics_assets_get_image_by_id(assets, image);
+    auto  image_buffer_driver_resource = (GLuint*)(backing_image_buffer->_driver_userdata);
+    if (image_buffer_driver_resource) {
+        _debugprintf("Deleting graphics resource %p", image_buffer_driver_resource);
+        glDeleteTextures(1, image_buffer_driver_resource);
+    }
 }
 
 void OpenGL_Graphics_Driver::screenshot(char* where) {
