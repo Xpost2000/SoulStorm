@@ -243,6 +243,10 @@ void Game::update_and_render_game_opening(struct render_commands* game_render_co
             f32 box_alpha  = 1.0f;
             s32 shown_characters = first_slide->shown_characters;
 
+            if (state.phase == OPENING_MODE_PHASE_FADE_IN) {
+                box_alpha = clamp<f32>((state.fade_timer-0.2) / OPENING_MODE_FADE_TIMER_MAX, 0.0f, 1.0f);
+            }
+
             if (first_slide->display_phase == OPENING_MODE_SLIDE_DATA_PHASE_CROSSFADE) {
                 f32 target_alpha = 1 - clamp<f32>(first_slide->timer/OPENING_MODE_DISPLAY_FADE_CROSSFADE_TIME, 0.0f, 1.0f);
                 if (next_slide) {

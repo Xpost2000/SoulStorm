@@ -101,6 +101,20 @@ struct MainMenu_Introduction_Cutscene_Data {
     s32  phase            = 0;
 };
 
+enum MainMenu_Unlock_Pet_Cutscene_Phase {
+    MAIN_MENU_UNLOCK_PET_CUTSCENE_PHASE_OFF           = 0,
+    MAIN_MENU_UNLOCK_PET_CUTSCENE_COROUTINE_TASK      = 1,
+    MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_IN_UNLOCK_BOX  = 2,
+    MAIN_MENU_UNLOCK_PET_CUTSCENE_POP_IN_PET          = 3,
+    MAIN_MENU_UNLOCK_PET_CUTSCENE_IDLE                = 4,
+    MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_OUT_UNLOCK_BOX = 5,
+};
+struct MainMenu_Unlock_Pet_Cutscene_Data {
+    bool triggered        = false;
+    s32  phase            = 0;
+    f32  timer            = 0;
+};
+
 #define MAX_MAINMENU_OUTERSPACE_STARS (2000)
 #define MAX_MAINMENU_SPARKLING_STARS (64)
 
@@ -154,6 +168,7 @@ struct MainMenu_Data {
 
     MainMenu_Completed_MainGame_Cutscene_Data cutscene1;
     MainMenu_Introduction_Cutscene_Data       cutscene2;
+    MainMenu_Unlock_Pet_Cutscene_Data         cutscene3;
 
     Fixed_Array<MainMenu_ScreenMessage> screen_messages;
     Fixed_Array<MainMenu_Clutter_Poop>  clutter_poops;
@@ -185,6 +200,7 @@ struct MainMenu_Data {
     void cleanup_all_dead_poops(void);
 
     void start_completed_maingame_cutscene(Game_State* game_state);
+    void start_unlock_pet_cutscene(Game_State* game_state);
     void start_introduction_cutscene(Game_State* game_state, bool fasttrack);
     
     void update_and_render_cutscene1(struct render_commands* game_commands, struct render_commands* ui_commands, f32 dt);

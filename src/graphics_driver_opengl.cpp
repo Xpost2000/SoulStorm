@@ -620,8 +620,8 @@ void OpenGL_Graphics_Driver::flush_and_render_quads(void) {
     GL_CheckError("bind vertex array");
     glBindBuffer(GL_ARRAY_BUFFER, quad_vertex_buffer);
 
-    glBufferData(GL_ARRAY_BUFFER, quad_vertices.size * sizeof(OpenGL_Vertex_Format), quad_vertices.data, GL_DYNAMIC_DRAW);
-    // glBufferSubData(GL_ARRAY_BUFFER, 0, quad_vertices.size * sizeof(OpenGL_Vertex_Format), quad_vertices.data);
+    // glBufferData(GL_ARRAY_BUFFER, quad_vertices.size * sizeof(OpenGL_Vertex_Format), quad_vertices.data, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, quad_vertices.size * sizeof(OpenGL_Vertex_Format), quad_vertices.data);
     GL_CheckError("buffer subdata update?");
     glDrawArrays(GL_TRIANGLES, 0, quad_vertices.size);
     GL_CheckError("draw array");

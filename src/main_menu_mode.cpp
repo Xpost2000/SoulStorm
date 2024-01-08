@@ -2,12 +2,89 @@
 // main menu code
 
 // cutscene coroutines.
+// these cutscenes are really good copy and paste fu.
+void cutscene_unlocked_pet_task(jdr_duffcoroutine_t* co) {
+    _jdr_bind_current(co);
+    Game_State* state           = ((Game_Task_Userdata*)(co->userdata))->game_state;
+    auto        main_menu_state = &state->mainmenu_data;
+    f32         dt              = ((Game_Task_Userdata*)(co->userdata))->dt;
+    V2          resolution      = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);
+
+    auto& camera = main_menu_state->main_camera;
+    float* trauma_timer = (float*)_jdr_alloc_var(sizeof(*trauma_timer));
+
+    JDR_Coroutine_Start(co, Start);
+    TASK_WAIT(0.7f);
+    {
+        *trauma_timer = 0;
+        while ((*trauma_timer) < 0.35f) {
+            controller_rumble(Input::get_gamepad(0), 0.25f, 0.25f, 10);
+            camera_set_trauma(&camera, 0.17f);
+            *trauma_timer += dt;
+            JDR_Coroutine_YieldNR();
+        }
+    }
+    TASK_WAIT(0.25f);
+    {
+        *trauma_timer = 0;
+        while ((*trauma_timer) < 0.25f) {
+            controller_rumble(Input::get_gamepad(0), 0.25f, 0.25f, 10);
+            camera_set_trauma(&camera, 0.17f);
+            *trauma_timer += dt;
+            JDR_Coroutine_YieldNR();
+        }
+    }
+    TASK_WAIT(0.25f);
+    {
+        *trauma_timer = 0;
+        while ((*trauma_timer) < 0.25f) {
+            controller_rumble(Input::get_gamepad(0), 0.25f, 0.25f, 10);
+            camera_set_trauma(&camera, 0.17f);
+            *trauma_timer += dt;
+            JDR_Coroutine_YieldNR();
+        }
+    }
+
+    TASK_WAIT(0.25f);
+    // Show pop up for current pet
+    camera_set_point_to_interpolate(&camera, V2(resolution.x, resolution.y), 2.0);
+    while (camera_interpolating(&camera)) {
+        JDR_Coroutine_YieldNR();
+    }
+
+    *trauma_timer = 0;
+    TASK_WAIT(0.25f);
+    while ((*trauma_timer) < 0.65f) {
+        controller_rumble(Input::get_gamepad(0), 0.25f, 0.25f, 10);
+        camera_set_trauma(&camera, 0.17f);
+        *trauma_timer += dt;
+        JDR_Coroutine_YieldNR();
+    }
+
+    {
+        auto& current_pet = main_menu_state->pets[state->gameplay_data.unlocked_pets++];
+        current_pet.position = V2(resolution.x/2, resolution.y/2);
+    }
+    TASK_WAIT(0.5f);
+
+    // TODO: show pop up text which depends on the pet.
+    camera_set_point_to_interpolate(&camera, V2(resolution.x/2, resolution.y/2), 1.0);
+
+    while (camera_interpolating(&camera)) {
+        JDR_Coroutine_YieldNR();
+    }
+
+    main_menu_state->cutscene3.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_IN_UNLOCK_BOX;
+    main_menu_state->cutscene3.timer = 0.0f;
+    JDR_Coroutine_End;
+}
+
 void cutscene_completed_maingame_task(jdr_duffcoroutine_t* co) {
     _jdr_bind_current(co);
     Game_State* state           = ((Game_Task_Userdata*)(co->userdata))->game_state;
     auto        main_menu_state = &state->mainmenu_data;
     f32         dt              = ((Game_Task_Userdata*)(co->userdata))->dt;
-    V2          resolution      = Global_Engine()->driver->resolution();
+    V2          resolution      = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);
 
     auto& camera = main_menu_state->main_camera;
     float* trauma_timer = (float*)_jdr_alloc_var(sizeof(*trauma_timer));
@@ -26,6 +103,8 @@ void cutscene_completed_maingame_task(jdr_duffcoroutine_t* co) {
     while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
 
 
+    // NOTE: should I make the portals unlock through cutscene? maybe
+    // prolly.
 #if 0
     // post game portal focus and spawn.
     // Using a similar animation to the player.
@@ -79,7 +158,7 @@ void cutscene_introduction_fasttrack_task(jdr_duffcoroutine_t* co) {
     Game_State* state           = ((Game_Task_Userdata*)(co->userdata))->game_state;
     auto        main_menu_state = &state->mainmenu_data;
     f32         dt              = ((Game_Task_Userdata*)(co->userdata))->dt;
-    V2          resolution      = Global_Engine()->driver->resolution();
+    V2          resolution      = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);
 
     auto& camera = main_menu_state->main_camera;
     float* trauma_timer = (float*)_jdr_alloc_var(sizeof(*trauma_timer));
@@ -118,7 +197,7 @@ void cutscene_introduction_firsttime_task(jdr_duffcoroutine_t* co) {
     Game_State* state           = ((Game_Task_Userdata*)(co->userdata))->game_state;
     auto        main_menu_state = &state->mainmenu_data;
     f32         dt              = ((Game_Task_Userdata*)(co->userdata))->dt;
-    V2          resolution      = Global_Engine()->driver->resolution();
+    V2          resolution      = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);
 
     auto& camera = main_menu_state->main_camera;
     float* trauma_timer = (float*)_jdr_alloc_var(sizeof(*trauma_timer));
@@ -268,8 +347,8 @@ local f32 pet_weight_actions_by_type[GAME_PET_ID_COUNT][MAIN_MENU_PET_MAIN_ACTIO
         0.1,
         0.1,
         0.1,
-        0.5,
-        0.2,
+        0.6,
+        0.1,
         0.07
     },  
     // fish
@@ -529,6 +608,15 @@ void MainMenu_Data::cleanup_all_dead_poops(void) {
     }
 }
 
+void MainMenu_Data::start_unlock_pet_cutscene(Game_State* game_state) {
+    if (!cutscene3.triggered) {
+        _debugprintf("Starting pet unlock cutscene!");
+        cutscene3.triggered        = true;
+        cutscene3.phase            = 1;
+        game_state->coroutine_tasks.add_task(game_state, cutscene_unlocked_pet_task);
+    }
+}
+
 void MainMenu_Data::start_completed_maingame_cutscene(Game_State* game_state) {
     if (!cutscene1.triggered) {
         _debugprintf("Starting main game completion cutscene!");
@@ -555,7 +643,7 @@ void MainMenu_Data::start_introduction_cutscene(Game_State* game_state, bool fas
 }
 
 bool MainMenu_Data::cutscene_active() {
-    return cutscene1.phase != 0 || cutscene2.phase != 0;
+    return cutscene1.phase != 0 || cutscene2.phase != 0 || cutscene3.phase != 0;
 }
 
 bool MainMenu_Data::screen_messages_finished() {
@@ -832,7 +920,6 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
             BLEND_MODE_ALPHA);
 
         // background stars are slower
-
         auto bkg_slow_stars = main_menu_state.star_positions[0];
         auto bkg_faster_stars = main_menu_state.star_positions[1];
         // forward stars are moving more
@@ -901,13 +988,13 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
         Achievements::get(ACHIEVEMENT_ID_STAGE2)->_deunlock();
         Achievements::get(ACHIEVEMENT_ID_STAGE1)->_deunlock();
     }
+    if (Input::is_key_pressed(KEY_O)) {
+        main_menu_state.start_unlock_pet_cutscene(state);
+    }
 #endif
 
     if (Action::is_pressed(ACTION_MENU)) {
-        if (this->state->ui_state == UI_STATE_STAGE_SELECT ||
-            main_menu_state.cutscene1.phase != 0          ||
-            main_menu_state.cutscene2.phase != 0
-        ) {
+        if (this->state->ui_state == UI_STATE_STAGE_SELECT || main_menu_state.cutscene_active()) {
             
         } else {
             if (this->state->ui_state != UI_STATE_PAUSED) {
@@ -923,8 +1010,12 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
             main_menu_state.player.update(&main_menu_state, dt);
         }
 
-        for (int i = 0; i < this->state->gameplay_data.unlocked_pets; ++i) {
-            main_menu_state.pets[i].update(&main_menu_state, dt);
+        // I do not want the pets to move on screen until their unlock cutscene
+        // is over, because otherwise something might look weird.
+        if (main_menu_state.cutscene3.phase == 0) {
+            for (int i = 0; i < this->state->gameplay_data.unlocked_pets; ++i) {
+                main_menu_state.pets[i].update(&main_menu_state, dt);
+            }
         }
 
         for (int i = 0; i < main_menu_state.clutter_poops.size; ++i) {
@@ -1033,64 +1124,89 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
 
     // screen messages
     if (state->ui_state == UI_STATE_INACTIVE) {
-        if (main_menu_state.screen_messages.size > 0) {
-            main_menu_state.screen_message_fade_t += dt;
-        } else {
-            main_menu_state.screen_message_fade_t -= dt;
+        // Screen_Message
+        {
+            if (main_menu_state.screen_messages.size > 0) {
+                main_menu_state.screen_message_fade_t += dt;
+            } else {
+                main_menu_state.screen_message_fade_t -= dt;
+            }
+
+            main_menu_state.screen_message_fade_t = clamp<f32>(main_menu_state.screen_message_fade_t, 0.0f, 1.0f);
+
+            auto font = resources->get_font(MENU_FONT_COLOR_WHITE);
+            f32 text_scale = 4.0f;
+
+            render_commands_push_quad_ext(
+                ui_render_commands,
+                rectangle_f32(0, 0, ui_render_commands->screen_width, ui_render_commands->screen_height),
+                color32u8(0, 0, 0, main_menu_state.screen_message_fade_t * 150),
+                V2(0, 0), 0,
+                BLEND_MODE_ALPHA
+            );
+
+            // one message per "screen"
+            if (main_menu_state.screen_messages.size > 0) {
+                s32 message_index = 0;
+                auto& message = main_menu_state.screen_messages[message_index];
+
+                f32 text_width       = font_cache_text_width(font, message.text, text_scale);
+                f32 text_height      = font_cache_text_height(font) * text_scale;
+                V2  message_position = V2(ui_render_commands->screen_width/2 - text_width/2.0f, ui_render_commands->screen_height/2 - text_height/2);
+
+                // TODO: fix alignment and visual look.
+                switch (message.phase) {
+                    case MAIN_MENU_SCREEN_MESSAGE_APPEAR: {
+                        const f32 PHASE_MAX = 0.35f;
+                        message.timer += dt;
+                        f32 alpha = clamp<f32>(message.timer/PHASE_MAX, 0.0f, 1.0f);
+
+                        render_commands_push_text(ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1, alpha), BLEND_MODE_ALPHA);
+                        if (message.timer >= PHASE_MAX) {
+                            message.phase = MAIN_MENU_SCREEN_MESSAGE_WAIT_FOR_CONTINUE;
+                            message.timer = 0.0f;
+                        }
+                    } break;
+                    case MAIN_MENU_SCREEN_MESSAGE_WAIT_FOR_CONTINUE: {
+                        render_commands_push_text(ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1,1), BLEND_MODE_ALPHA);
+                        if (Input::any_key_down() || Input::controller_any_button_down(Input::get_gamepad(0))) {
+                            message.phase = MAIN_MENU_SCREEN_MESSAGE_DISAPPEAR;
+                        }
+                    } break;
+                    case MAIN_MENU_SCREEN_MESSAGE_DISAPPEAR: {
+                        const f32 PHASE_MAX = 0.25f;
+                        message.timer += dt;
+                        f32 alpha = clamp<f32>(1 - message.timer/PHASE_MAX, 0.0f, 1.0f);
+                        render_commands_push_text(ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA);
+
+                        if (message.timer >= PHASE_MAX) {
+                            message.timer = 0.0f;
+
+                            main_menu_state.screen_messages.pop_and_swap(message_index);
+                        }
+                    } break;
+                }
+            }
         }
 
-        main_menu_state.screen_message_fade_t = clamp<f32>(main_menu_state.screen_message_fade_t, 0.0f, 1.0f);
-
-        auto font = resources->get_font(MENU_FONT_COLOR_WHITE);
-        f32 text_scale = 4.0f;
-
-        render_commands_push_quad_ext(
-            ui_render_commands,
-            rectangle_f32(0, 0, ui_render_commands->screen_width, ui_render_commands->screen_height),
-            color32u8(0, 0, 0, main_menu_state.screen_message_fade_t * 150),
-            V2(0, 0), 0,
-            BLEND_MODE_ALPHA
-        );
-
-        // one message per "screen"
-        if (main_menu_state.screen_messages.size > 0) {
-            s32 message_index = 0;
-            auto& message = main_menu_state.screen_messages[message_index];
-
-            f32 text_width       = font_cache_text_width(font, message.text, text_scale);
-            f32 text_height      = font_cache_text_height(font) * text_scale;
-            V2  message_position = V2(ui_render_commands->screen_width/2 - text_width/2.0f, ui_render_commands->screen_height/2 - text_height/2);
-
-            // TODO: fix alignment and visual look.
-            switch (message.phase) {
-                case MAIN_MENU_SCREEN_MESSAGE_APPEAR: {
-                    const f32 PHASE_MAX = 0.35f;
-                    message.timer += dt;
-                    f32 alpha = clamp<f32>(message.timer/PHASE_MAX, 0.0f, 1.0f);
-
-                    render_commands_push_text(ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1, alpha), BLEND_MODE_ALPHA);
-                    if (message.timer >= PHASE_MAX) {
-                        message.phase = MAIN_MENU_SCREEN_MESSAGE_WAIT_FOR_CONTINUE;
-                        message.timer = 0.0f;
-                    }
+        // Unlock Pet Cutscene
+        {
+            auto& cutscene_state = main_menu_state.cutscene3;
+            switch (cutscene_state.phase) {
+                case MAIN_MENU_UNLOCK_PET_CUTSCENE_PHASE_OFF:
+                case MAIN_MENU_UNLOCK_PET_CUTSCENE_COROUTINE_TASK: {} break;
+                case MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_IN_UNLOCK_BOX: {
+                    cutscene_state.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_POP_IN_PET;
                 } break;
-                case MAIN_MENU_SCREEN_MESSAGE_WAIT_FOR_CONTINUE: {
-                    render_commands_push_text(ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1,1), BLEND_MODE_ALPHA);
-                    if (Input::any_key_down() || Input::controller_any_button_down(Input::get_gamepad(0))) {
-                        message.phase = MAIN_MENU_SCREEN_MESSAGE_DISAPPEAR;
-                    }
+                case MAIN_MENU_UNLOCK_PET_CUTSCENE_POP_IN_PET: {
+                    cutscene_state.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_IDLE;
                 } break;
-                case MAIN_MENU_SCREEN_MESSAGE_DISAPPEAR: {
-                    const f32 PHASE_MAX = 0.25f;
-                    message.timer += dt;
-                    f32 alpha = clamp<f32>(1 - message.timer/PHASE_MAX, 0.0f, 1.0f);
-                    render_commands_push_text(ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA);
-
-                    if (message.timer >= PHASE_MAX) {
-                        message.timer = 0.0f;
-
-                        main_menu_state.screen_messages.pop_and_swap(message_index);
-                    }
+                case MAIN_MENU_UNLOCK_PET_CUTSCENE_IDLE: {
+                    cutscene_state.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_OUT_UNLOCK_BOX;
+                } break;
+                case MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_OUT_UNLOCK_BOX: {
+                    cutscene_state.phase  = MAIN_MENU_UNLOCK_PET_CUTSCENE_PHASE_OFF;
+                    cutscene_state.triggered = false;
                 } break;
             }
         }
