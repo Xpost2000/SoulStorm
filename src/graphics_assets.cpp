@@ -135,6 +135,7 @@ void image_buffer_free(struct image_buffer* image) {
 // Font Cache
 struct font_cache font_cache_load_bitmap_font(string filepath, s32 tile_width, s32 tile_height, s32 atlas_rows, s32 atlas_columns) {
     struct font_cache result = {};
+    zero_memory(&result, sizeof(result));
     result.type        = FONT_CACHE_ATLAS_FIXED_ASCII;
     result.tile_width  = tile_width;
     result.tile_height = tile_height;
@@ -142,10 +143,12 @@ struct font_cache font_cache_load_bitmap_font(string filepath, s32 tile_width, s
     result.atlas_cols  = atlas_columns;
 
     struct image_buffer atlas_image = image_buffer_load_from_file(filepath);
+   // image_buffer_pad_to_POT(&atlas_image);
 
     result.width  = atlas_image.width;
     result.height = atlas_image.height;
     result.pixels = atlas_image.pixels;
+   // result.pot_square_size = atlas_image.pot_square_size;
 
     return result;
 }

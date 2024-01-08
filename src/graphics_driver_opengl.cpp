@@ -64,7 +64,7 @@ void main() {
     gl_Position = u_projection_matrix * u_view_matrix * vec4(in_vertex_position.xy, 1.0, 1.0);
 
     out_vertex_position  = in_vertex_position;
-    out_vertex_texcoords = in_vertex_texcoords;
+    out_vertex_texcoords = vec2(in_vertex_texcoords.x, in_vertex_texcoords.y);
     out_vertex_colors    = in_vertex_colors;
 }
 )shader";
@@ -166,6 +166,16 @@ local GLuint opengl_build_texture2d_object(struct image_buffer* image_buffer) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+#if 0
+        // hopefully do not need this.
+        // since I have a pot resizer...
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+        glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+#endif
+
         GL_CheckError("Set texture parameters for current texture");
         glGenerateMipmap(GL_TEXTURE_2D);
         GL_CheckError("Generate mipmap with glGenerateMipmap");
@@ -404,6 +414,12 @@ void OpenGL_Graphics_Driver::push_render_quad_vertices(rectangle_f32 destination
     if (image) {
         u32 image_width   = (image->pot_square_size) ? image->pot_square_size : image->width;
         u32 image_height  = (image->pot_square_size) ? image->pot_square_size : image->height;
+
+        if ((source.x == 0) && (source.y == 0) && (source.w == 0) && (source.h == 0)) {
+            source.w = image_width;
+            source.h = image_height;
+        }
+
         // normalize coordinates.
         source.x         /= image_width;
         source.y         /= image_height;
@@ -419,27 +435,35 @@ void OpenGL_Graphics_Driver::push_render_quad_vertices(rectangle_f32 destination
     OpenGL_Vertex_Format top_left;
     {
         top_left.position = V2(destination.x, destination.y);
-        top_left.texcoord = V2(source.x, source.y);
         top_left.color    = color;
     }
     OpenGL_Vertex_Format top_right;
     {
         top_right.position = V2(destination.x + destination.w, destination.y);
-        top_right.texcoord = V2(source.x + source.w, source.y);
         top_right.color    = color;
     }
     OpenGL_Vertex_Format bottom_left;
     {
         bottom_left.position = V2(destination.x, destination.y + destination.h);
-        bottom_left.texcoord = V2(source.x, source.y + source.h);
         bottom_left.color    = color;
     }
     OpenGL_Vertex_Format bottom_right;
     {
         bottom_right.position = V2(destination.x + destination.w, destination.y + destination.h);
-        bottom_right.texcoord = V2(source.x + source.w, source.y + source.h);
         bottom_right.color    = color;
     }
+
+#if 1
+    top_left.texcoord     = V2(source.x, source.y);
+    top_right.texcoord    = V2(source.x + source.w, source.y);
+    bottom_left.texcoord  = V2(source.x, source.y + source.h);
+    bottom_right.texcoord = V2(source.x + source.w, source.y + source.h);
+#else
+    top_left.texcoord     = V2(source.x, source.y + source.h);
+    top_right.texcoord    = V2(source.x + source.w, source.y + source.h);
+    bottom_left.texcoord  = V2(source.x, source.y);
+    bottom_right.texcoord = V2(source.x + source.w, source.y);
+#endif
 
     quad_vertices.push(top_left);
     quad_vertices.push(top_right);
@@ -498,8 +522,7 @@ void OpenGL_Graphics_Driver::render_command_draw_text(const render_command& rc) 
                 y_cursor += font->tile_height * scale;
                 x_cursor =  position.x;
             } else {
-                s32 character_index = text.data[index] - 32;
-                char character = text.data[index];
+                s32 character = text.data[index] - 32;
                 auto destination_rect = rectangle_f32(
                     x_cursor, y_cursor,
                     font->tile_width  * scale,
