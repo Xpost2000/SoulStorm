@@ -131,10 +131,12 @@ local void initialize_framebuffer(void) {
     V2 framebuffer_resolution = get_scaled_screen_resolution(V2(REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT));
 
     // /* I know these sound like constants. They really aren't... */
-    u32 last_screen_width  = SCREEN_WIDTH;
-    u32 last_screen_height = SCREEN_HEIGHT;
-    SCREEN_WIDTH  = framebuffer_resolution.x;
-    SCREEN_HEIGHT = ENGINE_BASE_VERTICAL_RESOLUTION;
+    u32 last_screen_width               = SCREEN_WIDTH;
+    u32 last_screen_height              = SCREEN_HEIGHT;
+    SCREEN_WIDTH                        = framebuffer_resolution.x;
+    SCREEN_HEIGHT                       = ENGINE_BASE_VERTICAL_RESOLUTION;
+    Global_Engine()->real_screen_width  = REAL_SCREEN_WIDTH;
+    Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
     if (last_screen_width == SCREEN_WIDTH && last_screen_height == SCREEN_HEIGHT) {
         _debugprintf("Framebuffer did not change resolutions. No change needed.");
     } else {

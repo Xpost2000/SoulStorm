@@ -277,13 +277,13 @@ void OpenGL_Graphics_Driver::initialize(SDL_Window* window, int width, int heigh
         context = SDL_GL_CreateContext(game_window);
         SDL_GL_MakeCurrent(game_window, context);
         assert(gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress) && "OpenGL functions could not be loaded. That's bad.");
+
+        {
+            quad_vertices = Fixed_Array<OpenGL_Vertex_Format>(&Global_Engine()->main_arena, MAX_OPENGL_VERTICES_FOR_QUAD_BUFFER);
+        }
     }
 
     initialize_backbuffer(V2(width, height));
-
-    {
-        quad_vertices = Fixed_Array<OpenGL_Vertex_Format>(&Global_Engine()->main_arena, MAX_OPENGL_VERTICES_FOR_QUAD_BUFFER);
-    }
 }
 
 void OpenGL_Graphics_Driver::initialize_backbuffer(V2 resolution) {
@@ -296,6 +296,9 @@ void OpenGL_Graphics_Driver::initialize_backbuffer(V2 resolution) {
     
     real_resolution = V2(Global_Engine()->real_screen_width, Global_Engine()->real_screen_height);
     virtual_resolution = resolution;
+
+    _debugprintf("Real resolution %d, %d", (s32)real_resolution.x, (s32)real_resolution.y);
+    _debugprintf("virtual resolution %d, %d", (s32)virtual_resolution.x, (s32)virtual_resolution.y);
 
     // setup projection matrix
     {
