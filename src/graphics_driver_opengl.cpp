@@ -323,6 +323,10 @@ void OpenGL_Graphics_Driver::initialize_backbuffer(V2 resolution) {
 }
 
 void OpenGL_Graphics_Driver::swap_and_present() {
+    if (!initialized_default_shader) {
+        return;
+    }
+
     SDL_GL_SetSwapInterval(-1);
     SDL_GL_SwapWindow(game_window);
 }
@@ -341,8 +345,8 @@ void OpenGL_Graphics_Driver::finish() {
     glDeleteProgram(default_shader_program);
     for (unsigned index = 0; index < array_count(texture_ids); ++index) {
         glDeleteTextures(1, &texture_ids[index]);
+        texture_ids[index] = 0;
     }
-    zero_array(texture_ids);
 }
 
 void OpenGL_Graphics_Driver::set_blend_mode(u8 new_blend_mode) {
@@ -404,7 +408,12 @@ void OpenGL_Graphics_Driver::push_render_quad_vertices(rectangle_f32 destination
         source.w         /= image_width;
         source.h         /= image_height;
 
-        assertion(image->_driver_userdata && "How does this image not have a OpenGL texture id?");
+
+        if (image->_driver_userdata == nullptr) {
+            _debugprintf("Warning? No opengl texture image id? Uploading dynamically.");
+            upload_image_buffer_to_gpu(image);
+        }
+        // assertion(image->_driver_userdata && "How does this image not have a OpenGL texture id?");
         set_texture_id(*((GLuint*)image->_driver_userdata));
     } else {
         set_texture_id(white_pixel);
@@ -579,6 +588,9 @@ void OpenGL_Graphics_Driver::flush_and_render_quads(void) {
 }
 
 void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* commands) {
+    if (!initialized_default_shader) {
+        return;
+    }
     // NOTE:
     // unlike the software renderer this doesn't try to clip anything
     // because it kind of doesn't have to? It would be too fast anyway...

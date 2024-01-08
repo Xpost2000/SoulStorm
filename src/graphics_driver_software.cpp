@@ -31,6 +31,10 @@ void Software_Renderer_Graphics_Driver::initialize_backbuffer(V2 resolution) {
 }
 
 void Software_Renderer_Graphics_Driver::swap_and_present() {
+    if (!game_texture_surface) {
+        return;
+    }
+
     {
         void* locked_pixel_region;
         s32   _pitch; unused(_pitch);
@@ -47,6 +51,8 @@ void Software_Renderer_Graphics_Driver::finish() {
     software_framebuffer_finish(&default_framebuffer);
     SDL_DestroyTexture(game_texture_surface);
     SDL_DestroyRenderer(game_sdl_renderer);
+    game_texture_surface = nullptr;
+    game_sdl_renderer = nullptr;
 }
 
 void Software_Renderer_Graphics_Driver::clear_color_buffer(color32u8 color) {
@@ -55,6 +61,9 @@ void Software_Renderer_Graphics_Driver::clear_color_buffer(color32u8 color) {
 
 void Software_Renderer_Graphics_Driver::consume_render_commands(struct render_commands* commands) {
     // refer to software_render_commands_implementation.cpp
+    if (!game_texture_surface) {
+        return;
+    }
     software_framebuffer_render_commands(&default_framebuffer, commands); 
 }
 
