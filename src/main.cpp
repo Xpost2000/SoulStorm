@@ -532,36 +532,43 @@ bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
     }
 
     {
-        lua_getglobal(L, "width");
-        preferences->width = lua_tointeger(L, -1);
+        int t = lua_getglobal(L, "width");
+        if (t != LUA_TNONE && t != LUA_TNIL)
+          preferences->width = lua_tointeger(L, -1);
     }
     {
-        lua_getglobal(L, "height");
-        preferences->height = lua_tointeger(L, -1);
+        int t = lua_getglobal(L, "height");
+        if (t != LUA_TNONE && t != LUA_TNIL)
+           preferences->height = lua_tointeger(L, -1);
     }
     {
-        lua_getglobal(L, "music_volume");
-        preferences->music_volume = lua_tonumber(L, -1);
+        int t = lua_getglobal(L, "music_volume");
+        if (t != LUA_TNONE && t != LUA_TNIL)
+            preferences->music_volume = lua_tonumber(L, -1);
     }
 
     {
-        lua_getglobal(L, "sound_volume");
-        preferences->sound_volume = lua_tonumber(L, -1);
+        int t = lua_getglobal(L, "sound_volume");
+        if (t != LUA_TNONE && t != LUA_TNIL)
+            preferences->sound_volume = lua_tonumber(L, -1);
     }
     {
-        lua_getglobal(L, "fullscreen");
-        preferences->fullscreen = lua_toboolean(L, -1);
+        int t = lua_getglobal(L, "fullscreen");
+        if (t != LUA_TNONE && t != LUA_TNIL)
+            preferences->fullscreen = lua_toboolean(L, -1);
     }
     {
-        lua_getglobal(L, "renderer");
-        preferences->renderer_type = lua_tonumber(L, -1);
-        if (preferences->renderer_type == 0) {
+        int t = lua_getglobal(L, "renderer");
+        if (t != LUA_TNONE && t != LUA_TNIL)
+            preferences->renderer_type = lua_tonumber(L, -1);
+        if (preferences->renderer_type == GRAPHICS_DEVICE_NULL) {
             preferences->renderer_type = GRAPHICS_DEVICE_SOFTWARE;
         }
     }
     {
-        lua_getglobal(L, "controller_vibration");
-        preferences->controller_vibration = lua_toboolean(L, -1);
+        int t = lua_getglobal(L, "controller_vibration");
+        if (t != LUA_TNONE && t != LUA_TNIL)
+            preferences->controller_vibration = lua_toboolean(L, -1);
     }
 
     lua_close(L);
