@@ -300,6 +300,8 @@ local void update_all_controller_inputs(void) {
 
 local void change_resolution(s32 new_resolution_x, s32 new_resolution_y) {
     SDL_SetWindowSize(global_game_window, new_resolution_x, new_resolution_y);
+    Global_Engine()->real_screen_width = new_resolution_x;
+    Global_Engine()->real_screen_height = new_resolution_y;
 }
 
 local void set_fullscreen(bool v) {
@@ -432,7 +434,8 @@ void initialize() {
                                           REAL_SCREEN_WIDTH,
                                           REAL_SCREEN_HEIGHT,
                                           flags);
-
+    Global_Engine()->real_screen_width = REAL_SCREEN_WIDTH;
+    Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
     Thread_Pool::initialize();
 
 #ifndef NO_FANCY_FADEIN_INTRO

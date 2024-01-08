@@ -1,5 +1,9 @@
 #include "graphics_driver_opengl.h"
 
+#include "engine.h"
+
+#include <stb_image_write.h>
+
 local const char* gl_error_string(GLenum error) {
     switch (error) {
         case GL_NO_ERROR: {
@@ -234,6 +238,9 @@ void OpenGL_Graphics_Driver::initialize_backbuffer(V2 resolution) {
     // Which I only really need to do once since I'm not doing any render texture
     // or interesting tricks...
     initialize_default_rendering_state();
+    
+    real_resolution = V2(Global_Engine()->real_screen_width, Global_Engine()->real_screen_height);
+    virtual_resolution = resolution;
 }
 
 void OpenGL_Graphics_Driver::swap_and_present() {
@@ -262,7 +269,7 @@ void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* com
 }
 
 V2 OpenGL_Graphics_Driver::resolution() {
-    return V2(640, 480);
+    return V2(virtual_resolution.x, virtual_resolution.y);
 }
 
 void OpenGL_Graphics_Driver::upload_texture(struct graphics_assets* assets, image_id image) {
@@ -299,7 +306,14 @@ void OpenGL_Graphics_Driver::unload_texture(struct graphics_assets* assets, imag
 
 void OpenGL_Graphics_Driver::screenshot(char* where) {
     _debugprintf("OpenGL driver screenshot is nop");
- //   unimplemented("Not done");
+
+
+    // NOTE: pretty sure opengl might read it upside down...
+    struct image_buffer image = image_buffer_create_blank(real_resolution.x, real_resolution.y);
+    glReadPixels(0, 0, real_resolution.x, real_resolution.y, GL_RGBA, GL_UNSIGNED_BYTE, image.pixels);
+    stbi_write_png(where, image.width, image.height, 4, image.pixels, 4 * image.width);
+    image_buffer_free(&image);
+    //   unimplemented("Not done");
 }
 
 

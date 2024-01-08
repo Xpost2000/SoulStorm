@@ -28,6 +28,9 @@ public:
     void screenshot(char* where);
     const char* get_name(void);
 private:
+    V2 real_resolution;
+    V2 virtual_resolution;
+
     void initialize_default_rendering_state(void);
     bool find_first_free_texture_id(unsigned int* result);
 

@@ -25,6 +25,9 @@ struct Engine {
     bool running;
     Graphics_Driver* driver;
 
+    int real_screen_width;
+    int real_screen_height;
+
     void die();
     string memory_usage_strings();
 };
