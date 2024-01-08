@@ -573,7 +573,8 @@ void MainMenu_Data::screen_message_add(string message) {
 void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
     {
         auto state = &this->state->mainmenu_data;
-        auto resolution = driver->resolution();
+        // auto resolution = driver->resolution();
+        auto resolution = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);
 
         state->particle_pool.init(arena, 1024);
         

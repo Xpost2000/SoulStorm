@@ -38,7 +38,7 @@ public:
     const char* get_name(void);
 private:
     void upload_image_buffer_to_gpu(struct image_buffer* image); // NOTE: also update driver_userdata field
-    void push_render_quad_vertices(rectangle_f32 destination, rectangle_f32 source, color32f32 color, struct image_buffer* image);
+    void push_render_quad_vertices(rectangle_f32 destination, rectangle_f32 source, color32f32 color, struct image_buffer* image, s32 angle = 0, s32 angle_y = 0, u32 flags = NO_FLAGS, V2 rotation_origin = V2(0,0));
     void set_blend_mode(u8 new_blend_mode);
     void set_texture_id(GLuint texture_id);
     // Batching State

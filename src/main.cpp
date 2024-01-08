@@ -137,6 +137,8 @@ local void initialize_framebuffer(void) {
     SCREEN_HEIGHT                       = ENGINE_BASE_VERTICAL_RESOLUTION;
     Global_Engine()->real_screen_width  = REAL_SCREEN_WIDTH;
     Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
+    Global_Engine()->virtual_screen_width  = SCREEN_WIDTH;
+    Global_Engine()->virtual_screen_height = SCREEN_HEIGHT;
     if (last_screen_width == SCREEN_WIDTH && last_screen_height == SCREEN_HEIGHT) {
         _debugprintf("Framebuffer did not change resolutions. No change needed.");
     } else {

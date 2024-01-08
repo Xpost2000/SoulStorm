@@ -4,6 +4,22 @@
 
 #include <stb_image_write.h>
 
+// NOTE: from software_renderer.cpp
+inline local void _rotate_f32_xy_as_pseudo_zyx(f32* x, f32* y, f32 c=0, f32 s=0, f32 c1=0, f32 s1=0, f32 c2=0, f32 s2=1) {
+    // z rot
+    float _x = *x;
+    float _y = *y;
+    *x = floor(c * (_x) - s * (_y));
+    *y = floor(s * (_x) + c * (_y));
+
+#if 1
+    // y rot
+    *y = floor(c1 * (*y));
+    // x rot
+    *x = floor(s2 * (*x));
+#endif
+}
+
 local const char* gl_error_string(GLenum error) {
     switch (error) {
         case GL_NO_ERROR: {
@@ -392,7 +408,16 @@ void OpenGL_Graphics_Driver::clear_color_buffer(color32u8 color) {
     glClearColor(color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f);
 }
 
-void OpenGL_Graphics_Driver::push_render_quad_vertices(rectangle_f32 destination, rectangle_f32 source, color32f32 color, struct image_buffer* image) {
+void OpenGL_Graphics_Driver::push_render_quad_vertices(
+    rectangle_f32        destination,
+    rectangle_f32        source,
+    color32f32           color,
+    struct image_buffer* image,
+    s32                  angle,
+    s32                  angle_y,
+    u32                  flags,
+    V2                   rotation_origin
+) {
     if (image) {
         u32 image_width   = (image->pot_square_size) ? image->pot_square_size : image->width;
         u32 image_height  = (image->pot_square_size) ? image->pot_square_size : image->height;
@@ -419,6 +444,11 @@ void OpenGL_Graphics_Driver::push_render_quad_vertices(rectangle_f32 destination
         set_texture_id(white_pixel);
     }
 
+    f32 c = cosf(degree_to_radians(angle));
+    f32 s = sinf(degree_to_radians(angle));
+    f32 c1 = cosf(degree_to_radians(angle_y));
+    f32 s1 = sinf(degree_to_radians(angle_y));
+
     OpenGL_Vertex_Format top_left;
     {
         top_left.position = V2(destination.x, destination.y);
@@ -440,6 +470,26 @@ void OpenGL_Graphics_Driver::push_render_quad_vertices(rectangle_f32 destination
         bottom_right.color    = color;
     }
 
+    // center for rotation.
+    {
+        V2 displacement = V2(destination.x + (rotation_origin.x * destination.w), destination.y + (rotation_origin.y * destination.h));
+
+        top_left.position     -= displacement;
+        top_right.position    -= displacement;
+        bottom_left.position  -= displacement;
+        bottom_right.position -= displacement;
+
+        _rotate_f32_xy_as_pseudo_zyx(&top_left.position.x,     &top_left.position.y,     c, s, c1, s1);
+        _rotate_f32_xy_as_pseudo_zyx(&top_right.position.x,    &top_left.position.y,     c, s, c1, s1);
+        _rotate_f32_xy_as_pseudo_zyx(&bottom_left.position.x,  &bottom_left.position.y,  c, s, c1, s1);
+        _rotate_f32_xy_as_pseudo_zyx(&bottom_right.position.x, &bottom_right.position.y, c, s, c1, s1);
+
+        top_left.position     += displacement;
+        top_right.position    += displacement;
+        bottom_left.position  += displacement;
+        bottom_right.position += displacement;
+    }
+
 #if 1
     top_left.texcoord     = V2(source.x, source.y);
     top_right.texcoord    = V2(source.x + source.w, source.y);
@@ -451,6 +501,20 @@ void OpenGL_Graphics_Driver::push_render_quad_vertices(rectangle_f32 destination
     bottom_left.texcoord  = V2(source.x, source.y);
     bottom_right.texcoord = V2(source.x + source.w, source.y);
 #endif
+
+    if ((flags & DRAW_IMAGE_FLIP_HORIZONTALLY)) {
+        top_left.texcoord.x = source.x + source.w;
+        top_right.texcoord.x = source.x;
+        bottom_left.texcoord.x = source.x + source.w;
+        bottom_right.texcoord.x = source.x;
+    }
+
+    if ((flags & DRAW_IMAGE_FLIP_VERTICALLY)) {
+        top_left.texcoord.y = source.y + source.h;
+        top_right.texcoord.y = source.y + source.h;
+        bottom_left.texcoord.y = source.y;
+        bottom_right.texcoord.y = source.y;
+    }
 
     quad_vertices.push(top_left);
     quad_vertices.push(top_right);
@@ -470,7 +534,7 @@ void OpenGL_Graphics_Driver::render_command_draw_quad(const render_command& rc) 
     auto color            = rc.modulation_u8;
     auto image_buffer     = rc.image;
     set_blend_mode(rc.blend_mode);
-    push_render_quad_vertices(destination_rect, source_rect, color32u8_to_color32f32(color), image_buffer);
+    push_render_quad_vertices(destination_rect, source_rect, color32u8_to_color32f32(color), image_buffer, rc.angle_degrees, rc.angle_y_degrees, rc.flags, rc.rotation_center);
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_image(const render_command& rc) {
@@ -480,7 +544,7 @@ void OpenGL_Graphics_Driver::render_command_draw_image(const render_command& rc)
     auto image_buffer     = rc.image;
     // same thing but I just need an image.
     set_blend_mode(rc.blend_mode);
-    push_render_quad_vertices(destination_rect, source_rect, color32u8_to_color32f32(color), image_buffer);
+    push_render_quad_vertices(destination_rect, source_rect, color32u8_to_color32f32(color), image_buffer, rc.angle_degrees, rc.angle_y_degrees, rc.flags, rc.rotation_center);
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_line(const render_command& rc) {

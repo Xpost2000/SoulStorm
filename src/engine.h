@@ -28,6 +28,9 @@ struct Engine {
     int real_screen_width;
     int real_screen_height;
 
+    int virtual_screen_width;
+    int virtual_screen_height;
+
     void die();
     string memory_usage_strings();
 };
