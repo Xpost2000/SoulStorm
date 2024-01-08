@@ -228,11 +228,11 @@ void OpenGL_Graphics_Driver::initialize_default_rendering_state(void) {
         glEnableVertexAttribArray(VERTEX_ATTRIB_INDEX);
         glEnableVertexAttribArray(TEXCOORD_ATTRIB_INDEX);
         glEnableVertexAttribArray(VERTEXCOLOR_ATTRIB_INDEX);
-        glVertexAttribPointer(VERTEX_ATTRIB_INDEX,      2, GL_FLOAT, false, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, position));
+        glVertexAttribPointer(VERTEX_ATTRIB_INDEX,      2, GL_FLOAT, GL_FALSE, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, position));
         GL_CheckError("Vertex position attribute");
-        glVertexAttribPointer(TEXCOORD_ATTRIB_INDEX,    2, GL_FLOAT, false, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, texcoord));
+        glVertexAttribPointer(TEXCOORD_ATTRIB_INDEX,    2, GL_FLOAT, GL_FALSE, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, texcoord));
         GL_CheckError("Tex Coord position attribute");
-        glVertexAttribPointer(VERTEXCOLOR_ATTRIB_INDEX, 4, GL_FLOAT, false, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, color));
+        glVertexAttribPointer(VERTEXCOLOR_ATTRIB_INDEX, 4, GL_FLOAT, GL_FALSE, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, color));
         GL_CheckError("Vertex Color position attribute");
 
         glBindVertexArray(line_vertex_array_object);
@@ -243,11 +243,11 @@ void OpenGL_Graphics_Driver::initialize_default_rendering_state(void) {
         glEnableVertexAttribArray(VERTEX_ATTRIB_INDEX);
         glEnableVertexAttribArray(TEXCOORD_ATTRIB_INDEX);
         glEnableVertexAttribArray(VERTEXCOLOR_ATTRIB_INDEX);
-        glVertexAttribPointer(VERTEX_ATTRIB_INDEX,      2, GL_FLOAT, false, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, position));
+        glVertexAttribPointer(VERTEX_ATTRIB_INDEX,      2, GL_FLOAT, GL_FALSE, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, position));
         GL_CheckError("Vertex position attribute");
-        glVertexAttribPointer(TEXCOORD_ATTRIB_INDEX,    2, GL_FLOAT, false, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, texcoord));
+        glVertexAttribPointer(TEXCOORD_ATTRIB_INDEX,    2, GL_FLOAT, GL_FALSE, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, texcoord));
         GL_CheckError("Tex Coord position attribute");
-        glVertexAttribPointer(VERTEXCOLOR_ATTRIB_INDEX, 4, GL_FLOAT, false, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, color));
+        glVertexAttribPointer(VERTEXCOLOR_ATTRIB_INDEX, 4, GL_FLOAT, GL_FALSE, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, color));
         GL_CheckError("Vertex Color position attribute");
 
         glBindVertexArray(0);
@@ -255,9 +255,6 @@ void OpenGL_Graphics_Driver::initialize_default_rendering_state(void) {
     initialized_default_shader = true;
 
     glEnable(GL_BLEND);
-
-
-
 }
 
 bool OpenGL_Graphics_Driver::find_first_free_texture_id(unsigned int* result) {
@@ -314,10 +311,10 @@ void OpenGL_Graphics_Driver::initialize_backbuffer(V2 resolution) {
         GLfloat far = 100.0f;
         GLfloat near = 0.1f;
         GLfloat orthographic_matrix[] = {
-            2 / (right - left), 0, 0, -(right+left)/(right-left),
-            0, 2 / (top - left), 0, -(top+left)/(top-left),
-            0, 0, 2 / (far - near), -(far+near)/(far-near),
-            0, 0, 0, 1
+            2 / (right - left), 0, 0, 0,
+            0, 2 / (top - bottom), 0, 0,
+            0, 0, 2 / (far - near), 0,
+            -(right+left)/(right-left), -(top+bottom)/(top-bottom), -(far+near)/(far-near), 1
         };
 
         glUseProgram(default_shader_program);
@@ -510,11 +507,27 @@ void OpenGL_Graphics_Driver::render_command_draw_clear_scissor(const render_comm
 }
 
 void OpenGL_Graphics_Driver::flush_and_render_quads(void) {
-    
+    if (quad_vertices.size == 0)
+        return;
+
+    glBindVertexArray(quad_vertex_array_object);
+    GL_CheckError("bind vertex array");
+    glBindBuffer(GL_ARRAY_BUFFER, quad_vertex_buffer);
+
+    glBufferData(GL_ARRAY_BUFFER, quad_vertices.size * sizeof(OpenGL_Vertex_Format), quad_vertices.data, GL_DYNAMIC_DRAW);
+    // glBufferSubData(GL_ARRAY_BUFFER, 0, quad_vertices.size * sizeof(OpenGL_Vertex_Format), quad_vertices.data);
+    GL_CheckError("buffer subdata update?");
+    glDrawArrays(GL_TRIANGLES, 0, quad_vertices.size);
+    GL_CheckError("draw array");
+
+    quad_vertices.clear();
 }
 
 void OpenGL_Graphics_Driver::flush_and_render_lines(void) {
-    
+    if (line_vertices.size == 0)
+        return;
+
+    line_vertices.clear();
 }
 
 void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* commands) {
@@ -537,10 +550,10 @@ void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* com
         }
 
         GLfloat view_matrix[] = {
-            scale_x, 0,       0,    transform_x,
-            0,       scale_y, 0,    transform_y,
-            0,       0,       1.0f, 0.0,
-            0,       0,       0,    1.0
+            scale_x, 0,       0,                          0,
+            0,       scale_y, 0,                          0,
+            0,       0,       1.0f,                       0.0,
+            transform_x,       transform_y,       0,    1.0
         };
 
         glUniformMatrix4fv(view_matrix_uniform_location, 1, false, view_matrix);
@@ -580,6 +593,8 @@ void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* com
         }
     }
 
+    flush_and_render_lines();
+    flush_and_render_quads();
     glUseProgram(0);
 }
 
