@@ -201,6 +201,13 @@ void OpenGL_Graphics_Driver::initialize_default_rendering_state(void) {
         glUseProgram(0);
     }
 
+    // Generate white pixel so I can render textured and untextured quads in the same pass.
+    {
+        struct image_buffer white_pixel_image_buffer = image_buffer_create_blank(1, 1);
+        *white_pixel_image_buffer.pixels_u32         = 0xFFFFFFFF;
+        white_pixel                                  = opengl_build_texture2d_object(&white_pixel_image_buffer);
+        image_buffer_free(&white_pixel_image_buffer);
+    }
     initialized_default_shader = true;
 }
 
@@ -241,6 +248,27 @@ void OpenGL_Graphics_Driver::initialize_backbuffer(V2 resolution) {
     
     real_resolution = V2(Global_Engine()->real_screen_width, Global_Engine()->real_screen_height);
     virtual_resolution = resolution;
+
+    // setup projection matrix
+    {
+        GLfloat right = resolution.x;
+        GLfloat left = 0;
+        GLfloat top = 0;
+        GLfloat bottom = resolution.y;
+
+        GLfloat far = 100.0f;
+        GLfloat near = 0.1f;
+        GLfloat orthographic_matrix[] = {
+            2 / (right - left), 0, 0, -(right+left)/(right-left),
+            0, 2 / (top - left), 0, -(top+left)/(top-left),
+            0, 0, 2 / (far - near), -(far+near)/(far-near),
+            0, 0, 0, 1
+        };
+
+        glUseProgram(default_shader_program);
+        glUniformMatrix4fv(projection_matrix_uniform_location, 1, 0, orthographic_matrix);
+        glUseProgram(0);
+    }
 }
 
 void OpenGL_Graphics_Driver::swap_and_present() {
@@ -264,8 +292,99 @@ void OpenGL_Graphics_Driver::clear_color_buffer(color32u8 color) {
     glClearColor(color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f);
 }
 
+void OpenGL_Graphics_Driver::render_command_draw_quad(const render_command& rc) {
+    
+}
+
+void OpenGL_Graphics_Driver::render_command_draw_image(const render_command& rc) {
+    
+}
+
+void OpenGL_Graphics_Driver::render_command_draw_line(const render_command& rc) {
+    
+}
+
+void OpenGL_Graphics_Driver::render_command_draw_text(const render_command& rc) {
+    
+}
+
+void OpenGL_Graphics_Driver::render_command_draw_set_scissor(const render_command& rc) {
+    
+}
+
+void OpenGL_Graphics_Driver::render_command_draw_clear_scissor(const render_command& rc) {
+    
+}
+
+void OpenGL_Graphics_Driver::flush_and_render_quads(void) {
+    
+}
+
+void OpenGL_Graphics_Driver::flush_and_render_lines(void) {
+    
+}
 void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* commands) {
- //   unimplemented("Not done");
+    // NOTE:
+    // unlike the software renderer this doesn't try to clip anything
+    // because it kind of doesn't have to? It would be too fast anyway...
+
+    // Build new view matrix
+    glUseProgram(default_shader_program);
+    const auto& camera = commands->camera;
+    {
+        GLfloat transform_x = -(camera.xy.x + camera.trauma_displacement.x);
+        GLfloat transform_y = -(camera.xy.y + camera.trauma_displacement.y);
+        GLfloat scale_x     = camera.zoom;
+        GLfloat scale_y     = camera.zoom;
+
+        if (camera.centered) {
+            transform_x += commands->screen_width/2;
+            transform_y += commands->screen_height/2;
+        }
+
+        GLfloat view_matrix[] = {
+            scale_x, 0,       0,    transform_x,
+            0,       scale_y, 0,    transform_y,
+            0,       0,       1.0f, 0.0,
+            0,       0,       0,    1.0
+        };
+
+        glUniformMatrix4fv(view_matrix_uniform_location, 1, false, view_matrix);
+    }
+
+    if (commands->should_clear_buffer) {
+        clear_color_buffer(commands->clear_buffer_color);
+    }
+
+    for (unsigned command_index = 0; command_index < commands->command_count; ++command_index) {
+        auto& command = commands->commands[command_index];
+
+        switch (command.type) {
+            case RENDER_COMMAND_DRAW_QUAD: {
+                render_command_draw_quad(command);
+            } break;
+            case RENDER_COMMAND_DRAW_IMAGE: {
+                render_command_draw_image(command);
+            } break;
+            case RENDER_COMMAND_DRAW_TEXT: {
+                render_command_draw_text(command);
+            } break;
+            case RENDER_COMMAND_DRAW_LINE: {
+                render_command_draw_line(command);
+            } break;
+            case RENDER_COMMAND_SET_SCISSOR: {
+                render_command_draw_set_scissor(command);
+            } break;
+            case RENDER_COMMAND_CLEAR_SCISSOR: {
+                render_command_draw_clear_scissor(command);
+            } break;
+            case RENDER_COMMAND_POSTPROCESS_APPLY_SHADER: {
+                unimplemented("I haven't had to use this, and I hope I'm not going to use it.");
+            } break;
+        }
+    }
+
+    glUseProgram(0);
 }
 
 V2 OpenGL_Graphics_Driver::resolution() {

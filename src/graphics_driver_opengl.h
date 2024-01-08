@@ -28,6 +28,17 @@ public:
     void screenshot(char* where);
     const char* get_name(void);
 private:
+    // Batching State
+    // End Batching State
+    void render_command_draw_quad(const render_command& rc);
+    void render_command_draw_image(const render_command& rc);
+    void render_command_draw_line(const render_command& rc);
+    void render_command_draw_text(const render_command& rc);
+    void render_command_draw_set_scissor(const render_command& rc);
+    void render_command_draw_clear_scissor(const render_command& rc);
+    void flush_and_render_quads(void);
+    void flush_and_render_lines(void);
+
     V2 real_resolution;
     V2 virtual_resolution;
 
@@ -36,6 +47,7 @@ private:
 
     SDL_GLContext context;
     GLuint texture_ids[MAX_OPENGL_SUPPORTED_TEXTURES];
+    GLuint white_pixel;
 
     // simple sprite shader program
     bool   initialized_default_shader = false;
