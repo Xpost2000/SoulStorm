@@ -67,13 +67,6 @@ void cutscene_unlocked_pet_task(jdr_duffcoroutine_t* co) {
     }
     TASK_WAIT(0.5f);
 
-    // TODO: show pop up text which depends on the pet.
-    camera_set_point_to_interpolate(&camera, V2(resolution.x/2, resolution.y/2), 1.0);
-
-    while (camera_interpolating(&camera)) {
-        JDR_Coroutine_YieldNR();
-    }
-
     main_menu_state->cutscene3.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_IN_UNLOCK_BOX;
     main_menu_state->cutscene3.timer = 0.0f;
     JDR_Coroutine_End;
@@ -902,6 +895,7 @@ void MainMenu_Data::adjust_entities_for_screen_resolution(int new_screen_width, 
 
 void Game::update_and_render_game_main_menu(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
     auto& main_menu_state = state->mainmenu_data;
+    V2 resolution = V2(game_render_commands->screen_width, game_render_commands->screen_height);
     game_render_commands->camera = main_menu_state.main_camera;
 
     main_menu_state.adjust_entities_for_screen_resolution(game_render_commands->screen_width, game_render_commands->screen_height);
@@ -1196,15 +1190,93 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
                 case MAIN_MENU_UNLOCK_PET_CUTSCENE_PHASE_OFF:
                 case MAIN_MENU_UNLOCK_PET_CUTSCENE_COROUTINE_TASK: {} break;
                 case MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_IN_UNLOCK_BOX: {
-                    cutscene_state.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_POP_IN_PET;
+                    const f32 PHASE_MAX = 0.55f/* + 0.15f */;
+                    f32 fade_alpha = clamp<f32>((cutscene_state.timer-0.15) / PHASE_MAX, 0.0f, 1.0f);
+
+                    render_commands_push_quad_ext(
+                        ui_render_commands,
+                        rectangle_f32(0, 0, resolution.x, resolution.y),
+                        color32u8(2, 5, 15, 100 * fade_alpha),
+                        V2(0, 0), 0,
+                        BLEND_MODE_ALPHA
+                    );
+
+                    if (cutscene_state.timer >= PHASE_MAX) {
+                        cutscene_state.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_POP_IN_PET;
+                        cutscene_state.timer = 0;
+                    } else {
+                        cutscene_state.timer += dt;
+                    }
                 } break;
                 case MAIN_MENU_UNLOCK_PET_CUTSCENE_POP_IN_PET: {
-                    cutscene_state.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_IDLE;
+                    render_commands_push_quad_ext(
+                        ui_render_commands,
+                        rectangle_f32(0, 0, resolution.x, resolution.y),
+                        color32u8(2, 5, 15, 100),
+                        V2(0, 0), 0,
+                        BLEND_MODE_ALPHA
+                    );
+
+                    /*
+                     * Yeah, I'm really writing this kind of timing code, thankfully it's only one place
+                     * so I'm not really bothered by this, but there's not really a super duper convenient way
+                     * of writing this in C++.
+                     */
+                    cutscene_state.timer += dt;
+                    if (cutscene_state.timer >= 0.15f && cutscene_state.timer < 0.225f) {
+                        const f32 length_of_fade_in   = (0.225f - 0.15f);
+                        const f32 effective_fade_in_t = cutscene_state.timer - 0.15f;
+                        const f32 alpha               = clamp<f32>(effective_fade_in_t / length_of_fade_in, 0.0f, 1.0f);
+
+                        render_commands_push_quad_ext(
+                            ui_render_commands,
+                            rectangle_f32(0, 0, resolution.x, resolution.y),
+                            color32u8(255, 255, 255, 255 * alpha),
+                            V2(0, 0), 0,
+                            BLEND_MODE_ALPHA
+                        );
+                    } else if (cutscene_state.timer >= 0.225f && cutscene_state.timer < 0.300f) {
+                        // linger
+                        const f32 length_of_fade_in   = (0.300f - 0.225f);
+                        const f32 effective_fade_in_t = cutscene_state.timer - 0.225f;
+
+                        render_commands_push_quad_ext(
+                            ui_render_commands,
+                            rectangle_f32(0, 0, resolution.x, resolution.y),
+                            color32u8(255, 255, 255, 255),
+                            V2(0, 0), 0,
+                            BLEND_MODE_ALPHA
+                        );
+                    } else if (cutscene_state.timer >= 0.300f && cutscene_state.timer < 0.470f) {
+                        // fade out
+                        const f32 length_of_fade_in   = (0.470f - 0.300f);
+                        const f32 effective_fade_in_t = cutscene_state.timer - 0.300f;
+                        const f32 alpha               = clamp<f32>(effective_fade_in_t / length_of_fade_in, 0.0f, 1.0f);
+
+                        render_commands_push_quad_ext(
+                            ui_render_commands,
+                            rectangle_f32(0, 0, resolution.x, resolution.y),
+                            color32u8(255, 255, 255, 255 * (1.0f - alpha)),
+                            V2(0, 0), 0,
+                            BLEND_MODE_ALPHA
+                        );
+                    } else if (cutscene_state.timer >= 0.470f) {
+                        cutscene_state.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_IDLE;
+                        cutscene_state.timer = 0;
+                    }
                 } break;
                 case MAIN_MENU_UNLOCK_PET_CUTSCENE_IDLE: {
+                    render_commands_push_quad_ext(
+                        ui_render_commands,
+                        rectangle_f32(0, 0, resolution.x, resolution.y),
+                        color32u8(2, 5, 15, 100),
+                        V2(0, 0), 0,
+                        BLEND_MODE_ALPHA
+                    );
                     cutscene_state.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_OUT_UNLOCK_BOX;
                 } break;
                 case MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_OUT_UNLOCK_BOX: {
+                    camera_set_point_to_interpolate(&main_menu_state.main_camera, V2(resolution.x/2, resolution.y/2), 1.0);
                     cutscene_state.phase  = MAIN_MENU_UNLOCK_PET_CUTSCENE_PHASE_OFF;
                     cutscene_state.triggered = false;
                 } break;
