@@ -232,9 +232,7 @@ void OpenGL_Graphics_Driver::initialize_default_rendering_state(void) {
         const int VERTEXCOLOR_ATTRIB_INDEX = 2;
 
         glGenBuffers(1, &quad_vertex_buffer);
-        glGenBuffers(1, &line_vertex_buffer);
         glGenVertexArrays(1, &quad_vertex_array_object);
-        glGenVertexArrays(1, &line_vertex_array_object);
 
         glBindVertexArray(quad_vertex_array_object);
         glBindBuffer(GL_ARRAY_BUFFER, quad_vertex_buffer);
@@ -250,22 +248,6 @@ void OpenGL_Graphics_Driver::initialize_default_rendering_state(void) {
         GL_CheckError("Tex Coord position attribute");
         glVertexAttribPointer(VERTEXCOLOR_ATTRIB_INDEX, 4, GL_FLOAT, GL_FALSE, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, color));
         GL_CheckError("Vertex Color position attribute");
-
-        glBindVertexArray(line_vertex_array_object);
-        glBindBuffer(GL_ARRAY_BUFFER, line_vertex_buffer);
-        // NOTE: orphaned array buffer.
-        glBufferData(GL_ARRAY_BUFFER, line_vertices.capacity * sizeof(OpenGL_Vertex_Format), nullptr, GL_DYNAMIC_DRAW);
-        GL_CheckError("Create vertex buffer data");
-        glEnableVertexAttribArray(VERTEX_ATTRIB_INDEX);
-        glEnableVertexAttribArray(TEXCOORD_ATTRIB_INDEX);
-        glEnableVertexAttribArray(VERTEXCOLOR_ATTRIB_INDEX);
-        glVertexAttribPointer(VERTEX_ATTRIB_INDEX,      2, GL_FLOAT, GL_FALSE, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, position));
-        GL_CheckError("Vertex position attribute");
-        glVertexAttribPointer(TEXCOORD_ATTRIB_INDEX,    2, GL_FLOAT, GL_FALSE, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, texcoord));
-        GL_CheckError("Tex Coord position attribute");
-        glVertexAttribPointer(VERTEXCOLOR_ATTRIB_INDEX, 4, GL_FLOAT, GL_FALSE, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, color));
-        GL_CheckError("Vertex Color position attribute");
-
         glBindVertexArray(0);
     }
     initialized_default_shader = true;
@@ -301,8 +283,6 @@ void OpenGL_Graphics_Driver::initialize(SDL_Window* window, int width, int heigh
 
     {
         quad_vertices = Fixed_Array<OpenGL_Vertex_Format>(&Global_Engine()->main_arena, MAX_OPENGL_VERTICES_FOR_QUAD_BUFFER);
-        line_vertices = Fixed_Array<OpenGL_Vertex_Format>(&Global_Engine()->main_arena, MAX_OPENGL_VERTICES_FOR_LINE_BUFFER);
-        _debugprintf("%.*s\n", Global_Engine()->memory_usage_strings().length, Global_Engine()->memory_usage_strings().data);
     }
 }
 
@@ -349,11 +329,8 @@ void OpenGL_Graphics_Driver::finish() {
     // in a more mature environment they should really be freed otherwise.
     {
         glDeleteVertexArrays(1, &quad_vertex_array_object);
-        glDeleteVertexArrays(1, &line_vertex_array_object);
         glDeleteBuffers(1, &quad_vertex_buffer);
-        glDeleteBuffers(1, &line_vertex_buffer);
         quad_vertices.clear();
-        line_vertices.clear();
     }
     _debugprintf("OpenGL Driver Finish");
     _debugprintf("Deleting shader program and textures.");
@@ -369,7 +346,6 @@ void OpenGL_Graphics_Driver::set_blend_mode(u8 new_blend_mode) {
     if (current_blend_mode != new_blend_mode) {
         // Previous objects are assumed to be in a different blend mode.
         flush_and_render_quads();
-        flush_and_render_lines();
         current_blend_mode = new_blend_mode;
 
         switch (current_blend_mode) {
@@ -397,7 +373,6 @@ void OpenGL_Graphics_Driver::set_blend_mode(u8 new_blend_mode) {
 
 void OpenGL_Graphics_Driver::set_texture_id(GLuint texture_id) {
     if (current_texture_id != texture_id) {
-        flush_and_render_lines();
         flush_and_render_quads();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -478,7 +453,6 @@ void OpenGL_Graphics_Driver::push_render_quad_vertices(rectangle_f32 destination
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_quad(const render_command& rc) {
-    flush_and_render_lines();
     auto destination_rect = rc.destination;
     auto source_rect      = rc.source;
     auto color            = rc.modulation_u8;
@@ -488,7 +462,6 @@ void OpenGL_Graphics_Driver::render_command_draw_quad(const render_command& rc) 
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_image(const render_command& rc) {
-    flush_and_render_lines();
     auto destination_rect = rc.destination;
     auto source_rect      = rc.source;
     auto color            = rc.modulation_u8;
@@ -499,11 +472,46 @@ void OpenGL_Graphics_Driver::render_command_draw_image(const render_command& rc)
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_line(const render_command& rc) {
-    flush_and_render_quads();
-    // NOTE: will flush all quad buffers, in order to ensure that
-    // draw order is perserved.
-    // NOTE: this is for simplification for now, but I should draw lines as more quads.
-    // will fix later.
+    auto start = rc.start;
+    auto end   = rc.end;
+    auto color = color32u8_to_color32f32(rc.modulation_u8);
+    set_blend_mode(rc.blend_mode);
+    set_texture_id(white_pixel);
+
+    auto line_normal = V2_perpendicular(V2_direction(start, end));
+    {
+        OpenGL_Vertex_Format top_left;
+        {
+            top_left.position = V2(start.x, start.y);
+            top_left.color    = color;
+        }
+        OpenGL_Vertex_Format top_right;
+        {
+            top_right.position = V2(start.x, start.y) + line_normal * 1;
+            top_right.color    = color;
+        }
+        OpenGL_Vertex_Format bottom_left;
+        {
+            bottom_left.position = V2(end.x, end.y);
+            bottom_left.color    = color;
+        }
+        OpenGL_Vertex_Format bottom_right;
+        {
+            bottom_right.position = V2(end.x, end.y) + line_normal * 1;
+            bottom_right.color    = color;
+        }
+
+        quad_vertices.push(top_left);
+        quad_vertices.push(top_right);
+        quad_vertices.push(bottom_left);
+        quad_vertices.push(bottom_left);
+        quad_vertices.push(top_right);
+        quad_vertices.push(bottom_right);
+
+        if (quad_vertices.size >= quad_vertices.capacity) {
+            flush_and_render_quads();
+        }
+    }
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_text(const render_command& rc) {
@@ -565,13 +573,6 @@ void OpenGL_Graphics_Driver::flush_and_render_quads(void) {
     GL_CheckError("draw array");
 
     quad_vertices.clear();
-}
-
-void OpenGL_Graphics_Driver::flush_and_render_lines(void) {
-    if (line_vertices.size == 0)
-        return;
-
-    line_vertices.clear();
 }
 
 void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* commands) {
@@ -637,7 +638,6 @@ void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* com
         }
     }
 
-    flush_and_render_lines();
     flush_and_render_quads();
     glUseProgram(0);
 }
