@@ -424,7 +424,7 @@ void initialize() {
 
     Audio::initialize();
 
-    u32 flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_ALLOW_HIGHDPI;
+    u32 flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL;
 
     global_game_window = SDL_CreateWindow("SoulStorm",
                                           SDL_WINDOWPOS_CENTERED,
@@ -440,7 +440,8 @@ void initialize() {
 #endif
     SDL_ShowWindow(global_game_window);
 
-    set_graphics_device(GRAPHICS_DEVICE_SOFTWARE);
+    // set_graphics_device(GRAPHICS_DEVICE_SOFTWARE);
+    set_graphics_device(GRAPHICS_DEVICE_OPENGL);
 
     // initialize game_preferences structure here.
     {

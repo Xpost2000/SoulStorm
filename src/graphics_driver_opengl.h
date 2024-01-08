@@ -25,10 +25,18 @@ public:
     void screenshot(char* where);
     const char* get_name(void);
 private:
+    void initialize_default_rendering_state(void);
+
     SDL_GLContext context;
 
     int texture_count = 0;
     GLuint texture_ids[MAX_OPENGL_SUPPORTED_TEXTURES];
+
+    // simple sprite shader program
+    bool initialized_default_shader = false;
+    GLuint default_shader_program;
+    GLuint projection_matrix_uniform_location;
+    GLuint view_matrix_uniform_location;
 };
 
 #endif
