@@ -4,22 +4,6 @@
 
 #include <stb_image_write.h>
 
-// NOTE: from software_renderer.cpp
-inline local void _rotate_f32_xy_as_pseudo_zyx(f32* x, f32* y, f32 c=0, f32 s=0, f32 c1=0, f32 s1=0, f32 c2=0, f32 s2=1) {
-    // z rot
-    float _x = *x;
-    float _y = *y;
-    *x = floor(c * (_x) - s * (_y));
-    *y = floor(s * (_x) + c * (_y));
-
-#if 0
-    // y rot
-    *y = floor(c1 * (*y));
-    // x rot
-    *x = floor(s2 * (*x));
-#endif
-}
-
 local const char* gl_error_string(GLenum error) {
     switch (error) {
         case GL_NO_ERROR: {
@@ -453,41 +437,18 @@ void OpenGL_Graphics_Driver::push_render_quad_vertices(
     // instead, since I cannot rotate each vertex.
 
     // although I do still have to rotate the top left vertex based on the basis differences.
-    V2 down_basis    = V2(0, destination.h);
-    V2 right_basis = V2(destination.w, 0);
+    V2 down_basis  = V2_rotate(V2(0, destination.h), angle, angle_y);
+    V2 right_basis = V2_rotate(V2(destination.w, 0), angle, angle_y);
 
     OpenGL_Vertex_Format top_left;
     {
-        top_left.position = V2(destination.x, destination.y);
-        top_left.color    = color;
-    }
-
-    {
         V2 displacement = V2(destination.x + ((rotation_origin.x) * destination.w), destination.y + ((rotation_origin.y) * destination.h));
-#if 0
-
-        top_left.position     -= displacement;
-        top_right.position    -= displacement;
-        bottom_left.position  -= displacement;
-        bottom_right.position -= displacement;
-
-        _rotate_f32_xy_as_pseudo_zyx(&top_left.position.x,     &top_left.position.y,     c, s, c1, s1);
-        _rotate_f32_xy_as_pseudo_zyx(&top_right.position.x,    &top_left.position.y,     c, s, c1, s1);
-        _rotate_f32_xy_as_pseudo_zyx(&bottom_left.position.x,  &bottom_left.position.y,  c, s, c1, s1);
-        _rotate_f32_xy_as_pseudo_zyx(&bottom_right.position.x, &bottom_right.position.y, c, s, c1, s1);
-
-        top_left.position     += displacement;
-        top_right.position    += displacement;
-        bottom_left.position  += displacement;
-        bottom_right.position += displacement;
-#else
-        top_left.position     -= displacement;
-        _rotate_f32_xy_as_pseudo_zyx(&top_left.position.x,     &top_left.position.y,     c, s, c1, s1);
-        top_left.position     += displacement;
-
-        _rotate_f32_xy_as_pseudo_zyx(&down_basis.x,     &down_basis.y,     c, s, c1, s1);
-        _rotate_f32_xy_as_pseudo_zyx(&right_basis.x,    &right_basis.y,     c, s, c1, s1);
-#endif
+        top_left.position =
+            V2_rotate(
+                V2(destination.x, destination.y) - displacement,
+                angle, angle_y)
+            + displacement;
+        top_left.color    = color;
     }
 
     OpenGL_Vertex_Format top_right;

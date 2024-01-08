@@ -1,5 +1,21 @@
 #include "v2.h"
 
+// NOTE: from software_renderer.cpp
+inline local void _rotate_f32_xy_as_pseudo_zyx(f32* x, f32* y, f32 c=0, f32 s=0, f32 c1=0, f32 s1=0, f32 c2=0, f32 s2=1) {
+    // z rot
+    float _x = *x;
+    float _y = *y;
+    *x = floor(c * (_x) - s * (_y));
+    *y = floor(s * (_x) + c * (_y));
+
+#if 0
+    // y rot
+    *y = floor(c1 * (*y));
+    // x rot
+    *x = floor(s2 * (*x));
+#endif
+}
+
 
 V2::V2(f32 x, f32 y) : x(x), y(y) {
     
@@ -112,4 +128,21 @@ V2 V2_direction_from_degree(f32 x) {
 
 V2 V2_perpendicular(V2 x) {
     return V2(-x.y, x.x);
+}
+
+V2 V2_rotate(
+    V2 x,
+    f32 angle,
+    f32 angle_y,
+    f32 angle_x
+) {
+    f32 c = cosf(degree_to_radians(angle));
+    f32 s = sinf(degree_to_radians(angle));
+    f32 c1 = cosf(degree_to_radians(angle_y));
+    f32 s1 = sinf(degree_to_radians(angle_y));
+    f32 c2 = cosf(degree_to_radians(angle_x));
+    f32 s2 = sinf(degree_to_radians(angle_x));
+    _rotate_f32_xy_as_pseudo_zyx(&x.x, &x.y, c, s, c1, s1, c2, s2);
+
+    return x;
 }

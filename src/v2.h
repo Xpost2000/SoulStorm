@@ -52,6 +52,7 @@ float V2_distance(V2 a, V2 b);
 float V2_distance_sq(V2 a, V2 b);
 V2 V2_direction(V2 a, V2 b);
 V2 V2_direction_from_degree(f32 x);
+V2 V2_rotate(V2 x, f32 angle_z, f32 angle_y=0.0f, f32 angle_x=0.0f);
 V2 V2_perpendicular(V2 x);
 
 struct lua_State;
