@@ -651,7 +651,7 @@ void OpenGL_Graphics_Driver::upload_image_buffer_to_gpu(struct image_buffer* ima
     auto image_buffer_driver_resource = (GLuint*)(backing_image_buffer->_driver_userdata);
 
     if (image_buffer_driver_resource) {
-        _debugprintf("Existing driver resource found. Do not need to reload.");
+        _debugprintf("Existing driver resource found for (%p)(%p). Do not need to reload.", image, image->_driver_userdata);
         return;
     }
 

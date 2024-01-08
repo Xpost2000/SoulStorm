@@ -65,6 +65,7 @@ local void _image_buffer_auto_fill_pot_square_size(struct image_buffer* image) {
 
 struct image_buffer image_buffer_create_blank(u32 width, u32 height) {
     struct image_buffer result;
+    zero_memory(&result, sizeof(result));
     result.width = width;
     result.height = height;
     result.pixels = (u8*)malloc(width * height * 4);
@@ -508,9 +509,9 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
         }
 
         result.atlas_image_id = new_id;
+        assets->graphics_driver->upload_texture(assets, new_id);
 #endif
     }
-
     _debugprintf("Atlas writing completed");
     return result;
 }
