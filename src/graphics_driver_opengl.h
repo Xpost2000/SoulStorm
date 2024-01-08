@@ -10,7 +10,18 @@
 #include <glad/glad.h>
 #include <SDL2/SDL.h>
 
+#include "fixed_array.h"
+
 #define MAX_OPENGL_SUPPORTED_TEXTURES 512
+#define MAX_OPENGL_BATCHED_QUADS (2048)
+#define MAX_OPENGL_BATCHED_LINES (256)
+#define MAX_OPENGL_VERTICES_FOR_QUAD_BUFFER (MAX_OPENGL_BATCHED_QUADS * 6)
+#define MAX_OPENGL_VERTICES_FOR_LINE_BUFFER (MAX_OPENGL_BATCHED_LINES * 2)
+struct OpenGL_Vertex_Format {
+    V2         position;
+    V2         texcoord;
+    color32f32 color;
+};
 class OpenGL_Graphics_Driver : public Graphics_Driver {
 public:
     void initialize(SDL_Window* window, int width, int height);
@@ -29,6 +40,13 @@ public:
     const char* get_name(void);
 private:
     // Batching State
+    GLuint quad_vertex_buffer;
+    GLuint quad_vertex_array_object;
+    Fixed_Array<OpenGL_Vertex_Format> quad_vertices;
+
+    GLuint line_vertex_buffer;
+    GLuint line_vertex_array_object;
+    Fixed_Array<OpenGL_Vertex_Format> line_vertices;
     // End Batching State
     void render_command_draw_quad(const render_command& rc);
     void render_command_draw_image(const render_command& rc);

@@ -208,6 +208,50 @@ void OpenGL_Graphics_Driver::initialize_default_rendering_state(void) {
         white_pixel                                  = opengl_build_texture2d_object(&white_pixel_image_buffer);
         image_buffer_free(&white_pixel_image_buffer);
     }
+
+    // build vertex buffers
+    {
+        const int VERTEX_ATTRIB_INDEX      = 0;
+        const int TEXCOORD_ATTRIB_INDEX    = 1;
+        const int VERTEXCOLOR_ATTRIB_INDEX = 2;
+
+        glGenBuffers(1, &quad_vertex_buffer);
+        glGenBuffers(1, &line_vertex_buffer);
+        glGenVertexArrays(1, &quad_vertex_array_object);
+        glGenVertexArrays(1, &line_vertex_array_object);
+
+        glBindVertexArray(quad_vertex_array_object);
+        glBindBuffer(GL_ARRAY_BUFFER, quad_vertex_buffer);
+        // NOTE: orphaned array buffer.
+        glBufferData(GL_ARRAY_BUFFER, quad_vertices.capacity * sizeof(OpenGL_Vertex_Format), nullptr, GL_DYNAMIC_DRAW);
+        GL_CheckError("Create vertex buffer data");
+        glEnableVertexAttribArray(VERTEX_ATTRIB_INDEX);
+        glEnableVertexAttribArray(TEXCOORD_ATTRIB_INDEX);
+        glEnableVertexAttribArray(VERTEXCOLOR_ATTRIB_INDEX);
+        glVertexAttribPointer(VERTEX_ATTRIB_INDEX,      2, GL_FLOAT, false, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, position));
+        GL_CheckError("Vertex position attribute");
+        glVertexAttribPointer(TEXCOORD_ATTRIB_INDEX,    2, GL_FLOAT, false, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, texcoord));
+        GL_CheckError("Tex Coord position attribute");
+        glVertexAttribPointer(VERTEXCOLOR_ATTRIB_INDEX, 4, GL_FLOAT, false, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, color));
+        GL_CheckError("Vertex Color position attribute");
+
+        glBindVertexArray(line_vertex_array_object);
+        glBindBuffer(GL_ARRAY_BUFFER, line_vertex_buffer);
+        // NOTE: orphaned array buffer.
+        glBufferData(GL_ARRAY_BUFFER, line_vertices.capacity * sizeof(OpenGL_Vertex_Format), nullptr, GL_DYNAMIC_DRAW);
+        GL_CheckError("Create vertex buffer data");
+        glEnableVertexAttribArray(VERTEX_ATTRIB_INDEX);
+        glEnableVertexAttribArray(TEXCOORD_ATTRIB_INDEX);
+        glEnableVertexAttribArray(VERTEXCOLOR_ATTRIB_INDEX);
+        glVertexAttribPointer(VERTEX_ATTRIB_INDEX,      2, GL_FLOAT, false, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, position));
+        GL_CheckError("Vertex position attribute");
+        glVertexAttribPointer(TEXCOORD_ATTRIB_INDEX,    2, GL_FLOAT, false, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, texcoord));
+        GL_CheckError("Tex Coord position attribute");
+        glVertexAttribPointer(VERTEXCOLOR_ATTRIB_INDEX, 4, GL_FLOAT, false, sizeof(OpenGL_Vertex_Format), (void*)offsetof(OpenGL_Vertex_Format, color));
+        GL_CheckError("Vertex Color position attribute");
+
+        glBindVertexArray(0);
+    }
     initialized_default_shader = true;
 }
 
@@ -236,6 +280,12 @@ void OpenGL_Graphics_Driver::initialize(SDL_Window* window, int width, int heigh
     }
 
     initialize_backbuffer(V2(width, height));
+
+    {
+        quad_vertices = Fixed_Array<OpenGL_Vertex_Format>(&Global_Engine()->main_arena, MAX_OPENGL_VERTICES_FOR_QUAD_BUFFER);
+        line_vertices = Fixed_Array<OpenGL_Vertex_Format>(&Global_Engine()->main_arena, MAX_OPENGL_VERTICES_FOR_LINE_BUFFER);
+        _debugprintf("%.*s\n", Global_Engine()->memory_usage_strings().length, Global_Engine()->memory_usage_strings().data);
+    }
 }
 
 void OpenGL_Graphics_Driver::initialize_backbuffer(V2 resolution) {
@@ -277,6 +327,16 @@ void OpenGL_Graphics_Driver::swap_and_present() {
 }
 
 void OpenGL_Graphics_Driver::finish() {
+    // NOTE: both fixed arrays are not deallocated, which is fine... since they don't take much memory anyway.
+    // in a more mature environment they should really be freed otherwise.
+    {
+        glDeleteVertexArrays(1, &quad_vertex_array_object);
+        glDeleteVertexArrays(1, &line_vertex_array_object);
+        glDeleteBuffers(1, &quad_vertex_buffer);
+        glDeleteBuffers(1, &line_vertex_buffer);
+        quad_vertices.clear();
+        line_vertices.clear();
+    }
     _debugprintf("OpenGL Driver Finish");
     _debugprintf("Deleting shader program and textures.");
     initialized_default_shader = false;
@@ -301,7 +361,10 @@ void OpenGL_Graphics_Driver::render_command_draw_image(const render_command& rc)
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_line(const render_command& rc) {
-    
+    // NOTE: will flush all quad buffers, in order to ensure that
+    // draw order is perserved.
+    // NOTE: this is for simplification for now, but I should draw lines as more quads.
+    // will fix later.
 }
 
 void OpenGL_Graphics_Driver::render_command_draw_text(const render_command& rc) {
