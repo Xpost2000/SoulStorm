@@ -842,8 +842,8 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
                 bkg_slow_stars[i].x += dt * 10.0f * (normalized_sinf(i)+0.25);
                 bkg_slow_stars[i].y += dt * 15.0f * (normalized_sinf(Global_Engine()->global_elapsed_time)+0.25);
 
-                bkg_faster_stars[i].x += dt * 250.0f * (normalized_sinf(i*25)+0.15);
-                bkg_faster_stars[i].y += dt * 200.0f * (sinf(Global_Engine()->global_elapsed_time)/2+0.25);
+                bkg_faster_stars[i].x += dt * 27.0f * (normalized_sinf(i*25)+0.15);
+                bkg_faster_stars[i].y += dt * 39.0f * (sinf(Global_Engine()->global_elapsed_time)/2+0.25);
 
                 if (bkg_faster_stars[i].x > game_render_commands->screen_width*1.5f)  bkg_faster_stars[i].x = -150;
                 if (bkg_faster_stars[i].y > game_render_commands->screen_height*1.5f) bkg_faster_stars[i].y = -150;
@@ -868,7 +868,7 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
                 render_commands_push_quad_ext(
                     game_render_commands,
                     r2,
-                    color32u8(200, 245, 200, 255),
+                    color32u8(200, 200, 255, 255),
                     V2(0, 0), 0,
                     BLEND_MODE_ALPHA
                 );
@@ -876,7 +876,7 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
                 render_commands_push_quad_ext(
                     game_render_commands,
                     r1,
-                    color32u8(200, 200, 245, 255),
+                    color32u8(100, 100, 245, 255),
                     V2(0, 0), 0,
                     BLEND_MODE_ALPHA
                 );
