@@ -52,13 +52,14 @@ extern "C" {
 }
 
 enum graphics_device_type {
-    GRAPHICS_DEVICE_NULL,
-    GRAPHICS_DEVICE_SOFTWARE,
-    GRAPHICS_DEVICE_OPENGL,
+    GRAPHICS_DEVICE_SOFTWARE = 0,
+    GRAPHICS_DEVICE_OPENGL = 1,
 #ifdef _WIN32
-    GRAPHICS_DEVICE_D3D11,
+    GRAPHICS_DEVICE_D3D11 = 2,
 #endif
+    GRAPHICS_DEVICE_NULL = 3,
 };
+s32 last_graphics_device_id = GRAPHICS_DEVICE_NULL;
 local void set_graphics_device(s32 id);
 
 Software_Renderer_Graphics_Driver global_software_renderer_driver;
@@ -138,7 +139,6 @@ local void initialize_framebuffer(void) {
         _debugprintf("Framebuffer did not change resolutions. No change needed.");
     } else {
         _debugprintf("framebuffer resolution is: (%d, %d) vs (%d, %d) real resolution", SCREEN_WIDTH, SCREEN_HEIGHT, REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
-
         global_graphics_driver->initialize(global_game_window, framebuffer_resolution.x, framebuffer_resolution.y);
     }
 }
@@ -443,8 +443,8 @@ void initialize() {
 #endif
     SDL_ShowWindow(global_game_window);
 
-    // set_graphics_device(GRAPHICS_DEVICE_SOFTWARE);
-    set_graphics_device(GRAPHICS_DEVICE_OPENGL);
+    set_graphics_device(GRAPHICS_DEVICE_SOFTWARE);
+    // set_graphics_device(GRAPHICS_DEVICE_OPENGL);
 
     // initialize game_preferences structure here.
     {
@@ -455,6 +455,7 @@ void initialize() {
         preferences.resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences.width, preferences.height);
         preferences.music_volume = 0.5f;
         preferences.sound_volume = 0.5f;
+        preferences.renderer_type = GRAPHICS_DEVICE_SOFTWARE;
         preferences.fullscreen   = SCREEN_IS_FULLSCREEN;
         preferences.controller_vibration = true;
     }
@@ -481,6 +482,7 @@ void confirm_preferences(Game_Preferences* preferences, Game_Resources* resource
     REAL_SCREEN_WIDTH  = preferences->width;
     REAL_SCREEN_HEIGHT = preferences->height;
     set_fullscreen(preferences->fullscreen);
+    set_graphics_device(preferences->renderer_type);
 
     global_graphics_driver->change_resolution(REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
 
@@ -507,6 +509,7 @@ bool save_preferences_to_disk(Game_Preferences* preferences, string path) {
         fprintf(f, "height = %d\n",    preferences->height);
         fprintf(f, "music_volume = %3.3f\n", preferences->music_volume);
         fprintf(f, "sound_volume = %3.3f\n", preferences->sound_volume);
+        fprintf(f, "renderer = %d\n", preferences->renderer_type);
         fprintf(f, "fullscreen = %s\n",    ((s32)preferences->fullscreen) ? "true" : "false");
         fprintf(f, "controller_vibration = %s\n",    ((s32)preferences->controller_vibration) ? "true" : "false");
         // controls are separate.
@@ -544,6 +547,13 @@ bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
     {
         lua_getglobal(L, "fullscreen");
         preferences->fullscreen = lua_toboolean(L, -1);
+    }
+    {
+        lua_getglobal(L, "renderer");
+        preferences->renderer_type = lua_tonumber(L, -1);
+        if (preferences->renderer_type == 0) {
+            preferences->renderer_type = GRAPHICS_DEVICE_SOFTWARE;
+        }
     }
     {
         lua_getglobal(L, "controller_vibration");
@@ -623,8 +633,13 @@ void engine_main_loop() {
 }
 
 local void set_graphics_device(s32 id) {
+    if (last_graphics_device_id == id) {
+        return;
+    }
+
+    last_graphics_device_id = id;
+
     if (global_graphics_driver) {
-        // clean the previous device resources
         global_graphics_driver->finish();
     }
 
@@ -645,6 +660,7 @@ local void set_graphics_device(s32 id) {
 
     // reinitialize game assets (reuploading stuff basically)
     initialize_framebuffer();
+    global_graphics_driver->initialize(global_game_window, SCREEN_WIDTH, SCREEN_HEIGHT);
     game.init_graphics_resources(global_graphics_driver);
     Global_Engine()->driver = global_graphics_driver;
 }

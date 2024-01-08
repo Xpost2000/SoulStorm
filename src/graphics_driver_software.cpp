@@ -1,4 +1,5 @@
 #include "graphics_driver_software.h"
+#include "thread_pool.h"
 
 #include <SDL2/SDL.h>
 
@@ -13,6 +14,7 @@ void Software_Renderer_Graphics_Driver::initialize(SDL_Window* window, int width
 
 void Software_Renderer_Graphics_Driver::initialize_backbuffer(V2 resolution) {
     _debugprintf("Reconstructing backbuffer.");
+    Thread_Pool::synchronize_tasks(); // finish up any render command tasks hopefully...
 
     software_framebuffer_finish(&default_framebuffer);
     // lightmask_buffer_finish(&global_lightmask_buffer);

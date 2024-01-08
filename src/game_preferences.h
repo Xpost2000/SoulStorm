@@ -10,6 +10,7 @@
 struct Game_Preferences {
     // NOTE: these are computed
     //       from the resolution_option_index + graphics_driver.
+    s32  renderer_type = 0; // GRAPHICS_DEVICE_SOFTWARE
     s32  width = 1024;
     s32  height = 768;
 

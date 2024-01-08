@@ -1097,6 +1097,16 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
             GameUI::option_selector(V2(100, y), string_literal("Resolution: "), color32f32(1, 1, 1, 1), 2, options_list.data, options_list.size, &temp_preferences.resolution_option_index);
             y += 30;
         }
+        {
+            Fixed_Array<string> options_list = Fixed_Array<string>(&Global_Engine()->scratch_arena, 5);
+            options_list.push(string_literal("Software Renderer"));
+            options_list.push(string_literal("OpenGL 3.3 Core"));
+#ifdef _WIN32
+            options_list.push(string_literal("DirectX11"));
+#endif
+            GameUI::option_selector(V2(100, y), string_literal("Renderer: "), color32f32(1, 1, 1, 1), 2, options_list.data, options_list.size, &temp_preferences.renderer_type);
+            y += 30;
+        }
         if (GameUI::checkbox(V2(100, y), string_literal("Fullscreen "), color32f32(1, 1, 1, 1), 2, &temp_preferences.fullscreen)) {}
         y += 30;
         if (GameUI::checkbox(V2(100, y), string_literal("Controller Vibration"), color32f32(1, 1, 1, 1), 2, &temp_preferences.controller_vibration)) {}

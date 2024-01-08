@@ -83,11 +83,11 @@ struct Fixed_Array {
         assertion(size >= 0 && size <= capacity && "Impossible?");
     }
 
-    void push(T& x) {
+    void push(const T x) {
         data[size++] = x;
         assertion(size >= 0 && size <= capacity && "Over allocated.");
     }
-    
+
     T* alloc() {
         T* r = &data[size++];
         assertion(size >= 0 && size <= capacity && "Over allocated.");
