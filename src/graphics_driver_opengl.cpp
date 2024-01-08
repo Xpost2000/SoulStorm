@@ -76,9 +76,11 @@ in vec2 out_vertex_position;
 in vec2 out_vertex_texcoords;
 in vec4 out_vertex_colors;
 
+uniform sampler2D sampler_texture;
+
 out vec4 out_color;
 void main() {
-    out_color = vec4(1.0, 0.0, 0.0, 1.0);
+    out_color = texture2D(sampler_texture, out_vertex_texcoords) * out_vertex_colors;
 }
 )shader";
 
@@ -186,6 +188,7 @@ void OpenGL_Graphics_Driver::initialize_default_rendering_state(void) {
     default_shader_program = opengl_build_shader_program(shaders, array_count(shaders));
     projection_matrix_uniform_location = glGetUniformLocation(default_shader_program, "u_projection_matrix");
     view_matrix_uniform_location       = glGetUniformLocation(default_shader_program, "u_view_matrix");
+    texture_sampler_uniform_location   = glGetUniformLocation(default_shader_program, "sampler_texture");
 
     {
         GLfloat identity4x4[] = {
@@ -196,8 +199,11 @@ void OpenGL_Graphics_Driver::initialize_default_rendering_state(void) {
         };
 
         glUseProgram(default_shader_program);
-        glUniformMatrix4fv(projection_matrix_uniform_location, 1, false, identity4x4);
-        glUniformMatrix4fv(view_matrix_uniform_location, 1, false, identity4x4);
+        {
+            glUniformMatrix4fv(projection_matrix_uniform_location, 1, false, identity4x4);
+            glUniformMatrix4fv(view_matrix_uniform_location, 1, false, identity4x4);
+            glUniform1i(texture_sampler_uniform_location, 0); // only one texture unit needed.
+        }
         glUseProgram(0);
     }
 
@@ -379,6 +385,16 @@ void OpenGL_Graphics_Driver::set_blend_mode(u8 new_blend_mode) {
     }
 }
 
+void OpenGL_Graphics_Driver::set_texture_id(GLuint texture_id) {
+    if (current_texture_id != texture_id) {
+        flush_and_render_lines();
+        flush_and_render_quads();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+        current_texture_id = texture_id;
+    }
+}
+
 void OpenGL_Graphics_Driver::clear_color_buffer(color32u8 color) {
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f);
@@ -393,6 +409,11 @@ void OpenGL_Graphics_Driver::push_render_quad_vertices(rectangle_f32 destination
         source.y         /= image_height;
         source.w         /= image_width;
         source.h         /= image_height;
+
+        assertion(image->_driver_userdata && "How does this image not have a OpenGL texture id?");
+        set_texture_id(*((GLuint*)image->_driver_userdata));
+    } else {
+        set_texture_id(white_pixel);
     }
 
     OpenGL_Vertex_Format top_left;
@@ -602,10 +623,9 @@ V2 OpenGL_Graphics_Driver::resolution() {
     return V2(virtual_resolution.x, virtual_resolution.y);
 }
 
-void OpenGL_Graphics_Driver::upload_texture(struct graphics_assets* assets, image_id image) {
-    _debugprintf("OpenGL driver upload texture is nop");
-    auto backing_image_buffer         = graphics_assets_get_image_by_id(assets, image);
-    auto  image_buffer_driver_resource = (GLuint*)(backing_image_buffer->_driver_userdata);
+void OpenGL_Graphics_Driver::upload_image_buffer_to_gpu(struct image_buffer* image) {
+    auto backing_image_buffer         = image;
+    auto image_buffer_driver_resource = (GLuint*)(backing_image_buffer->_driver_userdata);
 
     if (image_buffer_driver_resource) {
         _debugprintf("Existing driver resource found. Do not need to reload.");
@@ -620,9 +640,14 @@ void OpenGL_Graphics_Driver::upload_texture(struct graphics_assets* assets, imag
     _debugprintf("Loaded texture2d resource");
 }
 
+void OpenGL_Graphics_Driver::upload_texture(struct graphics_assets* assets, image_id image) {
+    auto backing_image_buffer = graphics_assets_get_image_by_id(assets, image);
+    upload_image_buffer_to_gpu(backing_image_buffer);
+}
+
 void OpenGL_Graphics_Driver::upload_font(struct graphics_assets* assets, font_id font) {
-    _debugprintf("OpenGL driver upload font is nop, all things are sampled as textures.");
- //   unimplemented("Not done");
+    auto backing_image_buffer = (struct image_buffer*)graphics_assets_get_font_by_id(assets, font);
+    upload_image_buffer_to_gpu(backing_image_buffer);
 }
 
 void OpenGL_Graphics_Driver::unload_texture(struct graphics_assets* assets, image_id image) {

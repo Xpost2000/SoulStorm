@@ -39,10 +39,13 @@ public:
     void screenshot(char* where);
     const char* get_name(void);
 private:
+    void upload_image_buffer_to_gpu(struct image_buffer* image); // NOTE: also update driver_userdata field
     void push_render_quad_vertices(rectangle_f32 destination, rectangle_f32 source, color32f32 color, struct image_buffer* image);
     void set_blend_mode(u8 new_blend_mode);
+    void set_texture_id(GLuint texture_id);
     // Batching State
     u8 current_blend_mode;
+    GLuint current_texture_id;
     GLuint quad_vertex_buffer;
     GLuint quad_vertex_array_object;
     Fixed_Array<OpenGL_Vertex_Format> quad_vertices;
@@ -75,6 +78,7 @@ private:
     GLuint default_shader_program;
     GLuint projection_matrix_uniform_location;
     GLuint view_matrix_uniform_location;
+    GLuint texture_sampler_uniform_location;
 };
 
 #endif
