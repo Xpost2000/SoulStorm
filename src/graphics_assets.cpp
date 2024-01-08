@@ -419,6 +419,10 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
 
                 subimage_object.subrectangle   = rectangle_f32(write_x, write_y, img->width, img->height);
 
+                if (request_resize) {
+                    break;
+                }
+
                 if (new_row) {
                     _debugprintf("Make new row");
 
