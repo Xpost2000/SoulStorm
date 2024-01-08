@@ -19,7 +19,13 @@ struct image_buffer {
         u32* pixels_u32;
     };
 
-    // TODO: add graphics_driver specific information.
+    // NOTE: This field is modified by the graphics_driver implementations
+    //       to store internal pointers to the actual backing graphics driver
+    //       resource.
+    //
+    //
+    //       This engine was made with a software renderer first and this was technically
+    //       the only way this stuff was meant to be used.
     void* _driver_userdata;
 };
 

@@ -101,6 +101,7 @@ struct image_buffer image_buffer_load_from_file(string filepath) {
     }
     assertion(image_buffer && "image load failed!");
     struct image_buffer result;
+    zero_memory(&result, sizeof(result));
     result.pixels = image_buffer;
     result.width  = width;
     result.height = height;
