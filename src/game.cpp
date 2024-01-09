@@ -2434,6 +2434,10 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                     game_update_stage_score(stage_id, level_id, state->gameplay_data.current_score);
                     game_register_stage_completion(stage_id, level_id);
                     completion_type = game_complete_stage_level(stage_id, level_id, state->gameplay_data.playing_practice_mode);
+
+                    if (completion_type == GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE) {
+                        state->mainmenu_data.start_unlock_pet_cutscene(state);
+                    }
                 }
 
                 Transitions::do_color_transition_in(
