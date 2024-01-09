@@ -800,6 +800,12 @@ void Direct3D11_Graphics_Driver::set_blend_mode(u8 blend_mode) {
 }
 
 void Direct3D11_Graphics_Driver::consume_render_commands(struct render_commands* commands) {
+    if (context == nullptr || device == nullptr) {
+        // NOTE: this is not an assertion because this can happen
+        // when I try to change graphics devices at runtime.
+        return;
+    }
+
     set_blend_mode(BLEND_MODE_ALPHA);
 
     if (commands->should_clear_buffer) {

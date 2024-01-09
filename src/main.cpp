@@ -498,8 +498,6 @@ void confirm_preferences(Game_Preferences* preferences, Game_Resources* resource
     global_graphics_driver->get_display_modes(); // update internal list of display modes.
     preferences->resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences->width, preferences->height);
     _use_controller_rumble = preferences->controller_vibration;
-
-    graphics_assets_update_graphics_driver(&resources->graphics_assets, global_graphics_driver);
 }
 
 /*
@@ -676,8 +674,8 @@ local void set_graphics_device(s32 id) {
     // reinitialize game assets (reuploading stuff basically)
     initialize_framebuffer();
     global_graphics_driver->initialize(global_game_window, SCREEN_WIDTH, SCREEN_HEIGHT);
-    game.init_graphics_resources(global_graphics_driver);
     Global_Engine()->driver = global_graphics_driver;
+    game.init_graphics_resources(global_graphics_driver);
 }
 
 int main(int argc, char** argv) {

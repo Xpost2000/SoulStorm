@@ -227,6 +227,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     if (!initialized) {
         return;
     }
+    graphics_assets_update_graphics_driver(&resources->graphics_assets, driver);
 
     for (unsigned index = 0; index < array_count(menu_font_variation_string_names); ++index) {
         string current = menu_font_variation_string_names[index];
