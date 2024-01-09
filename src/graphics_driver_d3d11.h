@@ -37,6 +37,18 @@ public:
     void screenshot(char* where);
     const char* get_name(void);
 private:
+    void push_render_quad_vertices(rectangle_f32 destination, rectangle_f32 source, color32f32 color, struct image_buffer* image, s32 angle = 0, s32 angle_y = 0, u32 flags = NO_FLAGS, V2 rotation_origin = V2(0,0));
+
+    // NOTE: could abstract into one file, but
+    // these are the only two hardware paths. Might as well keep them.
+    void render_command_draw_quad(const render_command& rc);
+    void render_command_draw_image(const render_command& rc);
+    void render_command_draw_line(const render_command& rc);
+    void render_command_draw_text(const render_command& rc);
+    void render_command_draw_set_scissor(const render_command& rc);
+    void render_command_draw_clear_scissor(const render_command& rc);
+    void flush_and_render_quads(void);
+
     bool find_first_free_image(D3D11_Image** result);
     void upload_image_buffer_to_gpu(struct image_buffer* image);
 

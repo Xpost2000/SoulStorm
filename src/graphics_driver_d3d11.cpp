@@ -306,11 +306,289 @@ void Direct3D11_Graphics_Driver::clear_color_buffer(color32u8 color) {
     context->ClearRenderTargetView(rendertarget, rgba);
 }
 
+// NOTE: copied from the opengl driver. They're basically the same tbh.
+void Direct3D11_Graphics_Driver::push_render_quad_vertices(
+    rectangle_f32        destination,
+    rectangle_f32        source,
+    color32f32           color,
+    struct image_buffer* image,
+    s32                  angle,
+    s32                  angle_y,
+    u32                  flags,
+    V2                   rotation_origin
+) {
+    if (image) {
+        u32 image_width   = (image->pot_square_size) ? image->pot_square_size : image->width;
+        u32 image_height  = (image->pot_square_size) ? image->pot_square_size : image->height;
+
+        if ((source.x == 0) && (source.y == 0) && (source.w == 0) && (source.h == 0)) {
+            source.w = image_width;
+            source.h = image_height;
+        }
+
+        // normalize coordinates.
+        source.x         /= image_width;
+        source.y         /= image_height;
+        source.w         /= image_width;
+        source.h         /= image_height;
+
+
+        if (image->_driver_userdata == nullptr) {
+            _debugprintf("Warning? No d3d11 texture image id? Uploading dynamically.");
+            upload_image_buffer_to_gpu(image);
+        }
+        // assertion(image->_driver_userdata && "How does this image not have a OpenGL texture id?");
+        // set_texture_id(*((GLuint*)image->_driver_userdata));
+    } else {
+        // set_texture_id(white_pixel);
+    }
+
+    f32 c  = cosf(degree_to_radians(angle));
+    f32 s  = sinf(degree_to_radians(angle));
+    f32 c1 = cosf(degree_to_radians(angle_y));
+    f32 s1 = sinf(degree_to_radians(angle_y));
+
+    // rotate the basis axes
+    // instead, since I cannot rotate each vertex.
+
+    // although I do still have to rotate the top left vertex based on the basis differences.
+    V2 down_basis  = V2_rotate(V2(0, destination.h), angle, angle_y);
+    V2 right_basis = V2_rotate(V2(destination.w, 0), angle, angle_y);
+
+    D3D11_Vertex_Format top_left;
+    {
+        V2 displacement = V2(destination.x + ((rotation_origin.x) * destination.w), destination.y + ((rotation_origin.y) * destination.h));
+        top_left.position =
+            V2_rotate(
+                V2(destination.x, destination.y) - displacement,
+                angle, angle_y)
+            + displacement;
+        top_left.color    = color;
+    }
+
+    D3D11_Vertex_Format top_right;
+    {
+        top_right.position = top_left.position + right_basis;
+        top_right.color    = color;
+    }
+    D3D11_Vertex_Format bottom_left;
+    {
+        bottom_left.position = top_left.position + down_basis;
+        bottom_left.color    = color;
+    }
+    D3D11_Vertex_Format bottom_right;
+    {
+        bottom_right.position = top_left.position + right_basis + down_basis;
+        bottom_right.color    = color;
+    }
+
+
+#if 1
+    top_left.texcoord     = V2(source.x, source.y);
+    top_right.texcoord    = V2(source.x + source.w, source.y);
+    bottom_left.texcoord  = V2(source.x, source.y + source.h);
+    bottom_right.texcoord = V2(source.x + source.w, source.y + source.h);
+#else
+    top_left.texcoord     = V2(source.x, source.y + source.h);
+    top_right.texcoord    = V2(source.x + source.w, source.y + source.h);
+    bottom_left.texcoord  = V2(source.x, source.y);
+    bottom_right.texcoord = V2(source.x + source.w, source.y);
+#endif
+
+    if ((flags & DRAW_IMAGE_FLIP_HORIZONTALLY)) {
+        top_left.texcoord.x = source.x + source.w;
+        top_right.texcoord.x = source.x;
+        bottom_left.texcoord.x = source.x + source.w;
+        bottom_right.texcoord.x = source.x;
+    }
+
+    if ((flags & DRAW_IMAGE_FLIP_VERTICALLY)) {
+        top_left.texcoord.y = source.y + source.h;
+        top_right.texcoord.y = source.y + source.h;
+        bottom_left.texcoord.y = source.y;
+        bottom_right.texcoord.y = source.y;
+    }
+
+    quad_vertices.push(top_left);
+    quad_vertices.push(top_right);
+    quad_vertices.push(bottom_left);
+    quad_vertices.push(bottom_left);
+    quad_vertices.push(top_right);
+    quad_vertices.push(bottom_right);
+
+    if (quad_vertices.size >= quad_vertices.capacity) {
+        flush_and_render_quads();
+    }
+}
+
+void Direct3D11_Graphics_Driver::render_command_draw_quad(const render_command& rc) {
+    auto destination_rect = rc.destination;
+    auto source_rect      = rc.source;
+    auto color            = rc.modulation_u8;
+    auto image_buffer     = rc.image;
+    // set_blend_mode(rc.blend_mode);
+    push_render_quad_vertices(destination_rect, source_rect, color32u8_to_color32f32(color), image_buffer, rc.angle_degrees, rc.angle_y_degrees, rc.flags, rc.rotation_center);
+}
+
+void Direct3D11_Graphics_Driver::render_command_draw_image(const render_command& rc) {
+    auto destination_rect = rc.destination;
+    auto source_rect      = rc.source;
+    auto color            = rc.modulation_u8;
+    auto image_buffer     = rc.image;
+    // set_blend_mode(rc.blend_mode);
+    push_render_quad_vertices(destination_rect, source_rect, color32u8_to_color32f32(color), image_buffer, rc.angle_degrees, rc.angle_y_degrees, rc.flags, rc.rotation_center);
+}
+
+void Direct3D11_Graphics_Driver::render_command_draw_line(const render_command& rc) {
+    auto start = rc.start;
+    auto end   = rc.end;
+    auto color = color32u8_to_color32f32(rc.modulation_u8);
+    // set_blend_mode(rc.blend_mode);
+    // set_texture_id(white_pixel);
+
+    auto line_normal = V2_perpendicular(V2_direction(start, end));
+    {
+        D3D11_Vertex_Format top_left;
+        {
+            top_left.position = V2(start.x, start.y);
+            top_left.color    = color;
+        }
+        D3D11_Vertex_Format top_right;
+        {
+            top_right.position = V2(start.x, start.y) + line_normal * 1;
+            top_right.color    = color;
+        }
+        D3D11_Vertex_Format bottom_left;
+        {
+            bottom_left.position = V2(end.x, end.y);
+            bottom_left.color    = color;
+        }
+        D3D11_Vertex_Format bottom_right;
+        {
+            bottom_right.position = V2(end.x, end.y) + line_normal * 1;
+            bottom_right.color    = color;
+        }
+
+        quad_vertices.push(top_left);
+        quad_vertices.push(top_right);
+        quad_vertices.push(bottom_left);
+        quad_vertices.push(bottom_left);
+        quad_vertices.push(top_right);
+        quad_vertices.push(bottom_right);
+
+        if (quad_vertices.size >= quad_vertices.capacity) {
+            flush_and_render_quads();
+        }
+    }
+}
+
+void Direct3D11_Graphics_Driver::render_command_draw_text(const render_command& rc) {
+    auto font     = rc.font;
+    auto scale    = rc.scale;
+    auto position = rc.xy;
+    auto text     = rc.text;
+    auto color    = rc.modulation_u8;
+    // set_blend_mode(rc.blend_mode);
+
+    {
+        f32 x_cursor = position.x;
+        f32 y_cursor = position.y;
+        for (unsigned index = 0; index < text.length; ++index) {
+            if (text.data[index] == '\n') {
+                y_cursor += font->tile_height * scale;
+                x_cursor =  position.x;
+            } else {
+                s32 character = text.data[index] - 32;
+                auto destination_rect = rectangle_f32(
+                    x_cursor, y_cursor,
+                    font->tile_width  * scale,
+                    font->tile_height * scale
+                );
+
+                auto source_rect = rectangle_f32(
+                    (character % font->atlas_cols) * font->tile_width,
+                    (character / font->atlas_cols) * font->tile_height,
+                    font->tile_width, font->tile_height
+                );
+
+                push_render_quad_vertices(destination_rect, source_rect, color32u8_to_color32f32(color), (struct image_buffer*)font);
+                x_cursor += font->tile_width * scale;
+            }
+        }
+    }
+}
+
+void Direct3D11_Graphics_Driver::render_command_draw_set_scissor(const render_command& rc) {
+    unimplemented("set scissor not implemented");
+}
+
+void Direct3D11_Graphics_Driver::render_command_draw_clear_scissor(const render_command& rc) {
+    unimplemented("clear scissor not implemented");
+}
+
+void Direct3D11_Graphics_Driver::flush_and_render_quads(void) {
+    if (quad_vertices.size == 0) {
+        return;
+    }
+
+    {
+        context->VSSetShader(vertex_shader, 0, 0);
+        context->PSSetShader(pixel_shader, 0, 0);
+        // map the vertex buffer and write all the quad data to it...
+        {
+            D3D11_MAPPED_SUBRESOURCE mapped;
+            assertion(SUCCEEDED(context->Map(vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)) && "Could not map vertex buffer for writing?");
+            memory_copy(quad_vertices.data, mapped.pData, quad_vertices.size * sizeof(*quad_vertices.data));
+            context->Unmap(vertex_buffer, 0);
+        }
+        context->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        context->IASetInputLayout(vertex_layout);
+        {
+            unsigned int stride = sizeof(D3D11_Vertex_Format);
+            unsigned int offset = 0;
+            context->IASetVertexBuffers(0, 1, &vertex_buffer, &stride, &offset);
+        }
+        context->Draw(quad_vertices.size, 0);
+    }
+
+    quad_vertices.clear();
+}
+
 void Direct3D11_Graphics_Driver::consume_render_commands(struct render_commands* commands) {
     if (commands->should_clear_buffer) {
         clear_color_buffer(commands->clear_buffer_color);
     }
     // unimplemented("Not done");
+
+    for (unsigned command_index = 0; command_index < commands->command_count; ++command_index) {
+        auto& command = commands->commands[command_index];
+
+        switch (command.type) {
+            case RENDER_COMMAND_DRAW_QUAD: {
+                render_command_draw_quad(command);
+            } break;
+            case RENDER_COMMAND_DRAW_IMAGE: {
+                render_command_draw_image(command);
+            } break;
+            case RENDER_COMMAND_DRAW_TEXT: {
+                render_command_draw_text(command);
+            } break;
+            case RENDER_COMMAND_DRAW_LINE: {
+                render_command_draw_line(command);
+            } break;
+            case RENDER_COMMAND_SET_SCISSOR: {
+                render_command_draw_set_scissor(command);
+            } break;
+            case RENDER_COMMAND_CLEAR_SCISSOR: {
+                render_command_draw_clear_scissor(command);
+            } break;
+            case RENDER_COMMAND_POSTPROCESS_APPLY_SHADER: {
+                unimplemented("I haven't had to use this, and I hope I'm not going to use it.");
+            } break;
+        }
+    }
+
+    flush_and_render_quads();
 }
 
 V2 Direct3D11_Graphics_Driver::resolution() {
@@ -356,7 +634,7 @@ void Direct3D11_Graphics_Driver::upload_font(struct graphics_assets* assets, fon
 }
 
 void Direct3D11_Graphics_Driver::unload_texture(struct graphics_assets* assets, image_id image) {
-    _debugprintf("NOP right now.");
+    _debugprintf("NOP right now. TODO");
 }
 
 void Direct3D11_Graphics_Driver::screenshot(char* where) {
