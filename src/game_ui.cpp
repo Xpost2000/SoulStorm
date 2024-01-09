@@ -56,6 +56,8 @@ struct UI_State {
 
     char* last_ui_id = nullptr;
     char* ui_id      = nullptr;
+
+    f32 alpha = 1.0f;
 };
 
 UI_State* global_ui_state = nullptr;
@@ -199,8 +201,18 @@ namespace GameUI {
         global_ui_state->default_font = font;
     }
 
+    void set_all_visual_alpha(f32 alpha) {
+        global_ui_state->alpha = alpha;
+    }
+
+    void reset_alpha(void) {
+        global_ui_state->alpha = 1.0f;
+    }
+
     void label(V2 where, string text, color32f32 modulation, f32 scale, bool active) {
         assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
+        modulation.a *= global_ui_state->alpha;
+
         auto widget = push_label(where, text, scale, modulation);
         widget->active = active;
         auto font = global_ui_state->default_font;
@@ -212,6 +224,8 @@ namespace GameUI {
 
     s32 button(V2 where, string text, color32f32 modulation, f32 scale, bool active) {
         assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
+        modulation.a *= global_ui_state->alpha;
+
         auto widget      = push_button(where, text, scale, modulation);
         widget->active    = active;
         auto font        = global_ui_state->default_font;
@@ -249,6 +263,8 @@ namespace GameUI {
 
     bool checkbox(V2 where, string text, color32f32 modulation, f32 scale, bool* ptr, bool active) {
         assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
+        modulation.a *= global_ui_state->alpha;
+
         auto widget         = push_button(where, text, scale, modulation);
         widget->active    = active;
         auto font           = global_ui_state->default_font;
@@ -300,6 +316,8 @@ namespace GameUI {
 
     void option_selector(V2 where, string text, color32f32 modulation, f32 scale, string* options, s32 options_count, s32* out_selected, bool active) {
         assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
+        modulation.a *= global_ui_state->alpha;
+
         auto widget = push_option_selector(where, text, scale, modulation, out_selected);
         widget->active    = active;
         auto font   = global_ui_state->default_font;
@@ -333,6 +351,8 @@ namespace GameUI {
 
     void f32_slider(V2 where, string text, color32f32 modulation, f32 scale, f32* ptr, f32 min_value, f32 max_value, f32 slider_width_px, bool active) {
         assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
+        modulation.a *= global_ui_state->alpha;
+
         auto widget         = push_f32_slider(where, text, scale, modulation);
         widget->active    = active;
         auto font           = global_ui_state->default_font;
@@ -393,7 +413,7 @@ namespace GameUI {
             inner_rect.y += (dy / 2);
 
 
-            render_commands_push_quad(global_ui_state->commands, inner_rect, color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
+            render_commands_push_quad(global_ui_state->commands, inner_rect, color32u8(0, 0, 0, 255 * widget->modulation.a), BLEND_MODE_ALPHA);
 
             color32u8 color = color32u8(255 * !(*ptr), 255 * (*ptr), 0, 255 - 128 * !active);
             inner_rect.w *= percentage_of;
@@ -413,6 +433,7 @@ namespace GameUI {
     }
 
     void ninepatch(const Texture_Atlas* texture_atlas, const GameUI_Ninepatch& np, V2 where, u32 width, u32 height, color32f32 modulation, f32 scale) {
+        modulation.a *= global_ui_state->alpha;
         auto estimated_dimensions = ninepatch_dimensions(np, width, height) * scale;
         V2 top_left_tile_position = where;
         V2 top_right_tile_position = where + V2(estimated_dimensions.x - (np.tile_width * scale), 0);

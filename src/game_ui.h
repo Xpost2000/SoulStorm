@@ -57,6 +57,9 @@ namespace GameUI {
     void set_font_active(font_cache* font);
     void set_font(font_cache* font);
 
+    void set_all_visual_alpha(f32 alpha); // does not affect the "active state" of any buttons.
+    void reset_alpha(void);
+
     void label(V2 where, string text, color32f32 modulation, f32 scale, bool active=true);
     void option_selector(V2 where, string text, color32f32 modulation, f32 scale, string* options, s32 options_count, s32* out_selected, bool active=true);
 
