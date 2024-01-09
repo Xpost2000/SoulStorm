@@ -25,6 +25,8 @@ struct Engine {
     bool running;
     Graphics_Driver* driver;
 
+    bool fullscreen;
+
     int real_screen_width;
     int real_screen_height;
 

@@ -438,8 +438,9 @@ void initialize() {
                                           REAL_SCREEN_WIDTH,
                                           REAL_SCREEN_HEIGHT,
                                           flags);
-    Global_Engine()->real_screen_width = REAL_SCREEN_WIDTH;
+    Global_Engine()->real_screen_width  = REAL_SCREEN_WIDTH;
     Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
+    Global_Engine()->fullscreen         = SCREEN_IS_FULLSCREEN;
     Thread_Pool::initialize();
 
 #ifndef NO_FANCY_FADEIN_INTRO
@@ -488,6 +489,7 @@ void confirm_preferences(Game_Preferences* preferences, Game_Resources* resource
     set_fullscreen(preferences->fullscreen);
     set_graphics_device(preferences->renderer_type);
 
+    Global_Engine()->fullscreen = preferences->fullscreen;
     global_graphics_driver->change_resolution(REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
 
     Audio::set_volume_sound(preferences->sound_volume);

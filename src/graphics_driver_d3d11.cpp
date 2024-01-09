@@ -9,6 +9,18 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 
+void D3D11_Image::Release() {
+    if (texture2d) {
+        texture2d->Release();
+        texture2d = nullptr;
+    }
+
+    if (shader_resource_view) {
+        shader_resource_view->Release();
+        shader_resource_view = nullptr;
+    }
+}
+
 local const char* pixel_shader_source = R"shader(
     struct VertexShader_Result 
     {
@@ -160,78 +172,15 @@ void Direct3D11_Graphics_Driver::initialize(SDL_Window* window, int width, int h
         quad_vertices = Fixed_Array<D3D11_Vertex_Format>(&Global_Engine()->main_arena, MAX_D3D11_VERTICES_FOR_QUAD_BUFFER);
 
         zero_array(images);
+        zero_array(blending_states);
     }
     initialize_backbuffer(V2(width, height));
 }
 
-void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
-    _debugprintf("Direct3D11 Initialize Backbuffer");
-
-    /*
-      TODO:
-
-      For now, I'll do it the dumb way, and just use CreateDeviceAndSwapChain
-
-      I will assume I don't resize as I need to just be able to "render" anything
-      at all...
-    */
-    real_resolution = V2(Global_Engine()->real_screen_width, Global_Engine()->real_screen_height);
-    virtual_resolution = resolution;
-
-    DXGI_SWAP_CHAIN_DESC swapchain_description;
-    zero_memory(&swapchain_description, sizeof(swapchain_description));
-    swapchain_description.BufferDesc.Width  = real_resolution.x;
-    swapchain_description.BufferDesc.Height = real_resolution.y;
-    swapchain_description.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-
-    // no vsync
-    swapchain_description.BufferDesc.RefreshRate.Numerator   = 0;
-    swapchain_description.BufferDesc.RefreshRate.Denominator = 0;
-
-    // no aa
-    swapchain_description.SampleDesc.Count   = 1;
-    swapchain_description.SampleDesc.Quality = 0;
-
-    {
-        SDL_SysWMinfo wmInfo;
-        SDL_VERSION(&wmInfo.version);
-        SDL_GetWindowWMInfo(game_window, &wmInfo);
-        HWND hwnd = wmInfo.info.win.window;
-        swapchain_description.OutputWindow = hwnd;
+void Direct3D11_Graphics_Driver::initialize_default_rendering_resources(void) {
+    if (initialized_resources) {
+        return;
     }
-    swapchain_description.Windowed = true; // TODO: check windowed status from engine later.
-
-    swapchain_description.BufferCount = 2;
-    swapchain_description.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-
-    D3D_FEATURE_LEVEL feature_level;
-    UINT flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
-
-#ifndef RELEASE
-    flags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-
-    D3D11CreateDeviceAndSwapChain(
-        nullptr,
-        D3D_DRIVER_TYPE_HARDWARE,
-        nullptr,
-        flags,
-        0, 0,
-        D3D11_SDK_VERSION,
-        &swapchain_description,
-        &swapchain,
-        &device,
-        &feature_level,
-        &context
-    );
-
-    // swapchain_framebuffer_texture holds backbuffer
-    swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&swapchain_framebuffer_texture);
-    device->CreateRenderTargetView(
-        swapchain_framebuffer_texture,
-        nullptr,
-        &rendertarget
-    );
 
     // Create D3D11 Resources here
     {
@@ -396,6 +345,127 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
             image_buffer_free(&white_pixel_image_buffer);
         }
     }
+
+    initialized_resources = true;
+}
+
+void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
+    _debugprintf("Direct3D11 Initialize Backbuffer");
+
+    /*
+      TODO:
+
+      For now, I'll do it the dumb way, and just use CreateDeviceAndSwapChain
+
+      I will assume I don't resize as I need to just be able to "render" anything
+      at all...
+    */
+    real_resolution = V2(Global_Engine()->real_screen_width, Global_Engine()->real_screen_height);
+    virtual_resolution = resolution;
+
+    if (!initialized_resources) {
+        DXGI_SWAP_CHAIN_DESC swapchain_description;
+        zero_memory(&swapchain_description, sizeof(swapchain_description));
+        swapchain_description.BufferDesc.Width  = real_resolution.x;
+        swapchain_description.BufferDesc.Height = real_resolution.y;
+        swapchain_description.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+
+        // no vsync
+        swapchain_description.BufferDesc.RefreshRate.Numerator   = 0;
+        swapchain_description.BufferDesc.RefreshRate.Denominator = 0;
+
+        // no aa
+        swapchain_description.SampleDesc.Count   = 1;
+        swapchain_description.SampleDesc.Quality = 0;
+
+        {
+            SDL_SysWMinfo wmInfo;
+            SDL_VERSION(&wmInfo.version);
+            SDL_GetWindowWMInfo(game_window, &wmInfo);
+            HWND hwnd = wmInfo.info.win.window;
+            swapchain_description.OutputWindow = hwnd;
+        }
+        swapchain_description.Windowed = !Global_Engine()->fullscreen; // TODO: check windowed status from engine later.
+
+        swapchain_description.BufferCount = 2;
+        swapchain_description.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+
+        D3D_FEATURE_LEVEL feature_level;
+        UINT flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
+
+#ifndef RELEASE
+        flags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+        D3D11CreateDeviceAndSwapChain(
+            nullptr,
+            D3D_DRIVER_TYPE_HARDWARE,
+            nullptr,
+            flags,
+            0, 0,
+            D3D11_SDK_VERSION,
+            &swapchain_description,
+            &swapchain,
+            &device,
+            &feature_level,
+            &context
+        );
+
+        // swapchain_framebuffer_texture holds backbuffer
+        swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&swapchain_framebuffer_texture);
+        device->CreateRenderTargetView(
+            swapchain_framebuffer_texture,
+            nullptr,
+            &rendertarget
+        );
+
+        {
+            D3D11_VIEWPORT viewport = {
+                0.0f, 0.0f,
+                real_resolution.x, real_resolution.y,
+                0.0f, 1.0f
+            };
+
+            context->RSSetViewports(1, &viewport);
+            context->OMSetRenderTargets(1, &rendertarget, nullptr);
+        }
+    } else {
+        // Update swapchain and reset rendertarget view texture
+        _debugprintf("Resizing swap chain to %d x %d", (s32)real_resolution.x, (s32)real_resolution.y);
+
+        swapchain->ResizeBuffers(2, (s32)real_resolution.x, (s32)real_resolution.y, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
+        swapchain->SetFullscreenState(Global_Engine()->fullscreen, nullptr);
+        
+        if (swapchain_framebuffer_texture) {
+            swapchain_framebuffer_texture->Release();
+            swapchain_framebuffer_texture = nullptr;
+        }
+
+        if (rendertarget) {
+            rendertarget->Release();
+            rendertarget = nullptr;
+        }
+
+        swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&swapchain_framebuffer_texture);
+        device->CreateRenderTargetView(
+            swapchain_framebuffer_texture,
+            nullptr,
+            &rendertarget
+        );
+
+        {
+            D3D11_VIEWPORT viewport = {
+                0.0f, 0.0f,
+                real_resolution.x, real_resolution.y,
+                0.0f, 1.0f
+            };
+
+            context->RSSetViewports(1, &viewport);
+            context->OMSetRenderTargets(1, &rendertarget, nullptr);
+        }
+    }
+
+    initialize_default_rendering_resources();
 }
 
 void Direct3D11_Graphics_Driver::swap_and_present() {
@@ -404,14 +474,67 @@ void Direct3D11_Graphics_Driver::swap_and_present() {
 
 void Direct3D11_Graphics_Driver::finish() {
     _debugprintf("Direct3D11 Driver Finish");
+    initialized_resources = false;
+
+    quad_vertices.clear();
+
+    {
+        matrix_constant_buffer->Release();
+        matrix_constant_buffer = nullptr;
+    }
+    {
+        vertex_buffer->Release();
+        vertex_buffer = nullptr;
+    }
+    {
+        current_image = nullptr;
+        current_blend_mode = -1;
+    }
+    {
+        vertex_shader->Release();
+        vertex_shader = nullptr;
+    }
+    {
+        pixel_shader->Release();
+        pixel_shader = nullptr;
+    }
+    {
+        swapchain->Release();
+        swapchain = nullptr;
+    }
+    {
+        rendertarget->Release();
+        rendertarget = nullptr;
+    }
+    {
+        swapchain_framebuffer_texture = nullptr; // NOTE: should be owned by swapchain?
+    }
+    {
+        vertex_layout->Release();
+        vertex_layout = nullptr;
+    }
+    {
+        nearest_neighbor_sampler_state->Release();
+        nearest_neighbor_sampler_state = nullptr;
+    }
+
+    for (unsigned image_index = 0; image_index < MAX_D3D11_TEXTURES; ++image_index) {
+        auto& image = images[image_index];
+        image.Release();
+    }
+
+    white_pixel.Release();
+
+    for (unsigned blend_mode_index = 0; blend_mode_index < BLEND_MODE_COUNT; ++blend_mode_index) {
+        if (blending_states[blend_mode_index]) {
+            blending_states[blend_mode_index]->Release();
+            blending_states[blend_mode_index] = nullptr;
+        }
+    }
+
+
     context->Release();
     device->Release();
-
-    // TODO: free all resources
-
-    vertex_shader = nullptr;
-    pixel_shader = nullptr;
-
     device = nullptr;
     context = nullptr;
 }
@@ -688,16 +811,6 @@ void Direct3D11_Graphics_Driver::set_blend_mode(u8 blend_mode) {
 }
 
 void Direct3D11_Graphics_Driver::consume_render_commands(struct render_commands* commands) {
-    {
-        D3D11_VIEWPORT viewport = {
-            0.0f, 0.0f,
-            real_resolution.x, real_resolution.y,
-            0.0f, 1.0f
-        };
-
-        context->RSSetViewports(1, &viewport);
-        context->OMSetRenderTargets(1, &rendertarget, nullptr);
-    }
     set_blend_mode(BLEND_MODE_ALPHA);
 
     if (commands->should_clear_buffer) {

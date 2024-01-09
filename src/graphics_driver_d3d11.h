@@ -22,6 +22,8 @@ struct D3D11_Vertex_Format {
 struct D3D11_Image {
     ID3D11Texture2D* texture2d;
     ID3D11ShaderResourceView* shader_resource_view;
+
+    void Release(void);
 };
 
 _declspec(align(16))
@@ -46,6 +48,8 @@ public:
     void screenshot(char* where);
     const char* get_name(void);
 private:
+    void initialize_default_rendering_resources(void);
+
     void set_blend_mode(u8 blend_mode);
     void set_texture_id(D3D11_Image* image);
     void push_render_quad_vertices(rectangle_f32 destination, rectangle_f32 source, color32f32 color, struct image_buffer* image, s32 angle = 0, s32 angle_y = 0, u32 flags = NO_FLAGS, V2 rotation_origin = V2(0,0));
@@ -62,6 +66,8 @@ private:
 
     bool find_first_free_image(D3D11_Image** result);
     void upload_image_buffer_to_gpu(struct image_buffer* image);
+
+    bool initialized_resources = false;
 
     V2 real_resolution;
     V2 virtual_resolution;
