@@ -1273,12 +1273,102 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
                         V2(0, 0), 0,
                         BLEND_MODE_ALPHA
                     );
-                    cutscene_state.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_OUT_UNLOCK_BOX;
+
+                    {
+                        auto& texture_atlas = resources->ui_texture_atlas;
+                        auto box_width = 800;
+                        auto box_height = 800;
+                        render_commands_push_image_ext(
+                            ui_render_commands,
+                            graphics_assets_get_image_by_id(&resources->graphics_assets, texture_atlas.atlas_image_id),
+                            rectangle_f32(resolution.x/2 - box_width/2, resolution.y/2 - box_height/2, box_width, box_height), // TODO: fix this image, it's not very good looking but it's good enough for placeholdering
+                            texture_atlas.get_subrect(resources->ui_rays_gradient),
+                            color32f32(1,1,1,1),
+                            V2(0.5,0.5),
+                            Global_Engine()->global_elapsed_time * 200.0f,
+                            NO_FLAGS,
+                            BLEND_MODE_ALPHA
+                        );
+                    }
+
+                    {
+                        render_commands_push_quad_ext(
+                            ui_render_commands,
+                            rectangle_f32(0, 0, resolution.x, 40),
+                            color32u8(0, 0, 0, 255),
+                            V2(0, 0), 0,
+                            BLEND_MODE_ALPHA
+                        );
+                        render_commands_push_text(
+                            ui_render_commands,
+                            resources->get_font(MENU_FONT_COLOR_WHITE),
+                            2, V2(10, 10),
+                            string_literal("Pet Unlocked! Try it on 'Stage Select'!"),
+                            color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+                        );
+                    }
+
+                    if (cutscene_state.timer >= 4.45f) {
+                        cutscene_state.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_OUT_UNLOCK_BOX;
+                        cutscene_state.timer = 0.0f;
+                    } else {
+                        cutscene_state.timer += dt;
+                    }
                 } break;
                 case MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_OUT_UNLOCK_BOX: {
-                    camera_set_point_to_interpolate(&main_menu_state.main_camera, V2(resolution.x/2, resolution.y/2), 1.0);
-                    cutscene_state.phase  = MAIN_MENU_UNLOCK_PET_CUTSCENE_PHASE_OFF;
-                    cutscene_state.triggered = false;
+                    const f32 phase_length = 1.5f;
+                    f32 alpha = 1.0f - clamp<f32>(cutscene_state.timer / phase_length, 0.0f, 1.0f);
+                    {
+                        render_commands_push_quad_ext(
+                            ui_render_commands,
+                            rectangle_f32(0, 0, resolution.x, resolution.y),
+                            color32u8(2, 5, 15, 100 * alpha),
+                            V2(0, 0), 0,
+                            BLEND_MODE_ALPHA
+                        );
+
+                        {
+                            auto& texture_atlas = resources->ui_texture_atlas;
+                            auto box_width = 800;
+                            auto box_height = 800;
+                            render_commands_push_image_ext(
+                                ui_render_commands,
+                                graphics_assets_get_image_by_id(&resources->graphics_assets, texture_atlas.atlas_image_id),
+                                rectangle_f32(resolution.x/2 - box_width/2, resolution.y/2 - box_height/2, box_width, box_height), // TODO: fix this image, it's not very good looking but it's good enough for placeholdering
+                                texture_atlas.get_subrect(resources->ui_rays_gradient),
+                                color32f32(1,1,1,1 * alpha),
+                                V2(0.5,0.5),
+                                Global_Engine()->global_elapsed_time * 200.0f,
+                                NO_FLAGS,
+                                BLEND_MODE_ALPHA
+                            );
+                        }
+
+                        {
+                            render_commands_push_quad_ext(
+                                ui_render_commands,
+                                rectangle_f32(0, 0, resolution.x, 40),
+                                color32u8(0, 0, 0, 255 * alpha),
+                                V2(0, 0), 0,
+                                BLEND_MODE_ALPHA
+                            );
+                            render_commands_push_text(
+                                ui_render_commands,
+                                resources->get_font(MENU_FONT_COLOR_WHITE),
+                                2, V2(10, 10),
+                                string_literal("Pet Unlocked! Try it on 'Stage Select'!"),
+                                color32f32(1, 1, 1, 1 * alpha), BLEND_MODE_ALPHA
+                            );
+                        }
+                    }
+
+                    if (cutscene_state.timer >= (phase_length + 1.0f)) {
+                        camera_set_point_to_interpolate(&main_menu_state.main_camera, V2(resolution.x/2, resolution.y/2), 1.0);
+                        cutscene_state.phase  = MAIN_MENU_UNLOCK_PET_CUTSCENE_PHASE_OFF;
+                        cutscene_state.triggered = false;
+                    } else {
+                        cutscene_state.timer += dt;
+                    }
                 } break;
             }
         }

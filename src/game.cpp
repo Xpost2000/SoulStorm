@@ -238,6 +238,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
     resources->ui_vignette_borders[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_left.png"));
     resources->ui_vignette_borders[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_bottom.png"));
+    resources->ui_rays_gradient = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/uieffect0.png"));
 
     // Sprites have their timings automatically done, so
     // so they don't store auto timing information.
@@ -389,6 +390,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         {
             int i = 0;
             image_id images[500];
+            images[i++] = resources->ui_rays_gradient;
             images[i++] = resources->ui_chunky.top_left;
             images[i++] = resources->ui_chunky.top_right;
             images[i++] = resources->ui_chunky.bottom_left;

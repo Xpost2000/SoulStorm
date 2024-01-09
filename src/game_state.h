@@ -585,6 +585,7 @@ struct Game_Resources {
 
     image_id        ui_marquee_bkrnd;
     image_id        ui_vignette_borders[2];
+    image_id        ui_rays_gradient;
 
     GameUI_Ninepatch ui_chunky;
     GameUI_Ninepatch ui_chunky_outline;
