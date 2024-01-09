@@ -1,7 +1,7 @@
 CC=g++
 # CC=clang++
 CFLAGS=-w -Wno-unused -Wno-unused-but-set-variable -std=c++17
-CLIBS=-lmingw32 -L./dependencies/x86-64/lib/ -L./dependencies/x86-64/bin/ -I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -I./dependencies/x86-64/include/SDL2 -ld3d11 -lOpenGL32 -lSDL2main -lSDL2 -lSDL2_mixer -llua54 -msse4
+CLIBS=-lmingw32 -L./dependencies/x86-64/lib/ -L./dependencies/x86-64/bin/ -I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -I./dependencies/x86-64/include/SDL2 -ld3d11 -ld3dcompiler -ldxguid -lOpenGL32 -lSDL2main -lSDL2 -lSDL2_mixer -llua54 -msse4
 ITCHPROJECT=xpost2000/untitled-project
 
 HEADER_FILES= src/achievement_list.h \
