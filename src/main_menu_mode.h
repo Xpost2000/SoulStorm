@@ -145,24 +145,6 @@ struct MainMenu_Clutter_Poop {
     void draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources);
 };
 
-struct MainMenu_Sparkling_Star_Data {
-    bool hide = true;
-    int frame_index; // manually animated (8 frames)
-    f32 anim_timer;
-    f32 visibility_delay_timer;
-    f32 max_visibility_delay_timer;
-    V2  position;
-    f32 scale; /* [1.0, 1.5] */
-
-    // NOTE:
-    // I want to more manually control these so I'm not using the sprite 
-    // system, since those were technically only intended for the "actual" game part
-    // and the architecture of this engine makes it so that all of these scenes are sort of
-    // completely independent "programs" that happen to share a main kernel that renders graphics
-    void update(f32 dt);
-    void draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources);
-};
-
 struct MainMenu_Data {
     Particle_Pool particle_pool;
 
@@ -177,7 +159,7 @@ struct MainMenu_Data {
     
     // For now I'll just use a basic outerspacy sort of theme.
     V2 star_positions[2][MAX_MAINMENU_OUTERSPACE_STARS];
-    MainMenu_Sparkling_Star_Data sparkling_stars[MAX_MAINMENU_SPARKLING_STARS];
+    Visual_Sparkling_Star_Data sparkling_stars[MAX_MAINMENU_SPARKLING_STARS];
 
     struct camera   main_camera;
     MainMenu_Player player;

@@ -176,6 +176,20 @@ enum Game_State_Pet_Type {
     GAME_PET_ID_COUNT = 3,
 };
 
+// Used for title screen and main menu
+struct Visual_Sparkling_Star_Data {
+    bool hide = true;
+    int frame_index; // manually animated (8 frames)
+    f32 anim_timer;
+    f32 visibility_delay_timer;
+    f32 max_visibility_delay_timer;
+    V2  position;
+    f32 scale; /* [1.0, 1.5] */
+
+    void update(f32 dt);
+    void draw(struct render_commands* commands, Game_Resources* resources);
+};
+
 #include "title_screen_mode.h"
 #include "main_menu_mode.h"
 #include "opening_mode.h"
@@ -573,6 +587,10 @@ enum Trophy_Icon_Frame {
     TROPHY_ICON_COUNT  = 6,
 };
 
+/*
+ * NOTE: all of the "permenant" or otherwise code referenced assets are here
+ * cause why not.
+ */
 struct Game_Resources {
     struct graphics_assets graphics_assets;
     font_id         menu_fonts[MENU_FONT_COUNT];
@@ -582,6 +600,20 @@ struct Game_Resources {
     sprite_id       player_sprite;
     sprite_id       circle_sprite;
 
+    // Title screen assets
+    // NOTE: honestly, I'd rather just animate the thing manually since it's
+    // not that much code, and also less cumbersome.
+    // The sprite stuff is mainly intended for the ingame screen and is not as complex
+    // as a proper sprite system.
+    // NOTE: this is for a "split" piece animated object for the title screen
+    // kind of like Spline, but budget mode.
+    image_id title_screen_puppet_eye_brow;
+    image_id title_screen_puppet_eyes[4];
+    image_id title_screen_puppet_head;
+    image_id title_screen_puppet_arm;
+    image_id title_screen_puppet_torso;
+
+    // end title screen
 
     image_id        ui_marquee_bkrnd;
     image_id        ui_vignette_borders[2];

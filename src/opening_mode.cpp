@@ -199,6 +199,7 @@ void OpeningMode_Data::update_and_render_skipper_box(f32 dt, Game_Resources* res
             }
 
             if (skipper_progress_t >= (OPENING_MODE_DATA_SKIPPER_PROGRESS_MAX_T + 0.10)) {
+                fade_timer = 0;
                 phase = OPENING_MODE_PHASE_FADE_OUT;
                 return;
             }
@@ -347,6 +348,13 @@ void Game::update_and_render_game_opening(struct render_commands* game_render_co
                 state.phase = OPENING_MODE_PHASE_SLIDESHOW;
                 state.fade_timer = 0.0;
                 switch_screen(GAME_SCREEN_TITLE_SCREEN);
+
+                Transitions::do_color_transition_out(
+                    color32f32(0, 0, 0, 1),
+                    0.17f,
+                    0.67f
+                );
+                return;
             } else {
                 state.fade_timer += dt;
             }

@@ -334,6 +334,19 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         frame->source_rect = RECTANGLE_F32_NULL;
     }
 
+    {
+        {
+            resources->title_screen_puppet_eyes[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_eye0.png"));
+            resources->title_screen_puppet_eyes[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_eye1.png"));
+            resources->title_screen_puppet_eyes[2] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_eye2.png"));
+            resources->title_screen_puppet_eyes[3] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_eye3.png"));
+        }
+        resources->title_screen_puppet_eye_brow = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_eyebrow0.png"));
+        resources->title_screen_puppet_head     = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_head0.png"));
+        resources->title_screen_puppet_arm      = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_arm.png"));
+        resources->title_screen_puppet_torso    = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_torso0.png"));
+    }
+
     #if 1
     {
         // build UI atlas
@@ -744,6 +757,9 @@ void Game::init(Graphics_Driver* driver) {
 
     // opening_data initialize
     opening_data_initialize(driver);
+
+    // title screen initialize
+    title_data_initialize(driver);
 
     Achievements::init_achievements(arena, make_slice<Achievement>(achievement_list, array_count(achievement_list)));
     GameUI::initialize(arena);
@@ -4363,5 +4379,96 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
         );
     }
 }
+
+// Visual_Sparkling_Star_Data
+void Visual_Sparkling_Star_Data::update(f32 dt) {
+    if (!hide) {
+        switch (frame_index) {
+            case 8:
+            case 0: {
+                if (anim_timer >= 0.06f) {
+                    if (frame_index == 8) {
+                        hide = true;
+                        frame_index = 0;
+                    } else {
+                        frame_index = 1;
+                    }
+                    anim_timer = 0.0f;
+                }
+            } break;
+            case 7:
+            case 1: {
+                if (anim_timer >= 0.07f) {
+                    if (frame_index == 7) {
+                        frame_index = 8;
+                    } else {
+                        frame_index = 2;
+                    }
+                    anim_timer = 0.0f;
+                }
+            } break;
+            case 6:
+            case 2: {
+                if (anim_timer >= 0.07f) {
+                    if (frame_index == 6) {
+                        frame_index = 7;
+                    } else {
+                        frame_index = 3;
+                    }
+                    anim_timer = 0.0f;
+                }
+            } break;
+            case 5:
+            case 3: {
+                if (anim_timer >= 0.07f) {
+                    if (frame_index == 5) {
+                        frame_index = 6;
+                    } else {
+                        frame_index = 4;
+                    }
+                    anim_timer = 0.0f;
+                }
+            } break;
+            case 4: {
+                if (anim_timer >= 0.12f) {
+                    frame_index = 5;
+                    anim_timer = 0.0f;
+                }
+            } break;
+        }
+        frame_index = clamp<s32>(frame_index, 0, 8);
+
+        anim_timer += dt;
+    } else {
+        visibility_delay_timer -= dt;
+        if (visibility_delay_timer <= 0.0f) {
+            visibility_delay_timer = max_visibility_delay_timer;
+            hide = false;
+        }
+    }
+}
+
+void Visual_Sparkling_Star_Data::draw(struct render_commands* commands, Game_Resources* resources) {
+    if (hide) {
+        return;
+    }
+
+    // auto& texture_atlas = resources->
+    auto sprite       = graphics_get_sprite_by_id(&resources->graphics_assets, resources->projectile_sprites[PROJECTILE_SPRITE_SPARKLING_STAR]);
+    auto sprite_frame = sprite_get_frame(sprite, frame_index);
+    auto sprite_image = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
+    auto source_rect  = sprite_frame->source_rect;
+
+    V2 sprite_dimensions = V2(16,16) * scale;
+    render_commands_push_image(commands,
+                               sprite_image,
+                               rectangle_f32(position.x, position.y, sprite_dimensions.x, sprite_dimensions.y),
+                               RECTANGLE_F32_NULL,
+                               color32f32(1.0, 1.0, 1.0, 1.0),
+                               0,
+                               BLEND_MODE_ALPHA);
+
+}
+// End Visual_Sparkling_Star_Data
 
 #include "demo_recording.cpp"

@@ -496,97 +496,6 @@ void MainMenu_Clutter_Poop::draw(MainMenu_Data* const state, struct render_comma
 }
 // MainMenu_Clutter_Poop end
 
-// MainMenu_Sparkling_Star_Data
-void MainMenu_Sparkling_Star_Data::update(f32 dt) {
-    if (!hide) {
-        switch (frame_index) {
-            case 8:
-            case 0: {
-                if (anim_timer >= 0.06f) {
-                    if (frame_index == 8) {
-                        hide = true;
-                        frame_index = 0;
-                    } else {
-                        frame_index = 1;
-                    }
-                    anim_timer = 0.0f;
-                }
-            } break;
-            case 7:
-            case 1: {
-                if (anim_timer >= 0.07f) {
-                    if (frame_index == 7) {
-                        frame_index = 8;
-                    } else {
-                        frame_index = 2;
-                    }
-                    anim_timer = 0.0f;
-                }
-            } break;
-            case 6:
-            case 2: {
-                if (anim_timer >= 0.07f) {
-                    if (frame_index == 6) {
-                        frame_index = 7;
-                    } else {
-                        frame_index = 3;
-                    }
-                    anim_timer = 0.0f;
-                }
-            } break;
-            case 5:
-            case 3: {
-                if (anim_timer >= 0.07f) {
-                    if (frame_index == 5) {
-                        frame_index = 6;
-                    } else {
-                        frame_index = 4;
-                    }
-                    anim_timer = 0.0f;
-                }
-            } break;
-            case 4: {
-                if (anim_timer >= 0.12f) {
-                    frame_index = 5;
-                    anim_timer = 0.0f;
-                }
-            } break;
-        }
-        frame_index = clamp<s32>(frame_index, 0, 8);
-
-        anim_timer += dt;
-    } else {
-        visibility_delay_timer -= dt;
-        if (visibility_delay_timer <= 0.0f) {
-            visibility_delay_timer = max_visibility_delay_timer;
-            hide = false;
-        }
-    }
-}
-
-void MainMenu_Sparkling_Star_Data::draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources) {
-    if (hide) {
-        return;
-    }
-
-    // auto& texture_atlas = resources->
-    auto sprite       = graphics_get_sprite_by_id(&resources->graphics_assets, resources->projectile_sprites[PROJECTILE_SPRITE_SPARKLING_STAR]);
-    auto sprite_frame = sprite_get_frame(sprite, frame_index);
-    auto sprite_image = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
-    auto source_rect  = sprite_frame->source_rect;
-
-    V2 sprite_dimensions = V2(16,16) * scale;
-    render_commands_push_image(commands,
-                               sprite_image,
-                               rectangle_f32(position.x, position.y, sprite_dimensions.x, sprite_dimensions.y),
-                               RECTANGLE_F32_NULL,
-                               color32f32(1.0, 1.0, 1.0, 1.0),
-                               0,
-                               BLEND_MODE_ALPHA);
-
-}
-// End MainMenu_Sparkling_Star_Data
-
 void MainMenu_Data::spawn_poop(V2 where) {
     MainMenu_Clutter_Poop poop;
     poop.position = where;
@@ -905,11 +814,11 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
     //
     //       However it should mostly be okay!
     {
-        f32 brightness = normalized_sinf(Global_Engine()->global_elapsed_time)/2;
+        f32 brightness = clamp<f32>(normalized_sinf(Global_Engine()->global_elapsed_time), 0.75, 0.87f);
         render_commands_push_quad_ext(
             game_render_commands,
             rectangle_f32(-300, -300, game_render_commands->screen_width*2, game_render_commands->screen_height*2),
-            color32u8(brightness, brightness, brightness, 255),
+            color32u8(brightness*(32/2), brightness*(45/2), brightness*(80/2), 255),
             V2(0, 0), 0,
             BLEND_MODE_ALPHA);
 
@@ -967,7 +876,7 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
 
         for (int i = 0; i < MAX_MAINMENU_SPARKLING_STARS; ++i) {
             main_menu_state.sparkling_stars[i].update(dt);
-            main_menu_state.sparkling_stars[i].draw(&main_menu_state, game_render_commands, resources);
+            main_menu_state.sparkling_stars[i].draw(game_render_commands, resources);
         }
     }
 
