@@ -18,6 +18,10 @@ struct D3D11_Vertex_Format {
     color32f32 color;
 };
 
+struct D3D11_Image {
+    ID3D11Texture2D* texture2d;
+    ID3D11ShaderResourceView* shader_resource_view;
+};
 class Direct3D11_Graphics_Driver : public Graphics_Driver {
 public:
     void initialize(SDL_Window* window, int width, int height);
@@ -33,27 +37,29 @@ public:
     void screenshot(char* where);
     const char* get_name(void);
 private:
+    bool find_first_free_image(D3D11_Image** result);
+    void upload_image_buffer_to_gpu(struct image_buffer* image);
+
     V2 real_resolution;
     V2 virtual_resolution;
 
     Fixed_Array<D3D11_Vertex_Format> quad_vertices;
 
-    ID3D11Device* device;
-    ID3D11DeviceContext* context;
+    ID3D11Device*        device  = nullptr;
+    ID3D11DeviceContext* context = nullptr;
 
-    ID3D11Buffer*       vertex_buffer;
-    ID3D11VertexShader* vertex_shader;
-    ID3D11PixelShader*  pixel_shader;
+    ID3D11Buffer*       vertex_buffer = nullptr;
+    ID3D11VertexShader* vertex_shader = nullptr;
+    ID3D11PixelShader*  pixel_shader  = nullptr;
 
-    IDXGISwapChain*         swapchain;
-    ID3D11RenderTargetView* rendertarget;
-    ID3D11Texture2D*        swapchain_framebuffer_texture;
+    IDXGISwapChain*         swapchain = nullptr;
+    ID3D11RenderTargetView* rendertarget = nullptr;
+    ID3D11Texture2D*        swapchain_framebuffer_texture = nullptr;
 
-    ID3D11InputLayout* vertex_layout;
+    ID3D11InputLayout* vertex_layout = nullptr;
+    ID3D11SamplerState* nearest_neighbor_sampler_state = nullptr;
 
-    int texture_count = 0;
-    ID3D11Texture2D* textures[MAX_D3D11_TEXTURES];
-    ID3D11ShaderResourceView* texture_shader_resource_view[MAX_D3D11_TEXTURES];
+    D3D11_Image images[MAX_D3D11_TEXTURES];
 };
 
 #endif

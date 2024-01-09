@@ -1,3 +1,5 @@
+// TODO:
+// I do not know how to use blending yet.
 #include "graphics_driver_d3d11.h"
 #include "engine.h"
 
@@ -36,6 +38,66 @@ local const char* vertex_shader_source = R"shader(
 )shader";
 
 // D3D11 Helpers Begin
+
+D3D11_Image d3d11_image_from_image_buffer(ID3D11Device* device, struct image_buffer* image_buffer) {
+    D3D11_Image result;
+    result.texture2d            = nullptr;
+    result.shader_resource_view = nullptr;
+
+    {
+        D3D11_TEXTURE2D_DESC texture_description;
+        zero_memory(&texture_description, sizeof(texture_description));
+
+        auto image_width              = (image_buffer->pot_square_size)  ? image_buffer->pot_square_size : image_buffer->width;
+        auto image_height             = (image_buffer->pot_square_size) ? image_buffer->pot_square_size : image_buffer->height;
+        texture_description.Format    = DXGI_FORMAT_R8G8B8A8_UNORM;
+        texture_description.Width     = image_width;
+        texture_description.Height    = image_height;
+        texture_description.ArraySize = 1;
+        texture_description.MipLevels = 1;
+        texture_description.Usage     = D3D11_USAGE_IMMUTABLE;
+        texture_description.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        texture_description.SampleDesc.Count = 1;
+
+        D3D11_SUBRESOURCE_DATA texture_data;
+        zero_memory(&texture_data, sizeof(texture_data));
+        texture_data.pSysMem = image_buffer->pixels;
+        texture_data.SysMemPitch = sizeof(uint32_t) * image_width;
+
+        assertion(
+            SUCCEEDED(
+                device->CreateTexture2D(
+                    &texture_description,
+                    &texture_data,
+                    &result.texture2d
+                )
+            ) &&
+            "Texture2D creation failure?"
+        );
+    }
+
+    {
+        D3D11_SHADER_RESOURCE_VIEW_DESC texture_shader_resource_view_description;
+        zero_memory(&texture_shader_resource_view_description, sizeof(texture_shader_resource_view_description));
+        texture_shader_resource_view_description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        texture_shader_resource_view_description.Texture2D.MipLevels = 1;
+        texture_shader_resource_view_description.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+
+        assertion(
+            SUCCEEDED(
+                device->CreateShaderResourceView(
+                    result.texture2d,
+                    &texture_shader_resource_view_description,
+                    &result.shader_resource_view
+                )
+            ) &&
+            "Texture2D SRV creation failure?"
+        );
+    }
+
+    return result;
+}
+
 ID3DBlob* d3d_compile_shader_blob(const char* shader_source, const char* shader_name, const char* target) {
     ID3DBlob* result;
     ID3DBlob* error_message;
@@ -69,6 +131,8 @@ void Direct3D11_Graphics_Driver::initialize(SDL_Window* window, int width, int h
     if (game_window == nullptr) {
         game_window = window;
         quad_vertices = Fixed_Array<D3D11_Vertex_Format>(&Global_Engine()->main_arena, MAX_D3D11_VERTICES_FOR_QUAD_BUFFER);
+
+        zero_array(images);
     }
     initialize_backbuffer(V2(width, height));
 }
@@ -189,6 +253,22 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
                 "Failed to allocate orphaned vertex buffer"
             );
         }
+
+        // create sampler
+        {
+            D3D11_SAMPLER_DESC sampler_description = {};
+            sampler_description.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+            sampler_description.AddressU = sampler_description.AddressV = sampler_description.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+            sampler_description.MaxLOD = D3D11_FLOAT32_MAX;
+            sampler_description.ComparisonFunc = D3D11_COMPARISON_NEVER;
+
+            assertion(
+                SUCCEEDED(
+                    device->CreateSamplerState(&sampler_description, &nearest_neighbor_sampler_state)
+                ) &&
+                "Failed to create sampler state?"
+            );
+        }
     }
 }
 
@@ -210,6 +290,8 @@ void Direct3D11_Graphics_Driver::finish() {
     _debugprintf("Direct3D11 Driver Finish");
     context->Release();
     device->Release();
+
+    // TODO: free all resources
 
     vertex_shader = nullptr;
     pixel_shader = nullptr;
@@ -235,18 +317,46 @@ V2 Direct3D11_Graphics_Driver::resolution() {
     return virtual_resolution;
 }
 
+bool Direct3D11_Graphics_Driver::find_first_free_image(D3D11_Image** result) {
+    for (unsigned index = 0; index < MAX_D3D11_TEXTURES; ++index) {
+        auto& current_image = images[index];
+
+        if (current_image.texture2d == nullptr && current_image.shader_resource_view == nullptr) {
+            *result = &current_image;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void Direct3D11_Graphics_Driver::upload_image_buffer_to_gpu(struct image_buffer* image) {
+    auto backing_image_buffer         = image;
+    auto image_buffer_driver_resource = (D3D11_Image*)(backing_image_buffer->_driver_userdata);
+
+    if (image_buffer_driver_resource) {
+        _debugprintf("Existing driver resource found for (%p)(%p). Do not need to reload.", image, image->_driver_userdata);
+        return;
+    }
+
+    D3D11_Image* free_image;
+    assertion(find_first_free_image(&free_image) && "No more free texture ids. Bump the number");
+    *free_image = d3d11_image_from_image_buffer(device, backing_image_buffer);
+    backing_image_buffer->_driver_userdata = free_image;
+}
+
 void Direct3D11_Graphics_Driver::upload_texture(struct graphics_assets* assets, image_id image) {
-    _debugprintf("Direct3D11 driver upload texture is nop");
-    // unimplemented("Not done");
+    auto backing_image_buffer = graphics_assets_get_image_by_id(assets, image);
+    upload_image_buffer_to_gpu(backing_image_buffer);
 }
 
 void Direct3D11_Graphics_Driver::upload_font(struct graphics_assets* assets, font_id font) {
-    _debugprintf("Direct3D11 driver upload font is nop");
-    // unimplemented("Not done");
+    auto backing_image_buffer = (struct image_buffer*)graphics_assets_get_font_by_id(assets, font);
+    upload_image_buffer_to_gpu(backing_image_buffer);
 }
 
 void Direct3D11_Graphics_Driver::unload_texture(struct graphics_assets* assets, image_id image) {
-    
+    _debugprintf("NOP right now.");
 }
 
 void Direct3D11_Graphics_Driver::screenshot(char* where) {
