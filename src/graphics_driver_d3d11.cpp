@@ -2,6 +2,9 @@
 // I do not know how to use blending yet.
 #include "graphics_driver_d3d11.h"
 #include "engine.h"
+#undef far
+#undef near
+// why windows.h do you do this to me.
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
@@ -10,10 +13,15 @@ local const char* pixel_shader_source = R"shader(
     struct VertexShader_Result 
     {
         float4 position_clip : SV_POSITION;
+        float4 color         : COLOR;
+        float2 texcoord      : TEXCOORD;
     };
     
+    Texture2D sprite_tex2D : register(t0);
+    SamplerState sprite_sampler : register(s0);
+
     float4 main(VertexShader_Result input) : SV_Target {
-        return float4(1.0f, 0.0f, 0.0f, 1.0f);
+        return sprite_tex2D.Sample(sprite_sampler, input.texcoord) * input.color;
     }
 )shader";
 
@@ -28,18 +36,35 @@ local const char* vertex_shader_source = R"shader(
     struct VertexShader_Result
     {
         float4 position_clip : SV_POSITION;
+        float4 color         : COLOR;
+        float2 texcoord      : TEXCOORD;
+    };
+
+    cbuffer MatrixBuffer : register(b0)
+    {
+          float4x4 projection_matrix;
+          float4x4 view_matrix;
+          float    global_elapsed_time;
     };
 
     VertexShader_Result main(VertexShader_Params input) {
         VertexShader_Result result;
-        result.position_clip = float4(input.position, 1.0f, 1.0f);
+        // NOTE:
+        // I want to use the same matrices I do with the opengl side
+        // so just flip all the matrix multiplication math I guess.
+        result.position_clip = mul(projection_matrix, mul(view_matrix, float4(input.position, 0.0f, 1.0f)));
+        // result.position_clip = float4(input.position, 1.0f, 1.0f);
+        // result.position_clip = mul(view_matrix, float4(input.position, 1.0f, 1.0f));
+        // result.position_clip = mul(float4(input.position, 1.0f, 1.0f), view_matrix);
+        result.color = input.color;
+        result.texcoord = input.texcoord;
         return result;
     }
 )shader";
 
 // D3D11 Helpers Begin
 
-D3D11_Image d3d11_image_from_image_buffer(ID3D11Device* device, struct image_buffer* image_buffer) {
+D3D11_Image d3d11_image_from_image_buffer(ID3D11Device* device, ID3D11DeviceContext* context, struct image_buffer* image_buffer) {
     D3D11_Image result;
     result.texture2d            = nullptr;
     result.shader_resource_view = nullptr;
@@ -93,8 +118,10 @@ D3D11_Image d3d11_image_from_image_buffer(ID3D11Device* device, struct image_buf
             ) &&
             "Texture2D SRV creation failure?"
         );
+        context->GenerateMips(result.shader_resource_view);
     }
 
+    _debugprintf("D3D11 texture: %p srv %p", result.texture2d, result.shader_resource_view);
     return result;
 }
 
@@ -155,7 +182,7 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
     zero_memory(&swapchain_description, sizeof(swapchain_description));
     swapchain_description.BufferDesc.Width  = real_resolution.x;
     swapchain_description.BufferDesc.Height = real_resolution.y;
-    swapchain_description.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    swapchain_description.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 
     // no vsync
     swapchain_description.BufferDesc.RefreshRate.Numerator   = 0;
@@ -208,6 +235,63 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
 
     // Create D3D11 Resources here
     {
+        {
+            D3D11_BLEND_DESC blend_description;
+            zero_memory(&blend_description, sizeof(blend_description));
+            blend_description.RenderTarget[0].BlendEnable = false;
+            blend_description.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+            assertion(
+                SUCCEEDED(
+                    device->CreateBlendState(&blend_description, &blending_states[BLEND_MODE_NONE])
+                )
+            );
+        }
+        {
+            D3D11_BLEND_DESC blend_description;
+            zero_memory(&blend_description, sizeof(blend_description));
+            blend_description.RenderTarget[0].BlendEnable = true;
+
+            blend_description.RenderTarget[0].SrcBlend  = D3D11_BLEND_SRC_ALPHA;
+            blend_description.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+            blend_description.RenderTarget[0].BlendOp   = D3D11_BLEND_OP_ADD;
+
+            blend_description.RenderTarget[0].SrcBlendAlpha  = D3D11_BLEND_ONE;
+            blend_description.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+            blend_description.RenderTarget[0].BlendOpAlpha   = D3D11_BLEND_OP_ADD;
+
+            blend_description.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+            assertion(
+                SUCCEEDED(
+                    device->CreateBlendState(&blend_description, &blending_states[BLEND_MODE_ALPHA])
+                )
+            );
+        }
+
+        {
+            D3D11_BLEND_DESC blend_description;
+            zero_memory(&blend_description, sizeof(blend_description));
+            blend_description.RenderTarget[0].BlendEnable = true;
+
+            blend_description.RenderTarget[0].SrcBlend  = D3D11_BLEND_SRC_ALPHA;
+            blend_description.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+            blend_description.RenderTarget[0].BlendOp   = D3D11_BLEND_OP_ADD;
+
+            blend_description.RenderTarget[0].SrcBlendAlpha  = D3D11_BLEND_ONE;
+            blend_description.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+            blend_description.RenderTarget[0].BlendOpAlpha   = D3D11_BLEND_OP_ADD;
+
+            blend_description.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+            assertion(
+                SUCCEEDED(
+                    device->CreateBlendState(&blend_description, &blending_states[BLEND_MODE_ADDITIVE])
+                )
+            );
+        }
+    }
+    {
         // Create Default Shaders
         auto ps_blob = d3d_compile_shader_blob(pixel_shader_source, "PixelShaderDefault", "ps_4_0");
         auto vs_blob = d3d_compile_shader_blob(vertex_shader_source, "VertexShaderDefault", "vs_4_0");
@@ -254,6 +338,40 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
             );
         }
 
+        // Allocate constant buffer
+        {
+            D3D11_BUFFER_DESC matrix_constant_buffer_description;
+            zero_memory(&matrix_constant_buffer_description, sizeof(matrix_constant_buffer_description));
+            matrix_constant_buffer_description.Usage          = D3D11_USAGE_DYNAMIC;
+            matrix_constant_buffer_description.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
+            matrix_constant_buffer_description.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+            matrix_constant_buffer_description.ByteWidth      = sizeof(D3D11_Matrix_Constant_Buffer);
+
+            D3D11_Matrix_Constant_Buffer initial_constant_buffer_data;
+            float identity4x4[] = {
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1,
+            };
+            {
+                memory_copy(identity4x4, initial_constant_buffer_data.view_matrix, sizeof(identity4x4));
+                memory_copy(identity4x4, initial_constant_buffer_data.projection_matrix, sizeof(identity4x4));
+            }
+            
+            initial_constant_buffer_data.global_elapsed_time = Global_Engine()->global_elapsed_time;
+
+            D3D11_SUBRESOURCE_DATA initial_data;
+            zero_memory(&initial_data, sizeof(initial_data));
+            initial_data.pSysMem = &initial_constant_buffer_data;
+            assertion(
+                SUCCEEDED(
+                    device->CreateBuffer(&matrix_constant_buffer_description, &initial_data, &matrix_constant_buffer)
+                ) &&
+                "Initial matrix constant buffer setup failure?"
+            );
+        }
+
         // create sampler
         {
             D3D11_SAMPLER_DESC sampler_description = {};
@@ -269,20 +387,18 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
                 "Failed to create sampler state?"
             );
         }
+
+        // white pixel
+        {
+            struct image_buffer white_pixel_image_buffer = image_buffer_create_blank(1, 1);
+            *white_pixel_image_buffer.pixels_u32         = 0xFFFFFFFF;
+            white_pixel                                  = d3d11_image_from_image_buffer(device, context, &white_pixel_image_buffer);
+            image_buffer_free(&white_pixel_image_buffer);
+        }
     }
 }
 
 void Direct3D11_Graphics_Driver::swap_and_present() {
-    {
-        D3D11_VIEWPORT viewport = {
-            0.0f, 0.0f,
-            real_resolution.x, real_resolution.y,
-            0.0f, 1.0f
-        };
-
-        context->RSSetViewports(1, &viewport);
-        context->OMSetRenderTargets(1, &rendertarget, nullptr);
-    }
     swapchain->Present(1, 0);
 }
 
@@ -304,6 +420,18 @@ void Direct3D11_Graphics_Driver::clear_color_buffer(color32u8 color) {
     // unimplemented("Not done");
     float rgba[] = {color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f};
     context->ClearRenderTargetView(rendertarget, rgba);
+}
+
+void Direct3D11_Graphics_Driver::set_texture_id(D3D11_Image* image) {
+    // return;
+    if (current_image != image) {
+        flush_and_render_quads();
+        // bind the new image
+        current_image = image;
+
+        context->PSSetSamplers(0, 1, &nearest_neighbor_sampler_state);
+        context->PSSetShaderResources(0, 1, &current_image->shader_resource_view);
+    }
 }
 
 // NOTE: copied from the opengl driver. They're basically the same tbh.
@@ -337,10 +465,9 @@ void Direct3D11_Graphics_Driver::push_render_quad_vertices(
             _debugprintf("Warning? No d3d11 texture image id? Uploading dynamically.");
             upload_image_buffer_to_gpu(image);
         }
-        // assertion(image->_driver_userdata && "How does this image not have a OpenGL texture id?");
-        // set_texture_id(*((GLuint*)image->_driver_userdata));
+        set_texture_id((D3D11_Image*)image->_driver_userdata);
     } else {
-        // set_texture_id(white_pixel);
+        set_texture_id(&white_pixel);
     }
 
     f32 c  = cosf(degree_to_radians(angle));
@@ -426,7 +553,7 @@ void Direct3D11_Graphics_Driver::render_command_draw_quad(const render_command& 
     auto source_rect      = rc.source;
     auto color            = rc.modulation_u8;
     auto image_buffer     = rc.image;
-    // set_blend_mode(rc.blend_mode);
+    set_blend_mode(rc.blend_mode);
     push_render_quad_vertices(destination_rect, source_rect, color32u8_to_color32f32(color), image_buffer, rc.angle_degrees, rc.angle_y_degrees, rc.flags, rc.rotation_center);
 }
 
@@ -435,7 +562,7 @@ void Direct3D11_Graphics_Driver::render_command_draw_image(const render_command&
     auto source_rect      = rc.source;
     auto color            = rc.modulation_u8;
     auto image_buffer     = rc.image;
-    // set_blend_mode(rc.blend_mode);
+    set_blend_mode(rc.blend_mode);
     push_render_quad_vertices(destination_rect, source_rect, color32u8_to_color32f32(color), image_buffer, rc.angle_degrees, rc.angle_y_degrees, rc.flags, rc.rotation_center);
 }
 
@@ -443,8 +570,8 @@ void Direct3D11_Graphics_Driver::render_command_draw_line(const render_command& 
     auto start = rc.start;
     auto end   = rc.end;
     auto color = color32u8_to_color32f32(rc.modulation_u8);
-    // set_blend_mode(rc.blend_mode);
-    // set_texture_id(white_pixel);
+    set_blend_mode(rc.blend_mode);
+    set_texture_id(&white_pixel);
 
     auto line_normal = V2_perpendicular(V2_direction(start, end));
     {
@@ -488,7 +615,7 @@ void Direct3D11_Graphics_Driver::render_command_draw_text(const render_command& 
     auto position = rc.xy;
     auto text     = rc.text;
     auto color    = rc.modulation_u8;
-    // set_blend_mode(rc.blend_mode);
+    set_blend_mode(rc.blend_mode);
 
     {
         f32 x_cursor = position.x;
@@ -532,8 +659,6 @@ void Direct3D11_Graphics_Driver::flush_and_render_quads(void) {
     }
 
     {
-        context->VSSetShader(vertex_shader, 0, 0);
-        context->PSSetShader(pixel_shader, 0, 0);
         // map the vertex buffer and write all the quad data to it...
         {
             D3D11_MAPPED_SUBRESOURCE mapped;
@@ -554,12 +679,91 @@ void Direct3D11_Graphics_Driver::flush_and_render_quads(void) {
     quad_vertices.clear();
 }
 
+void Direct3D11_Graphics_Driver::set_blend_mode(u8 blend_mode) {
+    if (blend_mode != current_blend_mode) {
+        flush_and_render_quads();
+        current_blend_mode = blend_mode;
+        context->OMSetBlendState(blending_states[blend_mode], 0, 0xffffffff);
+    }
+}
+
 void Direct3D11_Graphics_Driver::consume_render_commands(struct render_commands* commands) {
+    {
+        D3D11_VIEWPORT viewport = {
+            0.0f, 0.0f,
+            real_resolution.x, real_resolution.y,
+            0.0f, 1.0f
+        };
+
+        context->RSSetViewports(1, &viewport);
+        context->OMSetRenderTargets(1, &rendertarget, nullptr);
+    }
+    set_blend_mode(BLEND_MODE_ALPHA);
+
     if (commands->should_clear_buffer) {
         clear_color_buffer(commands->clear_buffer_color);
     }
     // unimplemented("Not done");
 
+    {
+        // write shader constant buffer
+        {
+            {
+                D3D11_MAPPED_SUBRESOURCE mapped;
+                assertion(SUCCEEDED(context->Map(matrix_constant_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)) && "Could not map vertex buffer for writing?");
+                D3D11_Matrix_Constant_Buffer* constant_buffer = (D3D11_Matrix_Constant_Buffer*)mapped.pData;
+                {
+                    // projection matrix
+                    {
+                        float right  = virtual_resolution.x;
+                        float left   = 0;
+                        float top    = 0;
+                        float bottom = virtual_resolution.y;
+
+                        float far = 100.0f;
+                        float near = 0.1f;
+                        float orthographic_matrix[] = {
+                            2 / (right - left), 0, 0, 0,
+                            0, 2 / (top - bottom), 0, 0,
+                            0, 0, 2 / (far - near), 0,
+                                                                                    // NOTE: different from the OpenGL matrix, Z convention is different in DirectX's NDC.
+                            -(right+left)/(right-left), -(top+bottom)/(top-bottom), (far-near)/(far+near), 1
+                        };
+
+                        memory_copy(orthographic_matrix, constant_buffer->projection_matrix, sizeof(orthographic_matrix));
+                    }
+                    // view matrix
+                    {
+                        const auto& camera = commands->camera;
+                        float transform_x = -(camera.xy.x + camera.trauma_displacement.x);
+                        float transform_y = -(camera.xy.y + camera.trauma_displacement.y);
+                        float scale_x     = camera.zoom;
+                        float scale_y     = camera.zoom;
+
+                        if (camera.centered) {
+                            transform_x += commands->screen_width/2;
+                            transform_y += commands->screen_height/2;
+                        }
+
+                        float view_matrix[] = {
+                            scale_x, 0,       0,                          0,
+                            0,       scale_y, 0,                          0,
+                            0,       0,       1.0f,                       0.0,
+                            transform_x,       transform_y,       0,    1.0
+                        };
+
+                        memory_copy(view_matrix, constant_buffer->view_matrix, sizeof(view_matrix));
+                    }
+                    constant_buffer->global_elapsed_time = Global_Engine()->global_elapsed_time;
+                }
+                context->Unmap(matrix_constant_buffer, 0);
+            }
+        }
+        context->VSSetConstantBuffers(0, 1, &matrix_constant_buffer);
+    }
+
+    context->VSSetShader(vertex_shader, 0, 0);
+    context->PSSetShader(pixel_shader, 0, 0);
     for (unsigned command_index = 0; command_index < commands->command_count; ++command_index) {
         auto& command = commands->commands[command_index];
 
@@ -619,7 +823,7 @@ void Direct3D11_Graphics_Driver::upload_image_buffer_to_gpu(struct image_buffer*
 
     D3D11_Image* free_image;
     assertion(find_first_free_image(&free_image) && "No more free texture ids. Bump the number");
-    *free_image = d3d11_image_from_image_buffer(device, backing_image_buffer);
+    *free_image = d3d11_image_from_image_buffer(device, context, backing_image_buffer);
     backing_image_buffer->_driver_userdata = free_image;
 }
 

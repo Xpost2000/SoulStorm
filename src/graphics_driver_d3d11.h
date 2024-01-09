@@ -18,10 +18,19 @@ struct D3D11_Vertex_Format {
     color32f32 color;
 };
 
+
 struct D3D11_Image {
     ID3D11Texture2D* texture2d;
     ID3D11ShaderResourceView* shader_resource_view;
 };
+
+_declspec(align(16))
+struct D3D11_Matrix_Constant_Buffer {
+    float projection_matrix[16];
+    float view_matrix[16];
+    float global_elapsed_time;
+};
+
 class Direct3D11_Graphics_Driver : public Graphics_Driver {
 public:
     void initialize(SDL_Window* window, int width, int height);
@@ -37,6 +46,8 @@ public:
     void screenshot(char* where);
     const char* get_name(void);
 private:
+    void set_blend_mode(u8 blend_mode);
+    void set_texture_id(D3D11_Image* image);
     void push_render_quad_vertices(rectangle_f32 destination, rectangle_f32 source, color32f32 color, struct image_buffer* image, s32 angle = 0, s32 angle_y = 0, u32 flags = NO_FLAGS, V2 rotation_origin = V2(0,0));
 
     // NOTE: could abstract into one file, but
@@ -55,14 +66,17 @@ private:
     V2 real_resolution;
     V2 virtual_resolution;
 
+    D3D11_Image* current_image;
+    u8           current_blend_mode = -1;
     Fixed_Array<D3D11_Vertex_Format> quad_vertices;
 
     ID3D11Device*        device  = nullptr;
     ID3D11DeviceContext* context = nullptr;
 
-    ID3D11Buffer*       vertex_buffer = nullptr;
-    ID3D11VertexShader* vertex_shader = nullptr;
-    ID3D11PixelShader*  pixel_shader  = nullptr;
+    ID3D11Buffer*       matrix_constant_buffer = nullptr;
+    ID3D11Buffer*       vertex_buffer          = nullptr;
+    ID3D11VertexShader* vertex_shader          = nullptr;
+    ID3D11PixelShader*  pixel_shader           = nullptr;
 
     IDXGISwapChain*         swapchain = nullptr;
     ID3D11RenderTargetView* rendertarget = nullptr;
@@ -72,6 +86,10 @@ private:
     ID3D11SamplerState* nearest_neighbor_sampler_state = nullptr;
 
     D3D11_Image images[MAX_D3D11_TEXTURES];
+    D3D11_Image white_pixel;
+
+    // blend modes
+    ID3D11BlendState* blending_states[BLEND_MODE_COUNT];
 };
 
 #endif
