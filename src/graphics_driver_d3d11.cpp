@@ -275,7 +275,7 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
             blend_description.RenderTarget[0].BlendEnable = true;
 
             blend_description.RenderTarget[0].SrcBlend  = D3D11_BLEND_SRC_ALPHA;
-            blend_description.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+            blend_description.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
             blend_description.RenderTarget[0].BlendOp   = D3D11_BLEND_OP_ADD;
 
             blend_description.RenderTarget[0].SrcBlendAlpha  = D3D11_BLEND_ONE;
