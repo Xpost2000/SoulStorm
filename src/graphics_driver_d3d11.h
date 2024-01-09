@@ -20,8 +20,8 @@ struct D3D11_Vertex_Format {
 
 
 struct D3D11_Image {
-    ID3D11Texture2D* texture2d;
-    ID3D11ShaderResourceView* shader_resource_view;
+    ID3D11Texture2D* texture2d = nullptr;
+    ID3D11ShaderResourceView* shader_resource_view = nullptr;
 
     void Release(void);
 };
@@ -48,6 +48,7 @@ public:
     void screenshot(char* where);
     const char* get_name(void);
 private:
+    void setup_viewport(void);
     void initialize_default_rendering_resources(void);
 
     void set_blend_mode(u8 blend_mode);

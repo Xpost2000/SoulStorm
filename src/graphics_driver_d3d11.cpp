@@ -10,6 +10,7 @@
 #include <SDL2/SDL_syswm.h>
 
 void D3D11_Image::Release() {
+    _debugprintf("Unloading D3D11 Image Object");
     if (texture2d) {
         texture2d->Release();
         texture2d = nullptr;
@@ -349,6 +350,18 @@ void Direct3D11_Graphics_Driver::initialize_default_rendering_resources(void) {
     initialized_resources = true;
 }
 
+void Direct3D11_Graphics_Driver::setup_viewport(void) {
+    {
+        D3D11_VIEWPORT viewport = {
+            0.0f, 0.0f,
+            real_resolution.x, real_resolution.y,
+            0.0f, 1.0f
+        };
+
+        context->RSSetViewports(1, &viewport);
+    }
+}
+
 void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
     _debugprintf("Direct3D11 Initialize Backbuffer");
 
@@ -411,31 +424,10 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
             &context
         );
 
-        // swapchain_framebuffer_texture holds backbuffer
-        swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&swapchain_framebuffer_texture);
-        device->CreateRenderTargetView(
-            swapchain_framebuffer_texture,
-            nullptr,
-            &rendertarget
-        );
-
-        {
-            D3D11_VIEWPORT viewport = {
-                0.0f, 0.0f,
-                real_resolution.x, real_resolution.y,
-                0.0f, 1.0f
-            };
-
-            context->RSSetViewports(1, &viewport);
-            context->OMSetRenderTargets(1, &rendertarget, nullptr);
-        }
     } else {
         // Update swapchain and reset rendertarget view texture
         _debugprintf("Resizing swap chain to %d x %d", (s32)real_resolution.x, (s32)real_resolution.y);
 
-        swapchain->ResizeBuffers(2, (s32)real_resolution.x, (s32)real_resolution.y, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
-        swapchain->SetFullscreenState(Global_Engine()->fullscreen, nullptr);
-        
         if (swapchain_framebuffer_texture) {
             swapchain_framebuffer_texture->Release();
             swapchain_framebuffer_texture = nullptr;
@@ -446,24 +438,21 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
             rendertarget = nullptr;
         }
 
-        swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&swapchain_framebuffer_texture);
-        device->CreateRenderTargetView(
-            swapchain_framebuffer_texture,
-            nullptr,
-            &rendertarget
-        );
-
-        {
-            D3D11_VIEWPORT viewport = {
-                0.0f, 0.0f,
-                real_resolution.x, real_resolution.y,
-                0.0f, 1.0f
-            };
-
-            context->RSSetViewports(1, &viewport);
-            context->OMSetRenderTargets(1, &rendertarget, nullptr);
-        }
+        // swapchain->ResizeBuffers(2, (s32)real_resolution.x, (s32)real_resolution.y, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
+        assertion(SUCCEEDED(swapchain->ResizeBuffers(2, (s32)real_resolution.x, (s32)real_resolution.y, DXGI_FORMAT_B8G8R8A8_UNORM, 0)) && "? failure to resize backbuffer?");
+        assertion(SUCCEEDED(swapchain->SetFullscreenState(Global_Engine()->fullscreen, nullptr) && "Failure to set fullscreen state for swapchain?"));
     }
+
+    // swapchain_framebuffer_texture holds backbuffer
+    swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&swapchain_framebuffer_texture);
+    device->CreateRenderTargetView(
+        swapchain_framebuffer_texture,
+        nullptr,
+        &rendertarget
+    );
+
+    setup_viewport();
+    context->OMSetRenderTargets(1, &rendertarget, nullptr);
 
     initialize_default_rendering_resources();
 }
@@ -951,7 +940,12 @@ void Direct3D11_Graphics_Driver::upload_font(struct graphics_assets* assets, fon
 }
 
 void Direct3D11_Graphics_Driver::unload_texture(struct graphics_assets* assets, image_id image) {
-    _debugprintf("NOP right now. TODO");
+    auto backing_image_buffer = graphics_assets_get_image_by_id(assets, image);
+    auto image_object = (D3D11_Image*)backing_image_buffer->_driver_userdata;
+    if (image_object) {
+        image_object->Release();
+        backing_image_buffer->_driver_userdata = nullptr;
+    }
 }
 
 void Direct3D11_Graphics_Driver::screenshot(char* where) {
