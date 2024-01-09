@@ -663,10 +663,12 @@ local void set_graphics_device(s32 id) {
             _debugprintf("Using opengl graphics device");
             global_graphics_driver = &global_opengl_renderer_driver;
         } break;
+#ifdef _WIN32
         case GRAPHICS_DEVICE_D3D11: {
             _debugprintf("Using DirectX11 graphics device");
             global_graphics_driver = &global_direct3d11_renderer_driver;
         } break;
+#endif
     }
 
     // reinitialize game assets (reuploading stuff basically)

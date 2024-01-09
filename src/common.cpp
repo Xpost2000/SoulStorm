@@ -3,12 +3,23 @@
 #include "V2.h"
 #include "memory_arena.h"
 
+// TODO:
+// fix linux implementation of directory related
+// functions because they're all broken right now.
+// everything else works though.
+
 #undef UNICODE
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #ifndef __EMSCRIPTEN__
 #include <windows.h>
 #endif
+#else
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/sysmacros.h>
+#include <unistd.h>
 #endif
 
 rectangle_f32 rectangle_f32_centered(rectangle_f32 center_region, f32 width, f32 height) {
@@ -174,6 +185,7 @@ bool path_exists(string location) {
         tmp_copy[location.length-1] = 0;
     }
 
+#ifdef _WIN32
     WIN32_FIND_DATA find_data = {};
     HANDLE handle = FindFirstFile(tmp_copy, &find_data);
 
@@ -182,6 +194,17 @@ bool path_exists(string location) {
         return false;
     }
     return true;
+#else
+    DIR* directory_information;
+    directory_information = opendir(location.data);
+
+    if (directory_information) {
+        closedir(directory_information);
+        return true;
+    }
+
+    return false;
+#endif
 #else
     return false;
 #endif
@@ -197,6 +220,7 @@ bool is_path_directory(string location) {
         tmp_copy[location.length-1] = 0;
     }
 
+#ifdef _WIN32
     WIN32_FIND_DATA find_data = {};
     HANDLE handle = FindFirstFile(tmp_copy, &find_data);
 
@@ -209,20 +233,32 @@ bool is_path_directory(string location) {
     }
 
     return false;
-#else
+#else                                          
+    struct stat file_stat_info;
+    int stat_result = stat(location.data, &file_stat_info);
+    if(stat_result){
+        // error
+    }else{
+    }
+
+    if( S_ISDIR(file_stat_info.st_mode) ) {
+        return true;
+    }
     return false;
 #endif
+#endif
+    return false;
 }
 
 Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, string location) {
     Directory_Listing result = {};
     cstring_copy(location.data, result.basename, 260);
 
-#ifndef __EMSCRIPTEN__
     if (!is_path_directory(location)) {
         return result;
     }
-
+#ifndef __EMSCRIPTEN__
+#ifdef _WIN32
     WIN32_FIND_DATA find_data = {};
     HANDLE handle = FindFirstFile(string_concatenate(arena, location, string_literal("/*")).data, &find_data);
 
@@ -241,6 +277,41 @@ Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, strin
 
         arena->push_unaligned(sizeof(*result.files));
     } while (FindNextFile(handle, &find_data));
+#else
+    // linux
+    DIR* directory_information;
+    struct dirent* directory_entry;
+    string acceptable_filepath = string_concatenate(arena, string_literal("./"), location);
+    directory_information = opendir(acceptable_filepath.data);
+
+    result.files = (Directory_File*)arena->push_unaligned(sizeof(*result.files));
+    if(directory_information){
+        while( (directory_entry = readdir(directory_information)) ){
+            Directory_File* current_file = &result.files[result.count++];
+            {
+                cstring_copy(directory_entry->d_name, current_file->name, array_count(current_file->name));
+                struct stat file_stat_info;
+
+                string full_path_name = string_from_cstring(format_temp("%s/%s", acceptable_filepath.data, current_file->name));
+                int stat_result = stat(full_path_name.data, &file_stat_info);
+                if(stat_result){
+                    // error
+                }else{
+                    current_file->filesize = file_stat_info.st_size;
+                }
+
+                if( S_ISDIR(file_stat_info.st_mode) ) {
+                    current_file->is_directory = true;
+                }else{
+                    current_file->is_directory = false;
+                }
+            }
+
+            arena->push_unaligned(sizeof(*result.files));
+        }
+        closedir(directory_information);
+    }
+#endif
 #endif
 
     return result;

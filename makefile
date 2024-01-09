@@ -1,7 +1,7 @@
 CC=g++
 # CC=clang++
 CFLAGS=-w -Wno-unused -Wno-unused-but-set-variable -std=c++17
-CLIBS=-lmingw32 -L./dependencies/x86-64/lib/ -L./dependencies/x86-64/bin/ -I./dependencies/ -I./dependencies/x86-64/include -I./dependencies/x86-64/include/SDL2 -lOpenGL32 -lglew32 -lSDL2main -lSDL2 -lSDL2_mixer -llua54 -msse4
+CLIBS=-lmingw32 -L./dependencies/x86-64/lib/ -L./dependencies/x86-64/bin/ -I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -I./dependencies/x86-64/include/SDL2 -ld3d11 -lOpenGL32 -lSDL2main -lSDL2 -lSDL2_mixer -llua54 -msse4
 ITCHPROJECT=xpost2000/untitled-project
 
 HEADER_FILES= src/achievement_list.h \
@@ -30,6 +30,9 @@ HEADER_FILES= src/achievement_list.h \
 		src/graphics_common.h \
 		src/graphics_driver.h \
 		src/graphics_driver_software.h \
+		src/graphics_driver_opengl.h \
+		src/graphics_driver_d3d11.h \
+		src/graphics_driver_null.h \
 		src/image_buffer.h \
 		src/input.h \
 		src/lightmask_buffer.h \
@@ -42,12 +45,15 @@ HEADER_FILES= src/achievement_list.h \
 		src/serializer.h \
 		src/shader_effect_types.h \
 		src/software_renderer.h \
+		src/particle_system.h \
 		src/stage.h \
+		src/virtual_file_system.h \
 		src/stage_list.h \
 		src/stages.h \
 		src/string.h \
 		src/thread_pool.h \
 		src/title_screen_mode.h \
+		Bigfilepacker/bigfile.h \
 		src/v2.h
 
 # src/audio.h src/memory_arena.h src/v2.h src/input.h src/string.h src/thread_pool.h src/engine.h src/graphics.h src/allocators.h src/serializer.h src/entity.h src/common.h
@@ -64,11 +70,21 @@ SOURCE_FILES= src/achievements.cpp \
 		src/entity_prototypes.cpp \
 		src/fade_transition.cpp \
 		src/game.cpp \
+		Bigfilepacker/bigfile.cpp \
+		glad/src/glad.c \
 		src/game_task_scheduler.cpp \
 		src/game_ui.cpp \
 		src/graphics_assets.cpp \
 		src/graphics_driver.cpp \
+		src/graphics_driver_null.cpp \
+		src/graphics_driver_opengl.cpp \
+		src/graphics_driver_d3d11.cpp \
 		src/graphics_driver_software.cpp \
+		src/v2_lua_bindings.cpp \
+		src/entity_lua_bindings.cpp \
+		src/game_lua_bindings.cpp \
+		src/virtual_file_system.cpp \
+		src/particle_system.cpp \
 		src/input.cpp \
 		src/lightmask_buffer.cpp \
 		src/main.cpp \
