@@ -146,6 +146,11 @@ inline static s32 sign_s32(s32 a) {
     if (a < 0) return -1;
     return 0;
 }
+inline static s32 sign_f32(f32 a) {
+    if (a > 0) return 1;
+    if (a < 0) return -1;
+    return 0;
+}
 
 inline static f32 normalized_sinf(f32 t) {
     return (sinf(t)+1)/2.0;

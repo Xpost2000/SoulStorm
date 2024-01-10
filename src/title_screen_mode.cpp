@@ -1,28 +1,137 @@
 // NOTE: meant to be included inside of game.cpp
 // title screen code
 
-void TitleScreen_MainCharacter_Puppet::update(f32 dt) {
-    
+void TitleScreen_MainCharacter_Puppet::update_blinking(f32 dt) {
+    if (time_between_blinks > 0.0f) {
+        time_between_blinks -= dt;
+    } else {
+        switch (eye_frame) {
+            case 0:
+            case 1:
+            case 2:
+            case 4:
+            case 5: {
+                if (blink_timer >= 0.05) {
+                    eye_frame++;
+                    blink_timer = 0.0f;
+                } else {
+                    blink_timer += dt;
+                }
+            } break;
+            case 3: { // hold closed eye
+                if (blink_timer >= 1.00f) {
+                    eye_frame++;
+                    blink_timer = 0.0f;
+                } else {
+                    blink_timer += dt;
+                }
+            } break;
+            case 6: { // allow eye to stay open
+                blink_timer = 0;
+                time_between_blinks = TITLESCREEN_MAINCHARACTER_PUPPET_TIME_BETWEEN_BLINKS;
+                eye_frame = 0;
+            } break;
+        }
+    }
 }
 
-void TitleScreen_MainCharacter_Puppet::draw(struct render_commands* commands, Game_Resources* resources) {
+void TitleScreen_MainCharacter_Puppet::update(f32 dt) {
+    update_blinking(dt);
+}
+
+void TitleScreen_MainCharacter_Puppet::update_breathing_position_behavior(
+    f32 dt,
+    V2& head_position,
+    V2& torso_position,
+    V2& left_arm_position,
+    V2& right_arm_position
+) {
+    // Breathing behaviors
+    {
+        head_position += (V2(0, -7 * clamp<f32>((normalized_sinf(Global_Engine()->global_elapsed_time) + 0.25), 0.25, 1.0f))) * scale;
+        torso_position += (V2(0, -3 * clamp<f32>((normalized_cosf(Global_Engine()->global_elapsed_time * 1.45) + 0.15), 0.35, 1.0f))) * scale;
+        left_arm_position += (V2(0, -5.5 * clamp<f32>((normalized_sinf(Global_Engine()->global_elapsed_time * 1.00) + 0.15), 0.35, 1.0f))) * scale;
+        right_arm_position += (V2(0, -5.5 * clamp<f32>((normalized_sinf(Global_Engine()->global_elapsed_time * 1.00) + 0.15), 0.35, 1.0f))) * scale;
+    }
+}
+
+void TitleScreen_MainCharacter_Puppet::update_eye_look_behavior(
+    f32 dt,
+    V2 eye_look_direction,
+    V2& left_eye_position,
+    V2& right_eye_position
+) {
+    eye_look_direction = eye_look_direction.normalized();
+    // Eye look positions
+    {
+        if (f32_close_enough(eye_look_direction.magnitude_sq(), 0.0f)) {
+            // no modifications to position;
+        }
+        else {
+            int direction = sign_f32(eye_look_direction.x);
+
+            f32 right_eye_influence_extra_weight = 0;
+            f32 left_eye_influence_extra_weight = 0;
+            f32 alternate_eye_decay_influence_factor = 0.4785;
+
+            if (direction == -1) {
+                left_eye_influence_extra_weight = eye_look_direction.magnitude();
+                right_eye_influence_extra_weight = 1 - left_eye_influence_extra_weight * alternate_eye_decay_influence_factor;
+            } else if (direction == 1) {
+                right_eye_influence_extra_weight = eye_look_direction.magnitude();
+                left_eye_influence_extra_weight = 1 - right_eye_influence_extra_weight * alternate_eye_decay_influence_factor;
+            }
+
+            left_eye_influence_extra_weight = clamp<f32>(left_eye_influence_extra_weight, 0.0f, 1.0f);
+            right_eye_influence_extra_weight = clamp<f32>(right_eye_influence_extra_weight, 0.0f, 1.0f);
+
+            V2 eye_look_offset_distance = V2(5, 10);
+
+            left_eye_position.x  += eye_look_direction.x * scale * ((eye_look_offset_distance.x) * (1 + left_eye_influence_extra_weight));
+            right_eye_position.x += eye_look_direction.x * scale * ((eye_look_offset_distance.x) * (1 + right_eye_influence_extra_weight));
+            left_eye_position.y += eye_look_direction.y * scale * ((eye_look_offset_distance.y));
+            right_eye_position.y += eye_look_direction.y * scale * ((eye_look_offset_distance.y));
+        } 
+    }
+}
+
+void TitleScreen_MainCharacter_Puppet::draw(f32 dt, struct render_commands* commands, Game_Resources* resources) {
     V2 arm_position_offset  = V2(5, 0);
     V2 head_position_offset = V2(0, -110);
-    V2 eye_position_offset   = V2(30, -65);
+    V2 eye_position_offset   = V2(30, 42);
     V2 eye_spacing_offset   = V2(20, 0);
     V2 eyebrow_spacing_offset = V2(0, -20);
 
-    f32 scale     = 2;
-    s32 eye_frame = 0;
+    local s32 eye_frame_table[] = { 0, 1, 2, 3, 2, 1, 0 };
+    s32       eye_sprite_frame  = eye_frame_table[eye_frame];
+    eye_sprite_frame            = clamp<s32>(eye_sprite_frame, 0, 3); // incase I accidentally overrun bounds again...
 
-    V2 head_position          = position + head_position_offset * scale;
-    V2 right_eye_position     = position + (eye_position_offset + eye_spacing_offset) * scale;
-    V2 left_eye_position      = position + (eye_position_offset - eye_spacing_offset) * scale;
+    V2 torso_position;
+    {
+        auto image             = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->title_screen_puppet_torso);
+        V2   sprite_dimensions = V2(image->width, image->height) * scale;
+        torso_position = position - V2(sprite_dimensions.x/2, 0);
+    }
+
+    V2 head_position          = torso_position + head_position_offset * scale;
+    V2 left_arm_position      = torso_position - arm_position_offset * scale;
+    V2 right_arm_position     = torso_position + (arm_position_offset - V2(3, 0)) * scale;
+
+    {
+        update_breathing_position_behavior(dt, head_position, torso_position, left_arm_position, right_arm_position);
+    }
+
+    V2 right_eye_position = head_position + (eye_position_offset + eye_spacing_offset) * scale;
+    V2 left_eye_position = head_position + (eye_position_offset - eye_spacing_offset) * scale;
+   
+    {
+        // V2 target = V2(cosf(Global_Engine()->global_elapsed_time), sinf(Global_Engine()->global_elapsed_time));
+        V2 target = eye_look_target;
+        update_eye_look_behavior(dt, target, left_eye_position, right_eye_position);
+    }
+
     V2 right_eyebrow_position = right_eye_position + eyebrow_spacing_offset * scale;
-    V2 left_eyebrow_position  = left_eye_position + eyebrow_spacing_offset * scale;
-    V2 torso_position         = position;
-    V2 left_arm_position      = position - arm_position_offset * scale;
-    V2 right_arm_position     = position + (arm_position_offset - V2(3, 0)) * scale;
+    V2 left_eyebrow_position = left_eye_position + eyebrow_spacing_offset * scale;
 
     {
         V2   position          = left_arm_position;
@@ -97,7 +206,7 @@ void TitleScreen_MainCharacter_Puppet::draw(struct render_commands* commands, Ga
     {
         V2   position          = left_eye_position;
         V2   position1         = right_eye_position;
-        auto image             = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->title_screen_puppet_eyes[eye_frame]);
+        auto image             = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->title_screen_puppet_eyes[eye_sprite_frame]);
         V2   sprite_dimensions = V2(image->width, image->height) * scale;
         render_commands_push_image(commands,
                                    image,
@@ -159,20 +268,89 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
     auto commands = ui_render_commands;
     auto resolution = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);
 
+    f32 ui_x_title = 50.0f; // ends at 50
+    f32 ui_x = 100.0f;       // ends at 100
     // setup camera for rendering main part
     {
         s32 new_screen_width = game_render_commands->screen_width;
         s32 new_screen_height = game_render_commands->screen_height;
-        if (state->titlescreen_data.last_screen_width  != new_screen_width ||
-            state->titlescreen_data.last_screen_height != new_screen_height) {
-            state->titlescreen_data.last_screen_width   = new_screen_width;
-            state->titlescreen_data.last_screen_height  = new_screen_height;
-            state->titlescreen_data.main_camera.xy = V2(new_screen_width/2, new_screen_height/2);
+        {
+            if (state->titlescreen_data.last_screen_width  != new_screen_width ||
+                state->titlescreen_data.last_screen_height != new_screen_height) {
+                state->titlescreen_data.last_screen_width   = new_screen_width;
+                state->titlescreen_data.last_screen_height  = new_screen_height;
+                state->titlescreen_data.main_camera.xy = V2(new_screen_width/2, new_screen_height/2);
+            }
+
         }
 
-        // move puppet to center of screen
+        // Handle_Title_Screen_Animation_Phase
         {
-            state->titlescreen_data.puppet.position = V2(new_screen_width/2, new_screen_height/2);
+            auto& titlescreen_data = state->titlescreen_data;
+            const f32 max_zoom = 2.5f;
+            switch (titlescreen_data.phase) {
+                case TITLE_SCREEN_ANIMATION_PHASE_CLOSE_UP_OF_FACE: {
+                    const f32 phase_max_t = 3.5f;
+                    GameUI::set_all_visual_alpha(0.0f);
+
+                    titlescreen_data.main_camera.zoom     = max_zoom;
+                    titlescreen_data.main_camera.xy       = V2(-new_screen_width/2 * titlescreen_data.main_camera.zoom, -new_screen_height/2 * titlescreen_data.main_camera.zoom);
+
+                    if (titlescreen_data.anim_timer < phase_max_t) {
+                        titlescreen_data.anim_timer += dt;
+                    } else {
+                        titlescreen_data.anim_timer = 0.0f;
+                        titlescreen_data.phase      = TITLE_SCREEN_ANIMATION_PHASE_ZOOM_OUT;
+                    }
+
+                    // move puppet to center of screen
+                    {
+                        state->titlescreen_data.puppet.position = V2(-new_screen_width/2, -new_screen_height/2+55);
+                    }
+                } break;
+                case TITLE_SCREEN_ANIMATION_PHASE_ZOOM_OUT: {
+                    const f32 phase_max_t = 2.65f;
+                    const f32 effective_t = clamp<f32>(titlescreen_data.anim_timer/phase_max_t, 0.0f, 1.0f);
+
+                    GameUI::set_all_visual_alpha(0.0f);
+                    titlescreen_data.main_camera.zoom     = ease_out_back_f32(max_zoom, 1.0f, effective_t);
+                    titlescreen_data.main_camera.xy       = V2(-new_screen_width/2 * titlescreen_data.main_camera.zoom, -new_screen_height/2 * titlescreen_data.main_camera.zoom);
+
+                    if (titlescreen_data.anim_timer < phase_max_t) {
+                        titlescreen_data.anim_timer += dt;
+                    } else {
+                        titlescreen_data.anim_timer = 0.0f;
+                        titlescreen_data.phase      = TITLE_SCREEN_ANIMATION_PHASE_MOVE_PUPPET_TO_RIGHT_AND_FADE_IN_MENU;
+                    }
+                } break;
+                case TITLE_SCREEN_ANIMATION_PHASE_MOVE_PUPPET_TO_RIGHT_AND_FADE_IN_MENU: {
+                    const f32 phase_max_t = 2.00f;
+                    const f32 effective_t2 = clamp<f32>(titlescreen_data.anim_timer/(phase_max_t/2), 0.0f, 1.0f);
+                    const f32 effective_t = clamp<f32>(titlescreen_data.anim_timer/phase_max_t, 0.0f, 1.0f);
+
+                    titlescreen_data.main_camera.zoom     = 1.0f;
+                    titlescreen_data.main_camera.xy       = V2(-new_screen_width/2 * titlescreen_data.main_camera.zoom, -new_screen_height/2 * titlescreen_data.main_camera.zoom);
+                    GameUI::set_all_visual_alpha(effective_t);
+
+                    ui_x       = quadratic_ease_in_out_f32(-100,  100, effective_t);
+                    ui_x_title = quadratic_ease_in_out_f32(-120,  50, effective_t);
+
+                    if (titlescreen_data.anim_timer < phase_max_t) {
+                        titlescreen_data.anim_timer += dt;
+                    } else {
+                        titlescreen_data.anim_timer = 0.0f;
+                        titlescreen_data.phase      = TITLE_SCREEN_ANIMATION_PHASE_IDLE;
+                    }
+                    {
+                        state->titlescreen_data.puppet.position = V2(quadratic_ease_in_out_f32(-new_screen_width/2,  -new_screen_width/2 + new_screen_width/4, effective_t2), -new_screen_height/2+55);
+                    }
+                } break;
+                case TITLE_SCREEN_ANIMATION_PHASE_IDLE: {
+                    GameUI::set_all_visual_alpha(1.0f);
+                    titlescreen_data.main_camera.xy = V2(-new_screen_width / 2 * titlescreen_data.main_camera.zoom, -new_screen_height / 2 * titlescreen_data.main_camera.zoom);
+                    state->titlescreen_data.puppet.position = V2(-new_screen_width/2 + new_screen_width/4, -new_screen_height/2+55);
+                } break;
+            }
         }
     }
 
@@ -215,7 +393,7 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
         }
 
         state->titlescreen_data.puppet.update(dt);
-        state->titlescreen_data.puppet.draw(game_render_commands, resources);
+        state->titlescreen_data.puppet.draw(dt, game_render_commands, resources);
     }
 
     if (state->ui_state != UI_STATE_INACTIVE) {
@@ -224,17 +402,19 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
         GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
         GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
+        bool ui_active = !Transitions::fading() && (state->titlescreen_data.phase == TITLE_SCREEN_ANIMATION_PHASE_IDLE);
+
         GameUI::set_ui_id((char*)"ui_titlescreen_menu");
         GameUI::begin_frame(commands, &resources->graphics_assets);
         {
             f32 y = 100;
             GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
-            GameUI::label(V2(50, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
+            GameUI::label(V2(ui_x_title, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
             GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
 
             y += 45;
 
-            if (GameUI::button(V2(100, y), string_literal("Play"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(ui_x, y), string_literal("Play"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 Transitions::do_shuteye_in(
                     color32f32(0, 0, 0, 1),
                     0.15f,
@@ -269,16 +449,16 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
             }
             y += 30;
 
-            if (GameUI::button(V2(100, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(ui_x, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(UI_STATE_OPTIONS);
             }
             y += 30;
 
-            if (GameUI::button(V2(100, y), string_literal("Achievements"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(ui_x, y), string_literal("Achievements"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(UI_STATE_ACHIEVEMENTS);
             }
             y += 30;
-            if (GameUI::button(V2(100, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(ui_x, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 Transitions::do_shuteye_in(
                     color32f32(0, 0, 0, 1),
                     0.15f,
@@ -300,7 +480,7 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
                 );
             }
             y += 30;
-            if (GameUI::button(V2(100, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(ui_x, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(UI_STATE_CONFIRM_EXIT_TO_WINDOWS);
             }
             // GameUI::ninepatch(&resources->ui_texture_atlas, resources->ui_chunky, V2(100, 100), 3, 3, color32f32(0,0,1,1), 3);

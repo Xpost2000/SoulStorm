@@ -352,7 +352,7 @@ void Game::update_and_render_game_opening(struct render_commands* game_render_co
                 Transitions::do_color_transition_out(
                     color32f32(0, 0, 0, 1),
                     0.17f,
-                    0.67f
+                    2.35f
                 );
                 return;
             } else {
