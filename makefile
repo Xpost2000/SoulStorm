@@ -99,11 +99,12 @@ SOURCE_FILES= src/achievements.cpp \
 		src/v2.cpp
 
 # src/main.cpp src/audio.cpp src/memory_arena.cpp src/v2.cpp src/input.cpp src/string.cpp src/thread_pool.cpp src/engine.cpp src/graphics.cpp src/prng.cpp src/game.cpp src/allocators.cpp src/serializer.cpp src/entity.cpp
-
 game-debug.exe: $(SOURCE_FILES) $(HEADER_FILES)
-	$(CC) -o $@  $(SOURCE_FILES) $(CFLAGS) $(CLIBS) -m64 -ggdb3
+	windres Game.rc -o Game.res
+	$(CC) -o $@  $(SOURCE_FILES) Game.res $(CFLAGS) $(CLIBS) -m64 -ggdb3
 game.exe: $(SOURCE_FILES) $(HEADER_FILES)
-	$(CC) -o $@ $(SOURCE_FILES) $(CFLAGS) $(CLIBS) -O2
+	windres Game.rc -o Game.res
+	$(CC) -o $@ $(SOURCE_FILES) Game.res $(CFLAGS) $(CLIBS) -O2
 run: game.exe
 	./game.exe
 run-debug: game-debug.exe

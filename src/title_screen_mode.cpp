@@ -157,6 +157,9 @@ void TitleScreen_MainCharacter_Puppet::update_eye_look_behavior(
 }
 
 void TitleScreen_MainCharacter_Puppet::draw(f32 dt, struct render_commands* commands, Game_Resources* resources) {
+    V2 old_position = position;
+    position += V2(0, sinf(Global_Engine()->global_elapsed_time + 125) * 10 * scale);
+    
     V2 arm_position_offset  = V2(5, 0);
     V2 head_position_offset = V2(0, -110);
     V2 eye_position_offset   = V2(30, 42);
@@ -286,6 +289,7 @@ void TitleScreen_MainCharacter_Puppet::draw(f32 dt, struct render_commands* comm
                                    0,
                                    BLEND_MODE_ALPHA);
     }
+    position = old_position;
 }
 
 /*
