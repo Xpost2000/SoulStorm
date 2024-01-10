@@ -3,6 +3,14 @@
 
 #define MAX_TITLE_SCREEN_OUTERSPACE_STARS (512)
 #define MAX_TITLE_SCREEN_SPARKLING_STARS  (128)
+struct TitleScreen_MainCharacter_Puppet {
+    // NOTE: refers to center/torso
+    V2 position;
+
+    void update(f32 dt);
+    void draw(struct render_commands* commands, Game_Resources* resources);
+};
+
 struct TitleScreen_Data {
     // there might not be anything
     // here, but it's just to keep the pattern
@@ -18,6 +26,8 @@ struct TitleScreen_Data {
 
     V2 star_positions[MAX_TITLE_SCREEN_OUTERSPACE_STARS];
     Visual_Sparkling_Star_Data sparkling_stars[MAX_TITLE_SCREEN_SPARKLING_STARS];
+
+    TitleScreen_MainCharacter_Puppet puppet;
 
     s32 last_screen_width = -1;
     s32 last_screen_height = -1;

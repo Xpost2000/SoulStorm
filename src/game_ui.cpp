@@ -636,6 +636,7 @@ namespace GameUI {
 
     void initialize(Memory_Arena* arena) {
         global_ui_state         = (UI_State*)arena->push_unaligned(sizeof(*global_ui_state));
+        global_ui_state->alpha  = 1.0f;
         global_ui_state->widgets = Fixed_Array<Widget>(arena, 256);
     }
 

@@ -1,6 +1,121 @@
 // NOTE: meant to be included inside of game.cpp
 // title screen code
 
+void TitleScreen_MainCharacter_Puppet::update(f32 dt) {
+    
+}
+
+void TitleScreen_MainCharacter_Puppet::draw(struct render_commands* commands, Game_Resources* resources) {
+    V2 arm_position_offset  = V2(5, 0);
+    V2 head_position_offset = V2(0, -110);
+    V2 eye_position_offset   = V2(30, -65);
+    V2 eye_spacing_offset   = V2(20, 0);
+    V2 eyebrow_spacing_offset = V2(0, -20);
+
+    f32 scale     = 2;
+    s32 eye_frame = 0;
+
+    V2 head_position          = position + head_position_offset * scale;
+    V2 right_eye_position     = position + (eye_position_offset + eye_spacing_offset) * scale;
+    V2 left_eye_position      = position + (eye_position_offset - eye_spacing_offset) * scale;
+    V2 right_eyebrow_position = right_eye_position + eyebrow_spacing_offset * scale;
+    V2 left_eyebrow_position  = left_eye_position + eyebrow_spacing_offset * scale;
+    V2 torso_position         = position;
+    V2 left_arm_position      = position - arm_position_offset * scale;
+    V2 right_arm_position     = position + (arm_position_offset - V2(3, 0)) * scale;
+
+    {
+        V2   position          = left_arm_position;
+        V2   position1         = right_arm_position;
+        auto image             = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->title_screen_puppet_arm);
+        V2   sprite_dimensions = V2(image->width, image->height) * scale;
+        render_commands_push_image(commands,
+                                   image,
+                                   rectangle_f32(position1.x, position1.y, sprite_dimensions.x, sprite_dimensions.y),
+                                   RECTANGLE_F32_NULL,
+                                   color32f32(1.0, 1.0, 1.0, 1.0),
+                                   0,
+                                   BLEND_MODE_ALPHA);
+        render_commands_push_image(commands,
+                                   image,
+                                   rectangle_f32(position.x, position.y, sprite_dimensions.x, sprite_dimensions.y),
+                                   RECTANGLE_F32_NULL,
+                                   color32f32(1.0, 1.0, 1.0, 1.0),
+                                   DRAW_IMAGE_FLIP_HORIZONTALLY,
+                                   BLEND_MODE_ALPHA);
+    }
+
+    {
+        V2   position          = torso_position;
+        auto image             = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->title_screen_puppet_torso);
+        V2   sprite_dimensions = V2(image->width, image->height) * scale;
+        render_commands_push_image(commands,
+                                   image,
+                                   rectangle_f32(position.x, position.y, sprite_dimensions.x, sprite_dimensions.y),
+                                   RECTANGLE_F32_NULL,
+                                   color32f32(1.0, 1.0, 1.0, 1.0),
+                                   0,
+                                   BLEND_MODE_ALPHA);
+    }
+
+    {
+        V2   position          = head_position;
+        auto image             = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->title_screen_puppet_head);
+        V2   sprite_dimensions = V2(image->width, image->height) * scale;
+        render_commands_push_image(commands,
+                                   image,
+                                   rectangle_f32(position.x, position.y, sprite_dimensions.x, sprite_dimensions.y),
+                                   RECTANGLE_F32_NULL,
+                                   color32f32(1.0, 1.0, 1.0, 1.0),
+                                   0,
+                                   BLEND_MODE_ALPHA);
+    }
+
+#if 0 // These look a little dumb after seeing them...
+    {
+        V2   position          = left_eyebrow_position;
+        V2   position1         = right_eyebrow_position;
+        auto image             = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->title_screen_puppet_eye_brow);
+        V2   sprite_dimensions = V2(image->width, image->height) * (scale);
+        render_commands_push_image(commands,
+                                   image,
+                                   rectangle_f32(position.x, position.y, sprite_dimensions.x, sprite_dimensions.y),
+                                   RECTANGLE_F32_NULL,
+                                   color32f32(1.0, 1.0, 1.0, 1.0),
+                                   DRAW_IMAGE_FLIP_HORIZONTALLY,
+                                   BLEND_MODE_ALPHA);
+        render_commands_push_image(commands,
+                                   image,
+                                   rectangle_f32(position1.x, position1.y, sprite_dimensions.x, sprite_dimensions.y),
+                                   RECTANGLE_F32_NULL,
+                                   color32f32(1.0, 1.0, 1.0, 1.0),
+                                   0,
+                                   BLEND_MODE_ALPHA);
+    }
+#endif
+
+    {
+        V2   position          = left_eye_position;
+        V2   position1         = right_eye_position;
+        auto image             = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->title_screen_puppet_eyes[eye_frame]);
+        V2   sprite_dimensions = V2(image->width, image->height) * scale;
+        render_commands_push_image(commands,
+                                   image,
+                                   rectangle_f32(position.x, position.y, sprite_dimensions.x, sprite_dimensions.y),
+                                   RECTANGLE_F32_NULL,
+                                   color32f32(1.0, 1.0, 1.0, 1.0),
+                                   0,
+                                   BLEND_MODE_ALPHA);
+        render_commands_push_image(commands,
+                                   image,
+                                   rectangle_f32(position1.x, position1.y, sprite_dimensions.x, sprite_dimensions.y),
+                                   RECTANGLE_F32_NULL,
+                                   color32f32(1.0, 1.0, 1.0, 1.0),
+                                   0,
+                                   BLEND_MODE_ALPHA);
+    }
+}
+
 /*
   The title screen is only for when you first open
   the game.
@@ -54,6 +169,11 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
             state->titlescreen_data.last_screen_height  = new_screen_height;
             state->titlescreen_data.main_camera.xy = V2(new_screen_width/2, new_screen_height/2);
         }
+
+        // move puppet to center of screen
+        {
+            state->titlescreen_data.puppet.position = V2(new_screen_width/2, new_screen_height/2);
+        }
     }
 
     game_render_commands->camera = state->titlescreen_data.main_camera;
@@ -93,6 +213,9 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
             state->titlescreen_data.sparkling_stars[i].update(dt);
             state->titlescreen_data.sparkling_stars[i].draw(game_render_commands, resources);
         }
+
+        state->titlescreen_data.puppet.update(dt);
+        state->titlescreen_data.puppet.draw(game_render_commands, resources);
     }
 
     if (state->ui_state != UI_STATE_INACTIVE) {
