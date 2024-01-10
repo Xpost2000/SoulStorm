@@ -8,12 +8,25 @@
 #define TITLESCREEN_MAINCHARACTER_PUPPET_TIME_BETWEEN_BLINKS (2.25f)
 struct TitleScreen_MainCharacter_Puppet {
     // NOTE: refers to center/torso
+    random_state* prng;
     V2  position;
     f32 scale               = 2.75;
     s32 eye_frame           = 0;
     f32 blink_timer         = 0.0f;
     f32 time_between_blinks = TITLESCREEN_MAINCHARACTER_PUPPET_TIME_BETWEEN_BLINKS;
-    V2  eye_look_target     = V2(0,0);
+    V2  eye_look_target                      = V2(0,0);
+
+    f32 time_between_finding_new_look_target = 0.0f;
+
+    V2  initial_eye_look_target;
+    V2  final_eye_look_target;
+    f32 look_target_anim_t = 0.0f;
+    f32 max_look_target_anim_t = 0.0f;
+
+
+    bool allow_looking_random = false;
+
+    void set_new_eye_target(V2 new_target, f32 time_to_goto);
 
     void update_blinking(f32 dt);
 
@@ -25,6 +38,11 @@ struct TitleScreen_MainCharacter_Puppet {
         V2& right_arm_position
     );
 
+    void update_head_for_eye_look_behavior(
+        f32 dt,
+        V2 eye_look_direction,
+        V2& head_position
+    );
     void update_eye_look_behavior(
         f32 dt,
         V2 eye_look_direction,

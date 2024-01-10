@@ -1,6 +1,20 @@
 // NOTE: meant to be included inside of game.cpp
 // title screen code
 
+void TitleScreen_MainCharacter_Puppet::set_new_eye_target(V2 new_target, f32 time_to_goto) {
+    max_look_target_anim_t = time_to_goto;
+    look_target_anim_t     = 0.0f;
+    
+    initial_eye_look_target = eye_look_target;
+    final_eye_look_target   = new_target;
+    _debugprintf("initialeyelook: %f, %f, to eyelook: %f, %f (%f)",
+                 initial_eye_look_target.x,
+                 initial_eye_look_target.y,
+                 final_eye_look_target.x,
+                 final_eye_look_target.y,
+                 max_look_target_anim_t);
+}
+
 void TitleScreen_MainCharacter_Puppet::update_blinking(f32 dt) {
     if (time_between_blinks > 0.0f) {
         time_between_blinks -= dt;
@@ -37,6 +51,35 @@ void TitleScreen_MainCharacter_Puppet::update_blinking(f32 dt) {
 
 void TitleScreen_MainCharacter_Puppet::update(f32 dt) {
     update_blinking(dt);
+
+    if (!allow_looking_random)
+        return;
+
+    if (time_between_finding_new_look_target <= 0.0f) {
+        s32 random_look = random_ranged_integer(prng, 0, 7);
+        V2 eye_direction = V2_direction_from_degree(random_ranged_float(prng, -360.0f, 360.0f));
+        f32 time_to_look = random_ranged_float(prng, 1.5f, 2.2f);
+
+        if (random_look < 3) {
+            eye_direction = V2(0, 0);
+        }
+        set_new_eye_target(eye_direction.normalized(), time_to_look);
+        time_between_finding_new_look_target = random_ranged_float(prng, 3.0f, 6.0f);
+    } else {
+        if (look_target_anim_t < max_look_target_anim_t) {
+            // _debugprintf("looking at target (%f/%f) (%f, %f)", look_target_anim_t, max_look_target_anim_t, eye_look_target.x, eye_look_target.y);
+            
+            f32 effective_t = clamp<f32>(look_target_anim_t / max_look_target_anim_t, 0.0f, 1.0f);
+            look_target_anim_t += dt;
+        
+            eye_look_target.x = ease_out_back_f32(initial_eye_look_target.x, final_eye_look_target.x, effective_t);
+            eye_look_target.y = ease_out_back_f32(initial_eye_look_target.y, final_eye_look_target.y, effective_t);
+        } else {
+            // _debugprintf("waiting to look at something else (%f)", time_between_finding_new_look_target);
+            time_between_finding_new_look_target -= dt;
+        }
+    }
+
 }
 
 void TitleScreen_MainCharacter_Puppet::update_breathing_position_behavior(
@@ -48,10 +91,28 @@ void TitleScreen_MainCharacter_Puppet::update_breathing_position_behavior(
 ) {
     // Breathing behaviors
     {
-        head_position += (V2(0, -7 * clamp<f32>((normalized_sinf(Global_Engine()->global_elapsed_time) + 0.25), 0.25, 1.0f))) * scale;
+        head_position += (V2(0, -7 * clamp<f32>((normalized_sinf(Global_Engine()->global_elapsed_time) + 0.25), 0.15, 1.0f))) * scale;
         torso_position += (V2(0, -3 * clamp<f32>((normalized_cosf(Global_Engine()->global_elapsed_time * 1.45) + 0.15), 0.35, 1.0f))) * scale;
         left_arm_position += (V2(0, -5.5 * clamp<f32>((normalized_sinf(Global_Engine()->global_elapsed_time * 1.00) + 0.15), 0.35, 1.0f))) * scale;
         right_arm_position += (V2(0, -5.5 * clamp<f32>((normalized_sinf(Global_Engine()->global_elapsed_time * 1.00) + 0.15), 0.35, 1.0f))) * scale;
+    }
+}
+
+void TitleScreen_MainCharacter_Puppet::update_head_for_eye_look_behavior(
+    f32 dt,
+    V2 eye_look_direction,
+    V2& head_position
+) {
+    //eye_look_direction = eye_look_direction.normalized();
+    {
+        if (f32_close_enough(eye_look_direction.magnitude_sq(), 0.0f)) {
+            // no modifications to position;
+        }
+        else {
+            V2 eye_look_offset_distance = V2(5, 10);
+            head_position.x += eye_look_direction.x * scale * ((eye_look_offset_distance.x));
+            head_position.y += eye_look_direction.y * scale * ((eye_look_offset_distance.y));
+        } 
     }
 }
 
@@ -61,7 +122,7 @@ void TitleScreen_MainCharacter_Puppet::update_eye_look_behavior(
     V2& left_eye_position,
     V2& right_eye_position
 ) {
-    eye_look_direction = eye_look_direction.normalized();
+    //eye_look_direction = eye_look_direction.normalized();
     // Eye look positions
     {
         if (f32_close_enough(eye_look_direction.magnitude_sq(), 0.0f)) {
@@ -117,8 +178,11 @@ void TitleScreen_MainCharacter_Puppet::draw(f32 dt, struct render_commands* comm
     V2 left_arm_position      = torso_position - arm_position_offset * scale;
     V2 right_arm_position     = torso_position + (arm_position_offset - V2(3, 0)) * scale;
 
+    // V2 target = V2(1, 0);
+    V2 target = eye_look_target;
     {
         update_breathing_position_behavior(dt, head_position, torso_position, left_arm_position, right_arm_position);
+        update_head_for_eye_look_behavior(dt, target, head_position);
     }
 
     V2 right_eye_position = head_position + (eye_position_offset + eye_spacing_offset) * scale;
@@ -126,7 +190,6 @@ void TitleScreen_MainCharacter_Puppet::draw(f32 dt, struct render_commands* comm
    
     {
         // V2 target = V2(cosf(Global_Engine()->global_elapsed_time), sinf(Global_Engine()->global_elapsed_time));
-        V2 target = eye_look_target;
         update_eye_look_behavior(dt, target, left_eye_position, right_eye_position);
     }
 
@@ -261,6 +324,8 @@ void Game::title_data_initialize(Graphics_Driver* driver) {
             star.position = V2(random_ranged_float(&prng, -800, 800), random_ranged_float(&prng, -480, 480));
             star.scale = random_ranged_float(&prng, 1.0f, 1.75f);
         }
+
+        state->puppet.prng = &prng;
     }
 }
 
@@ -340,6 +405,8 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
                     } else {
                         titlescreen_data.anim_timer = 0.0f;
                         titlescreen_data.phase      = TITLE_SCREEN_ANIMATION_PHASE_IDLE;
+                        titlescreen_data.puppet.allow_looking_random = true;
+                        
                     }
                     {
                         state->titlescreen_data.puppet.position = V2(quadratic_ease_in_out_f32(-new_screen_width/2,  -new_screen_width/2 + new_screen_width/4, effective_t2), -new_screen_height/2+55);
