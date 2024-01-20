@@ -1,4 +1,4 @@
-dofile("stages/common.lua")
+engine_dofile("stages/common.lua")
 -- TODO:
 -- Prettification pass.
 -- revise spinster pattern 1
@@ -699,7 +699,9 @@ function _wave2_bullet_firework2(b, arc_direction, start_speed, setup_t, acceler
    bullet_reset_movement(b);
 
    local ep = v2(bullet_position_x(b), bullet_position_y(b));
-   local r = v2_distance(sp, ep);
+   local r = v2_distance(sp, ep) * 0.85;
+   bullet_start_trail(b, 12);
+   bullet_set_trail_modulation(b, 0.8, 0.8, 0.8, 0.3);
    do
       local st = bullet_time_since_spawn(b);
       local starting_angle = dir_to_angle(arc_direction);
@@ -765,7 +767,7 @@ function wave_2_sub3()
          enemy_set_position(e, play_area_width()/2 - dist_r, -50);
          enemy_set_task(
             e,
-            "_wave2_enemy_firework", v2(0, 100), 1.5, 4, 12, 0.45, "_wave2_bullet_firework1"
+            "_wave2_enemy_firework", v2(0, 85), 1.5, 4, 10, 0.45, "_wave2_bullet_firework1"
          );
       end
       do
@@ -775,7 +777,7 @@ function wave_2_sub3()
          enemy_set_position(e, play_area_width()/2 + dist_r, -50);
          enemy_set_task(
             e,
-            "_wave2_enemy_firework", v2(0, 100), 1.5, 4, 12, 0.45, "_wave2_bullet_firework1"
+            "_wave2_enemy_firework", v2(0, 85), 1.5, 4, 10, 0.45, "_wave2_bullet_firework1"
          );
       end
    end
@@ -787,7 +789,7 @@ function wave_2_sub3()
       enemy_set_position(e, play_area_width()/2, -50);
       enemy_set_task(
          e,
-         "_wave2_enemy_firework", v2(0, 100), 1.2, 6, 25, 0.45, "_wave2_bullet_firework2"
+         "_wave2_enemy_firework", v2(0, 65), 1.2, 6, 25, 0.45, "_wave2_bullet_firework2"
       );
    end
    t_wait(5.35)

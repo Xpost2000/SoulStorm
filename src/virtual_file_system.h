@@ -42,5 +42,7 @@ void               VFS_read_entire_file_into_buffer(string path, u8* buffer, siz
 struct file_buffer VFS_read_entire_file(IAllocator allocator, string path, bool priority_to_archive=false);
 #endif
 
+struct lua_State;
+void bind_vfs_lualib(lua_State* L);
 
 #endif

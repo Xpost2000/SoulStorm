@@ -2,6 +2,7 @@
 #include "entity.h"
 #include "game_state.h"
 #include "game_uid_generator.h"
+#include "virtual_file_system.h"
 
 // Lua bindings
 int _lua_bind_Task_Yield_Wait(lua_State* L) {
@@ -787,6 +788,7 @@ lua_State* Game_State::alloc_lua_bindings() {
     {lua_register(L, "get_difficulty_modifier", _lua_bind_game_difficulty_binding);}
     {bind_v2_lualib(L); }
     {bind_entity_lualib(L); }
+    {bind_vfs_lualib(L);}
     {
         Audio::bind_audio_lualib(L);
         lua_register(L, "load_sound", _lua_bind_load_sound);

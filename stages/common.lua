@@ -1,4 +1,4 @@
-dofile("stages/constants.lua")
+engine_dofile("stages/constants.lua")
 -- NOTE
 --
 -- This Bullet Hell's engine 

@@ -1,6 +1,12 @@
 #include "virtual_file_system.h"
 #include "bigfile.h"
 
+extern "C" {
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
+
 local size_t          _bigfile_archive_count = 0;
 local Bigfile_Archive _bigfile_archives[MAX_MOUNTABLE_BIGFILE_ARCHIVES];
 
@@ -139,3 +145,18 @@ struct file_buffer VFS_read_entire_file(IAllocator allocator, string path, bool 
     return result;
 }
 
+int _lua_bind_engine_dofile(lua_State* L) {
+    char*       file_name = (char*)lua_tostring(L, 1);
+    lua_remove(L, 1);
+    _debugprintf("Engine dofile: %s", file_name);
+
+    auto scripttext = VFS_read_entire_file(heap_allocator(), string_from_cstring((char*)file_name));
+    s32 error = (luaL_dostring(L, (const char*)scripttext.buffer));
+    _debugprintf("DOFILE: Text Buffer: scripttext.buffer:\n%s", scripttext.buffer);
+    file_buffer_free(&scripttext);
+    return 0;
+}
+
+void bind_vfs_lualib(lua_State* L) {
+    lua_register(L, "engine_dofile", _lua_bind_engine_dofile);
+}

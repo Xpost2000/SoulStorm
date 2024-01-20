@@ -1,4 +1,4 @@
-dofile("stages/common.lua")
+engine_dofile("stages/common.lua")
 
 -- need this to lerp between the angles... Like a gradient
 -- would probably help a lot...
