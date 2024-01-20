@@ -21,12 +21,12 @@
 // I would love to use coroutines for this...
 // but the duff routines are not ergonomic enough imo to be used for
 // more general purpose stuff like this.
-#define OPENING_MODE_SLIDE_TEXT_TYPE_SPEED       (0.060f)
-#define OPENING_MODE_DISPLAY_DELAY_TIME          (0.65f)
-#define OPENING_MODE_DISPLAY_READ_DELAY_TIME     (2.25f)
-#define OPENING_MODE_DISPLAY_FADE_TEXT_TIME      (0.45f)
-#define OPENING_MODE_DISPLAY_FADE_DELAY_TIME     (1.25f)
-#define OPENING_MODE_DISPLAY_FADE_CROSSFADE_TIME (1.25)
+#define OPENING_MODE_SLIDE_TEXT_TYPE_SPEED       (0.055f)
+#define OPENING_MODE_DISPLAY_DELAY_TIME          (0.60f)
+#define OPENING_MODE_DISPLAY_READ_DELAY_TIME     (2.20f)
+#define OPENING_MODE_DISPLAY_FADE_TEXT_TIME      (0.35f)
+#define OPENING_MODE_DISPLAY_FADE_DELAY_TIME     (1.00f)
+#define OPENING_MODE_DISPLAY_FADE_CROSSFADE_TIME (1.00)
 enum OpeningMode_SlideData_Phase {
     OPENING_MODE_SLIDE_DATA_PHASE_DISPLAY_DELAY = 0,
     OPENING_MODE_SLIDE_DATA_PHASE_TYPE_TEXT     = 1,

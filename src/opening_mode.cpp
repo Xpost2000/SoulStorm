@@ -19,52 +19,52 @@ void Game::opening_data_initialize(Graphics_Driver* driver) {
     _debugprintf("Initialize opening scene");
     {
         auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test.png"));
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/1.png"));
         slide.slide_caption = string_literal("Once upon a time, in the emptiness of space");
     }
     {
         auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test2.png"));
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/2.png"));
         slide.slide_caption = string_literal("Was a small, little boy.");
     }
     {
         auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test2.png"));
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/3.png"));
         slide.slide_caption = string_literal("Alone with nothing but his thoughts.");
     }
     {
         auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test3.png"));
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/4.png"));
         slide.slide_caption = string_literal("He loved staring at the far-off stars");
     }
     {
         auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test4.png"));
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/5.png"));
         slide.slide_caption = string_literal("Eventually he would find friends in the void");
     }
     {
         auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test4.png"));
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/6.png"));
         slide.slide_caption = string_literal("He loved playing with his extrastellar friends");
     }
     {
         auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test4.png"));
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/7.png"));
         slide.slide_caption = string_literal("However, one day mysterious portals appeared");
     }
     {
         auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test4.png"));
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/8.png"));
         slide.slide_caption = string_literal("His animal friends, curious and naive");
     }
     {
         auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test2.png"));
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/9.png"));
         slide.slide_caption = string_literal("Got absorbed into the portals");
     }
     {
         auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/test2.png"));
+        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/10.png"));
         slide.slide_caption = string_literal("And so the boy set on an adventure to rescue them.");
     }
     // Extra non-text slides are okay.
