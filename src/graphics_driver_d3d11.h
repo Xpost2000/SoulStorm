@@ -18,7 +18,6 @@ struct D3D11_Vertex_Format {
     color32f32 color;
 };
 
-
 struct D3D11_Image {
     ID3D11Texture2D* texture2d = nullptr;
     ID3D11ShaderResourceView* shader_resource_view = nullptr;
