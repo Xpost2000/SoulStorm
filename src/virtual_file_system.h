@@ -8,13 +8,11 @@
 
 /* #define ONLY_LOAD_FROM_BIGFILES */
 
-#if 1
 #ifdef RELEASE
     #define PRIORITIZE_BIGFILE_ARCHIVE_FOR_DEFAULT_LOAD
 #endif
-#else
-// Default Debug
-    #define PRIORITIZE_BIGFILE_ARCHIVE_FOR_DEFAULT_LOAD
+
+#if 1
 #endif
 
 /*

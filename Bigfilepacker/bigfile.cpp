@@ -124,7 +124,7 @@ void bigfile_archive_write_to_file(string filename, string* files_to_embed, u64 
         entry.offset_to_start = write_offset;
         entry.length          = file_buffers[file_index].length;
 
-        write_offset += entry.length;
+        write_offset += (entry.length+1); // invisible null terminator
     }
 
     // actually write here
@@ -132,7 +132,15 @@ void bigfile_archive_write_to_file(string filename, string* files_to_embed, u64 
     serialize_bytes(&file_serializer, entries_array, sizeof(Bigfile_Entry) * files_to_embed_length);
     for (unsigned file_index = 0; file_index < files_to_embed_length; ++file_index) {
         auto& file_buffer = file_buffers[file_index];
-        serialize_bytes(&file_serializer, file_buffer.buffer, file_buffer.length);
+        // NOTE: struct file_buffer implicitly null terminate the data it has so
+        // that it can safely be used by other things that expect it. So I also need to write
+        // the null terminator.
+        //
+        // This is because in order to avoid allocation, all file "access" is just offsets into the
+        // giant blob. (the entire bigfile is always in memory which is probably not **good**, but
+        // it's fine for 2D game like this one. Even then changing the API to legitimately stream from disk instead
+        // of keeping it all in memory isn't really that difficult, but would burden the caller more imo.)
+        serialize_bytes(&file_serializer, file_buffer.buffer, file_buffer.length+1);
         _debugprintf("Serialized %d bytes\n", file_buffer.length);
     }
 
