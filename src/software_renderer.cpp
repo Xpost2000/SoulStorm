@@ -244,6 +244,10 @@ void software_framebuffer_draw_quad_clipped(struct software_framebuffer* framebu
     software_framebuffer_draw_quad_ext_clipped(framebuffer, destination, rgba, blend_mode, clip_rect, V2(0, 0), 0, 0);
 }
 #endif
+
+// NOTE: EXT does not have a SIMD version
+// but that's also because drawing lots of small quads is sort of uncommon and also is way faster
+// than images... So I don't really want to do SIMD for this.
 void software_framebuffer_draw_quad_ext_clipped(struct software_framebuffer* framebuffer, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, s32 angle_y) {
     s32 start_x           = clamp<s32>((s32)destination.x, clip_rect.x, clip_rect.x+clip_rect.w);
     s32 start_y           = clamp<s32>((s32)destination.y, clip_rect.y, clip_rect.y+clip_rect.h);
@@ -310,8 +314,7 @@ void software_framebuffer_draw_image_ex_clipped(struct software_framebuffer* fra
     software_framebuffer_draw_image_ext_clipped(framebuffer, image, destination, src, modulation, flags, blend_mode, clip_rect, V2(0, 0), 0, 0, shader, shader_ctx);
 }
 
-#ifndef USE_SIMD_OPTIMIZATIONS
-void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, s32 angle_y, shader_fn shader, void* shader_ctx) {
+void software_framebuffer_draw_image_ext_clipped_scalar(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, s32 angle_y, shader_fn shader, void* shader_ctx) {
     if ((destination.x == 0) && (destination.y == 0) && (destination.w == 0) && (destination.h == 0)) {
         destination.w = framebuffer->width;
         destination.h = framebuffer->height;
@@ -358,12 +361,10 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
     f32 s1 = sinf(degree_to_radians(angle_y));
     
     for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
-        for (s32 x_cursor = start_x; x_cursor < end_x; ++x_cursor) {
-            // Can't really tell how badly it's hitting the framerate since this should be unlikely
-            if (image->pixels == nullptr) return;
+        s32 image_sample_y = (s32)fabs(fmodf((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h), image->height));
 
+        for (s32 x_cursor = start_x; x_cursor < end_x; ++x_cursor) {
             s32 image_sample_x = (s32)fabs(fmodf((src.x + src.w) - ((unclamped_end_x - x_cursor) * scale_ratio_w), image->width));
-            s32 image_sample_y = (s32)fabs(fmodf((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h), image->height));
 
             if ((flags & DRAW_IMAGE_FLIP_HORIZONTALLY))
                 image_sample_x = (s32)((((unclamped_end_x-1) - x_cursor) * scale_ratio_w) + src.x);
@@ -420,9 +421,25 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
         }
     }
 }
-#else
-// NOTE: has no rotation right now.
+
+#ifndef USE_SIMD_OPTIMIZATIONS
 void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, s32 angle_y, shader_fn shader, void* shader_ctx) {
+    software_framebuffer_draw_image_ext_clipped_scalar(framebuffer, image, destination, src, modulation, flags, blend_mode, clip_rect, origin, angle, angle_y, shader, shader_ctx);
+}
+#else
+/*
+  NOTE:
+  The SIMD software renderer is only slightly faster, but definitely more stable in framerate,
+  however if I need to rotate, I fall back to using the scalar version because my rotation logic is a bit
+  harder for me to think of a real SIMD solution for, and I want to make the game so...
+*/
+void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* framebuffer, struct image_buffer* image, struct rectangle_f32 destination, struct rectangle_f32 src, union color32f32 modulation, u32 flags, u8 blend_mode, struct rectangle_f32 clip_rect, V2 origin, s32 angle, s32 angle_y, shader_fn shader, void* shader_ctx) {
+    if (angle_y != 0 || angle != 0) {
+        // scalar fallback
+        software_framebuffer_draw_image_ext_clipped_scalar(framebuffer, image, destination, src, modulation, flags, blend_mode, clip_rect, origin, angle, angle_y, shader, shader_ctx);
+        return;
+    }
+
     if ((destination.x == 0) && (destination.y == 0) && (destination.w == 0) && (destination.h == 0)) {
         destination.w = clip_rect.w;
         destination.h = clip_rect.h;
@@ -462,6 +479,10 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
     s32 stride       = framebuffer->width;
     s32 image_stride = image->width;
 
+    if (image->pot_square_size) {
+        image_stride = image->pot_square_size;
+    }
+
     __m128 modulation_r = _mm_load1_ps(&modulation.r);
     __m128 modulation_g = _mm_load1_ps(&modulation.g);
     __m128 modulation_b = _mm_load1_ps(&modulation.b);
@@ -473,16 +494,16 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
     __m128 zero           = _mm_set1_ps(0);
 
     for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
-        s32 image_sample_y = ((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h));
+        s32 image_sample_y = (s32)fabs(fmodf((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h), image->height));
 
         if ((flags & DRAW_IMAGE_FLIP_VERTICALLY))
             image_sample_y = (s32)(((unclamped_end_y - y_cursor) * scale_ratio_h) + src.y);
 
         for (s32 x_cursor = start_x; x_cursor < end_x; x_cursor += 4) {
-            s32 image_sample_x  = ((src.x + src.w) - ((unclamped_end_x - (x_cursor))   * scale_ratio_w));
-            s32 image_sample_x1 = ((src.x + src.w) - ((unclamped_end_x - (x_cursor+1)) * scale_ratio_w));
-            s32 image_sample_x2 = ((src.x + src.w) - ((unclamped_end_x - (x_cursor+2)) * scale_ratio_w));
-            s32 image_sample_x3 = ((src.x + src.w) - ((unclamped_end_x - (x_cursor+3)) * scale_ratio_w));
+            s32 image_sample_x  = fmodf((src.x + src.w) - ((unclamped_end_x - (x_cursor))   * scale_ratio_w), image->width);
+            s32 image_sample_x1 = fmodf((src.x + src.w) - ((unclamped_end_x - (x_cursor+1)) * scale_ratio_w), image->width);
+            s32 image_sample_x2 = fmodf((src.x + src.w) - ((unclamped_end_x - (x_cursor+2)) * scale_ratio_w), image->width);
+            s32 image_sample_x3 = fmodf((src.x + src.w) - ((unclamped_end_x - (x_cursor+3)) * scale_ratio_w), image->width);
 
             if ((flags & DRAW_IMAGE_FLIP_HORIZONTALLY)) {
                 image_sample_x  = (s32)(((unclamped_end_x - x_cursor) * scale_ratio_w) + src.x);

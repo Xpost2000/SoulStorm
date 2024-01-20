@@ -3165,7 +3165,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
                 state->current_stage_timer  += FIXED_TICKTIME;
             }
 
-            state->fixed_tickrate_remainder = state->fixed_tickrate_timer/(dt);
+            state->fixed_tickrate_remainder = clamp<f32>(state->fixed_tickrate_timer/(dt), 0.0f, 1.0f);
         }
     }
 
