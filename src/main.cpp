@@ -73,6 +73,9 @@ const char* _build_flags =
 #ifdef USE_SIMD_OPTIMIZATIONS
     "using simd,"
 #endif
+#ifdef MULTITHREADED_EXPERIMENTAL
+    "using mt-sw,"
+#endif
 #ifdef RELEASE
     "release,"
 #else
@@ -104,6 +107,8 @@ f32 get_average_frametime(void) {
 }
 
 // Globals
+#define TARGET_TICKS_PER_SECOND (1000.0f / 60.0f)
+
 local SDL_Window*          global_game_window           = nullptr;
 local SDL_GameController*  global_controller_devices[4] = {};
 local Game                 game                         = {};
@@ -683,17 +688,18 @@ int main(int argc, char** argv) {
     SetProcessDPIAware();
 #endif
     initialize();
-#define TARGET_TICKS_PER_SECOND (1000.0f / 60.0f)
     while (Global_Engine()->running) {
         u32 start_frame_time = SDL_GetTicks();
         engine_main_loop();
 
         Global_Engine()->last_elapsed_delta_time = (SDL_GetTicks() - start_frame_time) / 1000.0f;
 
+#ifdef TARGET_TICKS_PER_SECOND
         if (SDL_GetTicks()-start_frame_time < TARGET_TICKS_PER_SECOND) {
             int sleep_time = TARGET_TICKS_PER_SECOND - (SDL_GetTicks() - start_frame_time);
             SDL_Delay(sleep_time);
         }
+#endif
 
         Global_Engine()->last_elapsed_delta_time = (SDL_GetTicks() - start_frame_time) / 1000.0f;
         Global_Engine()->global_elapsed_time += Global_Engine()->last_elapsed_delta_time;

@@ -1,6 +1,3 @@
-// #define USE_SIMD_OPTIMIZATIONS
-#define MULTITHREADED_EXPERIMENTAL
-
 #include "software_renderer.h"
 #include "thread_pool.h"
 #include "engine.h"
@@ -449,8 +446,8 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
         s32 xyzw[4];
         __m128i vectors;
     } v;
-    v.vectors =  _mm_set_epi32(destination.x, destination.y, destination.x+destination.w, destination.y+destination.h);
-    v.vectors           = _mm_min_epi32(_mm_max_epi32(v.vectors, rect_edges_start), rect_edges_end);
+    v.vectors = _mm_set_epi32(destination.x, destination.y, destination.x+destination.w, destination.y+destination.h);
+    v.vectors = _mm_min_epi32(_mm_max_epi32(v.vectors, rect_edges_start), rect_edges_end);
     s32 start_x = (v.xyzw)[3];
     s32 start_y = (v.xyzw)[2];
     s32 end_x   = (v.xyzw)[1];
@@ -470,15 +467,19 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
     __m128 modulation_b = _mm_load1_ps(&modulation.b);
     __m128 modulation_a = _mm_load1_ps(&modulation.a);
 
+    // Constants
     __m128 inverse_255    = _mm_set1_ps(1.0 / 255.0f);
-    __m128 zero           = _mm_set1_ps(0);
     __m128 two_fifty_five = _mm_set1_ps(255);
+    __m128 zero           = _mm_set1_ps(0);
 
     for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
-        for (s32 x_cursor = start_x; x_cursor < end_x; x_cursor += 4) {
-            s32 image_sample_y = ((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h));
-            s32 image_sample_x = ((src.x + src.w) - ((unclamped_end_x - (x_cursor))   * scale_ratio_w));
+        s32 image_sample_y = ((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h));
 
+        if ((flags & DRAW_IMAGE_FLIP_VERTICALLY))
+            image_sample_y = (s32)(((unclamped_end_y - y_cursor) * scale_ratio_h) + src.y);
+
+        for (s32 x_cursor = start_x; x_cursor < end_x; x_cursor += 4) {
+            s32 image_sample_x  = ((src.x + src.w) - ((unclamped_end_x - (x_cursor))   * scale_ratio_w));
             s32 image_sample_x1 = ((src.x + src.w) - ((unclamped_end_x - (x_cursor+1)) * scale_ratio_w));
             s32 image_sample_x2 = ((src.x + src.w) - ((unclamped_end_x - (x_cursor+2)) * scale_ratio_w));
             s32 image_sample_x3 = ((src.x + src.w) - ((unclamped_end_x - (x_cursor+3)) * scale_ratio_w));
@@ -490,84 +491,94 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
                 image_sample_x3 = (s32)(((unclamped_end_x - (x_cursor + 3)) * scale_ratio_w) + src.x);
             }
 
-            if ((flags & DRAW_IMAGE_FLIP_VERTICALLY))
-                image_sample_y = (s32)(((unclamped_end_y - y_cursor) * scale_ratio_h) + src.y);
+            union {
+                __m128 v;
+                union color32f32 c;
+            } sampled_pixels[4], destination_pixels[4];
 
-            union color32f32 sampled_pixels[4];
-            sampled_pixels[0] = color32f32(
-                image->pixels[image_sample_y * image_stride * 4 + image_sample_x3 * 4 + 0],
-                image->pixels[image_sample_y * image_stride * 4 + image_sample_x3 * 4 + 1],
-                image->pixels[image_sample_y * image_stride * 4 + image_sample_x3 * 4 + 2],
-                image->pixels[image_sample_y * image_stride * 4 + image_sample_x3 * 4 + 3]
+            // Load
+            sampled_pixels[0].c = color32f32(
+                (f32)image->pixels[image_sample_y * image_stride * 4 + image_sample_x3 * 4 + 0],
+                (f32)image->pixels[image_sample_y * image_stride * 4 + image_sample_x3 * 4 + 1],
+                (f32)image->pixels[image_sample_y * image_stride * 4 + image_sample_x3 * 4 + 2],
+                (f32)image->pixels[image_sample_y * image_stride * 4 + image_sample_x3 * 4 + 3]
             );
-            sampled_pixels[1] = color32f32(
+            sampled_pixels[1].c = color32f32(
                 image->pixels[image_sample_y * image_stride * 4 + image_sample_x2 * 4 + 0],
                 image->pixels[image_sample_y * image_stride * 4 + image_sample_x2 * 4 + 1],
                 image->pixels[image_sample_y * image_stride * 4 + image_sample_x2 * 4 + 2],
                 image->pixels[image_sample_y * image_stride * 4 + image_sample_x2 * 4 + 3]
             );
-            sampled_pixels[2] = color32f32(
+            sampled_pixels[2].c = color32f32(
                 image->pixels[image_sample_y * image_stride * 4 + image_sample_x1 * 4 + 0],
                 image->pixels[image_sample_y * image_stride * 4 + image_sample_x1 * 4 + 1],
                 image->pixels[image_sample_y * image_stride * 4 + image_sample_x1 * 4 + 2],
                 image->pixels[image_sample_y * image_stride * 4 + image_sample_x1 * 4 + 3]
             );
-            sampled_pixels[3] = color32f32(
+            sampled_pixels[3].c = color32f32(
                 image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 0],
                 image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 1],
                 image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 2],
                 image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 3]
             );
 
-            /* NOTE: This too can be SIMD-ed */
-            {
-                sampled_pixels[0].r /= 255.0f;
-                sampled_pixels[1].r /= 255.0f;
-                sampled_pixels[2].r /= 255.0f;
-                sampled_pixels[3].r /= 255.0f;
-                sampled_pixels[0].g /= 255.0f;
-                sampled_pixels[1].g /= 255.0f;
-                sampled_pixels[2].g /= 255.0f;
-                sampled_pixels[3].g /= 255.0f;
-                sampled_pixels[0].b /= 255.0f;
-                sampled_pixels[1].b /= 255.0f;
-                sampled_pixels[2].b /= 255.0f;
-                sampled_pixels[3].b /= 255.0f;
-                sampled_pixels[0].a /= 255.0f;
-                sampled_pixels[1].a /= 255.0f;
-                sampled_pixels[2].a /= 255.0f;
-                sampled_pixels[3].a /= 255.0f;
-            }
+            destination_pixels[3].c = color32f32(
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor) * 4 + 0],
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor) * 4 + 1],
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor) * 4 + 2],
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor) * 4 + 3]
+            );
+            destination_pixels[2].c = color32f32(
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+1) * 4 + 0],
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+1) * 4 + 1],
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+1) * 4 + 2],
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+1) * 4 + 3]
+            );
+            destination_pixels[1].c = color32f32(
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+2) * 4 + 0],
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+2) * 4 + 1],
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+2) * 4 + 2],
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+2) * 4 + 3]
+            );
+            destination_pixels[0].c = color32f32(
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+3) * 4 + 0],
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+3) * 4 + 1],
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+3) * 4 + 2],
+                framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+3) * 4 + 3]
+            );
+
+            // Shader Calculation
+            // NOTE: outdated sort of, since I don't use it in this engine since it's a very very slow path
+            // only kept because it was in legends. Shaders do not assume SIMD unfortunately.
             if (shader) {
-                sampled_pixels[0] = shader(framebuffer, sampled_pixels[0], V2(x_cursor+3, y_cursor), shader_ctx);
-                sampled_pixels[1] = shader(framebuffer, sampled_pixels[1], V2(x_cursor+2, y_cursor), shader_ctx);
-                sampled_pixels[2] = shader(framebuffer, sampled_pixels[2], V2(x_cursor+1, y_cursor), shader_ctx);
-                sampled_pixels[3] = shader(framebuffer, sampled_pixels[3], V2(x_cursor, y_cursor), shader_ctx);
-            }
-            {
-                sampled_pixels[0].r *= 255.0f;
-                sampled_pixels[1].r *= 255.0f;
-                sampled_pixels[2].r *= 255.0f;
-                sampled_pixels[3].r *= 255.0f;
-                sampled_pixels[0].g *= 255.0f;
-                sampled_pixels[1].g *= 255.0f;
-                sampled_pixels[2].g *= 255.0f;
-                sampled_pixels[3].g *= 255.0f;
-                sampled_pixels[0].b *= 255.0f;
-                sampled_pixels[1].b *= 255.0f;
-                sampled_pixels[2].b *= 255.0f;
-                sampled_pixels[3].b *= 255.0f;
-                sampled_pixels[0].a *= 255.0f;
-                sampled_pixels[1].a *= 255.0f;
-                sampled_pixels[2].a *= 255.0f;
-                sampled_pixels[3].a *= 255.0f;
+                {
+                    sampled_pixels[0].v = _mm_mul_ps(sampled_pixels[0].v, inverse_255);
+                    sampled_pixels[1].v = _mm_mul_ps(sampled_pixels[1].v, inverse_255);
+                    sampled_pixels[2].v = _mm_mul_ps(sampled_pixels[2].v, inverse_255);
+                    sampled_pixels[3].v = _mm_mul_ps(sampled_pixels[3].v, inverse_255);
+                }
+                sampled_pixels[0].c = shader(framebuffer, sampled_pixels[0].c, V2(x_cursor+3, y_cursor), shader_ctx);
+                sampled_pixels[1].c = shader(framebuffer, sampled_pixels[1].c, V2(x_cursor+2, y_cursor), shader_ctx);
+                sampled_pixels[2].c = shader(framebuffer, sampled_pixels[2].c, V2(x_cursor+1, y_cursor), shader_ctx);
+                sampled_pixels[3].c = shader(framebuffer, sampled_pixels[3].c, V2(x_cursor, y_cursor), shader_ctx);
+                {
+                    sampled_pixels[0].v = _mm_mul_ps(sampled_pixels[0].v, two_fifty_five);
+                    sampled_pixels[1].v = _mm_mul_ps(sampled_pixels[1].v, two_fifty_five);
+                    sampled_pixels[2].v = _mm_mul_ps(sampled_pixels[2].v, two_fifty_five);
+                    sampled_pixels[3].v = _mm_mul_ps(sampled_pixels[3].v, two_fifty_five);
+                }
             }
 
-            __m128 red_channels   = _mm_set_ps(sampled_pixels[0].r, sampled_pixels[1].r, sampled_pixels[2].r, sampled_pixels[3].r);
-            __m128 green_channels = _mm_set_ps(sampled_pixels[0].g, sampled_pixels[1].g, sampled_pixels[2].g, sampled_pixels[3].g);
-            __m128 blue_channels  = _mm_set_ps(sampled_pixels[0].b, sampled_pixels[1].b, sampled_pixels[2].b, sampled_pixels[3].b);
-            __m128 alpha_channels = _mm_set_ps(sampled_pixels[0].a, sampled_pixels[1].a, sampled_pixels[2].a, sampled_pixels[3].a);
+            __m128 red_channels   = _mm_set_ps(sampled_pixels[0].c.r, sampled_pixels[1].c.r, sampled_pixels[2].c.r, sampled_pixels[3].c.r);
+            __m128 green_channels = _mm_set_ps(sampled_pixels[0].c.g, sampled_pixels[1].c.g, sampled_pixels[2].c.g, sampled_pixels[3].c.g);
+            __m128 blue_channels  = _mm_set_ps(sampled_pixels[0].c.b, sampled_pixels[1].c.b, sampled_pixels[2].c.b, sampled_pixels[3].c.b);
+            __m128 alpha_channels = _mm_set_ps(sampled_pixels[0].c.a, sampled_pixels[1].c.a, sampled_pixels[2].c.a, sampled_pixels[3].c.a);
 
+#if 1
+            __m128 red_destination_channels = _mm_set_ps(destination_pixels[0].c.r, destination_pixels[1].c.r, destination_pixels[2].c.r, destination_pixels[3].c.r);
+            __m128 green_destination_channels = _mm_set_ps(destination_pixels[0].c.g, destination_pixels[1].c.g, destination_pixels[2].c.g, destination_pixels[3].c.g);
+            __m128 blue_destination_channels = _mm_set_ps(destination_pixels[0].c.b, destination_pixels[1].c.b, destination_pixels[2].c.b, destination_pixels[3].c.b);
+#else
             __m128 red_destination_channels = _mm_set_ps(
                 framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+3) * 4 + 0],
                 framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+2) * 4 + 0],
@@ -586,6 +597,7 @@ void software_framebuffer_draw_image_ext_clipped(struct software_framebuffer* fr
                 framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+1) * 4 + 2],
                 framebuffer->pixels[y_cursor * stride * 4 + (x_cursor+0) * 4 + 2]
             );
+#endif
 
             red_channels   = _mm_mul_ps(modulation_r, red_channels);
             green_channels = _mm_mul_ps(modulation_g, green_channels);

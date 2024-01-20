@@ -10,6 +10,9 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#define USE_SIMD_OPTIMIZATIONS
+#define MULTITHREADED_EXPERIMENTAL
+
 #include "graphics_common.h"
 
 struct software_framebuffer : public image_buffer {

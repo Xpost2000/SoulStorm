@@ -4092,6 +4092,7 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
                 for (int stage_index = 0; stage_index < 4; ++stage_index) {
                     serialize_s32(serializer, &save_data.stage_unlocks[stage_index]);
                 }
+                
                 serialize_u8(serializer, &save_data.post_game);
                 serialize_f32(serializer, &save_data.playtime);
                 serialize_s32(serializer, &save_data.first_load);
