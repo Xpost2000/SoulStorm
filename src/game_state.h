@@ -524,6 +524,7 @@ struct Dialogue_Speaker {
 struct Dialogue_State {
     bool in_conversation = false;
     bool confirm_continue = false;
+    bool speaking_lines_of_dialogue = false;
     // Only two characters would ever really be speaking.
     Dialogue_Speaker speakers[2];
     char             current_line[256];

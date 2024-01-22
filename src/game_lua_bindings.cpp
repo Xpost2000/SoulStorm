@@ -475,10 +475,11 @@ int _lua_bind_dialogue_say_line(lua_State* L) {
     auto& task = state->coroutine_tasks.tasks[task_id];
     task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_DIALOGUE_CONTINUE;
     char* line_string = (char*)lua_tostring(L, 1);
-    cstring_copy(line_string, dialogue_state.current_line, sizeof(dialogue_state.current_line));
-    dialogue_state.length = cstring_length(dialogue_state.current_line);
     dialogue_state.shown_characters = 0;
     dialogue_state.type_timer = 0;
+    dialogue_state.speaking_lines_of_dialogue = true;
+    cstring_copy(line_string, dialogue_state.current_line, sizeof(dialogue_state.current_line));
+    dialogue_state.length = cstring_length(dialogue_state.current_line);
     return lua_yield(L, 0);
 }
 
