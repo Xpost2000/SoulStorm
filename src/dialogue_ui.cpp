@@ -145,64 +145,142 @@ void Game::update_and_render_dialogue_ui(struct render_commands* commands, f32 d
     bool in_conversation = this->state->dialogue_state.in_conversation;
     auto& dialogue_state = this->state->dialogue_state;
     auto  font           = resources->get_font(MENU_FONT_COLOR_WHITE);
-    if (in_conversation) {
+
+    if (in_conversation && state->ui_state == UI_STATE_INACTIVE) {
         // render the characters
         {
             update_and_render_dialogue_speaker(commands, dt, 0);
             update_and_render_dialogue_speaker(commands, dt, 1);
         }
+        GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+        GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::set_ui_id((char*)"dialogue_subui_id");
 
-        // render the text itself
-        float dialogue_box_width    = commands->screen_width * 0.75;
-        float dialogue_box_height   = 120;
-        V2    dialogue_box_position = V2(40, commands->screen_height - (15 + dialogue_box_height));
-
-        auto text                 = string_slice(
-            string_from_cstring(dialogue_state.current_line),
-            0,
-            dialogue_state.shown_characters
-        );
-
-
-        render_commands_push_quad(
-            commands,
-            rectangle_f32(dialogue_box_position.x, dialogue_box_position.y,
-                          dialogue_box_width, dialogue_box_height),
-            color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA
-        );
-
-        render_commands_push_text(
-            commands, font, 2, dialogue_box_position + V2(10, 10),
-            text, color32f32(1,1,1,1), BLEND_MODE_ALPHA
-        ); 
-
-        // update some dialogue ui.
+        GameUI::begin_frame(commands, &resources->graphics_assets);
         {
-            if (dialogue_state.shown_characters < dialogue_state.length && dialogue_state.speaking_lines_of_dialogue) {
-                if (dialogue_state.type_timer <= 0.0f) {
-                    dialogue_state.type_timer = DIALOGUE_TYPE_SPEED;
-                    dialogue_state.shown_characters += 1;
-                } else {
-                    dialogue_state.type_timer -= dt;
-                }
-            } else {
-                dialogue_state.speaking_lines_of_dialogue = false;
-                // show the continue dialogue line
-                // should animate nicely later
-                render_commands_push_text(
-                    commands, font, 2, dialogue_box_position + V2(dialogue_box_width - 100, dialogue_box_height - 20),
-                    string_literal("Continue"), color32f32(1,1,1,1), BLEND_MODE_ALPHA
-                ); 
-            }
-        }
+            // render the text itself
+            float dialogue_box_width    = commands->screen_width * 0.75;
+            float dialogue_box_height   = 90;
+            V2    dialogue_box_position = V2(40, commands->screen_height - (36 + dialogue_box_height));
 
-        if (Action::is_pressed(ACTION_ACTION)) {
-            if (dialogue_state.speaking_lines_of_dialogue && dialogue_state.shown_characters < dialogue_state.length) {
-                dialogue_state.shown_characters = dialogue_state.length;
-            } else {
-                // allows the lua script to resume.
-                dialogue_state.confirm_continue = true;
+            s32 target_units_width  = dialogue_box_width / resources->ui_chunky.tile_width;
+            s32 target_units_height = dialogue_box_height / resources->ui_chunky.tile_width;
+
+            s32 units_width = target_units_width;
+            s32 units_height = target_units_height;
+
+            auto text = string_slice(
+                string_from_cstring(dialogue_state.current_line),
+                0,
+                dialogue_state.shown_characters
+            );
+
+            // animate the textbox getting bigger or smaller.
+            { 
+                const f32 effective_t = clamp<f32>(dialogue_state.box_open_close_timer / DIALOGUE_BOX_EXPANSION_MAX_TIME, 0.0f, 1.0f);
+                {
+                    auto s = dialogue_ui_animation_phase_strings[dialogue_state.phase];
+                    _debugprintf("%.*s", s.length, s.data);
+                }
+                
+                if (dialogue_state.phase == DIALOGUE_UI_ANIMATION_PHASE_INTRODUCTION) {
+                    units_width = lerp_s32(0, target_units_width, effective_t);
+
+                    dialogue_state.box_open_close_timer += dt;
+
+                    if (dialogue_state.box_open_close_timer >= DIALOGUE_BOX_EXPANSION_MAX_TIME) {
+                        dialogue_state.phase                = DIALOGUE_UI_ANIMATION_PHASE_IDLE;
+                        dialogue_state.box_open_close_timer = 0;
+                    }
+                } else if (dialogue_state.phase == DIALOGUE_UI_ANIMATION_PHASE_BYE) {
+                    units_width = lerp_s32(0, target_units_width, 1.0f - effective_t);
+
+                    dialogue_state.box_open_close_timer += dt;
+
+                    if (dialogue_state.shown_characters > 0) {
+                        if (dialogue_state.type_timer >= dialogue_state.bye_optimal_untype_time_max) {
+                            dialogue_state.shown_characters -= 1;
+                            dialogue_state.type_timer = 0.0f;
+                        } else {
+                            dialogue_state.type_timer += dt;
+                        }
+                    }
+
+                    if (dialogue_state.box_open_close_timer >= DIALOGUE_BOX_EXPANSION_MAX_TIME) {
+                        dialogue_state.phase                 = DIALOGUE_UI_ANIMATION_PHASE_INTRODUCTION;
+                        dialogue_state.box_open_close_timer  = 0;
+                        dialogue_state.in_conversation       = false;
+                    }
+                }
+            }
+
+            {
+                auto ui_color = color32f32_DEFAULT_UI_COLOR;
+                game_ui_draw_bordered_box(
+                    dialogue_box_position,
+                    units_width,
+                    units_height,
+                    ui_color
+                );
+            }
+
+            render_commands_push_text(
+                commands, font, 2, dialogue_box_position + V2(16, 16),
+                text, color32f32(1,1,1,1), BLEND_MODE_ALPHA
+            ); 
+
+            bool skipping_current_line = false;
+
+            if (dialogue_state.phase == DIALOGUE_UI_ANIMATION_PHASE_IDLE) {
+                if (dialogue_state.shown_characters < dialogue_state.length && dialogue_state.speaking_lines_of_dialogue) {
+                    if (dialogue_state.type_timer <= 0.0f) {
+                        dialogue_state.type_timer = DIALOGUE_TYPE_SPEED;
+                        dialogue_state.shown_characters += 1;
+                    } else {
+                        dialogue_state.type_timer -= dt;
+                    }
+                } else {
+                    dialogue_state.speaking_lines_of_dialogue = false;
+                    // show the continue dialogue line
+                    // should animate nicely later
+                    auto button_position = dialogue_box_position + V2(dialogue_box_width - 100, dialogue_box_height - 20);
+                    if (GameUI::button(button_position, string_literal("Continue"), color32f32(1, 1, 1, 1), 2.0f, true) == WIDGET_ACTION_ACTIVATE) {
+                        skipping_current_line = true;
+                    }
+                }
+
+                if (Action::is_pressed(ACTION_ACTION)) {
+                    skipping_current_line = true;
+                }
+            } else if (dialogue_state.phase == DIALOGUE_UI_ANIMATION_PHASE_UNWRITE_TEXT) {
+                if (dialogue_state.shown_characters > 0) {
+                    if (dialogue_state.type_timer <= 0.0f) {
+                        dialogue_state.type_timer = DIALOGUE_TYPE_SPEED;
+                        dialogue_state.shown_characters -= 1;
+                    } else {
+                        dialogue_state.type_timer -= dt;
+                    }
+                } else {
+                    cstring_copy(dialogue_state.next_line, dialogue_state.current_line, sizeof(dialogue_state.current_line));
+                    dialogue_state.shown_characters = 0;
+                    dialogue_state.type_timer = 0;
+                    dialogue_state.phase = DIALOGUE_UI_ANIMATION_PHASE_IDLE;
+                    dialogue_state.length = cstring_length(dialogue_state.current_line);
+                    dialogue_state.speaking_lines_of_dialogue = true;
+                }
+            }
+
+            if (skipping_current_line) {
+                if (dialogue_state.speaking_lines_of_dialogue && dialogue_state.shown_characters < dialogue_state.length) {
+                    dialogue_state.shown_characters = dialogue_state.length;
+                } else {
+                    // allows the lua script to resume.
+                    dialogue_state.confirm_continue = true;
+                }
+
             }
         }
+        GameUI::update(dt);
+        GameUI::end_frame();
     }
 }

@@ -346,6 +346,14 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
                         continue;
                     }
                 } break;
+                case TASK_YIELD_REASON_WAIT_FOR_DIALOGUE_TO_FINISH_INTRODUCTION: {
+                    assert(state->dialogue_state.in_conversation && "This wait should not happen outside of a conversation!");
+                    if (state->dialogue_state.phase != DIALOGUE_UI_ANIMATION_PHASE_INTRODUCTION) {
+                        task.userdata.yielded.reason = TASK_YIELD_REASON_NONE;
+                    } else {
+                        continue;
+                    }
+                } break;
                 case TASK_YIELD_REASON_WAIT_DIALOGUE_CONTINUE: {
                     assert(state->dialogue_state.in_conversation && "This wait should not happen outside of a conversation!");
                     if (state->dialogue_state.confirm_continue) {
@@ -356,7 +364,6 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
                     }
                 } break;
                 case TASK_YIELD_REASON_WAIT_DIALOGUE_FINISH: {
-                    // TODO: check me!
                     if (state->dialogue_state.in_conversation) {
                         continue;
                     } else {

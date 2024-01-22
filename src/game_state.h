@@ -473,7 +473,8 @@ struct Controller_LED_State {
  * This dialogue system is designed to work well with coroutine style
  * systems
  */
-#define DIALOGUE_TYPE_SPEED (0.0325f)
+#define DIALOGUE_TYPE_SPEED             (0.0327f)
+#define DIALOGUE_BOX_EXPANSION_MAX_TIME (0.55f)
 enum Dialogue_Speaker_Animation_Type {
     DIALOGUE_SPEAKER_ANIMATION_NONE      = 0,      // use for introduction
     DIALOGUE_SPEAKER_ANIMATION_FADE_IN   = 1,   // use for introduction
@@ -521,17 +522,45 @@ struct Dialogue_Speaker {
     bool mirrored = false;
     bool visible  = false;
 };
+
+enum Dialogue_UI_Animation_Phase {
+    // NOTE: characters are not updated yet.
+    DIALOGUE_UI_ANIMATION_PHASE_INTRODUCTION = 0,
+    DIALOGUE_UI_ANIMATION_PHASE_IDLE         = 1,
+    // NOTE: the text typing is *part* of the normal update, and I don't
+    // see a need to make it a special phase
+    DIALOGUE_UI_ANIMATION_PHASE_UNWRITE_TEXT = 2, // TODO: figure out when this is needed.
+    DIALOGUE_UI_ANIMATION_PHASE_BYE          = 3,
+};
+
+local string dialogue_ui_animation_phase_strings[] = {
+    string_literal("(introduction)"),
+    string_literal("(idle)"),
+    string_literal("(unwrite-text)"),
+    string_literal("(bye)"),
+};
+
+#define DIALOGUE_MAX_LINE_LENGTH (128)
 struct Dialogue_State {
+    uint8_t phase = DIALOGUE_UI_ANIMATION_PHASE_INTRODUCTION;
     bool in_conversation = false;
-    bool confirm_continue = false;
-    bool speaking_lines_of_dialogue = false;
+    bool confirm_continue = false; // flag to allow the script to continue executing
+    bool speaking_lines_of_dialogue = false; // flag to determine whether the text should be "rewritten"
     // Only two characters would ever really be speaking.
     Dialogue_Speaker speakers[2];
-    char             current_line[256];
+    char             current_line[DIALOGUE_MAX_LINE_LENGTH];
+    char             next_line[DIALOGUE_MAX_LINE_LENGTH];
 
-    int  shown_characters = 0;  // for typed out text
-    int  length           = 0; 
-    f32  type_timer       = 0.0f;
+    s16 shown_characters    = 0; // for typed out text
+    s16 length              = 0;  // (unused?)
+    f32 type_timer          = 0.0f;
+    f32 box_open_close_timer = 0.0f;
+
+    // I don't really trust my scissor box implementation, and also using the scissor
+    // box would definitely look worse than actually untyping the whole character.
+    // this calculation is used so I can "untype" characters at the same rate the dialogue
+    // box is closing.
+    f32 bye_optimal_untype_time_max = 0.0f; // based on character count
 
     int      tracked_image_count = 0;
     image_id tracked_images[512];

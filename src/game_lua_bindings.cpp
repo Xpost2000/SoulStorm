@@ -439,9 +439,16 @@ int _lua_bind_dialogue_start(lua_State* L) {
     dialogue_state.confirm_continue = false;
     dialogue_state.shown_characters = 0;
     dialogue_state.length = 0;
+    dialogue_state.phase = DIALOGUE_UI_ANIMATION_PHASE_INTRODUCTION;
     dialogue_state.type_timer = 0;
+    dialogue_state.box_open_close_timer = 0;
     dialogue_state.tracked_image_count = 0;
-    return 0;
+
+    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
+    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
+    auto& task = state->coroutine_tasks.tasks[task_id];
+    task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_FOR_DIALOGUE_TO_FINISH_INTRODUCTION;
+    return lua_yield(L, 0);
 }
 
 int _lua_bind_dialogue_end(lua_State* L) {
@@ -453,8 +460,15 @@ int _lua_bind_dialogue_end(lua_State* L) {
     auto& task = state->coroutine_tasks.tasks[task_id];
     task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_DIALOGUE_FINISH;
 
-    // for now. Instant stop
-    dialogue_state.in_conversation = false;
+    dialogue_state.phase = DIALOGUE_UI_ANIMATION_PHASE_BYE;
+    {
+        dialogue_state.type_timer = 0;
+        dialogue_state.bye_optimal_untype_time_max =
+            (DIALOGUE_BOX_EXPANSION_MAX_TIME * 0.10) / // NOTE: technically should be more advanced formula,
+                                                      // the boxes disappear by tiles so technically it looks "faster"
+            string_from_cstring(dialogue_state.current_line).length;
+        _debugprintf("Optimal untype time max: %3.3f", dialogue_state.bye_optimal_untype_time_max);
+    }
 
     for (s32 tracked_image_index = 0;
         tracked_image_index < dialogue_state.tracked_image_count;
@@ -475,11 +489,12 @@ int _lua_bind_dialogue_say_line(lua_State* L) {
     auto& task = state->coroutine_tasks.tasks[task_id];
     task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_DIALOGUE_CONTINUE;
     char* line_string = (char*)lua_tostring(L, 1);
-    dialogue_state.shown_characters = 0;
+    // do not modify this
+    // dialogue_state.shown_characters = 0;
     dialogue_state.type_timer = 0;
     dialogue_state.speaking_lines_of_dialogue = true;
-    cstring_copy(line_string, dialogue_state.current_line, sizeof(dialogue_state.current_line));
-    dialogue_state.length = cstring_length(dialogue_state.current_line);
+    dialogue_state.phase = DIALOGUE_UI_ANIMATION_PHASE_UNWRITE_TEXT;
+    cstring_copy(line_string, dialogue_state.next_line, sizeof(dialogue_state.next_line));
     return lua_yield(L, 0);
 }
 

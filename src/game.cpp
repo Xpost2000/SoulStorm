@@ -2206,8 +2206,11 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
 void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt) {
     switch (state->ui_state) {
         case UI_STATE_INACTIVE: {
-            // These are the two "full UI" screens
-            if (state->screen_mode != GAME_SCREEN_CREDITS && state->screen_mode != GAME_SCREEN_TITLE_SCREEN) {
+            bool should_empty_ui_id = state->screen_mode != GAME_SCREEN_CREDITS &&
+                state->screen_mode != GAME_SCREEN_TITLE_SCREEN &&
+                !state->dialogue_state.in_conversation;
+
+            if (should_empty_ui_id) {
                 GameUI::set_ui_id(0);
             }
         } break;

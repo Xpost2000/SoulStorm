@@ -44,12 +44,15 @@ enum {
     // I want more fine grained control, and also so I can fire off "setup level" tasks
     // such as background rendering tasks.
 
+    TASK_YIELD_REASON_WAIT_FOR_DIALOGUE_TO_FINISH_INTRODUCTION,
     TASK_YIELD_REASON_WAIT_DIALOGUE_CONTINUE,
     TASK_YIELD_REASON_WAIT_DIALOGUE_FINISH,
 
     // Yes. This implies that every level needs to add a t_wait_for_stage_intro, but
     // that's fine.
     // NOTE: Who said that? Me from a couple of weeks ago.
+    // this was the worst idea I ever had since it caused so many weird bugs in the replay
+    // system.
     TASK_YIELD_REASON_WAIT_FOR_INTRODUCTION_SEQUENCE_TO_COMPLETE,
     TASK_YIELD_REASON_COMPLETE_STAGE,
 };
