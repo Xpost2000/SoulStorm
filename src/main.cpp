@@ -457,6 +457,8 @@ void initialize() {
     Global_Engine()->fullscreen         = SCREEN_IS_FULLSCREEN;
     Thread_Pool::initialize();
 
+    Graphics_Driver::populate_display_mode_list(global_game_window); // update internal list of display modes.
+
 #ifndef NO_FANCY_FADEIN_INTRO
     set_window_transparency(0);
 #endif
@@ -470,8 +472,7 @@ void initialize() {
         auto& preferences = game.preferences;
         preferences.width = REAL_SCREEN_WIDTH;
         preferences.height = REAL_SCREEN_HEIGHT;
-        global_graphics_driver->get_display_modes(); // update internal list of display modes.
-        preferences.resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences.width, preferences.height);
+        preferences.resolution_option_index = Graphics_Driver::find_index_of_resolution(preferences.width, preferences.height);
         preferences.music_volume = 0.5f;
         preferences.sound_volume = 0.5f;
         preferences.renderer_type = GRAPHICS_DEVICE_SOFTWARE;
@@ -492,7 +493,7 @@ void initialize() {
 void update_preferences(Game_Preferences* a, Game_Preferences* b) {
     *a = *b;
 
-    auto display_mode = global_graphics_driver->get_display_modes()[b->resolution_option_index];
+    auto display_mode = Graphics_Driver::get_display_modes()[b->resolution_option_index];
     a->width          = display_mode.width;
     a->height         = display_mode.height;
 }
@@ -513,7 +514,6 @@ void actually_confirm_and_update_preferences(Game_Preferences* preferences, Game
     Audio::set_volume_sound(preferences->sound_volume);
     Audio::set_volume_music(preferences->music_volume);
 
-    global_graphics_driver->get_display_modes(); // update internal list of display modes.
     preferences->resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences->width, preferences->height);
     _use_controller_rumble = preferences->controller_vibration;
     queued_preference_update = false;
@@ -594,6 +594,7 @@ bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
             preferences->controller_vibration = lua_toboolean(L, -1);
     }
 
+    preferences->resolution_option_index = Graphics_Driver::find_index_of_resolution(preferences->width, preferences->height);
     lua_close(L);
     return true;
 }

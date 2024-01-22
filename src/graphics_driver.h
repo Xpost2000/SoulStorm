@@ -76,22 +76,25 @@ public:
 
     // NOTE: will not change the back buffer. You have to do that manually.
     void change_resolution(s32 new_resolution_x, s32 new_resolution_y);
-    Slice<Resolution_Mode> get_display_modes();
+
+    // static methods for "globally" shared resources or associated functions.
+    static void                   populate_display_mode_list(SDL_Window* game_window);
+    static Slice<Resolution_Mode> get_display_modes(void);
+    static s32                    find_index_of_resolution(s32 w, s32 h);
     //                     if it is an enumerable display mode.
-    s32                    find_index_of_resolution(s32 w, s32 h);
     virtual void screenshot(char* where) = 0;
 
     virtual const char* get_name(void);
 protected:
     SDL_Window* game_window = nullptr;
 private:
-    bool already_have_resolution(s32 w, s32 h);
+    static bool already_have_resolution(s32 w, s32 h);
     /*
      * I would like to know how I would even get close to half this number in the next decade.
      * I just don't want to dynamically allocate anything really.
      */
-    Resolution_Mode display_modes[128];
-    int display_mode_count = 0;
+    static Resolution_Mode display_modes[128];
+    static int display_mode_count;
 };
 
 #endif

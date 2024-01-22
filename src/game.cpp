@@ -1104,7 +1104,7 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
         y += 45;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         {
-            auto display_modes = Global_Engine()->driver->get_display_modes();
+            auto display_modes = Graphics_Driver::get_display_modes();
 
             Fixed_Array<string> options_list = Fixed_Array<string>(&Global_Engine()->scratch_arena, display_modes.length);
             for (s32 index = 0; index < display_modes.length; ++index) {
