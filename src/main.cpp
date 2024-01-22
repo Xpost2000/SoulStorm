@@ -62,6 +62,15 @@ enum graphics_device_type {
 s32 last_graphics_device_id = GRAPHICS_DEVICE_NULL;
 local void set_graphics_device(s32 id);
 
+/*
+ * calling confirm_preferences in the middle
+ * of the game update render loop has... potentially
+ * disasterous results, so I'm going to defer all the preference updates.
+ *
+ * So that way no unexpected execution happens or hard to reason about state happens....
+ */
+local bool queued_preference_update = false;
+
 Software_Renderer_Graphics_Driver global_software_renderer_driver;
 Null_Graphics_Driver              global_null_renderer_driver;
 OpenGL_Graphics_Driver            global_opengl_renderer_driver;
@@ -488,7 +497,11 @@ void update_preferences(Game_Preferences* a, Game_Preferences* b) {
     a->height         = display_mode.height;
 }
 
-void confirm_preferences(Game_Preferences* preferences, Game_Resources* resources) {
+void actually_confirm_and_update_preferences(Game_Preferences* preferences, Game_Resources* resources) {
+    if (!queued_preference_update) {
+        return;
+    }
+
     REAL_SCREEN_WIDTH  = preferences->width;
     REAL_SCREEN_HEIGHT = preferences->height;
     set_fullscreen(preferences->fullscreen);
@@ -503,6 +516,11 @@ void confirm_preferences(Game_Preferences* preferences, Game_Resources* resource
     global_graphics_driver->get_display_modes(); // update internal list of display modes.
     preferences->resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences->width, preferences->height);
     _use_controller_rumble = preferences->controller_vibration;
+    queued_preference_update = false;
+}
+
+void confirm_preferences(Game_Preferences* preferences, Game_Resources* resources) {
+    queued_preference_update = true;
 }
 
 /*
@@ -678,7 +696,7 @@ local void set_graphics_device(s32 id) {
 
     // reinitialize game assets (reuploading stuff basically)
     initialize_framebuffer();
-    global_graphics_driver->initialize(global_game_window, SCREEN_WIDTH, SCREEN_HEIGHT);
+    // global_graphics_driver->initialize(global_game_window, SCREEN_WIDTH, SCREEN_HEIGHT);
     Global_Engine()->driver = global_graphics_driver;
     game.init_graphics_resources(global_graphics_driver);
 }
@@ -703,6 +721,11 @@ int main(int argc, char** argv) {
 
         Global_Engine()->last_elapsed_delta_time = (SDL_GetTicks() - start_frame_time) / 1000.0f;
         Global_Engine()->global_elapsed_time += Global_Engine()->last_elapsed_delta_time;
+
+        actually_confirm_and_update_preferences(
+            &game.preferences,
+            game.resources
+        );
     }
     deinitialize();
     return 0; 

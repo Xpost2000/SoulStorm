@@ -221,6 +221,8 @@ void graphics_assets_finish(struct graphics_assets* assets) {
     DEBUG_graphics_assets_dump_all_images(assets, string_literal("DEBUG_dump_graphics_assets/"));
 
     for (unsigned image_index = 0; image_index < assets->image_count; ++image_index) {
+        if (assets->image_asset_status[image_index] == ASSET_STATUS_UNLOADED)
+            continue;
         struct image_buffer* image = assets->images + image_index;
         _debugprintf("destroying img: %p (%d) (%dx%d %p)", image, image_index, image->width, image->height, image->pixels);
         image_buffer_free(image);
@@ -317,6 +319,16 @@ void graphics_assets_update_graphics_driver(struct graphics_assets* assets, Grap
     if (assets->graphics_driver != driver && assets->graphics_driver) {
         _debugprintf("Updating from previous graphics driver");
         _debugprintf("NOTE: reupload all resources to new driver.");
+
+        for (u32 image_index = 0; image_index < assets->image_count; ++image_index) {
+            auto& image = assets->images[image_index];
+            image._driver_userdata = nullptr;
+        }
+
+        for (u32 font_index = 0; font_index < assets->font_count; ++font_index) {
+            auto& font = assets->fonts[font_index];
+            font._driver_userdata = nullptr;
+        }
     } else {
         _debugprintf("First graphics driver initialization. Nothing to do");
     }

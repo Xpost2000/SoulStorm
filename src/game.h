@@ -87,6 +87,8 @@ public:
     void update_and_render(Graphics_Driver* driver, f32 dt);
 
     Game_Preferences preferences;
+    Game_State*     state;
+    Game_Resources* resources;
 private: 
     void handle_ui_update_and_render(struct render_commands* commands, f32 dt);
 
@@ -174,8 +176,6 @@ private:
     void notify_new_achievement(s32 id);
 
     Memory_Arena*   arena;
-    Game_State*     state;
-    Game_Resources* resources;
     bool initialized = false;
 
     // used for writing into from the settings before I
