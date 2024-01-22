@@ -368,6 +368,12 @@ Sprite_Instance sprite_instance(sprite_id id) {
     return result;
 }
 
+void Sprite_Instance::reset(void) {
+    loop_completions = 0;
+    frame_timer      = 0;
+    frame            = 0;
+}
+
 void Sprite_Instance::animate(struct graphics_assets* graphics_assets, f32 dt, f32 anim_t, s32 start, s32 end) {
     assert(id.index != 0 && "You should have a valid sprite when calling this.");
 
@@ -387,6 +393,7 @@ void Sprite_Instance::animate(struct graphics_assets* graphics_assets, f32 dt, f
 
         if (frame < start || frame >= end) {
             frame = start;  
+            loop_completions += 1;
         } 
         frame_timer = 0;
     }
