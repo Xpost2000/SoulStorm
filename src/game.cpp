@@ -508,6 +508,7 @@ void Game::reset_stage_simulation_state() {
     // s32 pet_id   = this->state->
 
 
+    this->state->dialogue_state.in_conversation = false;
     // NOTE: need to save this to the savefile data.
     s32 pet_id   = state->selected_pet;
 
