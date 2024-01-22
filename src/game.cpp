@@ -231,7 +231,11 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
     for (unsigned index = 0; index < array_count(menu_font_variation_string_names); ++index) {
         string current = menu_font_variation_string_names[index];
-        resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
+        // HACKME FIX
+        // didn't have too much foresight for changing graphics devices.
+        // not a big deal but yeah.
+        if (resources->menu_fonts[index].index == 0)
+            resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
     }
 
     resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
@@ -309,14 +313,16 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     for (int projectile_sprite_id = 0; projectile_sprite_id < PROJECTILE_SPRITE_TYPES; ++projectile_sprite_id) {
         int   frames_to_alloc = projectile_sprite_frame_count[projectile_sprite_id];
         auto& sprite          = resources->projectile_sprites[projectile_sprite_id];
-        sprite                = graphics_assets_alloc_sprite(&resources->graphics_assets, frames_to_alloc);
+        if (sprite.index == 0) {
+            sprite                = graphics_assets_alloc_sprite(&resources->graphics_assets, frames_to_alloc);
 
-        for (int frame_index = 0; frame_index < frames_to_alloc; ++frame_index) {
-            string frame_img_name     = projectile_sprite_locations[projectile_sprite_id][frame_index];
-            string frame_img_location = string_from_cstring(format_temp("res/img/%.*s", frame_img_name.length, frame_img_name.data));
-            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), frame_index);
-            frame->img = graphics_assets_load_image(&resources->graphics_assets, frame_img_location);
-            frame->source_rect = RECTANGLE_F32_NULL;
+            for (int frame_index = 0; frame_index < frames_to_alloc; ++frame_index) {
+                string frame_img_name     = projectile_sprite_locations[projectile_sprite_id][frame_index];
+                string frame_img_location = string_from_cstring(format_temp("res/img/%.*s", frame_img_name.length, frame_img_name.data));
+                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), frame_index);
+                frame->img = graphics_assets_load_image(&resources->graphics_assets, frame_img_location);
+                frame->source_rect = RECTANGLE_F32_NULL;
+            }
         }
     }
 
