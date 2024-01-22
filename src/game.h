@@ -113,6 +113,9 @@ private:
     void update_and_render_confirm_back_to_main_menu(struct render_commands* commands, f32 dt);
     void update_and_render_confirm_exit_to_windows(struct render_commands* commands, f32 dt);
 
+    void update_dialogue_speaker(f32 dt, s32 speaker_index);
+    void render_dialogue_speaker(struct render_commands* commands, f32 dt, s32 speaker_index);
+
     void update_and_render_dialogue_speaker(struct render_commands* commands, f32 dt, s32 speaker_index);
     void update_and_render_dialogue_ui(struct render_commands* commands, f32 dt);
 

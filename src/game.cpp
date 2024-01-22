@@ -2940,7 +2940,6 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 
     // Rendering Dialogue UI
     bool in_conversation = this->state->dialogue_state.in_conversation;
-    update_and_render_dialogue_ui(ui_render_commands, dt);
 
     if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
         auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
@@ -2970,6 +2969,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         }
     }
 
+    update_and_render_dialogue_ui(ui_render_commands, dt);
     handle_ui_update_and_render(ui_render_commands, dt);
 
     // Handle transitions or stage specific data
