@@ -27,17 +27,17 @@ void Game::update_and_render_dialogue_speaker(struct render_commands* commands, 
                     modulation.a = lerp_f32(0.0f, 1.0f, 1.0f-effective_t);
                 } break;
                 case DIALOGUE_SPEAKER_ANIMATION_SLIDE_IN: {
-                    position.x = quadratic_ease_in_f32(-sprite_image_size.x, final_position.x, effective_t) + speaker.offset_position.x;
+                    position.x = quadratic_ease_in_f32(-sprite_image_size.x, final_position.x, effective_t);
                 } break;
                 case DIALOGUE_SPEAKER_ANIMATION_SLIDE_OUT: {
-                    position.x = quadratic_ease_in_f32(-sprite_image_size.x, final_position.x, 1.0f-effective_t) + speaker.offset_position.x;
+                    position.x = quadratic_ease_in_f32(-sprite_image_size.x, final_position.x, 1.0f-effective_t);
                 } break;
                 case DIALOGUE_SPEAKER_ANIMATION_SLIDE_FADE_IN: {
-                    position.x = quadratic_ease_in_f32(-sprite_image_size.x, final_position.x, effective_t) + speaker.offset_position.x;
+                    position.x = quadratic_ease_in_f32(-sprite_image_size.x, final_position.x, effective_t);
                     modulation.a = lerp_f32(0.0f, 1.0f, effective_t);
                 } break;
                 case DIALOGUE_SPEAKER_ANIMATION_SLIDE_FADE_OUT: {
-                    position.x = quadratic_ease_in_f32(-sprite_image_size.x, final_position.x, 1.0f-effective_t) + speaker.offset_position.x;
+                    position.x = quadratic_ease_in_f32(-sprite_image_size.x, final_position.x, 1.0f-effective_t);
                     modulation.a = lerp_f32(0.0f, 1.0f, 1.0f-effective_t);
                 } break;
                 case DIALOGUE_SPEAKER_ANIMATION_FOCUS_OUT: {
