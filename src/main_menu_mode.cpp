@@ -235,10 +235,42 @@ void cutscene_introduction_firsttime_task(jdr_duffcoroutine_t* co) {
     JDR_Coroutine_End;
 }
 
+void MainMenu_Stage_Portal::update(MainMenu_Data* const state, f32 dt) {
+    animation_t += dt;
 
-// NOTE: this main menu entity code is pretty similar to the
-//       main entity code, but I just don't wanna have the baggage of all the gameplay
-//       specific stuff.
+    if (animation_t >= MAIN_MENU_STAGE_PORTAL_TIME_UNTIL_NEXT_FRAME) {
+        if (triggered_level_selection) {
+            frame_index += 1;
+        } else {
+            frame_index -= 1;
+        }
+
+        if (frame_index <= 0) {
+            frame_index = 0;   
+        } else if (frame_index >= PORTAL_IMAGE_FRAME_COUNT) {
+            frame_index = PORTAL_IMAGE_FRAME_COUNT-1;
+        }
+
+        animation_t = 0.0f;
+    }
+}
+
+local color32f32 portal_color_from_stage_id(s32 stage_id) {
+    // TODO: pick better colors.
+    switch (stage_id) {
+        case 0: {
+            return color32f32(1, 0, 0, 1);
+        } break;
+        case 1: {
+            return color32f32(0, 1, 0, 1);
+        } break;
+        case 2: {
+            return color32f32(0, 0, 1, 1);
+        } break;
+    }
+
+    return color32f32(1, 1, 1, 1);
+}
 
 void MainMenu_Stage_Portal::draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources) {
     if (!visible) return;
@@ -249,24 +281,73 @@ void MainMenu_Stage_Portal::draw(MainMenu_Data* const state, struct render_comma
     auto  name_string     = stage_details.name;
     auto  subtitle_string = stage_details.subtitle;
 
+#if 0
+#ifndef RELEASE
     render_commands_push_quad_ext(
         commands,
         rectangle_f32(r.x, r.y, r.w, r.h),
         color32u8(0, 255, 0, 255),
         V2(0, 0), 0,
         BLEND_MODE_ALPHA);
+#endif
+#endif
+    {
+        image_id sprite_image = resources->main_menu_portal_images[frame_index];
+        auto image_object = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_image);
+        f32  image_scale  = 1.25f + normalized_sinf(Global_Engine()->global_elapsed_time * 5.0f) * 0.15f;
+        V2   image_size   = V2(image_object->width, image_object->height);
 
-    // sort of like a debug renderer.
-    // This should really just be some sort of colored vortex with a particle system.
-    // Maybe some special effect which fades into a themed background type.
-    render_commands_push_text(commands,
-                              resources->get_font(MENU_FONT_COLOR_GOLD),
-                              1, position,
-                              name_string, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
-    render_commands_push_text(commands,
-                              resources->get_font(MENU_FONT_COLOR_GOLD),
-                              1, position + V2(0,scale.y),
-                              subtitle_string, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+        auto portal_color = portal_color_from_stage_id(stage_id);
+
+        render_commands_push_image(
+            commands,
+            image_object,
+            // magic numbers are just to align the sprite.
+            rectangle_f32(
+                r.x,
+                r.y - (image_size.y*image_scale/2),
+                image_size.x*image_scale,
+                image_size.y*image_scale
+            ),
+            RECTANGLE_F32_NULL,
+            color32f32(portal_color.r, portal_color.g, portal_color.b, 0.35f),
+            0,
+            BLEND_MODE_ADDITIVE
+        );
+
+        // Hmm. This is the one time I use additive blending. LOL
+        render_commands_push_image(
+            commands,
+            image_object,
+            // magic numbers are just to align the sprite.
+            rectangle_f32(
+                r.x,
+                r.y - (image_size.y*image_scale/2),
+                image_size.x*image_scale,
+                image_size.y*image_scale
+            ),
+            RECTANGLE_F32_NULL,
+            color32f32(portal_color.r, portal_color.g, portal_color.b, normalized_sinf(Global_Engine()->global_elapsed_time * 1.5f) * 0.45f + 0.35f),
+            0,
+            BLEND_MODE_ADDITIVE
+        );
+    }
+
+#ifndef RELEASE
+    if (DebugUI::enabled()) {
+        // sort of like a debug renderer.
+        // This should really just be some sort of colored vortex with a particle system.
+        // Maybe some special effect which fades into a themed background type.
+        render_commands_push_text(commands,
+                                  resources->get_font(MENU_FONT_COLOR_GOLD),
+                                  1, position,
+                                  name_string, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+        render_commands_push_text(commands,
+                                  resources->get_font(MENU_FONT_COLOR_GOLD),
+                                  1, position + V2(0,scale.y),
+                                  subtitle_string, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+    }
+#endif
 }
 
 rectangle_f32 MainMenu_Stage_Portal::get_rect() {
@@ -293,6 +374,7 @@ void MainMenu_Player::draw(MainMenu_Data* const state, struct render_commands* c
     auto r = get_rect();
 
     // black rectangles for default
+#ifndef RELEASE
     render_commands_push_quad_ext(
         commands,
         rectangle_f32(r.x, r.y, r.w, r.h),
@@ -307,11 +389,52 @@ void MainMenu_Player::draw(MainMenu_Data* const state, struct render_commands* c
                                color32f32(1.0, 0, 1.0, 0.5f),
                                0,
                                BLEND_MODE_ALPHA);
+#endif
+    image_id sprite_image = resources->hero_images[HERO_IMAGE_FRAME_IDLE0];
+
+    if (!state->cutscene_active()) {
+        switch (facing_direction) {
+            case MAIN_MENU_PLAYER_FACING_DIRECTION_FORWARD: {
+                sprite_image = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_FRONT];
+            } break;
+            case MAIN_MENU_PLAYER_FACING_DIRECTION_BACK: {
+                sprite_image = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_BACK];
+            } break;
+            case MAIN_MENU_PLAYER_FACING_DIRECTION_LEFT: {
+                sprite_image = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_LEFT];
+            } break;
+            case MAIN_MENU_PLAYER_FACING_DIRECTION_RIGHT: {
+                sprite_image = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_RIGHT];
+            } break;
+        }
+    }
+
+    auto image_object = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_image);
+    f32  image_scale  = 1.25f;
+    V2   image_size   = V2(image_object->width, image_object->height);
+    V2   hover_offset = V2(0, sinf(Global_Engine()->global_elapsed_time * 2.852) * 5) * image_scale;
+
+    render_commands_push_image(
+        commands,
+        image_object,
+        // magic numbers are just to align the sprite.
+        rectangle_f32(
+            position.x - scale.x - ((image_size.x*image_scale) * 0.175f) + hover_offset.x,
+            position.y - scale.x - ((image_size.y*image_scale) * 0.85f) + hover_offset.y,
+            image_size.x*image_scale,
+            image_size.y*image_scale
+        ),
+        RECTANGLE_F32_NULL,
+        color32f32(1.0, 1.0f, 1.0, 1.0f),
+        0,
+        BLEND_MODE_ALPHA
+    );
 }
 
 void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
     V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
     if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
+    f32 axes_magnitude = axes.magnitude_sq();
 
     const float UNIT_SPEED = 350;
 
@@ -319,6 +442,24 @@ void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
     velocity.y = axes[1] * UNIT_SPEED;
 
     position += velocity * dt;
+
+    // update facing direction
+    if (!f32_close_enough(axes_magnitude, 0.0f)){
+        bool should_be_horizontal = fabs(floorf(velocity.x)) > fabs(floorf(velocity.y));
+        if (should_be_horizontal)  {
+            if (velocity.x < 0.0f) {
+                facing_direction = MAIN_MENU_PLAYER_FACING_DIRECTION_LEFT;
+            } else {
+                facing_direction = MAIN_MENU_PLAYER_FACING_DIRECTION_RIGHT;
+            }
+        } else {
+            if (velocity.y < 0.0f) {
+                facing_direction = MAIN_MENU_PLAYER_FACING_DIRECTION_BACK;
+            } else {
+                facing_direction = MAIN_MENU_PLAYER_FACING_DIRECTION_FORWARD;
+            }
+        }
+    }
 }
 
 // MainMenu_Player End
@@ -560,6 +701,37 @@ void MainMenu_Data::screen_message_add(string message) {
     screen_messages.push(new_message);
 }
 
+local void initialize_portal_particle_emitters(MainMenu_Stage_Portal* portal,
+                                               Game_Resources* resources,
+                                               s32 sprite_id_for_main,
+                                               s32 sprite_id_for_vortex_sprite) {
+    {
+        auto& emitter = portal->emitter_main;
+        emitter.sprite = sprite_instance(resources->projectile_sprites[sprite_id_for_main]);
+        emitter.scale  = 0.35f;
+        emitter.emit_per_emission = 4;
+        emitter.lifetime = 1.0f;
+        emitter.velocity_x_variance = V2(-100, 100);
+        emitter.velocity_y_variance = V2(-100, 100);
+        emitter.acceleration_x_variance = V2(-100, 100);
+        emitter.acceleration_y_variance = V2(-100, 100);
+        emitter.lifetime_variance   = V2(-0.5f, 1.0f);
+        emitter.emission_max_timer = 0.028f;
+    }
+
+    {
+        auto& emitter = portal->emitter_vortex;
+        emitter.sprite = sprite_instance(resources->projectile_sprites[sprite_id_for_vortex_sprite]);
+        emitter.emit_per_emission = 8;
+        emitter.scale  = 0.15f;
+        emitter.lifetime = 2.0f;
+        emitter.lifetime_variance   = V2(-0.5f, 1.0f);
+        emitter.use_attraction_point = true;
+        emitter.attraction_force     = 100.0f;
+        emitter.emission_max_timer = 0.028f;
+    }
+}
+
 void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
     {
         auto state = &this->state->mainmenu_data;
@@ -594,29 +766,12 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                 }
                 portal.visible = true;
 
-                {
-                    auto& emitter = portal.emitter_main;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
-                    emitter.scale  = 1.0f;
-                    emitter.lifetime = 1.0f;
-                    emitter.velocity_x_variance = V2(-100, 100);
-                    emitter.velocity_y_variance = V2(-100, 100);
-                    emitter.acceleration_x_variance = V2(-100, 100);
-                    emitter.acceleration_y_variance = V2(-100, 100);
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.emission_max_timer = 0.025f;
-                }
-
-                {
-                    auto& emitter = portal.emitter_vortex;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
-                    emitter.scale  = 0.5f;
-                    emitter.lifetime = 2.0f;
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.use_attraction_point = true;
-                    emitter.attraction_force     = 100.0f;
-                    emitter.emission_max_timer = 0.025f;
-                }
+                initialize_portal_particle_emitters(
+                    &portal,
+                    this->state->resources,
+                    PROJECTILE_SPRITE_RED_ELECTRIC,
+                    PROJECTILE_SPRITE_RED
+                );
             }
 
             {
@@ -629,29 +784,12 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                 portal.prerequisites[0] = 0;
                 portal.visible = true;
 
-                {
-                    auto& emitter = portal.emitter_main;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
-                    emitter.scale  = 1.0f;
-                    emitter.lifetime = 1.0f;
-                    emitter.velocity_x_variance = V2(-100, 100);
-                    emitter.velocity_y_variance = V2(-100, 100);
-                    emitter.acceleration_x_variance = V2(-100, 100);
-                    emitter.acceleration_y_variance = V2(-100, 100);
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.emission_max_timer = 0.025f;
-                }
-
-                {
-                    auto& emitter = portal.emitter_vortex;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
-                    emitter.scale  = 0.5;
-                    emitter.lifetime = 2.0f;
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.use_attraction_point = true;
-                    emitter.attraction_force     = 100.0f;
-                    emitter.emission_max_timer = 0.025f;
-                }
+                initialize_portal_particle_emitters(
+                    &portal,
+                    this->state->resources,
+                    PROJECTILE_SPRITE_GREEN_ELECTRIC,
+                    PROJECTILE_SPRITE_GREEN
+                );
             }
 
             {
@@ -665,29 +803,12 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                 portal.prerequisites[1] = 1;
                 portal.visible = true;
 
-                {
-                    auto& emitter = portal.emitter_main;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
-                    emitter.scale  = 1.0f;
-                    emitter.lifetime = 1.0f;
-                    emitter.velocity_x_variance = V2(-100, 100);
-                    emitter.velocity_y_variance = V2(-100, 100);
-                    emitter.acceleration_x_variance = V2(-100, 100);
-                    emitter.acceleration_y_variance = V2(-100, 100);
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.emission_max_timer = 0.025f;
-                }
-
-                {
-                    auto& emitter = portal.emitter_vortex;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
-                    emitter.scale  = 0.5f;
-                    emitter.lifetime = 2.0f;
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.use_attraction_point = true;
-                    emitter.attraction_force     = 100.0f;
-                    emitter.emission_max_timer = 0.025f;
-                }
+                initialize_portal_particle_emitters(
+                    &portal,
+                    this->state->resources,
+                    PROJECTILE_SPRITE_BLUE_ELECTRIC,
+                    PROJECTILE_SPRITE_BLUE
+                );
             }
 
             // NOTE: postgame portal.
@@ -939,6 +1060,8 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
 
     for (int i = 0; i < main_menu_state.portals.size; ++i) {
         auto& p = main_menu_state.portals[i];
+
+        p.update(&main_menu_state, dt);
         p.draw(&main_menu_state, game_render_commands, resources);
     }
 

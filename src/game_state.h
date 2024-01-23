@@ -617,14 +617,36 @@ enum Trophy_Icon_Frame {
     TROPHY_ICON_COUNT  = 6,
 };
 
+enum Hero_Image_Frame {
+    HERO_IMAGE_FRAME_IDLE0                 = 0,
+    HERO_IMAGE_FRAME_FLOAT_FRONT           = 1,
+    HERO_IMAGE_FRAME_FLOAT_LEFT            = 2,
+    HERO_IMAGE_FRAME_FLOAT_RIGHT           = 3,
+    HERO_IMAGE_FRAME_FLOAT_BACK            = 4,
+    HERO_IMAGE_FRAME_FLOAT_BACK_LEAN_LEFT  = 5,
+    HERO_IMAGE_FRAME_FLOAT_BACK_LEAN_RIGHT = 6,
+    HERO_IMAGE_FRAME_COUNT                 = 7,
+};
+
+enum Portal_Image_Frame {
+    PORTAL_IMAGE_FRAME0 = 0,
+    PORTAL_IMAGE_FRAME1 = 1,
+    PORTAL_IMAGE_FRAME2 = 2,
+    PORTAL_IMAGE_FRAME3 = 3,
+    PORTAL_IMAGE_FRAME4 = 4,
+    PORTAL_IMAGE_FRAME_COUNT = 5,
+};
+
 /*
  * NOTE: all of the "permenant" or otherwise code referenced assets are here
- * cause why not.
  */
 struct Game_Resources {
     struct graphics_assets graphics_assets;
     font_id         menu_fonts[MENU_FONT_COUNT];
     image_id        circle;
+
+    image_id hero_images[HERO_IMAGE_FRAME_COUNT];
+    image_id main_menu_portal_images[PORTAL_IMAGE_FRAME_COUNT];
 
     sprite_id       projectile_sprites[PROJECTILE_SPRITE_TYPES];
     sprite_id       player_sprite;

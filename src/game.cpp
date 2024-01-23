@@ -223,6 +223,9 @@ Game::~Game() {
     
 }
 
+// TODO: convert some of these to be sprite atlases
+// in order to reduce draw call overhead on hardware paths.
+// Although the game seems to run quite acceptably...
 void Game::init_graphics_resources(Graphics_Driver* driver) {
     if (!initialized) {
         return;
@@ -476,6 +479,41 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
                 resources->locked_trophy_sprite_instance = sprite_instance(resources->locked_trophy_sprite);
                 resources->unlocked_trophy_sprite_instance = sprite_instance(resources->unlocked_trophy_sprite);
             }
+        }
+    }
+
+    // load sprite images for main menu assets
+    {
+        local string hero_image_locations[] = {
+            string_literal("res/img/hero/hero_idle0.png"),
+            string_literal("res/img/hero/hero_idle_float_f.png"),
+            string_literal("res/img/hero/hero_idle_float_l.png"),
+            string_literal("res/img/hero/hero_idle_float_r.png"),
+            string_literal("res/img/hero/hero_idle_float_b.png"),
+            string_literal("res/img/hero/hero_idle_float_b_lean_l.png"),
+            string_literal("res/img/hero/hero_idle_float_b_lean_r.png"),
+        };
+
+        local string portal_image_locations[] = {
+            string_literal("res/img/mainmenu_portals/portal0.png"),
+            string_literal("res/img/mainmenu_portals/portal1.png"),
+            string_literal("res/img/mainmenu_portals/portal2.png"),
+            string_literal("res/img/mainmenu_portals/portal3.png"),
+            string_literal("res/img/mainmenu_portals/portal4.png"),
+        };
+
+        for (unsigned image_index = 0; image_index < array_count(hero_image_locations); ++image_index) {
+            resources->hero_images[image_index] = graphics_assets_load_image(
+                &resources->graphics_assets,
+                hero_image_locations[image_index]
+            );
+        }
+
+        for (unsigned image_index = 0; image_index < array_count(portal_image_locations); ++image_index) {
+            resources->main_menu_portal_images[image_index] = graphics_assets_load_image(
+                &resources->graphics_assets,
+                portal_image_locations[image_index]
+            );
         }
     }
 #endif

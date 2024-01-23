@@ -63,7 +63,16 @@ struct MainMenu_Pet {
     rectangle_f32 get_rect(void);
 };
 
+enum MainMenu_Player_Facing_Direction {
+    MAIN_MENU_PLAYER_FACING_DIRECTION_FORWARD = 0, // towards screen
+    MAIN_MENU_PLAYER_FACING_DIRECTION_BACK = 1,
+    MAIN_MENU_PLAYER_FACING_DIRECTION_LEFT = 2,
+    MAIN_MENU_PLAYER_FACING_DIRECTION_RIGHT = 3,
+    MAIN_MENU_PLAYER_FACING_DIRECTION_COUNT = 4,
+};
+
 struct MainMenu_Player {
+    u8 facing_direction;
     bool visible = false;
     V2 position;
     V2 scale;
@@ -73,6 +82,7 @@ struct MainMenu_Player {
     rectangle_f32 get_rect();
 };
 
+#define MAIN_MENU_STAGE_PORTAL_TIME_UNTIL_NEXT_FRAME (0.075f)
 struct MainMenu_Stage_Portal {
     bool visible = false;
     // safe to serialize data
@@ -81,6 +91,9 @@ struct MainMenu_Stage_Portal {
     V2  position;
     V2  scale;
 
+    s32 frame_index = 0;
+    f32 animation_t = 0.0f;
+
     // runtime data
     bool triggered_level_selection;
 
@@ -88,6 +101,7 @@ struct MainMenu_Stage_Portal {
     Particle_Emitter emitter_vortex;
 
     void draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources);
+    void update(MainMenu_Data* const state, f32 dt);
     rectangle_f32 get_rect();
 };
 
