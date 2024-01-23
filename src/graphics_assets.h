@@ -61,6 +61,7 @@ struct Sprite_Instance {
     sprite_id id;
     V2        offset;
     V2        scale;
+    f32       angle_offset;
     s32       frame;
     f32       frame_timer;
     s32       loop_completions;

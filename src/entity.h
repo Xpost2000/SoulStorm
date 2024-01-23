@@ -291,18 +291,9 @@ struct Laser_Hazard {
 //       This was not totally planned for, but I might just keep only one player type so I can actually
 //       meet my arbitrary deadline.
 struct Player : public Entity {
-    // I think I just want the instant death system, which is a bit painful but
-    // okay! Just have a bunch of lives.
-
     // I did have plans for slightly different player types to make it interesting
     // but I'll see about that later.
     void update(Game_State* state, f32 dt);
-
-    /*
-     NOTE:
-     visually, I'd like to make grazing look more interesting,
-     maybe changing the UI?
-    */
     s32  currently_grazing(Game_State* state);
     void handle_grazing_behavior(Game_State* state, f32 dt);
     f32  get_grazing_score_modifier(s32 amount);

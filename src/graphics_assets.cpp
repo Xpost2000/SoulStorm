@@ -364,6 +364,7 @@ Sprite* graphics_get_sprite_by_id(struct graphics_assets* assets, sprite_id id) 
 }
 
 Sprite_Frame* sprite_get_frame(Sprite* sprite, s32 index) {
+    //_debugprintf("sprite get frame: (%p) %d/%d", sprite, index, sprite->frame_count);
     assertion(index >= 0 && index < sprite->frame_count);
     return &sprite->frames[index];
 }

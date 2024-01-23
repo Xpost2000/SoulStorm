@@ -274,7 +274,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         auto  sprite_frame      = sprite_get_frame(sprite_object, sprite.frame);
         auto  sprite_img        = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
         V2    sprite_image_size = V2(sprite_img->width, sprite_img->height);
-        float facing_angle      = 0.0f;
+        float facing_angle      = sprite.angle_offset;
 
         // NOTE: specifically needed for bullet disks which must be rotated to look correct.
         // I would personally... Like to not have this here, but it's not a big deal imo.
@@ -621,6 +621,55 @@ void Player::update(Game_State* state, f32 dt) {
     Entity::update(state, dt);
 
     handle_play_area_edge_behavior(play_area);
+
+    // Sprite animation
+    {
+        s32 frame_start = 0;
+        s32 frame_end   = 1;
+
+        // Procedural animation components
+        s32 sign = sign_f32(axes[0]);
+        {
+            const f32 MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING                    = 0.360f;
+            const f32 MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING = 0.1275f;
+            const f32 MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING           = MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING + MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING;
+            const f32 MAX_ANGLE_LEAN                                           = 39.5f;
+            f32       horizontal_axis_magnitude                                = fabs(axes[0]);
+
+            if (horizontal_axis_magnitude >= MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING) {
+                if (sign == -1) {
+                    frame_start = 1;
+                    frame_end = 2;
+                } else if (sign == 1) {
+                    frame_start = 2;
+                    frame_end = 3;
+                }
+
+                {
+                    // NOTE:
+                    // Yes, I know this is **wrong** usage of lerp
+                    // however I like the sort "cheap cutoff" effect it gives
+                    // and it also means I don't need to program a timer for this.
+                    // This is purely a visual effect and has no baring on simulation state.
+                    sprite.angle_offset = (lerp_f32(sprite.angle_offset, 0, dt));
+                }
+
+                if (horizontal_axis_magnitude >= (MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING)) {
+                    sprite.angle_offset = ((horizontal_axis_magnitude - MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING) * sign) * MAX_ANGLE_LEAN;
+                }
+            }
+
+            sprite.offset.y = sinf(t_since_spawn/2) * 4.25;
+        }
+
+        sprite.animate(
+            &state->resources->graphics_assets,
+            dt,
+            0.035,
+            frame_start,
+            frame_end
+        );
+    }
 
     switch (pet_data->attack_pattern_id) {
         // for now I'll only use one attack pattern, if I want more... I'll

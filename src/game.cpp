@@ -329,11 +329,58 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         }
     }
 
+    // load sprite images for main menu assets
     {
-        resources->player_sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 1);
-        auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->player_sprite), 0);
-        frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/player.png"));
-        frame->source_rect = RECTANGLE_F32_NULL;
+        local string hero_image_locations[] = {
+            string_literal("res/img/hero/hero_idle0.png"),
+            string_literal("res/img/hero/hero_idle_float_f.png"),
+            string_literal("res/img/hero/hero_idle_float_l.png"),
+            string_literal("res/img/hero/hero_idle_float_r.png"),
+            string_literal("res/img/hero/hero_idle_float_b.png"),
+            string_literal("res/img/hero/hero_idle_float_b_lean_l.png"),
+            string_literal("res/img/hero/hero_idle_float_b_lean_r.png"),
+        };
+
+        local string portal_image_locations[] = {
+            string_literal("res/img/mainmenu_portals/portal0.png"),
+            string_literal("res/img/mainmenu_portals/portal1.png"),
+            string_literal("res/img/mainmenu_portals/portal2.png"),
+            string_literal("res/img/mainmenu_portals/portal3.png"),
+            string_literal("res/img/mainmenu_portals/portal4.png"),
+        };
+
+        for (unsigned image_index = 0; image_index < array_count(hero_image_locations); ++image_index) {
+            resources->hero_images[image_index] = graphics_assets_load_image(
+                &resources->graphics_assets,
+                hero_image_locations[image_index]
+            );
+        }
+
+        for (unsigned image_index = 0; image_index < array_count(portal_image_locations); ++image_index) {
+            resources->main_menu_portal_images[image_index] = graphics_assets_load_image(
+                &resources->graphics_assets,
+                portal_image_locations[image_index]
+            );
+        }
+    }
+
+    {
+        resources->player_sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 3);
+        {
+            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->player_sprite), 0);
+            frame->img = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_BACK];
+            frame->source_rect = RECTANGLE_F32_NULL;
+        }
+        {
+            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->player_sprite), 1);
+            frame->img = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_BACK_LEAN_LEFT];
+            frame->source_rect = RECTANGLE_F32_NULL;
+        }
+        {
+            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->player_sprite), 2);
+            frame->img = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_BACK_LEAN_RIGHT];
+            frame->source_rect = RECTANGLE_F32_NULL;
+        }
     }
 
     {
@@ -479,41 +526,6 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
                 resources->locked_trophy_sprite_instance = sprite_instance(resources->locked_trophy_sprite);
                 resources->unlocked_trophy_sprite_instance = sprite_instance(resources->unlocked_trophy_sprite);
             }
-        }
-    }
-
-    // load sprite images for main menu assets
-    {
-        local string hero_image_locations[] = {
-            string_literal("res/img/hero/hero_idle0.png"),
-            string_literal("res/img/hero/hero_idle_float_f.png"),
-            string_literal("res/img/hero/hero_idle_float_l.png"),
-            string_literal("res/img/hero/hero_idle_float_r.png"),
-            string_literal("res/img/hero/hero_idle_float_b.png"),
-            string_literal("res/img/hero/hero_idle_float_b_lean_l.png"),
-            string_literal("res/img/hero/hero_idle_float_b_lean_r.png"),
-        };
-
-        local string portal_image_locations[] = {
-            string_literal("res/img/mainmenu_portals/portal0.png"),
-            string_literal("res/img/mainmenu_portals/portal1.png"),
-            string_literal("res/img/mainmenu_portals/portal2.png"),
-            string_literal("res/img/mainmenu_portals/portal3.png"),
-            string_literal("res/img/mainmenu_portals/portal4.png"),
-        };
-
-        for (unsigned image_index = 0; image_index < array_count(hero_image_locations); ++image_index) {
-            resources->hero_images[image_index] = graphics_assets_load_image(
-                &resources->graphics_assets,
-                hero_image_locations[image_index]
-            );
-        }
-
-        for (unsigned image_index = 0; image_index < array_count(portal_image_locations); ++image_index) {
-            resources->main_menu_portal_images[image_index] = graphics_assets_load_image(
-                &resources->graphics_assets,
-                portal_image_locations[image_index]
-            );
         }
     }
 #endif
