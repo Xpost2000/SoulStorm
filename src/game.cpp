@@ -570,7 +570,7 @@ void Game::reset_stage_simulation_state() {
     UID::reset();
 
     {
-        state->player.position                         = V2(state->play_area.width / 2, 300);
+        state->player.position                         = state->player.last_position = V2(state->play_area.width / 2, 300);
         state->player.hp                               = state->player.max_hp = 1;
         state->player.die                              = false;
         state->paused_from_death                       = false;
@@ -2722,6 +2722,11 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     }
 }
 
+// NOTE: this does not actually simulate the same way as
+// the actual game loop, so this needs adjustment in the future.
+// Technically the replay system is actually working, but this is a relatively
+// specific edge-case (and more for debugging anyway) so if I want to save a headache
+// I'd just probably remove this from the game.
 void Game::simulate_game_frames_until(int nth_frame) {
     auto state = &this->state->gameplay_data;
 
@@ -2733,6 +2738,7 @@ void Game::simulate_game_frames_until(int nth_frame) {
     reset_stage_simulation_state();
 
     int  desired_frame = nth_frame;
+    bool  simulate_frame = true;
     {
         auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
         update_packet_data->dt = FIXED_TICKTIME;
@@ -3006,6 +3012,13 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         float timescale      = 1.0f;
         bool  simulate_frame = true;
 
+        // Special case frame simulation
+        {
+            if (Transitions::fading()) {
+                simulate_frame = false;
+            }
+        }
+
         if (state->recording.in_playback) {
             timescale = replay_timescale_choices[state->demo_viewer.timescale_index];
             if (state->demo_viewer.paused) {
@@ -3019,10 +3032,17 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
             while (state->fixed_tickrate_timer >= FIXED_TICKTIME) {
                 simulate_game_frame(update_packet_data);
                 state->fixed_tickrate_timer -= FIXED_TICKTIME;
-                state->current_stage_timer  += FIXED_TICKTIME;
+
+                if (!this->state->dialogue_state.in_conversation) {
+                    state->current_stage_timer  += FIXED_TICKTIME;
+                }
             }
 
-            state->fixed_tickrate_remainder = clamp<f32>(state->fixed_tickrate_timer/(dt), 0.0f, 1.0f);
+            // NOTE: do not advance time or do any animation deviations while
+            // in conversation mode.
+            if (!this->state->dialogue_state.in_conversation) {
+                state->fixed_tickrate_remainder = clamp<f32>(state->fixed_tickrate_timer/(dt), 0.0f, 1.0f);
+            }
         }
     }
 
