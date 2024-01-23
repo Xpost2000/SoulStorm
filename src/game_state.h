@@ -393,6 +393,7 @@ struct Gameplay_Data {
     Fixed_Array<image_id> script_loaded_images;
     Fixed_Array<Audio::Sound_ID> script_loaded_sounds;
 
+    void unload_all_dialogue_loaded_resources(Game_State* state, Game_Resources* resources);
     void unload_all_script_loaded_resources(Game_State* state, Game_Resources* resources);
 
     // NOTE:

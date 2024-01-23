@@ -558,6 +558,7 @@ void Direct3D11_Graphics_Driver::push_render_quad_vertices(
     V2                   rotation_origin
 ) {
     if (image) {
+        assertion(image->pixels && "This might happen if an image asset is unloaded but exists. Check graphics_assets.cpp if I forgot to reupload the texture");
         u32 image_width   = (image->pot_square_size) ? image->pot_square_size : image->width;
         u32 image_height  = (image->pot_square_size) ? image->pot_square_size : image->height;
 

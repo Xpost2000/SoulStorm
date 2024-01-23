@@ -172,6 +172,7 @@ private:
     // needs to basically record what levels you beat, and what score you got.
     bool save_game();
     bool load_game();
+
     Save_File construct_save_data();
     Save_File serialize_game_state(struct binary_serializer* serializer);
     void update_from_save_data(Save_File* save_data);

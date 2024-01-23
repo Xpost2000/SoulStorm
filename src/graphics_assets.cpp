@@ -240,12 +240,17 @@ image_id graphics_assets_load_image(struct graphics_assets* assets, string path)
         u8*     status_field  = &assets->image_asset_status[index];
 
         if (string_equal(path, filepath)) {
+            auto new_image_id = image_id{.index = index+1};
             if (*status_field == ASSET_STATUS_UNLOADED) {
                 struct image_buffer* new_image           = &assets->images[index];
                 *new_image                               = image_buffer_load_from_file(filepath);
                 *status_field                            = ASSET_STATUS_LOADED;
+
+                assert(assets->graphics_driver && "Hmm, how do you have no graphics driver?");
+                _debugprintf("Reupload existing texture");
+                assets->graphics_driver->upload_texture(assets, new_image_id);
             }
-            return image_id{.index = index+1};
+            return new_image_id;
         }
     }
 
@@ -260,12 +265,17 @@ image_id graphics_assets_load_image(struct graphics_assets* assets, string path)
     *status_field                            = ASSET_STATUS_LOADED;
 
     assert(assets->graphics_driver && "Hmm, how do you have no graphics driver?");
+    _debugprintf("Upload new texture");
     assets->graphics_driver->upload_texture(assets, new_id);
 
     return new_id;
 }
 
 void graphics_assets_unload_image(struct graphics_assets* assets, image_id img) {
+    if (img.index == 0) {
+        return;
+    }
+
     s32 index = img.index-1;
     auto img_buffer = graphics_assets_get_image_by_id(assets, img);
 

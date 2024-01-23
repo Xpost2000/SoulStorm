@@ -3,7 +3,7 @@
 
 void Game::update_and_render_dialogue_speaker(struct render_commands* commands, f32 dt, s32 speaker_index) {
     auto& dialogue_state = this->state->dialogue_state;
-    auto  font           = resources->get_font(MENU_FONT_COLOR_WHITE);
+
     {
         auto&      speaker           = dialogue_state.speakers[speaker_index];
         if (!speaker.visible) return;
@@ -146,12 +146,10 @@ void Game::update_and_render_dialogue_ui(struct render_commands* commands, f32 d
     auto& dialogue_state = this->state->dialogue_state;
     auto  font           = resources->get_font(MENU_FONT_COLOR_WHITE);
 
+    if (!in_conversation)
+        return;
+
     if (in_conversation && state->ui_state == UI_STATE_INACTIVE) {
-        // render the characters
-        {
-            update_and_render_dialogue_speaker(commands, dt, 0);
-            update_and_render_dialogue_speaker(commands, dt, 1);
-        }
         GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
         GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
         GameUI::set_ui_id((char*)"dialogue_subui_id");
@@ -210,10 +208,17 @@ void Game::update_and_render_dialogue_ui(struct render_commands* commands, f32 d
                         dialogue_state.phase                 = DIALOGUE_UI_ANIMATION_PHASE_INTRODUCTION;
                         dialogue_state.box_open_close_timer  = 0;
                         dialogue_state.in_conversation       = false;
+                        state->gameplay_data.unload_all_script_loaded_resources(state, resources);
+                        return;
                     }
                 }
             }
 
+            // render the characters
+            {
+                update_and_render_dialogue_speaker(commands, dt, 0);
+                update_and_render_dialogue_speaker(commands, dt, 1);
+            }
             {
                 auto ui_color = color32f32_DEFAULT_UI_COLOR;
                 game_ui_draw_bordered_box(

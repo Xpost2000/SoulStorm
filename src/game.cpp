@@ -858,8 +858,23 @@ void Scriptable_Render_Object::render(Game_Resources* resources, struct render_c
 }
 
 // Gameplay_Data
+
+void Gameplay_Data::unload_all_dialogue_loaded_resources(Game_State* state, Game_Resources* resources) {
+    _debugprintf("Unloading all dialogue resources");
+    {
+        auto& dialogue_state = state->dialogue_state;
+        for (s32 tracked_image_index = 0;
+             tracked_image_index < dialogue_state.tracked_image_count;
+             ++tracked_image_index) {
+            graphics_assets_unload_image(&state->resources->graphics_assets, dialogue_state.tracked_images[tracked_image_index]);
+            dialogue_state.tracked_images[tracked_image_index].index = 0;
+        }
+    }
+}
+
 void Gameplay_Data::unload_all_script_loaded_resources(Game_State* game_state, Game_Resources* resources) {
     _debugprintf("Unloading level-specific resources");
+    unload_all_dialogue_loaded_resources(game_state, resources);
     for (s32 image_index = 0; image_index < script_loaded_images.size; ++image_index) {
         auto img_id = script_loaded_images[image_index];
         graphics_assets_unload_image(&resources->graphics_assets, img_id);

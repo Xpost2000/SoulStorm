@@ -470,13 +470,6 @@ int _lua_bind_dialogue_end(lua_State* L) {
         _debugprintf("Optimal untype time max: %3.3f", dialogue_state.bye_optimal_untype_time_max);
     }
 
-    for (s32 tracked_image_index = 0;
-        tracked_image_index < dialogue_state.tracked_image_count;
-        ++tracked_image_index) {
-        graphics_assets_unload_image(&state->resources->graphics_assets, dialogue_state.tracked_images[tracked_image_index]);
-        dialogue_state.tracked_images[tracked_image_index].index = 0;
-    }
-
     return lua_yield(L, 0);
 }
 
