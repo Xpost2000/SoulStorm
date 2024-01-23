@@ -92,7 +92,8 @@ bool Entity::touching_bottom_border(const Play_Area& play_area, bool as_point) {
 bool Entity::clamp_to_left_border(const Play_Area& play_area) {
     if (touching_left_border(play_area)) {
         velocity.x = 0;
-        position.x = scale.x;
+        last_position.x =
+            position.x = scale.x;
         return true;
     }
     return false;
@@ -101,7 +102,8 @@ bool Entity::clamp_to_left_border(const Play_Area& play_area) {
 bool Entity::clamp_to_right_border(const Play_Area& play_area) {
     if (touching_right_border(play_area)) {
         velocity.x = 0;
-        position.x = play_area.width - scale.x;
+        last_position.x =
+            position.x = play_area.width - scale.x;
         return true;
     }
     return false;
@@ -110,7 +112,8 @@ bool Entity::clamp_to_right_border(const Play_Area& play_area) {
 bool Entity::clamp_to_top_border(const Play_Area& play_area) {
     if (touching_top_border(play_area)) {
         velocity.y = 0;
-        position.y = scale.y;
+        last_position.y =
+            position.y = scale.y;
         return true;
     }
     return false;
@@ -119,7 +122,8 @@ bool Entity::clamp_to_top_border(const Play_Area& play_area) {
 bool Entity::clamp_to_bottom_border(const Play_Area& play_area) {
     if (touching_bottom_border(play_area)) {
         velocity.y = 0;
-        position.y = play_area.height - scale.y;
+        last_position.y =
+            position.y = play_area.height - scale.y;
         return true;
     }
     return false;
@@ -127,7 +131,8 @@ bool Entity::clamp_to_bottom_border(const Play_Area& play_area) {
 
 bool Entity::wrap_from_left_border(const Play_Area& play_area) {
     if (touching_left_border(play_area, true)) {
-        position.x = play_area.width;
+        last_position.x =
+            position.x = play_area.width;
         return true;
     }
     return false;
@@ -135,7 +140,8 @@ bool Entity::wrap_from_left_border(const Play_Area& play_area) {
 
 bool Entity::wrap_from_right_border(const Play_Area& play_area) {
     if (touching_right_border(play_area, true)) {
-        position.x = 0;
+        last_position.x =
+            position.x = 0;
         return true;
     }
     return false;
@@ -143,7 +149,8 @@ bool Entity::wrap_from_right_border(const Play_Area& play_area) {
 
 bool Entity::wrap_from_top_border(const Play_Area& play_area) {
     if (touching_top_border(play_area, true)) {
-        position.y = play_area.height;
+        last_position.y =
+            position.y = play_area.height;
         return true;
     }
     return false;
@@ -151,7 +158,8 @@ bool Entity::wrap_from_top_border(const Play_Area& play_area) {
 
 bool Entity::wrap_from_bottom_border(const Play_Area& play_area) {
     if (touching_bottom_border(play_area, true)) {
-        position.y = 0;
+        last_position.y =
+            position.y = 0;
         return true;
     }
     return false;
