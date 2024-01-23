@@ -1709,7 +1709,7 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
 
 void Game::update_and_render_stage_select_menu(struct render_commands* commands, f32 dt) {
     bool cancel = false;
-    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 64), BLEND_MODE_ALPHA);
 
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));

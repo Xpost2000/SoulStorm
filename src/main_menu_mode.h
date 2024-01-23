@@ -82,7 +82,7 @@ struct MainMenu_Player {
     rectangle_f32 get_rect();
 };
 
-#define MAIN_MENU_STAGE_PORTAL_TIME_UNTIL_NEXT_FRAME (0.075f)
+#define MAIN_MENU_STAGE_PORTAL_TIME_UNTIL_NEXT_FRAME (0.100f)
 struct MainMenu_Stage_Portal {
     bool visible = false;
     // safe to serialize data

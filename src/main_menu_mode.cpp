@@ -259,13 +259,16 @@ local color32f32 portal_color_from_stage_id(s32 stage_id) {
     // TODO: pick better colors.
     switch (stage_id) {
         case 0: {
-            return color32f32(1, 0, 0, 1);
+            return color32f32(210/255.0f, 77/255.0f, 87/255.0f, 1);
+            // return color32f32(1, 0, 0, 1);
         } break;
         case 1: {
-            return color32f32(0, 1, 0, 1);
+            // return color32f32(0, 1, 0, 1);
+            return color32f32(194/255.0f, 249/255.0f, 112/255.0f, 1);
         } break;
         case 2: {
-            return color32f32(0, 0, 1, 1);
+            // return color32f32(0, 0, 1, 1);
+            return color32f32(3/255.0f, 138/255.0f, 255/255.0f, 1.0f);
         } break;
     }
 
@@ -294,7 +297,7 @@ void MainMenu_Stage_Portal::draw(MainMenu_Data* const state, struct render_comma
     {
         image_id sprite_image = resources->main_menu_portal_images[frame_index];
         auto image_object = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_image);
-        f32  image_scale  = 1.25f + normalized_sinf(Global_Engine()->global_elapsed_time * 5.0f) * 0.15f;
+        f32  image_scale  = 1.50f + normalized_sinf(Global_Engine()->global_elapsed_time * 5.0f) * 0.15f;
         V2   image_size   = V2(image_object->width, image_object->height);
 
         auto portal_color = portal_color_from_stage_id(stage_id);
@@ -304,8 +307,8 @@ void MainMenu_Stage_Portal::draw(MainMenu_Data* const state, struct render_comma
             image_object,
             // magic numbers are just to align the sprite.
             rectangle_f32(
-                r.x,
-                r.y - (image_size.y*image_scale/2),
+                r.x - (image_size.x * (image_scale - 1.0f))/2,
+                r.y - (image_size.y*image_scale * 0.35f),
                 image_size.x*image_scale,
                 image_size.y*image_scale
             ),
@@ -321,8 +324,8 @@ void MainMenu_Stage_Portal::draw(MainMenu_Data* const state, struct render_comma
             image_object,
             // magic numbers are just to align the sprite.
             rectangle_f32(
-                r.x,
-                r.y - (image_size.y*image_scale/2),
+                r.x - (image_size.x * (image_scale - 1.0f))/2,
+                r.y - (image_size.y*image_scale * 0.35f),
                 image_size.x*image_scale,
                 image_size.y*image_scale
             ),
@@ -419,7 +422,7 @@ void MainMenu_Player::draw(MainMenu_Data* const state, struct render_commands* c
         image_object,
         // magic numbers are just to align the sprite.
         rectangle_f32(
-            position.x - scale.x - ((image_size.x*image_scale) * 0.175f) + hover_offset.x,
+            position.x - scale.x - ((image_size.x*image_scale) * 0.15f) + hover_offset.x,
             position.y - scale.x - ((image_size.y*image_scale) * 0.85f) + hover_offset.y,
             image_size.x*image_scale,
             image_size.y*image_scale
@@ -708,13 +711,13 @@ local void initialize_portal_particle_emitters(MainMenu_Stage_Portal* portal,
     {
         auto& emitter = portal->emitter_main;
         emitter.sprite = sprite_instance(resources->projectile_sprites[sprite_id_for_main]);
-        emitter.scale  = 0.35f;
+        emitter.scale  = 0.25f;
         emitter.emit_per_emission = 4;
-        emitter.lifetime = 1.0f;
+        emitter.lifetime = 0.75f;
         emitter.velocity_x_variance = V2(-100, 100);
         emitter.velocity_y_variance = V2(-100, 100);
-        emitter.acceleration_x_variance = V2(-100, 100);
-        emitter.acceleration_y_variance = V2(-100, 100);
+        emitter.acceleration_x_variance = V2(-10, 10);
+        emitter.acceleration_y_variance = V2(-10, 10);
         emitter.lifetime_variance   = V2(-0.5f, 1.0f);
         emitter.emission_max_timer = 0.028f;
     }
@@ -722,7 +725,7 @@ local void initialize_portal_particle_emitters(MainMenu_Stage_Portal* portal,
     {
         auto& emitter = portal->emitter_vortex;
         emitter.sprite = sprite_instance(resources->projectile_sprites[sprite_id_for_vortex_sprite]);
-        emitter.emit_per_emission = 8;
+        emitter.emit_per_emission = 16;
         emitter.scale  = 0.15f;
         emitter.lifetime = 2.0f;
         emitter.lifetime_variance   = V2(-0.5f, 1.0f);
@@ -915,9 +918,9 @@ void MainMenu_Data::adjust_entities_for_screen_resolution(int new_screen_width, 
             for (int i = 0; i < 3; ++i) {
                 auto& portal = main_menu_state.portals[i];
                 portal.position             = V2(screen_width * 0.1f + (screen_third*1.15) * i, 80);
-                portal.emitter_main.shape   = particle_emit_shape_circle(portal.position, 25.0f);
+                portal.emitter_main.shape   = particle_emit_shape_circle(portal.position, 35.0f);
                 portal.emitter_vortex.attraction_point     = portal.position;
-                portal.emitter_vortex.shape = particle_emit_shape_circle(portal.position, 100.0f);
+                portal.emitter_vortex.shape = particle_emit_shape_circle(portal.position, 80.0f);
             }
         }
     }
