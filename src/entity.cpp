@@ -641,8 +641,18 @@ void Player::update(Game_State* state, f32 dt) {
             const f32 MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING                    = 0.360f;
             const f32 MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING = 0.1275f;
             const f32 MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING           = MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING + MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING;
-            const f32 MAX_ANGLE_LEAN                                           = 39.5f;
+            const f32 MAX_ANGLE_LEAN                                           = 55.0f;
             f32       horizontal_axis_magnitude                                = fabs(axes[0]);
+
+            // angle
+            {
+                // NOTE:
+                // Yes, I know this is **wrong** usage of lerp
+                // however I like the sort "cheap cutoff" effect it gives
+                // and it also means I don't need to program a timer for this.
+                // This is purely a visual effect and has no baring on simulation state.
+                sprite.angle_offset = (lerp_f32(sprite.angle_offset, 0, dt));
+            }
 
             if (horizontal_axis_magnitude >= MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING) {
                 if (sign == -1) {
@@ -653,21 +663,13 @@ void Player::update(Game_State* state, f32 dt) {
                     frame_end = 3;
                 }
 
-                {
-                    // NOTE:
-                    // Yes, I know this is **wrong** usage of lerp
-                    // however I like the sort "cheap cutoff" effect it gives
-                    // and it also means I don't need to program a timer for this.
-                    // This is purely a visual effect and has no baring on simulation state.
-                    sprite.angle_offset = (lerp_f32(sprite.angle_offset, 0, dt));
-                }
 
                 if (horizontal_axis_magnitude >= (MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING)) {
                     sprite.angle_offset = ((horizontal_axis_magnitude - MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING) * sign) * MAX_ANGLE_LEAN;
                 }
             }
 
-            sprite.offset.y = sinf(t_since_spawn/2) * 4.25;
+            sprite.offset.y = sinf(t_since_spawn * 0.775) * 6;
         }
 
         sprite.animate(
