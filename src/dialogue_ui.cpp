@@ -255,7 +255,7 @@ void Game::update_and_render_dialogue_ui(struct render_commands* commands, f32 d
             } else if (dialogue_state.phase == DIALOGUE_UI_ANIMATION_PHASE_UNWRITE_TEXT) {
                 if (dialogue_state.shown_characters > 0) {
                     if (dialogue_state.type_timer <= 0.0f) {
-                        dialogue_state.type_timer = DIALOGUE_TYPE_SPEED;
+                        dialogue_state.type_timer = DIALOGUE_TYPE_SPEED/2;
                         dialogue_state.shown_characters -= 1;
                     } else {
                         dialogue_state.type_timer -= dt;

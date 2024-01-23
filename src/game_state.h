@@ -474,7 +474,7 @@ struct Controller_LED_State {
  * systems
  */
 #define DIALOGUE_TYPE_SPEED             (0.0327f)
-#define DIALOGUE_BOX_EXPANSION_MAX_TIME (0.55f)
+#define DIALOGUE_BOX_EXPANSION_MAX_TIME (0.685f)
 enum Dialogue_Speaker_Animation_Type {
     DIALOGUE_SPEAKER_ANIMATION_NONE      = 0,      // use for introduction
     DIALOGUE_SPEAKER_ANIMATION_FADE_IN   = 1,   // use for introduction
