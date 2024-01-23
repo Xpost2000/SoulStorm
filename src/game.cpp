@@ -3013,12 +3013,6 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         bool  simulate_frame = true;
 
         // Special case frame simulation
-        {
-            if (Transitions::fading()) {
-                simulate_frame = false;
-            }
-        }
-
         if (state->recording.in_playback) {
             timescale = replay_timescale_choices[state->demo_viewer.timescale_index];
             if (state->demo_viewer.paused) {
