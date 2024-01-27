@@ -639,19 +639,19 @@ void Player::update(Game_State* state, f32 dt) {
         s32 sign = sign_f32(axes[0]);
         {
             const f32 MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING                    = 0.360f;
-            const f32 MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING = 0.1275f;
+            const f32 MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING = 0.12f;
             const f32 MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING           = MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING + MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING;
-            const f32 MAX_ANGLE_LEAN                                           = 55.0f;
+            const f32 MAX_ANGLE_LEAN                                           =
+                (under_focus) ?
+                27.5f :
+                62.5f;
             f32       horizontal_axis_magnitude                                = fabs(axes[0]);
 
             // angle
             {
-                // NOTE:
-                // Yes, I know this is **wrong** usage of lerp
-                // however I like the sort "cheap cutoff" effect it gives
-                // and it also means I don't need to program a timer for this.
-                // This is purely a visual effect and has no baring on simulation state.
-                sprite.angle_offset = (lerp_f32(sprite.angle_offset, 0, dt));
+                const f32 effective_t = clamp<f32>(sprite.angle_offset / (MAX_ANGLE_LEAN*0.90), 0.0f, 1.0f);
+                f32 decay_factor = lerp_f32(0.020f, 0.170f, effective_t);
+                sprite.angle_offset *= pow(decay_factor, dt);
             }
 
             if (horizontal_axis_magnitude >= MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING) {
@@ -669,7 +669,7 @@ void Player::update(Game_State* state, f32 dt) {
                 }
             }
 
-            sprite.offset.y = sinf(t_since_spawn * 0.775) * 6;
+            sprite.offset.y = sinf(t_since_spawn * 0.775) * 6.5;
         }
 
         sprite.animate(
