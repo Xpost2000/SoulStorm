@@ -644,7 +644,7 @@ void Player::update(Game_State* state, f32 dt) {
             const f32 MAX_ANGLE_LEAN                                           =
                 (under_focus) ?
                 27.5f :
-                62.5f;
+                45.5f;
             f32       horizontal_axis_magnitude                                = fabs(axes[0]);
 
             // angle
@@ -669,7 +669,7 @@ void Player::update(Game_State* state, f32 dt) {
                 }
             }
 
-            sprite.offset.y = sinf(t_since_spawn * 0.775) * 6.5;
+            sprite.offset.y = sinf(t_since_spawn * 0.775) * 6.5 + 8; // NOTE: +7 is to adjust visual location to make the hit box look less "unintuitive"
         }
 
         sprite.animate(
