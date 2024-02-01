@@ -142,6 +142,9 @@ void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
 }
 
 // Particle Pool
+
+// NOTE:
+// This should be easy way to get some vectorization in...
 void Particle_Pool::init(Memory_Arena* arena, s32 amount) {
     particles = Fixed_Array<Particle>(arena, amount);
 }

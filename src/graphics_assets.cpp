@@ -374,6 +374,7 @@ Sprite_Instance sprite_instance(sprite_id id) {
     result.id = id;
     result.frame = 0;
     result.frame_timer = 0.0f;
+    result.modulation = color32f32(1, 1, 1, 1);
     result.offset = V2(0,0);
     result.scale = V2(1, 1);
     return result;

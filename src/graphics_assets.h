@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+#include "color.h"
 #include "image_buffer.h"
 #include "font_cache.h"
 
@@ -65,6 +66,7 @@ struct Sprite_Instance {
     s32       frame;
     f32       frame_timer;
     s32       loop_completions;
+    color32f32 modulation;
 
     // if anim_t == -1.0, use the time in the frame data.
     // otherwise, we override with our own fixed timer.
