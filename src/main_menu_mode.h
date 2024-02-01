@@ -77,6 +77,7 @@ struct MainMenu_Player {
     V2 position;
     V2 scale;
     V2 velocity;
+    Particle_Emitter emitter;
     void draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources);
     void update(MainMenu_Data* state, f32 dt);
     rectangle_f32 get_rect();

@@ -463,6 +463,28 @@ void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
             }
         }
     }
+
+    {
+        emitter.active = visible;
+        emitter.scale  = 0.5f;
+        emitter.emit_per_emission = 2;
+        emitter.lifetime = 0.55f;
+        emitter.velocity_x_variance = V2(-10, 50);
+        emitter.velocity_y_variance = V2(-10, 50);
+        emitter.acceleration_x_variance = V2(0, 10);
+        emitter.acceleration_y_variance = V2(0, 20);
+        emitter.lifetime_variance   = V2(-0.1f, 0.7f);
+        emitter.emission_max_timer = 0.045f;
+
+        {
+            auto r = get_rect();
+            f32 left   = r.x;
+            f32 bottom = r.y + r.h/2;
+            emitter.shape = particle_emit_shape_line(V2(left, bottom), V2(left + r.w, bottom));
+        }
+    }
+
+    emitter.update(&state->particle_pool, &state->prng, dt);
 }
 
 // MainMenu_Player End
@@ -855,6 +877,7 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
         state->player.position      = V2(resolution.x / 2, resolution.y / 2);
         state->player.scale         = V2(15, 15);
         state->player.velocity      = V2(0, 0);
+        state->player.emitter.sprite = sprite_instance(resources->projectile_sprites[PROJECTILE_SPRITE_SPARKLING_STAR]);
         // I need to utilize a camera effect which relies on centering
         // for polish reasons.
         state->main_camera          = camera(V2(resolution.x/2, resolution.y/2), 1.0);
