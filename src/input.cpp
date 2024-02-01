@@ -477,7 +477,7 @@ namespace Input {
          */
         const char* lua_code = R"(
 GamepadAxis = {
-UNKNOWN = 0
+UNKNOWN = 0,
 AXIS_X = 1,
 AXIS_Y = 2,
 
