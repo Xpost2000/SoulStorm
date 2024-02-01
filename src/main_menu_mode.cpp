@@ -687,6 +687,7 @@ void MainMenu_Clutter_Poop::draw(MainMenu_Data* const state, struct render_comma
         16
     );
 
+#ifndef RELEASE
     render_commands_push_quad_ext(
         commands,
         rectangle_f32(r.x, r.y, r.w, r.h),
@@ -694,6 +695,29 @@ void MainMenu_Clutter_Poop::draw(MainMenu_Data* const state, struct render_comma
         V2(0, 0), 0,
         BLEND_MODE_ALPHA
     );
+#endif
+
+    {
+        auto image        = resources->main_menu_clutter_poop;
+        auto image_object = graphics_assets_get_image_by_id(&resources->graphics_assets, image);
+        f32  image_scale  = 1.25f;
+        V2   image_size   = V2(image_object->width, image_object->height);
+
+        render_commands_push_image(
+            commands,
+            image_object,
+            rectangle_f32(
+                position.x - ((image_size.x*image_scale) * 0.5f),
+                position.y - ((image_size.y*image_scale) * 0.5f),
+                image_size.x*image_scale,
+                image_size.y*image_scale
+            ),
+            RECTANGLE_F32_NULL,
+            color32f32(1.0, 1.0f, 1.0, clamp_f32(lifetime, 0.0f, 1.0f)),
+            0,
+            BLEND_MODE_ALPHA
+        );
+    }
 }
 // MainMenu_Clutter_Poop end
 

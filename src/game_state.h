@@ -646,6 +646,11 @@ enum Portal_Image_Frame {
     PORTAL_IMAGE_FRAME_COUNT = 5,
 };
 
+enum UI_HP_Icon_Type {
+    UI_HP_ICON_TYPE_DEAD   = 0,
+    UI_HP_ICON_TYPE_LIVING = 1,
+};
+
 /*
  * NOTE: all of the "permenant" or otherwise code referenced assets are here
  */
@@ -659,6 +664,9 @@ struct Game_Resources {
     image_id pet_images[GAME_PET_ID_COUNT][4];
     image_id hero_images[HERO_IMAGE_FRAME_COUNT];
     image_id main_menu_portal_images[PORTAL_IMAGE_FRAME_COUNT];
+
+    image_id main_menu_clutter_poop;
+    image_id ui_hp_icons[2];
 
     sprite_id       projectile_sprites[PROJECTILE_SPRITE_TYPES];
     sprite_id       player_sprite;

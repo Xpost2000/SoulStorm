@@ -394,6 +394,23 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             );
         }
     }
+    {
+        resources->main_menu_clutter_poop = graphics_assets_load_image(
+            &resources->graphics_assets,
+            string_literal("res/img/ui/ui_clutter_poop.png") 
+        );
+
+        resources->ui_hp_icons[UI_HP_ICON_TYPE_DEAD]   =
+            graphics_assets_load_image(
+                &resources->graphics_assets,
+                string_literal("res/img/ui/ui_hp_dead.png")
+            );
+        resources->ui_hp_icons[UI_HP_ICON_TYPE_LIVING] =
+            graphics_assets_load_image(
+                &resources->graphics_assets,
+                string_literal("res/img/ui/ui_hp_living.png")
+            );
+    }
 
     {
         resources->player_sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 3);
