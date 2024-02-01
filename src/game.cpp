@@ -253,6 +253,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     resources->ui_vignette_borders[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_left.png"));
     resources->ui_vignette_borders[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_bottom.png"));
     resources->ui_rays_gradient = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/uieffect0.png"));
+    resources->ui_border_vignette = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette.png"));
 
     // Sprites have their timings automatically done, so
     // so they don't store auto timing information.
@@ -3515,6 +3516,7 @@ void Game_State::convert_bullets_to_score_pickups(float radius) {
             50
         );
         pe.seek_towards_player = true;
+        pe.sprite.modulation = color32f32(242.0f / 255.0f, 121.0f / 255.0f, 53.0f / 255.0f, 1.0f);
         state->add_pickup_entity(pe);
     }
 }
@@ -3540,6 +3542,7 @@ void Game_State::convert_enemies_to_score_pickups(float radius) {
             e.position,
             e.score_value/2
         );
+        pe.sprite.modulation = color32f32(254.0f / 255.0f, 121.0f / 255.0f, 104.0f / 255.0f, 1.0f);
         pe.seek_towards_player = true;
         state->add_pickup_entity(pe);
     }

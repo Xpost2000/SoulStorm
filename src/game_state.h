@@ -703,6 +703,9 @@ struct Game_Resources {
     image_id        ui_vignette_borders[2];
     image_id        ui_rays_gradient;
 
+    // Technically I'm using this for a cheap "glow" effect
+    image_id        ui_border_vignette;
+
     GameUI_Ninepatch ui_chunky;
     GameUI_Ninepatch ui_chunky_outline;
 

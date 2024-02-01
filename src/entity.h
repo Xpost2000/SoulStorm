@@ -354,6 +354,7 @@ enum Pickup_Entity_Type {
 struct Pickup_Entity : public Entity {
     s32 type = PICKUP_SCORE;
 
+    void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
     // TODO: custom drawing override.
     //       for the slightly different fading!
     void chase_player_update(Game_State* state, f32 dt);

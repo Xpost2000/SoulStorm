@@ -5,6 +5,7 @@
 
 #include "game_state.h"
 
+#include "engine.h"
 // Timer
 
 Timer::Timer() {}
@@ -1040,6 +1041,7 @@ Pickup_Entity pickup_score_entity(Game_State* state, V2 start, V2 end, s32 value
     Pickup_Entity score_entity = pickup_entity_generic(state, PICKUP_SCORE, start, end, value);
     score_entity.sprite = sprite_instance(state->resources->point_pickup_sprite);
     score_entity.sprite.scale = V2(1.0f, 1.0f);
+    score_entity.sprite.modulation = color32f32(255.0f / 255.0f, 215.0f / 255.0f, 0.0f, 1.0f);
     // unimplemented("pick_score_entity not needed yet?");
     return score_entity;
 }
@@ -1116,6 +1118,43 @@ void Pickup_Entity::update(Game_State* state, f32 dt) {
         0.085
     );
     Entity::update(state, dt);
+}
+
+void Pickup_Entity::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
+    auto  sprite_img = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_border_vignette);
+    V2    sprite_image_size = V2(64, 64) * (1 + normalized_sinf(Global_Engine()->global_elapsed_time*1.25 + 1234) * 0.55);
+
+    V2 interpolated_position = V2(
+        lerp_f32(last_position.x, position.x, state->gameplay_data.fixed_tickrate_remainder),
+        lerp_f32(last_position.y, position.y, state->gameplay_data.fixed_tickrate_remainder)
+    );
+
+    V2 sprite_position = V2(
+        interpolated_position.x + (sprite.offset.x - sprite_image_size.x/2),
+        interpolated_position.y + (sprite.offset.y - sprite_image_size.y/2)
+    );
+
+    render_commands_push_image_ext(
+        render_commands,
+        sprite_img,
+        rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+        RECTANGLE_F32_NULL,
+        color32f32(
+            sprite.modulation.r,
+            sprite.modulation.g,
+            sprite.modulation.b,
+            sprite.modulation.a * 0.50,
+        ),
+        V2(0, 0),
+        0,
+        0,
+        BLEND_MODE_ADDITIVE
+    );
+    Entity::draw(
+        state,
+        render_commands,
+        resources
+    );
 }
 
 void Pickup_Entity::on_picked_up(Game_State* state) {
