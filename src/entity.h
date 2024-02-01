@@ -75,7 +75,7 @@ struct Position_Trail_Ghost {
 // since I inherit from this for shared behavior regarding kinematics,
 // and automatic timer tracking (t_since_spawn).
 struct Entity {
-    u64 uid = 0;
+    u64 uid = 0; // NOTE: this UID is for the game_state lists. This has no meaning otherwise.
     // primarily for collision purposes
     // a visual representation can be drawn separately
     V2 last_position     = V2(0, 0); // for interpolation purposes

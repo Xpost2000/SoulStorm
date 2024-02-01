@@ -332,7 +332,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
             sprite_img,
             rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
             sprite_frame->source_rect,
-            color32f32(1.0, 1.0, 1.0, 1.0),
+            sprite.modulation,
             V2(0.5, 0.5),
             facing_angle,
             0,
@@ -348,7 +348,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
                 sprite_img,
                 rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
                 sprite_frame->source_rect,
-                color32f32(1.0, 1.0, 1.0, 1.0),
+                sprite.modulation,
                 0,
                 BLEND_MODE_ADDITIVE
             );
@@ -485,6 +485,10 @@ void Entity::update_firing_behavior(f32 dt) {
     firing_t -= dt;
 }
 
+// I'm fairly confident this could be vectorized with SSE,
+// considering this update loop was designed for threading I don't see why
+// it couldn't, but it would take time that I would not like to spend to rewrite
+// at least some parts of it as SSE code...
 void Entity::update(Game_State* state, f32 dt) {
     const auto& play_area = state->gameplay_data.play_area;
 
@@ -1034,6 +1038,8 @@ Pickup_Entity pickup_entity_generic(Game_State* state, s32 type, V2 start, V2 en
 
 Pickup_Entity pickup_score_entity(Game_State* state, V2 start, V2 end, s32 value) {
     Pickup_Entity score_entity = pickup_entity_generic(state, PICKUP_SCORE, start, end, value);
+    score_entity.sprite = sprite_instance(state->resources->point_pickup_sprite);
+    score_entity.sprite.scale = V2(1.0f, 1.0f);
     // unimplemented("pick_score_entity not needed yet?");
     return score_entity;
 }
@@ -1104,6 +1110,11 @@ void Pickup_Entity::update(Game_State* state, f32 dt) {
         chase_player_update(state, dt);
     }
 
+    sprite.animate(
+        &state->resources->graphics_assets,
+        dt,
+        0.085
+    );
     Entity::update(state, dt);
 }
 

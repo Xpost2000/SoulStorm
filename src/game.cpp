@@ -223,6 +223,12 @@ Game::~Game() {
     
 }
 
+/*
+ * Basically all these assets are hardcoded, and while I don't totally like this fact,
+ * this is a relatively small game, and I'm the only programmer (and everything else too I guess).
+ *
+ * Some stuff is probably going to be pushed out to be data driven, but a lot of core stuff is hard coded.
+ */
 // TODO: convert some of these to be sprite atlases
 // in order to reduce draw call overhead on hardware paths.
 // Although the game seems to run quite acceptably...
@@ -413,29 +419,53 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     }
 
     {
-        resources->player_sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 3);
-        {
-            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->player_sprite), 0);
-            frame->img = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_BACK];
-            frame->source_rect = RECTANGLE_F32_NULL;
-        }
-        {
-            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->player_sprite), 1);
-            frame->img = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_BACK_LEAN_LEFT];
-            frame->source_rect = RECTANGLE_F32_NULL;
-        }
-        {
-            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->player_sprite), 2);
-            frame->img = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_BACK_LEAN_RIGHT];
-            frame->source_rect = RECTANGLE_F32_NULL;
+        if (resources->player_sprite.index == 0) {
+            resources->player_sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 3);
+            {
+                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->player_sprite), 0);
+                frame->img = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_BACK];
+                frame->source_rect = RECTANGLE_F32_NULL;
+            }
+            {
+                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->player_sprite), 1);
+                frame->img = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_BACK_LEAN_LEFT];
+                frame->source_rect = RECTANGLE_F32_NULL;
+            }
+            {
+                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->player_sprite), 2);
+                frame->img = resources->hero_images[HERO_IMAGE_FRAME_FLOAT_BACK_LEAN_RIGHT];
+                frame->source_rect = RECTANGLE_F32_NULL;
+            }
         }
     }
 
     {
-        resources->circle_sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 1);
-        auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->circle_sprite), 0);
-        frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle64.png"));
-        frame->source_rect = RECTANGLE_F32_NULL;
+        if (resources->circle_sprite.index == 0) {
+            resources->circle_sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 1);
+            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->circle_sprite), 0);
+            frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle64.png"));
+            frame->source_rect = RECTANGLE_F32_NULL;
+        }
+    }
+    {
+        if (resources->point_pickup_sprite.index == 0) {
+            resources->point_pickup_sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, 7);
+            local string point_pickup_frames[] = {
+                string_literal("res/img/pickup/item_pickup_generic1.png"),
+                string_literal("res/img/pickup/item_pickup_generic2.png"),
+                string_literal("res/img/pickup/item_pickup_generic3.png"),
+                string_literal("res/img/pickup/item_pickup_generic4.png"),
+                string_literal("res/img/pickup/item_pickup_generic3.png"),
+                string_literal("res/img/pickup/item_pickup_generic2.png"),
+                string_literal("res/img/pickup/item_pickup_generic1.png"),
+            };
+
+            for (unsigned frame_index = 0; frame_index < array_count(point_pickup_frames); ++frame_index) {
+                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->point_pickup_sprite), frame_index);
+                frame->img = graphics_assets_load_image(&resources->graphics_assets, point_pickup_frames[frame_index]);
+                frame->source_rect = RECTANGLE_F32_NULL;
+            }
+        }
     }
 
     {

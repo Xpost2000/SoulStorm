@@ -675,9 +675,14 @@ struct Game_Resources {
     image_id main_menu_clutter_poop;
     image_id ui_hp_icons[2];
 
+    // TODO: would like to load these from files.
+    // I can't really hot reload these because of the way sprites work and my memory allocation
+    // scheme which doesn't really support lots of dynamic shifting like this would require.
     sprite_id       projectile_sprites[PROJECTILE_SPRITE_TYPES];
+
     sprite_id       player_sprite;
     sprite_id       circle_sprite;
+    sprite_id       point_pickup_sprite;
 
     // Title screen assets
     // NOTE: honestly, I'd rather just animate the thing manually since it's
@@ -705,6 +710,7 @@ struct Game_Resources {
     image_id         trophies_unlocked[TROPHY_ICON_COUNT];
     sprite_id        locked_trophy_sprite;
     sprite_id        unlocked_trophy_sprite;
+    
     // Only one of these needs to exist since all of them will animate at the same rate.
     Sprite_Instance  locked_trophy_sprite_instance;
     Sprite_Instance  unlocked_trophy_sprite_instance;
