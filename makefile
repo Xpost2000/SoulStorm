@@ -2,7 +2,7 @@ CC=g++
 # CC=clang++
 CFLAGS=-w -Wno-unused -Wno-unused-but-set-variable -std=c++17
 CLIBS=-lmingw32 -L./dependencies/x86-64/lib/ -L./dependencies/x86-64/bin/ -I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -I./dependencies/x86-64/include/SDL2 -ld3d11 -ld3dcompiler -ldxguid -lOpenGL32 -lSDL2main -lSDL2 -lSDL2_mixer -llua54 -msse4
-ITCHPROJECT=xpost2000/untitled-project
+ITCHPROJECT=xpost2000/soulstorm
 
 HEADER_FILES= src/achievement_list.h \
 		src/achievements.h \
@@ -109,3 +109,5 @@ run: game.exe
 	./game.exe
 run-debug: game-debug.exe
 	./game-debug.exe
+package-windows-build: build-run-tree
+	butler push run-tree $(ITCHPROJECT):windows-64bit
