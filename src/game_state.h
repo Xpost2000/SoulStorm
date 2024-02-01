@@ -232,6 +232,9 @@ struct Gameplay_Stage_Complete_Stage_Sequence {
     Timer stage_timer;
 };
 
+// NOTE: you can achieve this through various different things
+// like maximizing your score.
+#define MAX_TRIES_ALLOWED (15)
 #define MAX_BASE_TRIES (5)
 
 // will do a small jump before dying.
@@ -387,11 +390,15 @@ struct Gameplay_Data {
     s32 selected_pet = GAME_PET_ID_NONE;
     s32 unlocked_pets = 0; // [0,3]
     s32 tries = MAX_BASE_TRIES;
+    s32 max_tries = MAX_BASE_TRIES;
     s32 current_score = 0;
     f32 current_stage_timer = 0;
 
     Fixed_Array<image_id> script_loaded_images;
     Fixed_Array<Audio::Sound_ID> script_loaded_sounds;
+
+    void remove_life(void);
+    void add_life(void);
 
     void unload_all_dialogue_loaded_resources(Game_State* state, Game_Resources* resources);
     void unload_all_script_loaded_resources(Game_State* state, Game_Resources* resources);

@@ -672,6 +672,7 @@ void Game::reset_stage_simulation_state() {
     {
         auto pet_data = game_get_pet_data(pet_id);
         state->tries = pet_data->maximum_lives;
+        state->max_tries = pet_data->maximum_lives;
     }
 
     state->current_score = 0;
@@ -919,6 +920,17 @@ void Scriptable_Render_Object::render(Game_Resources* resources, struct render_c
 }
 
 // Gameplay_Data
+void Gameplay_Data::remove_life(void) {
+    if (tries > 0) {
+        tries -= 1;
+    }
+}
+
+void Gameplay_Data::add_life(void) {
+    if (tries < MAX_TRIES_ALLOWED) {
+        tries += 1;
+    }
+}
 
 void Gameplay_Data::unload_all_dialogue_loaded_resources(Game_State* state, Game_Resources* resources) {
     _debugprintf("Unloading all dialogue resources");
@@ -2026,7 +2038,7 @@ bool Game::safely_resurrect_player() {
 
     if (worked) {
         state->gameplay_data.paused_from_death  = false;
-        state->gameplay_data.tries             -= 1;
+        state->gameplay_data.remove_life();
         state->gameplay_data.player.begin_invincibility();
         state->gameplay_data.player.heal(1);
 
@@ -2974,10 +2986,51 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 
         // Render_Lives
         {
-            auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
-            auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
-            auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("Lives: (%d / %d)", state->tries, MAX_BASE_TRIES)));
-            render_commands_push_text(ui_render_commands, font, 2, V2(play_area_x+play_area_width + 40, 120), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+            auto font                    = resources->get_font(MENU_FONT_COLOR_LIME);
+            f32  lives_widget_position_x = (play_area_x + play_area_width + 40);
+            V2   lives_widget_position   = V2(lives_widget_position_x, 150);
+            render_commands_push_text(ui_render_commands, font, 2, V2(lives_widget_position_x, 120), string_literal("LIVES"), color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+            for (unsigned index = 0; index < MAX_TRIES_ALLOWED; ++index) {
+                if (index && (index % 5) == 0) {
+                    lives_widget_position.y += 36;
+                    lives_widget_position.x = lives_widget_position_x;
+                }
+
+                auto destination_rect =
+                    rectangle_f32(
+                        lives_widget_position.x,
+                        lives_widget_position.y + sinf(Global_Engine()->global_elapsed_time) * 3,
+                        32,
+                        32
+                    );
+
+                auto modulation = color32f32(1, 1, 1, 1);
+                auto image      = resources->ui_hp_icons[UI_HP_ICON_TYPE_LIVING];
+
+                if ((index+1) > state->tries) {
+                    image = resources->ui_hp_icons[UI_HP_ICON_TYPE_DEAD];
+                }
+
+                if ((index+1) > state->max_tries) {
+                    modulation = color32f32(0.15f, 0.15f, 0.15f, 1);
+                }
+
+                auto image_buffer = graphics_assets_get_image_by_id(&resources->graphics_assets, image);
+
+                render_commands_push_image_ext2(
+                    ui_render_commands,
+                    image_buffer,
+                    destination_rect,
+                    RECTANGLE_F32_NULL,
+                    modulation,
+                    V2(0, 0),
+                    0,
+                    0,
+                    NO_FLAGS,
+                    BLEND_MODE_ALPHA
+                );
+                lives_widget_position.x += 35;
+            }
         }
 
         // Render Boss HP
