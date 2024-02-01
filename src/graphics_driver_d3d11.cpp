@@ -972,6 +972,8 @@ void Direct3D11_Graphics_Driver::screenshot(char* where) {
     image_description.Width = width;
     image_description.Height = height;
     image_description.MipLevels = 1;
+    image_description.SampleDesc.Count = 1;
+    image_description.ArraySize = 1;
     device->CreateTexture2D(&image_description, nullptr, &staging_texture);
     // unimplemented("Not done");
 

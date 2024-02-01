@@ -732,44 +732,43 @@ void Game::init(Graphics_Driver* driver) {
     this->state->resources = resources;
 
     VFS_mount_archive(string_literal("./data.bigfile"));
+    // setup input
+    {
+        Action::register_action_keys(ACTION_MOVE_UP, KEY_UP, KEY_W, -1.0f);
+        Action::register_action_button(ACTION_MOVE_UP, DPAD_UP, -1.0f);
+        Action::register_action_joystick_axis(ACTION_MOVE_UP, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_POSITIVE_Y);
+
+        Action::register_action_keys(ACTION_MOVE_DOWN, KEY_DOWN, KEY_S, 1.0f);
+        Action::register_action_button(ACTION_MOVE_DOWN, DPAD_DOWN, 1.0f);
+        Action::register_action_joystick_axis(ACTION_MOVE_DOWN, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_NEGATIVE_Y);
+
+        Action::register_action_keys(ACTION_MOVE_LEFT, KEY_LEFT, KEY_A, -1.0f);
+        Action::register_action_button(ACTION_MOVE_LEFT, DPAD_LEFT, -1.0f);
+        Action::register_action_joystick_axis(ACTION_MOVE_LEFT, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_NEGATIVE_X);
+
+        Action::register_action_keys(ACTION_MOVE_RIGHT, KEY_RIGHT, KEY_D, 1.0f);
+        Action::register_action_button(ACTION_MOVE_RIGHT, DPAD_RIGHT, 1.0f);
+        Action::register_action_joystick_axis(ACTION_MOVE_RIGHT, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_POSITIVE_X);
+
+        Action::register_action_keys(ACTION_ACTION, KEY_SPACE, KEY_RETURN, 1.0f);
+        Action::register_action_button(ACTION_ACTION, BUTTON_A, 1.0f);
+
+        Action::register_action_keys(ACTION_FOCUS, KEY_SHIFT, KEY_CTRL, 1.0f);
+        Action::register_action_button(ACTION_FOCUS, BUTTON_X, 1.0f);
+
+        Action::register_action_keys(ACTION_CANCEL, KEY_BACKSPACE, KEY_UNKNOWN, 1.0f);
+        Action::register_action_button(ACTION_CANCEL, BUTTON_B, 1.0f);
+
+        Action::register_action_keys(ACTION_MENU, KEY_ESCAPE, KEY_UNKNOWN, 1.0f);
+        Action::register_action_button(ACTION_MENU, BUTTON_START, 1.0f);
+
+        Action::register_action_keys(ACTION_USE_BOMB, KEY_Z, KEY_UNKNOWN, 1.0f);
+        Action::register_action_button(ACTION_USE_BOMB, BUTTON_Y, 1.0f);
+
+        Action::register_action_keys(ACTION_SCREENSHOT, KEY_F9, KEY_UNKNOWN, 1.0f);
+    }
 
     if (!Action::load(string_literal("controls.lua"))) {
-        // setup input
-        {
-            Action::register_action_keys(ACTION_MOVE_UP, KEY_UP, KEY_W, -1.0f);
-            Action::register_action_button(ACTION_MOVE_UP, DPAD_UP, -1.0f);
-            Action::register_action_joystick_axis(ACTION_MOVE_UP, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_POSITIVE_Y);
-
-            Action::register_action_keys(ACTION_MOVE_DOWN, KEY_DOWN, KEY_S, 1.0f);
-            Action::register_action_button(ACTION_MOVE_DOWN, DPAD_DOWN, 1.0f);
-            Action::register_action_joystick_axis(ACTION_MOVE_DOWN, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_NEGATIVE_Y);
-
-            Action::register_action_keys(ACTION_MOVE_LEFT, KEY_LEFT, KEY_A, -1.0f);
-            Action::register_action_button(ACTION_MOVE_LEFT, DPAD_LEFT, -1.0f);
-            Action::register_action_joystick_axis(ACTION_MOVE_LEFT, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_NEGATIVE_X);
-
-            Action::register_action_keys(ACTION_MOVE_RIGHT, KEY_RIGHT, KEY_D, 1.0f);
-            Action::register_action_button(ACTION_MOVE_RIGHT, DPAD_RIGHT, 1.0f);
-            Action::register_action_joystick_axis(ACTION_MOVE_RIGHT, CONTROLLER_JOYSTICK_LEFT, GAMEPAD_AXIS_POSITIVE_X);
-
-            Action::register_action_keys(ACTION_ACTION, KEY_SPACE, KEY_RETURN, 1.0f);
-            Action::register_action_button(ACTION_ACTION, BUTTON_A, 1.0f);
-
-            Action::register_action_keys(ACTION_FOCUS, KEY_SHIFT, KEY_CTRL, 1.0f);
-            Action::register_action_button(ACTION_FOCUS, BUTTON_X, 1.0f);
-
-            Action::register_action_keys(ACTION_CANCEL, KEY_BACKSPACE, KEY_UNKNOWN, 1.0f);
-            Action::register_action_button(ACTION_CANCEL, BUTTON_B, 1.0f);
-
-            Action::register_action_keys(ACTION_MENU, KEY_ESCAPE, KEY_UNKNOWN, 1.0f);
-            Action::register_action_button(ACTION_MENU, BUTTON_START, 1.0f);
-
-            Action::register_action_keys(ACTION_USE_BOMB, KEY_Z, KEY_UNKNOWN, 1.0f);
-            Action::register_action_button(ACTION_USE_BOMB, BUTTON_Y, 1.0f);
-
-            Action::register_action_keys(ACTION_SCREENSHOT, KEY_F12, KEY_UNKNOWN, 1.0f);
-        }
-
         Action::save(string_literal("controls.lua"));
     } else {
         _debugprintf("Loaded control from file");
