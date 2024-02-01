@@ -359,7 +359,7 @@ void Game::update_and_render_game_title_screen(struct render_commands* game_rend
             const f32 max_zoom = 2.5f;
             switch (titlescreen_data.phase) {
                 case TITLE_SCREEN_ANIMATION_PHASE_CLOSE_UP_OF_FACE: {
-                    const f32 phase_max_t = 3.5f;
+                    const f32 phase_max_t = 2.55f;
                     GameUI::set_all_visual_alpha(0.0f);
 
                     titlescreen_data.main_camera.zoom     = max_zoom;
