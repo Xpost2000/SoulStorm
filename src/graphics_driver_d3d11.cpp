@@ -383,7 +383,7 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
         zero_memory(&swapchain_description, sizeof(swapchain_description));
         swapchain_description.BufferDesc.Width  = real_resolution.x;
         swapchain_description.BufferDesc.Height = real_resolution.y;
-        swapchain_description.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        swapchain_description.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
         // no vsync
         swapchain_description.BufferDesc.RefreshRate.Numerator   = 0;
@@ -441,7 +441,7 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
         }
 
         // swapchain->ResizeBuffers(2, (s32)real_resolution.x, (s32)real_resolution.y, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
-        assertion(SUCCEEDED(swapchain->ResizeBuffers(2, (s32)real_resolution.x, (s32)real_resolution.y, DXGI_FORMAT_B8G8R8A8_UNORM, 0)) && "? failure to resize backbuffer?");
+        assertion(SUCCEEDED(swapchain->ResizeBuffers(2, (s32)real_resolution.x, (s32)real_resolution.y, DXGI_FORMAT_R8G8B8A8_UNORM, 0)) && "? failure to resize backbuffer?");
         assertion(SUCCEEDED(swapchain->SetFullscreenState(Global_Engine()->fullscreen, nullptr) && "Failure to set fullscreen state for swapchain?"));
     }
 
