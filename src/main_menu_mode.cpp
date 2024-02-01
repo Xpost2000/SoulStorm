@@ -538,8 +538,11 @@ local f32 pet_velocities[GAME_PET_ID_COUNT] = {
 
 void MainMenu_Pet::draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources) {
     // pets are always visible.
+    // (provided their index is spawned.)
     auto r = get_rect();
+    image_id* image_set = resources->pet_images[type];
 
+#ifndef RELEASE
     // black rectangles for default
     render_commands_push_quad_ext(
         commands,
@@ -547,6 +550,60 @@ void MainMenu_Pet::draw(MainMenu_Data* const state, struct render_commands* comm
         color32u8(255, 0, 0, 255),
         V2(0, 0), 0,
         BLEND_MODE_ALPHA);
+#endif
+
+    // Default to front facing sprite since I drew those better,
+    // and also I think it makes more sense to visually show.
+    image_id image = image_set[1];
+    if (current_action == MAIN_MENU_PET_ACTION_MOVING) {
+        // back, front, left, right :: is the order I load them in
+        s32 direction_sprite_id = 0;
+
+        s32 sign_x      = sign_f32(current_direction.x);
+        s32 sign_y      = sign_f32(current_direction.y);
+        f32 x_magnitude = fabs(current_direction.x);
+        f32 y_magnitude = fabs(current_direction.y);
+
+        if (x_magnitude > y_magnitude) {
+            if (sign_x == 1) {
+                direction_sprite_id = PET_IMAGE_SPRITE_FACING_DIRECTION_LEFT;
+            } else {
+                direction_sprite_id = PET_IMAGE_SPRITE_FACING_DIRECTION_RIGHT;
+            }
+        } else {
+            if (sign_y == 1) {
+                direction_sprite_id = PET_IMAGE_SPRITE_FACING_DIRECTION_BACK;
+            } else {
+                direction_sprite_id = PET_IMAGE_SPRITE_FACING_DIRECTION_FRONT;
+            }
+        }
+
+        image = image_set[direction_sprite_id];
+    }
+
+    // They will float just like the player
+    {
+        auto image_object = graphics_assets_get_image_by_id(&resources->graphics_assets, image);
+        f32  image_scale  = 1.25f;
+        V2   image_size   = V2(image_object->width, image_object->height);
+        V2   hover_offset = V2(0, sinf(Global_Engine()->global_elapsed_time * 2.852) * 5) * image_scale;
+
+        render_commands_push_image(
+            commands,
+            image_object,
+            // magic numbers are just to align the sprite.
+            rectangle_f32(
+                position.x - r.w/2 - ((image_size.x*image_scale) * 0.15f) + hover_offset.x,
+                position.y - ((image_size.y*image_scale) * 0.85f) + hover_offset.y,
+                image_size.x*image_scale,
+                image_size.y*image_scale
+            ),
+            RECTANGLE_F32_NULL,
+            color32f32(1.0, 1.0f, 1.0, 1.0f),
+            0,
+            BLEND_MODE_ALPHA
+        );
+    }
 }
 
 void MainMenu_Pet::update(MainMenu_Data* state, f32 dt) {
@@ -654,11 +711,38 @@ void MainMenu_Data::cleanup_all_dead_poops(void) {
     }
 }
 
+// NOTE: I have to remap this because
+// the images do not intuitively cycle :/
+local s32 _remap_pet_facing_direction_to_sprite_index(s32 index) {
+    switch (index) {
+        // Front
+        case 0: {
+            return PET_IMAGE_SPRITE_FACING_DIRECTION_FRONT;
+        } break;
+        // Right
+        case 1: {
+            return PET_IMAGE_SPRITE_FACING_DIRECTION_RIGHT;
+        } break;
+        // Back
+        case 2: {
+            return PET_IMAGE_SPRITE_FACING_DIRECTION_BACK;
+        } break;
+        // Left
+        case 3: {
+            return PET_IMAGE_SPRITE_FACING_DIRECTION_LEFT;
+        } break;
+    }
+
+    return -1;
+}
+
 void MainMenu_Data::start_unlock_pet_cutscene(Game_State* game_state) {
     if (!cutscene3.triggered) {
         _debugprintf("Starting pet unlock cutscene!");
-        cutscene3.triggered        = true;
-        cutscene3.phase            = 1;
+        cutscene3.triggered            = true;
+        cutscene3.phase                = 1;
+        cutscene3.pet_spin_timer       = 0;
+        cutscene3.pet_facing_direction = 0;
         game_state->coroutine_tasks.add_task(game_state, cutscene_unlocked_pet_task);
     }
 }
@@ -1221,6 +1305,16 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
         // Unlock Pet Cutscene
         {
             auto& cutscene_state = main_menu_state.cutscene3;
+            if (cutscene_state.phase != MAIN_MENU_UNLOCK_PET_CUTSCENE_PHASE_OFF) {
+                cutscene_state.pet_spin_timer += dt;
+
+                if (cutscene_state.pet_spin_timer >= 0.200f) {
+                    cutscene_state.pet_spin_timer          = 0;
+                    cutscene_state.pet_facing_direction   += 1;
+                    cutscene_state.pet_facing_direction   %= 4;
+                }
+            }
+
             switch (cutscene_state.phase) {
                 case MAIN_MENU_UNLOCK_PET_CUTSCENE_PHASE_OFF:
                 case MAIN_MENU_UNLOCK_PET_CUTSCENE_COROUTINE_TASK: {} break;
@@ -1343,6 +1437,41 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
                         );
                     }
 
+                    // Draw pet spin around
+                    {
+                        s32       type      = (state->gameplay_data.unlocked_pets-1);
+                        image_id* image_set = resources->pet_images[type];
+                        image_id  image     = image_set[_remap_pet_facing_direction_to_sprite_index(cutscene_state.pet_facing_direction)];
+
+                        // I know this segmenet gets copied and pasted frequently, but this literally could not be shorter in any capacity unfortunately
+                        // and as this is a custom engine without any real UI workflow, well yeah this is kind of what happens.
+
+                        // At least it looks nice, but I admit it would be nice to have some drag and drop.
+                        {
+                            auto image_object = graphics_assets_get_image_by_id(&resources->graphics_assets, image);
+                            f32  image_scale  = 4;
+                            V2   image_size   = V2(image_object->width, image_object->height);
+                            V2   hover_offset = V2(0, sinf(Global_Engine()->global_elapsed_time * 2.852) * 5) * image_scale;
+
+                            V2   position     = V2(resolution.x / 2, resolution.y / 2);
+                            render_commands_push_image(
+                                ui_render_commands,
+                                image_object,
+                                // magic numbers are just to align the sprite.
+                                rectangle_f32(
+                                    position.x - ((image_size.x*image_scale)) * 0.5f + hover_offset.x,
+                                    position.y - ((image_size.y*image_scale)) * 0.5f + hover_offset.y,
+                                    image_size.x*image_scale,
+                                    image_size.y*image_scale
+                                ),
+                                RECTANGLE_F32_NULL,
+                                color32f32(1.0, 1.0f, 1.0, 1.0f),
+                                0,
+                                BLEND_MODE_ALPHA
+                            );
+                        }
+                    }
+
                     if (cutscene_state.timer >= 4.45f) {
                         cutscene_state.phase = MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_OUT_UNLOCK_BOX;
                         cutscene_state.timer = 0.0f;
@@ -1394,6 +1523,40 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
                                 string_literal("Pet Unlocked! Try it on 'Stage Select'!"),
                                 color32f32(1, 1, 1, 1 * alpha), BLEND_MODE_ALPHA
                             );
+                        }
+
+                        {
+                            s32       type      = (state->gameplay_data.unlocked_pets-1);
+                            image_id* image_set = resources->pet_images[type];
+                            image_id  image     = image_set[_remap_pet_facing_direction_to_sprite_index(cutscene_state.pet_facing_direction)];
+
+                            // I know this segmenet gets copied and pasted frequently, but this literally could not be shorter in any capacity unfortunately
+                            // and as this is a custom engine without any real UI workflow, well yeah this is kind of what happens.
+
+                            // At least it looks nice, but I admit it would be nice to have some drag and drop.
+                            {
+                                auto image_object = graphics_assets_get_image_by_id(&resources->graphics_assets, image);
+                                f32  image_scale  = 4;
+                                V2   image_size   = V2(image_object->width, image_object->height);
+                                V2   hover_offset = V2(0, sinf(Global_Engine()->global_elapsed_time * 2.852) * 5) * image_scale;
+
+                                V2   position     = V2(resolution.x / 2, resolution.y / 2);
+                                render_commands_push_image(
+                                    ui_render_commands,
+                                    image_object,
+                                    // magic numbers are just to align the sprite.
+                                    rectangle_f32(
+                                        position.x - ((image_size.x*image_scale)) * 0.5f + hover_offset.x,
+                                        position.y - ((image_size.y*image_scale) * 0.5f) + hover_offset.y,
+                                        image_size.x*image_scale,
+                                        image_size.y*image_scale
+                                    ),
+                                    RECTANGLE_F32_NULL,
+                                    color32f32(1.0, 1.0f, 1.0, alpha),
+                                    0,
+                                    BLEND_MODE_ALPHA
+                                );
+                            }
                         }
                     }
 

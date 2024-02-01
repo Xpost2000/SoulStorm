@@ -127,6 +127,10 @@ struct MainMenu_Unlock_Pet_Cutscene_Data {
     bool triggered        = false;
     s32  phase            = 0;
     f32  timer            = 0;
+    f32  pet_spin_timer   = 0;
+    // NOTE: I have to remap this because
+    // the images do not intuitively cycle lol.
+    s32  pet_facing_direction = 0;
 };
 
 #define MAX_MAINMENU_OUTERSPACE_STARS (2000)

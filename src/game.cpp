@@ -349,11 +349,42 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             string_literal("res/img/mainmenu_portals/portal4.png"),
         };
 
+        local string pet_image_locations[GAME_PET_ID_COUNT][4] = {
+            {
+                string_literal("res/img/pet_cat/back.png"),
+                string_literal("res/img/pet_cat/front.png"),
+                string_literal("res/img/pet_cat/left.png"),
+                string_literal("res/img/pet_cat/right.png"),
+            },
+            {
+                string_literal("res/img/pet_dog/back.png"),
+                string_literal("res/img/pet_dog/front.png"),
+                string_literal("res/img/pet_dog/left.png"),
+                string_literal("res/img/pet_dog/right.png"),
+            },
+            {
+                string_literal("res/img/pet_fish/back.png"),
+                string_literal("res/img/pet_fish/front.png"),
+                string_literal("res/img/pet_fish/left.png"),
+                string_literal("res/img/pet_fish/right.png"),
+            }
+        };
+
         for (unsigned image_index = 0; image_index < array_count(hero_image_locations); ++image_index) {
             resources->hero_images[image_index] = graphics_assets_load_image(
                 &resources->graphics_assets,
                 hero_image_locations[image_index]
             );
+        }
+
+        for (unsigned pet_index = 0; pet_index < array_count(pet_image_locations); ++pet_index) {
+            for (unsigned image_index = 0; image_index < 4; ++image_index) {
+                resources->pet_images[pet_index][image_index] =
+                    graphics_assets_load_image(
+                        &resources->graphics_assets,
+                        pet_image_locations[pet_index][image_index]
+                    );
+            }
         }
 
         for (unsigned image_index = 0; image_index < array_count(portal_image_locations); ++image_index) {

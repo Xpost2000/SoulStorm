@@ -629,6 +629,14 @@ enum Hero_Image_Frame {
     HERO_IMAGE_FRAME_COUNT                 = 7,
 };
 
+enum Pet_Image_Sprite_Facing_Direction {
+    PET_IMAGE_SPRITE_FACING_DIRECTION_FRONT = 1,
+    PET_IMAGE_SPRITE_FACING_DIRECTION_BACK  = 0,
+    PET_IMAGE_SPRITE_FACING_DIRECTION_LEFT  = 2,
+    PET_IMAGE_SPRITE_FACING_DIRECTION_RIGHT = 3,
+    PET_IMAGE_SPRITE_FACING_DIRECTION_COUNT = 4,
+};
+
 enum Portal_Image_Frame {
     PORTAL_IMAGE_FRAME0 = 0,
     PORTAL_IMAGE_FRAME1 = 1,
@@ -646,6 +654,9 @@ struct Game_Resources {
     font_id         menu_fonts[MENU_FONT_COUNT];
     image_id        circle;
 
+    // These are currently not animated because I don't have the budget to
+    // animate these more thoroughly myself :P
+    image_id pet_images[GAME_PET_ID_COUNT][4];
     image_id hero_images[HERO_IMAGE_FRAME_COUNT];
     image_id main_menu_portal_images[PORTAL_IMAGE_FRAME_COUNT];
 
