@@ -3222,6 +3222,7 @@ void Game_State::set_led_target_color_anim_force(color32u8 color, f32 anim_lengt
 
 void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     V2 resolution = driver->resolution();
+    bool take_screenshot = false;
 
     auto game_render_commands = render_commands(&Global_Engine()->scratch_arena, 12000, camera(V2(0, 0), 1));
     auto ui_render_commands   = render_commands(&Global_Engine()->scratch_arena, 8192,  camera(V2(0, 0), 1));
@@ -3233,7 +3234,7 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
 
     if (Action::is_pressed(ACTION_SCREENSHOT)) {
         _debugprintf("Saved a screenshot!"); // picture sound?
-        driver->screenshot((char*)"screenshot.png");
+        take_screenshot = true;
     }
 
     state->coroutine_tasks.schedule_by_type(state, dt, GAME_TASK_SOURCE_UI);
@@ -3350,6 +3351,10 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         );
 
         controller_set_led(Input::get_gamepad(0), present_color.r, present_color.g, present_color.b);
+    }
+
+    if (take_screenshot) {
+        driver->screenshot((char*)"screenshot.png");
     }
 }
 
