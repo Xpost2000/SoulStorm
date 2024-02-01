@@ -746,6 +746,7 @@ void OpenGL_Graphics_Driver::screenshot(char* where) {
     // NOTE: pretty sure opengl might read it upside down...
     struct image_buffer image = image_buffer_create_blank(real_resolution.x, real_resolution.y);
     glReadPixels(0, 0, real_resolution.x, real_resolution.y, GL_RGBA, GL_UNSIGNED_BYTE, image.pixels);
+
     stbi_write_png(where, image.width, image.height, 4, image.pixels, 4 * image.width);
     image_buffer_free(&image);
     //   unimplemented("Not done");

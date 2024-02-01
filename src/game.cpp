@@ -771,6 +771,8 @@ void Game::init(Graphics_Driver* driver) {
         }
 
         Action::save(string_literal("controls.lua"));
+    } else {
+        _debugprintf("Loaded control from file");
     }
 
     resources->graphics_assets   = graphics_assets_create(arena, 16, 512, 512);

@@ -215,6 +215,7 @@ USE_BOMB = 9
         luaL_open_game_actionlib(L);
 
         if (luaL_dofile(L, filename.data) != 0) {
+            _debugprintf("LUA_ERROR (%s) error?", lua_tostring(L,-1));
             _debugprintf("Could not exec %.*s. Hopefully it doesn't exist.", filename.length, filename.data);
             lua_close(L);
             return false;

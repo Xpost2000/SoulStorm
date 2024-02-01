@@ -9,6 +9,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 
+#include <stb_image_write.h>
+
 void D3D11_Image::Release() {
     _debugprintf("Unloading D3D11 Image Object");
     if (texture2d) {
@@ -957,7 +959,53 @@ void Direct3D11_Graphics_Driver::unload_texture(struct graphics_assets* assets, 
 
 void Direct3D11_Graphics_Driver::screenshot(char* where) {
     _debugprintf("Direct3D11 driver screenshot is nop");
+
+    s32 width = real_resolution.x;
+    s32 height = real_resolution.y;
+
+    ID3D11Texture2D* staging_texture;
+    D3D11_TEXTURE2D_DESC image_description;
+    zero_memory(&image_description, sizeof(image_description));
+    image_description.Usage = D3D11_USAGE_STAGING;
+    image_description.Format = DXGI_FORMAT_R8G8B8A8_SNORM;
+    image_description.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    image_description.Width = width;
+    image_description.Height = height;
+    image_description.MipLevels = 1;
+    device->CreateTexture2D(&image_description, nullptr, &staging_texture);
     // unimplemented("Not done");
+
+    D3D11_BOX copy_region;
+    {
+        copy_region.left = 0;
+        copy_region.top = 0;
+        copy_region.right = width;
+        copy_region.bottom = height;
+        copy_region.front = 0;
+        copy_region.back = 1;
+    }
+    context->CopySubresourceRegion(
+        staging_texture,
+        0,
+        0, 0, 0,
+        swapchain_framebuffer_texture,
+        0,
+        &copy_region
+    );
+
+    {
+        D3D11_MAPPED_SUBRESOURCE mapped_subresource;
+        context->Map(staging_texture, 0, D3D11_MAP_READ, 0, &mapped_subresource);
+        {
+            // I hope these are rgba pixels...
+            // NOTE: might be upside down, TODO: flip them
+            uint8_t* pixels = (uint8_t*)mapped_subresource.pData;
+            stbi_write_png(where, width, height, 4, pixels, 4 * width);
+        }
+        context->Unmap(staging_texture, 0);
+    }
+
+    staging_texture->Release();
 }
 
 
