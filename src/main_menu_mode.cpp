@@ -561,20 +561,21 @@ void MainMenu_Pet::draw(MainMenu_Data* const state, struct render_commands* comm
 
         s32 sign_x      = sign_f32(current_direction.x);
         s32 sign_y      = sign_f32(current_direction.y);
+        _debugprintf("%d, %d", sign_x, sign_y);
         f32 x_magnitude = fabs(current_direction.x);
         f32 y_magnitude = fabs(current_direction.y);
 
         if (x_magnitude > y_magnitude) {
             if (sign_x == 1) {
-                direction_sprite_id = PET_IMAGE_SPRITE_FACING_DIRECTION_LEFT;
-            } else {
                 direction_sprite_id = PET_IMAGE_SPRITE_FACING_DIRECTION_RIGHT;
+            } else {
+                direction_sprite_id = PET_IMAGE_SPRITE_FACING_DIRECTION_LEFT;
             }
         } else {
             if (sign_y == 1) {
-                direction_sprite_id = PET_IMAGE_SPRITE_FACING_DIRECTION_BACK;
-            } else {
                 direction_sprite_id = PET_IMAGE_SPRITE_FACING_DIRECTION_FRONT;
+            } else {
+                direction_sprite_id = PET_IMAGE_SPRITE_FACING_DIRECTION_BACK;
             }
         }
 
@@ -713,7 +714,7 @@ void MainMenu_Clutter_Poop::draw(MainMenu_Data* const state, struct render_comma
                 image_size.y*image_scale
             ),
             RECTANGLE_F32_NULL,
-            color32f32(1.0, 1.0f, 1.0, clamp_f32(lifetime, 0.0f, 1.0f)),
+            color32f32(1.0, 1.0f, 1.0, clamp<f32>(lifetime, 0.0f, 1.0f)),
             0,
             BLEND_MODE_ALPHA
         );
