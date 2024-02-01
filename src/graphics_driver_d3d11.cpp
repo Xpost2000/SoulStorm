@@ -967,7 +967,7 @@ void Direct3D11_Graphics_Driver::screenshot(char* where) {
     D3D11_TEXTURE2D_DESC image_description;
     zero_memory(&image_description, sizeof(image_description));
     image_description.Usage = D3D11_USAGE_STAGING;
-    image_description.Format = DXGI_FORMAT_R8G8B8A8_SNORM;
+    image_description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     image_description.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
     image_description.Width = width;
     image_description.Height = height;
@@ -1002,7 +1002,22 @@ void Direct3D11_Graphics_Driver::screenshot(char* where) {
             // I hope these are rgba pixels...
             // NOTE: might be upside down, TODO: flip them
             uint8_t* pixels = (uint8_t*)mapped_subresource.pData;
-            stbi_write_png(where, width, height, 4, pixels, 4 * width);
+
+            uint8_t* copied_pixels = (uint8_t*)malloc(width * height * 4);
+            // HACK: for some reason alpha is 0?
+            for (int i = 0; i < height; ++i) {
+                for (int j = 0; j < width; ++j) {
+                    copied_pixels[i * width * 4 + (j * 4) + 0] = pixels[i * width * 4 + (j * 4) + 0];
+                    copied_pixels[i * width * 4 + (j * 4) + 1] = pixels[i * width * 4 + (j * 4) + 1];
+                    copied_pixels[i * width * 4 + (j * 4) + 2] = pixels[i * width * 4 + (j * 4) + 2];
+                    copied_pixels[i * width * 4 + (j * 4) + 3] = 255;
+                }
+            }
+
+            stbi_flip_vertically_on_write(0);
+            stbi_write_png(where, width, height, 4, copied_pixels, 4 * width);
+
+            free(copied_pixels);
         }
         context->Unmap(staging_texture, 0);
     }
