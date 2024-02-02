@@ -101,7 +101,7 @@ void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
     if (!active)
         return;
 
-    if (max_emissions != -1 && emissions > max_emissions) {
+    if (max_emissions != -1 && emissions >= max_emissions) {
         active = false;
         return;
     }

@@ -643,19 +643,20 @@ void Game::reset_stage_simulation_state() {
         auto& deathanimation_emitter = deathanimation_data.player_explosion_emitter;
 
         deathanimation_emitter.reset();
-        deathanimation_emitter.sprite                    = 
+        deathanimation_emitter.sprite             = 
             sprite_instance(resources->projectile_sprites[PROJECTILE_SPRITE_BLUE_STROBING]);
-        deathanimation_emitter.sprite.scale              = V2(1.0f, 1.0f);
-        deathanimation_emitter.modulation                = color32f32(1.0f, 1.0f, 1.0f, 1.0f);
-        deathanimation_emitter.lifetime                  = 0.5f;
-        deathanimation_emitter.max_emissions             = 5;
-        deathanimation_emitter.scale                     = 1;
-        deathanimation_emitter.emit_per_emission = 32;
-        deathanimation_emitter.use_angular               = true;
-        deathanimation_emitter.angle_range               = V2(-360, 360);
-        deathanimation_emitter.velocity                  = V2(150, 0.0f);
-        deathanimation_emitter.acceleration              = V2(0, 0.0f);
-        deathanimation_emitter.scale_variance            = V2(-0.005, 0.005);
+        deathanimation_emitter.sprite.scale       = V2(1.0f);
+        deathanimation_emitter.modulation         = color32f32(1.0f, 1.0f, 1.0f, 1.0f);
+        deathanimation_emitter.lifetime           = 1.25f;
+        deathanimation_emitter.max_emissions      = 5;
+        deathanimation_emitter.emission_max_timer = 0.55f;
+        deathanimation_emitter.scale              = 1;
+        deathanimation_emitter.emit_per_emission  = 16;
+        deathanimation_emitter.use_angular        = true;
+        deathanimation_emitter.angle_range        = V2(-360, 360);
+        deathanimation_emitter.velocity           = V2(100, 0.0f);
+        deathanimation_emitter.acceleration       = V2(0, 0.0f);
+        deathanimation_emitter.scale_variance     = V2(-0.005, 0.005);
     }
 
     this->state->dialogue_state.in_conversation = false;
@@ -683,6 +684,7 @@ void Game::reset_stage_simulation_state() {
 
     {
         state->player.position                         = state->player.last_position = V2(state->play_area.width / 2, 300);
+        state->player.visible                          = true;
         state->player.hp                               = state->player.max_hp = 1;
         state->player.die                              = false;
         state->paused_from_death                       = false;
@@ -714,6 +716,7 @@ void Game::reset_stage_simulation_state() {
     state->scriptable_render_objects.clear();
     state->hit_score_notifications.clear();
     state->particle_pool.clear();
+    state->death_particle_pool.clear();
     state->particle_emitters.clear();
 
     state->to_create_enemy_bullets.zero();
@@ -888,6 +891,7 @@ void Game::init(Graphics_Driver* driver) {
         state->main_camera             = camera(V2(0, 0), 1.0);
         state->main_camera.rng         = &state->prng;
         state->particle_pool.init(arena, 8192);
+        state->death_particle_pool.init(arena, 512);
 
         // creation queues
         {
@@ -2420,39 +2424,58 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
     // whenever it works with the regular transitions which are not fixed
     // framerate timed...
     {
-        // Death Screen Horizontal Fade
         if (state->screen_mode == GAME_SCREEN_INGAME) {
-            f32 effective_t = clamp<f32>(
-                state->deathscreen_data.black_fade_t / MAX_DEATH_BLACK_FADE_T,
-                0.0f,
-                1.0f
-            );
-
-            union color32f32 render_color = color32f32(0.0f, 0.0f, 0.0f, 1.0f);
-            f32 position_to_draw          = lerp_f32(-(s32)commands->screen_width, 0, effective_t);
-            render_commands_push_quad(commands,
-                                      rectangle_f32(
-                                          position_to_draw,
-                                          0,
-                                          commands->screen_width,
-                                          commands->screen_height),
-                                      color32f32_to_color32u8(render_color),
-                                      BLEND_MODE_ALPHA
-            );
-
-            // I want to have a neat slice effect to make it less
-            // boring than a standard screen slide.
+            // Death Screen Horizontal Fade
             {
-                u32 slices_to_draw = commands->screen_height * 0.9;
-                u32 slice_height   = commands->screen_height / slices_to_draw;
-                for (unsigned slice = 0; slice < commands->screen_height; ++slice) {
-                    f32 slice_width_variance = 40 % (slice+1);
+                f32 effective_t = clamp<f32>(
+                    state->deathscreen_data.black_fade_t / MAX_DEATH_BLACK_FADE_T,
+                    0.0f,
+                    1.0f
+                );
+
+                union color32f32 render_color = color32f32(0.0f, 0.0f, 0.0f, 1.0f);
+                f32 position_to_draw          = lerp_f32(-(s32)commands->screen_width, 0, effective_t);
+                render_commands_push_quad(commands,
+                                          rectangle_f32(
+                                              position_to_draw,
+                                              0,
+                                              commands->screen_width,
+                                              commands->screen_height),
+                                          color32f32_to_color32u8(render_color),
+                                          BLEND_MODE_ALPHA
+                );
+
+                // I want to have a neat slice effect to make it less
+                // boring than a standard screen slide.
+                {
+                    u32 slices_to_draw = commands->screen_height * 0.9;
+                    u32 slice_height   = commands->screen_height / slices_to_draw;
+                    for (unsigned slice = 0; slice < commands->screen_height; ++slice) {
+                        f32 slice_width_variance = 40 % (slice+1);
+                        render_commands_push_quad(commands,
+                                                  rectangle_f32(
+                                                      position_to_draw,
+                                                      0,
+                                                      commands->screen_width + slice_width_variance,
+                                                      slice_height),
+                                                  color32f32_to_color32u8(render_color),
+                                                  BLEND_MODE_ALPHA
+                        );
+                    }
+                }
+            }
+
+            // death animation flashing
+            {
+                auto& deathanimation_data = this->state->deathanimation_data;
+                if (deathanimation_data.flashing) {
+                    union color32f32 render_color = color32f32(1.0f, 1.0f, 1.0f, 1.0f);
                     render_commands_push_quad(commands,
                                               rectangle_f32(
-                                                  position_to_draw,
                                                   0,
-                                                  commands->screen_width + slice_width_variance,
-                                                  slice_height),
+                                                  0,
+                                                  commands->screen_width,
+                                                  commands->screen_height),
                                               color32f32_to_color32u8(render_color),
                                               BLEND_MODE_ALPHA
                     );
@@ -3248,6 +3271,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
     // Rendering Dialogue UI
     bool in_conversation = this->state->dialogue_state.in_conversation;
 
+    // main game update things
     if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE && !state->triggered_stage_completion_cutscene) {
         auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
         update_packet_data->dt = FIXED_TICKTIME;
@@ -3281,6 +3305,56 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
             if (!this->state->dialogue_state.in_conversation) {
                 state->fixed_tickrate_remainder = clamp<f32>(state->fixed_tickrate_timer/(dt), 0.0f, 1.0f);
             }
+        }
+    }
+
+    // out of tick things
+    // death animation.
+    // NOTE: technically this will happen as long as the flag is appropriately triggered
+    // and the flashing happens independently of the particle systems.
+    // NOTE: need to see what this actually means about game frame timings.
+    {
+        auto& deathanimation_data = this->state->deathanimation_data;
+
+        if (deathanimation_data.phase != DEATH_ANIMATION_PHASE_INACTIVE) {
+            // NOTE: I need to update the particles here because the particles technically update during the
+            // regular fixed frame update.
+            // NOTE: the original fixed particle update is guaranteed to not happen by this point so this is not a big deal.
+            {
+                if (deathanimation_data.player_explosion_emitter.active) {
+                    deathanimation_data.player_explosion_emitter.update(&state->death_particle_pool, &state->prng_unessential, dt);
+                }
+
+                state->death_particle_pool.update(this->state, dt);
+            }
+        }
+        switch (deathanimation_data.phase) {
+            case DEATH_ANIMATION_PHASE_INACTIVE: {
+                // nothing needs to happen.
+            } break;
+            case DEATH_ANIMATION_PHASE_FLASH: {
+                if (deathanimation_data.flash_count == 0 && deathanimation_data.flashing == false) {
+                    deathanimation_data.phase = DEATH_ANIMATION_PHASE_LINGER;
+                } else {
+                    deathanimation_data.flash_t += dt;
+                    if (deathanimation_data.flash_t >= DEATH_ANIMATION_MAX_T_PER_FLASH) {
+                        deathanimation_data.flash_t = 0.0f;
+                        deathanimation_data.flashing ^= true;
+
+                        if (deathanimation_data.flashing) {
+                            deathanimation_data.flash_count -= 1;
+                        }
+                    }
+                }
+            } break;
+            case DEATH_ANIMATION_PHASE_LINGER: {
+                if (deathanimation_data.t >= DEATH_ANIMATION_LINGER_MAX_T) {
+                    switch_ui(UI_STATE_DEAD_MAYBE_RETRY);
+                    deathanimation_data.phase = DEATH_ANIMATION_PHASE_INACTIVE;
+                } else {
+                    deathanimation_data.t += dt;
+                }
+            } break;
         }
     }
 
@@ -3382,6 +3456,7 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
 
         state->player.draw(this->state, game_render_commands, resources);
         state->particle_pool.draw(game_render_commands, this->state->resources);
+        state->death_particle_pool.draw(game_render_commands, this->state->resources);
 
         Transitions::update_and_render(ui_render_commands, dt);
     }
@@ -3708,12 +3783,18 @@ void Game::on_player_death() {
 
             // Start death animation.
             {
-                auto& deathanimation_data       = this->state->deathanimation_data;
-                deathanimation_data.phase       = DEATH_ANIMATION_PHASE_FLASH;
-                deathanimation_data.t           = 0.0f;
-                deathanimation_data.flash_t     = 0.0f;
-                deathanimation_data.flash_count = DEATH_ANIMATION_FLASH_AMOUNT;
-                deathanimation_data.flashing    = false;
+                state->player.visible = false;
+            }
+            {
+                auto& deathanimation_data                           = this->state->deathanimation_data;
+                deathanimation_data.phase                           = DEATH_ANIMATION_PHASE_FLASH;
+                deathanimation_data.t                               = 0.0f;
+                deathanimation_data.flash_t                         = 0.0f;
+                deathanimation_data.flash_count                     = DEATH_ANIMATION_FLASH_AMOUNT;
+                deathanimation_data.flashing                        = false;
+                deathanimation_data.player_explosion_emitter.active = true;
+                deathanimation_data.player_explosion_emitter.shape  = particle_emit_shape_point(state->player.position);
+                deathanimation_data.player_explosion_emitter.reset();
             }
         }
     }

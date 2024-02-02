@@ -338,6 +338,7 @@ struct Gameplay_Data {
     bool playing_practice_mode;
     Stage_State stage_state;
     Particle_Pool particle_pool;
+    Particle_Pool death_particle_pool;
     // TODO: allow player name configuration
     /* char          player_name[64]; */
     void build_current_input_packet();
@@ -631,9 +632,9 @@ enum DeathAnimation_Phase {
     DEATH_ANIMATION_PHASE_LINGER   = 2,
 };
 
-#define DEATH_ANIMATION_MAX_T_PER_FLASH (0.25)
-#define DEATH_ANIMATION_LINGER_MAX_T    (1.0f)
-#define DEATH_ANIMATION_FLASH_AMOUNT    (3)
+#define DEATH_ANIMATION_MAX_T_PER_FLASH (0.15)
+#define DEATH_ANIMATION_LINGER_MAX_T    (2.25f)
+#define DEATH_ANIMATION_FLASH_AMOUNT    (5)
 struct DeathAnimation_Data {
     // sprout 5 times outward (kinda like megaman!)
     u8               phase       = DEATH_ANIMATION_PHASE_INACTIVE;
