@@ -136,6 +136,7 @@ void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
                 }
                 p->modulation   = modulation;
                 p->lifetime     = p->lifetime_max = lifetime + random_ranged_float(prng, lifetime_variance.x, lifetime_variance.y);
+                p->blend_mode   = blend_mode;
 
                 p->use_attraction_point = use_attraction_point;
                 p->attraction_point = attraction_point;
@@ -209,7 +210,7 @@ void Particle_Pool::draw(struct render_commands* commands, Game_Resources* resou
             sprite_frame->source_rect,
             modulation,
             0,
-            BLEND_MODE_ALPHA
+            particle.blend_mode
         );
     }
 }

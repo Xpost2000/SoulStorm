@@ -6,10 +6,12 @@
 #include "fixed_array.h"
 #include "prng.h"
 
+// Would like to simd this one day.
 struct Particle {
     V2 position;
     V2 velocity;
     V2 acceleration;
+    u32 blend_mode = BLEND_MODE_ALPHA;
 
     f32 scale;
     f32 lifetime, lifetime_max;
@@ -72,11 +74,9 @@ struct Particle_Emitter {
     Particle_Emit_Shape shape;
 
     Sprite_Instance sprite;
-    f32             scale;
     V2              velocity = V2(0,0);
     V2              acceleration = V2(0,0);
     color32f32      modulation = color32f32(1, 1, 1, 1);
-    f32             lifetime;
 
     V2 scale_variance          = V2(0,0); // particles are going to be "square/quads" only.
     V2 velocity_x_variance     = V2(0,0);
@@ -89,13 +89,17 @@ struct Particle_Emitter {
     // will source velocity and acceleration from the x components
     // of the respective variable
     V2 angle_range             = V2(0,0);
+    V2 attraction_point;
 
     bool use_attraction_point = false;
     bool use_angular          = false;
-    V2 attraction_point;
-    f32 attraction_force;
-
     bool active = false;
+    u32 blend_mode = BLEND_MODE_ALPHA;
+
+    f32 attraction_force;
+    f32 scale;
+    f32 lifetime;
+
     s32 max_emissions = -1;
     s32 emissions = 0;
     s32 emit_per_emission = 1;
