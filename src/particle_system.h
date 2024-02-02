@@ -85,7 +85,13 @@ struct Particle_Emitter {
     V2 acceleration_y_variance = V2(0,0);
     V2 lifetime_variance       = V2(0,0);
 
+    // NOTE: only active if use_angular == true.
+    // will source velocity and acceleration from the x components
+    // of the respective variable
+    V2 angle_range             = V2(0,0);
+
     bool use_attraction_point = false;
+    bool use_angular          = false;
     V2 attraction_point;
     f32 attraction_force;
 

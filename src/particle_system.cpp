@@ -115,16 +115,25 @@ void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
             {
                 p->sprite       = sprite;
                 p->scale        = scale + random_ranged_float(prng, scale_variance.x, scale_variance.y);
-                p->velocity     =
-                    velocity + V2(
-                        random_ranged_float(prng, velocity_x_variance.x, velocity_x_variance.y),
-                        random_ranged_float(prng, velocity_y_variance.x, velocity_y_variance.y)
-                    );
-                p->acceleration =
-                    acceleration + V2(
-                        random_ranged_float(prng, acceleration_x_variance.x, acceleration_x_variance.y),
-                        random_ranged_float(prng, acceleration_y_variance.x, acceleration_y_variance.y)
-                    );
+                if (use_angular) {
+                    V2 direction =
+                        V2_direction_from_degree(random_ranged_float(prng, angle_range.x, angle_range.y));
+                    p->velocity     =
+                        direction * (velocity.x + random_ranged_float(prng, velocity_x_variance.x, velocity_x_variance.y));
+                    p->velocity     =
+                        direction * (velocity.y + random_ranged_float(prng, acceleration_y_variance.x, acceleration_y_variance.y));
+                } else {
+                    p->velocity     =
+                        velocity + V2(
+                            random_ranged_float(prng, velocity_x_variance.x, velocity_x_variance.y),
+                            random_ranged_float(prng, velocity_y_variance.x, velocity_y_variance.y)
+                        );
+                    p->acceleration =
+                        acceleration + V2(
+                            random_ranged_float(prng, acceleration_x_variance.x, acceleration_x_variance.y),
+                            random_ranged_float(prng, acceleration_y_variance.x, acceleration_y_variance.y)
+                        );
+                }
                 p->modulation   = modulation;
                 p->lifetime     = p->lifetime_max = lifetime + random_ranged_float(prng, lifetime_variance.x, lifetime_variance.y);
 
