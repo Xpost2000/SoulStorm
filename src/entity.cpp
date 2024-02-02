@@ -518,6 +518,11 @@ void Entity::update(Game_State* state, f32 dt) {
     last_position       = position;
     position           += velocity * dt;
     t_since_spawn      += dt;
+
+    for (unsigned particle_emitter_index = 0; particle_emitter_index < ENTITY_MAX_PARTICLE_EMITTERS; ++particle_emitter_index) {
+        auto& emitter = emitters[particle_emitter_index];
+        emitter.update(&state->gameplay_data.particle_pool, &state->gameplay_data.prng, dt);
+    }
 }
 
 rectangle_f32 Entity::get_rect() {
@@ -639,8 +644,11 @@ f32 Player::get_grazing_score_modifier(s32 amount) {
 }
 
 void Player::update(Game_State* state, f32 dt) {
-    if (!visible)
+    if (!visible) {
+        auto& emitter = emitters[0];
+        emitter.active = false;
         return;
+    }
 
     const auto& play_area    = state->gameplay_data.play_area;
     const auto& input_packet = state->gameplay_data.current_input_packet;
@@ -663,6 +671,28 @@ void Player::update(Game_State* state, f32 dt) {
     Entity::update(state, dt);
 
     handle_play_area_edge_behavior(play_area);
+
+    // Particle Emitter
+    {
+        auto& emitter = emitters[0];
+        emitter.active = true;
+        emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_SPARKLING_STAR]);
+
+        auto r = get_rect();
+        f32 left   = r.x;
+        f32 bottom = r.y + r.h;
+
+        emitter.scale  = 1.0f;
+        emitter.emit_per_emission = 8;
+        emitter.lifetime = 0.65f;
+        emitter.velocity_x_variance = V2(-10, 50);
+        emitter.velocity_y_variance = V2(-10, 50);
+        emitter.acceleration_x_variance = V2(0, 10);
+        emitter.acceleration_y_variance = V2(0, 20);
+        emitter.lifetime_variance   = V2(-0.1f, 0.7f);
+        emitter.emission_max_timer = 0.045f;
+        emitter.shape = particle_emit_shape_line(V2(left, bottom), V2(left + r.w*1.5f, bottom));
+    }
 
     // Sprite animation
     {

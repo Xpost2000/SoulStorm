@@ -11,6 +11,7 @@
 #define ENTITY_H
 
 #include "render_commands.h"
+#include "particle_system.h"
 #include <functional>
 
 #define DEFAULT_SHOW_FLASH_WARNING_TIMER (0.125)
@@ -70,6 +71,8 @@ struct Position_Trail_Ghost {
     f32 alpha = 1.0f; // this will always be hardcoded to take one second
 };
 
+#define ENTITY_MAX_PARTICLE_EMITTERS (4)
+
 // Need to start removing some redundant fields or fields
 // that some smaller entities don't really need.
 // since I inherit from this for shared behavior regarding kinematics,
@@ -95,6 +98,9 @@ struct Entity {
 
     f32   t_since_spawn = 0.0f;
     Sprite_Instance sprite;
+
+    // Entity code can decide what they want to do with this one.
+    Particle_Emitter emitters[ENTITY_MAX_PARTICLE_EMITTERS];
 
     // Cool visual effect for trailing.
     color32f32           trail_ghost_modulation = color32f32(0.9, 0.9, 0.9, 1.0);
