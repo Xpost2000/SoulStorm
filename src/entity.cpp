@@ -572,10 +572,12 @@ void Cosmetic_Pet::update(Game_State* state, f32 dt) {
         }
 
         V2 direction_towards = V2_direction(position, target_position);
+        f32 distance         = V2_distance_sq(target_position, position);
 
-        f32 move_mag = 250;
+        f32 max_move_mag = 55;
+        f32 percent      = clamp<f32>(fabs(distance-radius_hover) / radius_hover, 0.0f, 1.0f);
         // make this look a little nicer.
-        acceleration = direction_towards * move_mag;
+        velocity = direction_towards * max_move_mag * percent;
     }
 
     // same particle emitter as player
@@ -597,9 +599,9 @@ void Cosmetic_Pet::update(Game_State* state, f32 dt) {
         emitter.acceleration_y_variance = V2(0, 20);
         emitter.lifetime_variance   = V2(-0.1f, 0.7f);
         emitter.emission_max_timer = 0.045f;
-        emitter.shape = particle_emit_shape_line(V2(left, bottom), V2(left + r.w*2, bottom));
+        emitter.shape = particle_emit_shape_line(V2(left, bottom), V2(left + r.w*2.5, bottom));
     }
-    sprite.offset.y = sinf(t_since_spawn * 0.795) * 8.5 + 5;
+    sprite.offset.y = sinf(t_since_spawn * 0.795) * 10.5 + 5;
 
     Entity::update(state, dt); 
 }
