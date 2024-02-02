@@ -645,7 +645,7 @@ void Game::reset_stage_simulation_state() {
         deathanimation_emitter.reset();
         deathanimation_emitter.sprite             = 
             sprite_instance(resources->projectile_sprites[PROJECTILE_SPRITE_BLUE_STROBING]);
-        deathanimation_emitter.sprite.scale       = V2(1.0f);
+        deathanimation_emitter.sprite.scale       = V2(1.0f, 1.0f);
         deathanimation_emitter.modulation         = color32f32(1.0f, 1.0f, 1.0f, 1.0f);
         deathanimation_emitter.lifetime           = 1.25f;
         deathanimation_emitter.max_emissions      = 5;
