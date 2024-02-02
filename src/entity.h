@@ -87,6 +87,8 @@ struct Entity {
     V2 relative_position = V2(0, 0);
     V2 scale             = V2(0, 0); 
 
+    V2 get_real_position(void);
+
     // NOTE: Going to take an... Alternate
     // approach to movement through scripting
     // which is more "classic".

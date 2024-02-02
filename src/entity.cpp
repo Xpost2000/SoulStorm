@@ -516,6 +516,7 @@ void Entity::update(Game_State* state, f32 dt) {
     }
 
     last_position       = position;
+    velocity           += acceleration * dt;
     position           += velocity * dt;
     t_since_spawn      += dt;
 
@@ -525,10 +526,16 @@ void Entity::update(Game_State* state, f32 dt) {
     }
 }
 
+V2 Entity::get_real_position(void) {
+    return position + relative_position;
+}
+
 rectangle_f32 Entity::get_rect() {
+    V2 real_position = get_real_position();
+
     return rectangle_f32(
-        (position.x + relative_position.x) - scale.x,
-        (position.y + relative_position.y) - scale.y,
+        (real_position.x) - scale.x,
+        (real_position.y) - scale.y,
         scale.x*2,
         scale.y*2
     );
@@ -537,8 +544,62 @@ rectangle_f32 Entity::get_rect() {
 // Cosmetic Pet Actor
 void Cosmetic_Pet::update(Game_State* state, f32 dt) {
     if (!visible) {
+        auto& emitter = emitters[0];
+        emitter.active = false;
         return;
     }
+
+    auto& player = state->gameplay_data.player;
+
+    const auto& play_area = state->gameplay_data.play_area;
+    /*
+     * NOTE:
+     * make this animation look more elaborate.
+     *
+     *
+     * But TL;DR pet will hover around the player and switch sides depending on where
+     * the player is. This might ship tbh, since making this look nicer is a lot of work.
+     *
+     */
+    {
+        f32 radius_hover = 75;
+
+        V2 player_position   = player.get_real_position();
+        V2 target_position   = V2(player_position.x - radius_hover, player_position.y);
+
+        if (player_position.x <= play_area.width/2) {
+            target_position   = V2(player_position.x + radius_hover, player_position.y);
+        }
+
+        V2 direction_towards = V2_direction(position, target_position);
+
+        f32 move_mag = 250;
+        // make this look a little nicer.
+        acceleration = direction_towards * move_mag;
+    }
+
+    // same particle emitter as player
+    {
+        auto& emitter = emitters[0];
+        emitter.active = true;
+        emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_SPARKLING_STAR]);
+
+        auto r = get_rect();
+        f32 left   = position.x - 5;
+        f32 bottom = position.y + 34;
+
+        emitter.scale  = 1.0f;
+        emitter.emit_per_emission = 4;
+        emitter.lifetime = 0.65f;
+        emitter.velocity_x_variance = V2(-10, 50);
+        emitter.velocity_y_variance = V2(-10, 50);
+        emitter.acceleration_x_variance = V2(0, 10);
+        emitter.acceleration_y_variance = V2(0, 20);
+        emitter.lifetime_variance   = V2(-0.1f, 0.7f);
+        emitter.emission_max_timer = 0.045f;
+        emitter.shape = particle_emit_shape_line(V2(left, bottom), V2(left + r.w*2, bottom));
+    }
+    sprite.offset.y = sinf(t_since_spawn * 0.795) * 8.5 + 5;
 
     Entity::update(state, dt); 
 }
@@ -809,8 +870,6 @@ void Bullet::handle_movement(Game_State* state, f32 dt) {
     if (velocity_function) {
         velocity = V2(0, 0);
         velocity_function(this, state, dt);
-    } else {
-        velocity += acceleration * dt;
     }
 }
 
@@ -861,8 +920,6 @@ void Enemy_Entity::update(Game_State* state, f32 dt) {
     if (velocity_function) {
         velocity = V2(0, 0);
         velocity_function(this, state, dt);
-    } else {
-        velocity += acceleration * dt;
     }
 
     Entity::update(state, dt);

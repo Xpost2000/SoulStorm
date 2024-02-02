@@ -17,7 +17,14 @@ inline local void _rotate_f32_xy_as_pseudo_zyx(f32* x, f32* y, f32 c=0, f32 s=0,
 }
 
 
-V2::V2(f32 x, f32 y) : x(x), y(y) {
+V2::V2(f32 k)
+    : x(k),
+      y(k){
+    
+}
+V2::V2(f32 x, f32 y)
+    : x(x),
+      y(y) {
     
 }
 

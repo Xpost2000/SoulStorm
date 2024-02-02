@@ -691,6 +691,7 @@ void Game::reset_stage_simulation_state() {
 
     {
         state->player.position                         = state->player.last_position = V2(state->play_area.width / 2, 300);
+        state->pet.position                            = state->pet.last_position = state->player.position;
         state->player.visible                          = true;
         state->player.hp                               = state->player.max_hp = 1;
         state->player.die                              = false;

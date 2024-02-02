@@ -14,6 +14,7 @@ union V2 {
     // I'll change this and hope it doesn't break anything in a bit.
     V2() { xy[0] = xy[1] = 0.0f; }
     V2(f32 x, f32 y);
+    V2(f32 k);
 
     V2 operator+(const V2& other);
     V2 operator-(const V2& other);

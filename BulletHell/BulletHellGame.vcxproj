@@ -253,7 +253,9 @@
     <ClCompile Include="..\src\common.cpp" />
     <ClCompile Include="..\src\debug_ui.cpp" />
     <ClCompile Include="..\src\engine.cpp" />
-    <ClCompile Include="..\src\entity.cpp" />
+    <ClCompile Include="..\src\entity.cpp">
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EditAndContinue</DebugInformationFormat>
+    </ClCompile>
     <ClCompile Include="..\src\entity_lua_bindings.cpp" />
     <ClCompile Include="..\src\entity_prototypes.cpp" />
     <ClCompile Include="..\src\fade_transition.cpp" />
