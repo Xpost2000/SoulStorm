@@ -649,12 +649,12 @@ void Game::reset_stage_simulation_state() {
         deathanimation_emitter.modulation         = color32f32(1.0f, 1.0f, 1.0f, 1.0f);
         deathanimation_emitter.lifetime           = 1.25f;
         deathanimation_emitter.max_emissions      = 5;
-        deathanimation_emitter.emission_max_timer = 0.55f;
+        deathanimation_emitter.emission_max_timer = (DEATH_ANIMATION_MAX_T_PER_FLASH)*2;
         deathanimation_emitter.scale              = 1;
         deathanimation_emitter.emit_per_emission  = 16;
         deathanimation_emitter.use_angular        = true;
         deathanimation_emitter.angle_range        = V2(-360, 360);
-        deathanimation_emitter.velocity           = V2(100, 0.0f);
+        deathanimation_emitter.velocity           = V2(250, 0.0f);
         deathanimation_emitter.acceleration       = V2(0, 0.0f);
         deathanimation_emitter.scale_variance     = V2(-0.005, 0.005);
     }
