@@ -637,6 +637,27 @@ void Game::reset_stage_simulation_state() {
     // s32 pet_id   = this->state->
 
     this->state->deathscreen_data.reset();
+
+    {
+        auto& deathanimation_data = this->state->deathanimation_data;
+        auto& deathanimation_emitter = deathanimation_data.player_explosion_emitter;
+
+        deathanimation_emitter.reset();
+        deathanimation_emitter.sprite                    = 
+            sprite_instance(resources->projectile_sprites[PROJECTILE_SPRITE_BLUE_STROBING]);
+        deathanimation_emitter.sprite.scale              = V2(1.0f, 1.0f);
+        deathanimation_emitter.modulation                = color32f32(1.0f, 1.0f, 1.0f, 1.0f);
+        deathanimation_emitter.lifetime                  = 0.5f;
+        deathanimation_emitter.max_emissions             = 5;
+        deathanimation_emitter.scale                     = 1;
+        deathanimation_emitter.emit_per_emission = 32;
+        deathanimation_emitter.use_angular               = true;
+        deathanimation_emitter.angle_range               = V2(-360, 360);
+        deathanimation_emitter.velocity                  = V2(150, 0.0f);
+        deathanimation_emitter.acceleration              = V2(0, 0.0f);
+        deathanimation_emitter.scale_variance            = V2(-0.005, 0.005);
+    }
+
     this->state->dialogue_state.in_conversation = false;
     // NOTE: need to save this to the savefile data.
     s32 pet_id   = state->selected_pet;
@@ -3683,7 +3704,17 @@ void Game::on_player_death() {
             state->complete_stage.stage_timer = Timer(0.35f);
         } else {
             // Start the game over fade animation.
-            switch_ui(UI_STATE_DEAD_MAYBE_RETRY);
+            // switch_ui(UI_STATE_DEAD_MAYBE_RETRY);
+
+            // Start death animation.
+            {
+                auto& deathanimation_data       = this->state->deathanimation_data;
+                deathanimation_data.phase       = DEATH_ANIMATION_PHASE_FLASH;
+                deathanimation_data.t           = 0.0f;
+                deathanimation_data.flash_t     = 0.0f;
+                deathanimation_data.flash_count = DEATH_ANIMATION_FLASH_AMOUNT;
+                deathanimation_data.flashing    = false;
+            }
         }
     }
 }

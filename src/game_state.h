@@ -627,12 +627,27 @@ struct DeathScreen_Data {
 */
 enum DeathAnimation_Phase {
     DEATH_ANIMATION_PHASE_INACTIVE = 0,
-    DEATH_ANIMATION_PHASE_ACTIVE   = 1,
+    DEATH_ANIMATION_PHASE_FLASH    = 1,
+    DEATH_ANIMATION_PHASE_LINGER   = 2,
 };
+
+#define DEATH_ANIMATION_MAX_T_PER_FLASH (0.25)
+#define DEATH_ANIMATION_LINGER_MAX_T    (1.0f)
+#define DEATH_ANIMATION_FLASH_AMOUNT    (3)
 struct DeathAnimation_Data {
     // sprout 5 times outward (kinda like megaman!)
-    u8 phase = DEATH_ANIMATION_PHASE_INACTIVE;
+    u8               phase       = DEATH_ANIMATION_PHASE_INACTIVE;
     Particle_Emitter player_explosion_emitter;
+    f32              t           = 0.0f;
+    f32              flash_t     = 0.0f;
+    // I admit, I'd like to do a more retro effect and invert the entire screen
+    // however unlike legends-jrpg, the postprocessing pipeline is mostly gone
+    // (even though there's a lot of resident code for it.)
+
+    // The postprocessing pipeline isn't even implemented for either hardware path,
+    // so this is the best I got.
+    s32              flash_count = 0;
+    bool             flashing    = false;
 };
 
 struct Game_State {
