@@ -4274,6 +4274,10 @@ void Game::update_from_save_data(Save_File* save_data) {
         }    
 #endif
     }
+    {
+        auto state = &this->state->gameplay_data;
+        state->unlocked_pets = save_data->pets_unlocked;
+    }
 }
 
 local void serialize_achievement(struct binary_serializer* serializer, Achievement* achievement) {
