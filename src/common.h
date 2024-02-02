@@ -641,6 +641,7 @@ struct Directory_Listing {
 bool path_exists(string location); 
 bool is_path_directory(string location); 
 Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, string location); 
+string get_preference_directory(string org, string path);
 
 #include "debug_ui.h"
 #include "duffcoroutine.h"

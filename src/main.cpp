@@ -716,6 +716,10 @@ int main(int argc, char** argv) {
     SetProcessDPIAware();
 #endif
     initialize();
+    {
+        string s = get_preference_directory(string_null, string_literal("Soulstorm"));
+        _debugprintf("Preference Writing Path: %.*s", _string_unwrap(s));
+    }
     while (Global_Engine()->running) {
         u32 start_frame_time = SDL_GetTicks();
         engine_main_loop();

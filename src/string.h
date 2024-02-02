@@ -3,6 +3,7 @@
 #include "common.h"
 #include "memory_arena.h"
 
+#define _string_unwrap(x) x.length, x.data
 
 bool is_whitespace(char c);
 bool is_alphabetic(char c);

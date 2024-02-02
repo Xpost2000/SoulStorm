@@ -11,8 +11,9 @@
 #undef UNICODE
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
-#ifndef __EMSCRIPTEN__
+#ifndef __EMSCRIPTEN__ // ?
 #include <windows.h>
+#include <shlobj.h>
 #endif
 #else
 #include <dirent.h>
@@ -278,6 +279,7 @@ Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, strin
         arena->push_unaligned(sizeof(*result.files));
     } while (FindNextFile(handle, &find_data));
 #else
+    // NOTE: this is broken!
     // linux
     DIR* directory_information;
     struct dirent* directory_entry;
@@ -315,4 +317,31 @@ Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, strin
 #endif
 
     return result;
+}
+
+string get_preference_directory(string org, string path) {
+#ifdef _WIN32
+    char buffer[MAX_PATH];
+    assertion(
+        SUCCEEDED(
+            SHGetFolderPath(
+                NULL, 
+                CSIDL_APPDATA | CSIDL_FLAG_CREATE, 
+                NULL, 0, 
+                buffer
+            )
+        )
+    );
+    
+    if (org.length > 0) {
+        return string_from_cstring(format_temp("%s\\%.*s\\", buffer, path.length, path.data));
+    }
+    else {
+        return string_from_cstring(format_temp("%s\\%.*s\\%.*s\\", buffer, org.length, org.data, path.length, path.data));
+    }
+    return string_from_cstring(buffer);
+#else
+    // todo;
+    return string_literal("./");
+#endif
 }
