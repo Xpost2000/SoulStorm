@@ -392,6 +392,13 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
                         pet_image_locations[pet_index][image_index]
                     );
             }
+
+            if (resources->pet_sprites[pet_index].index == 0) {
+                resources->pet_sprites[pet_index] = graphics_assets_alloc_sprite(&resources->graphics_assets, 1);
+                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->pet_sprites[pet_index]), 0);
+                frame->img = resources->pet_images[pet_index][PET_IMAGE_SPRITE_FACING_DIRECTION_BACK];
+                frame->source_rect = RECTANGLE_F32_NULL;
+            }
         }
 
         for (unsigned image_index = 0; image_index < array_count(portal_image_locations); ++image_index) {
@@ -2026,6 +2033,7 @@ void Game::update_and_render_stage_pet_select_menu(struct render_commands* comma
             if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 load_game = true;
                 gameplay_data.selected_pet = pet_id_list[state->mainmenu_data.stage_pet_selection];
+                gameplay_data.pet.set_id(gameplay_data.selected_pet, state->resources);
                 _debugprintf("%.*s\n", pet_data->name.length, pet_data->name.data);
             }
 
@@ -2879,6 +2887,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
             }
 
             state->player.update(game_state, dt);
+            state->pet.update(game_state, dt);
             state->player.handle_grazing_behavior(game_state, dt);
         }
 #else
@@ -2915,6 +2924,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
             }
 
             state->player.update(game_state, dt);
+            state->pet.update(game_state, dt);
             state->player.handle_grazing_behavior(game_state, dt);
         }
 
@@ -3455,8 +3465,9 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         }
 
         state->player.draw(this->state, game_render_commands, resources);
-        state->particle_pool.draw(game_render_commands, this->state->resources);
-        state->death_particle_pool.draw(game_render_commands, this->state->resources);
+        state->pet.draw(this->state, game_render_commands, resources);
+        state->particle_pool.draw(game_render_commands, resources);
+        state->death_particle_pool.draw(game_render_commands, resources);
 
         Transitions::update_and_render(ui_render_commands, dt);
     }

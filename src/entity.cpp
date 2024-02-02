@@ -529,6 +529,26 @@ rectangle_f32 Entity::get_rect() {
     );
 }
 
+// Cosmetic Pet Actor
+void Cosmetic_Pet::update(Game_State* state, f32 dt) {
+    if (!visible) {
+        return;
+    }
+
+    Entity::update(state, dt); 
+}
+
+void Cosmetic_Pet::set_id(s32 id, Game_Resources* resources) {
+    if (id == GAME_PET_ID_NONE) {
+        visible = false;
+    } else {
+        visible = true;
+    }
+
+    sprite = sprite_instance(resources->pet_sprites[id]);
+    this->id = id;
+}
+
 // PlayerActor
 s32 Player::currently_grazing(Game_State* state) {
     s32 grazed_bullets = 0;

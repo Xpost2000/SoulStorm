@@ -367,6 +367,7 @@ struct Gameplay_Data {
     Fixed_Array<Gameplay_UI_Score_Notification> score_notifications;
     Fixed_Array<Gameplay_UI_Hitmark_Score_Notification> hit_score_notifications;
     Player              player;
+    Cosmetic_Pet        pet;
 
     Boss_Healthbar_Displays boss_health_displays;
     Play_Area play_area;
@@ -761,6 +762,9 @@ struct Game_Resources {
     sprite_id       player_sprite;
     sprite_id       circle_sprite;
     sprite_id       point_pickup_sprite;
+
+    // NOTE: the pet sprites only need to exist for the back facing sprite...
+    sprite_id pet_sprites[GAME_PET_ID_COUNT];
 
     // Title screen assets
     // NOTE: honestly, I'd rather just animate the thing manually since it's

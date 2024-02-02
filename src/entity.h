@@ -308,6 +308,13 @@ struct Player : public Entity {
     bool under_focus = false;
 };
 
+struct Cosmetic_Pet : public Entity {
+    void update(Game_State* state, f32 dt);
+    void set_id(s32 id, Game_Resources* resources);
+private:
+    s32 id;
+};
+
 enum Bullet_Source {
     // Maybe I just want to shoot random bullets in the environment to kill stuff.
     // who knows?
