@@ -576,6 +576,41 @@ struct Dialogue_State {
     /* Fixed_Array<Audio::Sound_ID> tracked_sounds; */
 };
 
+enum DeathScreen_Phase {
+    DEATH_SCREEN_PHASE_SLIDE_IN      = 0,
+    DEATH_SCREEN_PHASE_FADE_IN_TEXT  = 1,
+    DEATH_SCREEN_PHASE_FADE_OUT_TEXT = 2,
+    DEATH_SCREEN_PHASE_BYE           = 3,
+};
+/*
+  NOTE:
+
+  I originally wanted a more elaborate death animation,
+  but since this is an arcadey game. This would be a terrible idea,
+  and someone might get bored pretty quick if they sit through a long
+  elaborate death animation.
+
+  So I'm going to make it quick and simple...
+
+  The main change was to make it look less placeholdery than whatever I'd
+  already been using.
+*/
+
+// TODO: make like a 3 second death track.
+#define MAX_DEATH_BLACK_FADE_T (0.45f)
+#define MAX_DEATH_TEXT_FADE_T  (0.75f)
+#define MAX_DEATH_TEXT_HOLD_T  (0.85f)
+#define MAX_DEATH_TEXT_PHASE_LENGTH_T (MAX_DEATH_TEXT_FADE_T + MAX_DEATH_TEXT_HOLD_T)
+struct DeathScreen_Data {
+    // NOTE: this has to be drawn on top always.
+    // this is a side swipe and works differently
+    // from the transition system.
+    s32 phase = DEATH_SCREEN_PHASE_SLIDE_IN;
+    f32 black_fade_t = 0.0f;
+    f32 text_fade_t  = 0.0f;
+    void reset(void);
+};
+
 struct Game_State {
     s32 screen_mode      = GAME_SCREEN_DEFAULT_MODE;
     s32 last_screen_mode = GAME_SCREEN_DEFAULT_MODE;
@@ -585,6 +620,7 @@ struct Game_State {
 
     Controller_LED_State led_state;
 
+    DeathScreen_Data deathscreen_data;
     Gameplay_Data    gameplay_data;
     MainMenu_Data    mainmenu_data;
     TitleScreen_Data titlescreen_data;

@@ -636,7 +636,7 @@ void Game::reset_stage_simulation_state() {
     s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
     // s32 pet_id   = this->state->
 
-
+    this->state->deathscreen_data.reset();
     this->state->dialogue_state.in_conversation = false;
     // NOTE: need to save this to the savefile data.
     s32 pet_id   = state->selected_pet;
@@ -2085,35 +2085,66 @@ bool Game::safely_resurrect_player() {
 // TODO: planning to deprecate this and
 // make a new death menu.
 void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands* commands, f32 dt) {
-    if (state->gameplay_data.paused_from_death) {
-        render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
-    }
-    GameUI::set_ui_id((char*)"ui_gameover_menu");
-    GameUI::begin_frame(commands, &resources->graphics_assets);
-    {
-        
-        f32 alpha = 1.0f;
-        if (Transitions::fading()) {
-            alpha = 1 - Transitions::fade_t();
-        }
+    auto& deathscreen_data = state->deathscreen_data;
+    auto  font             = resources->get_font(MENU_FONT_COLOR_BLOODRED);
+    string text            = string_literal("GAME OVER");
+    f32 text_scale         = 8;
 
-        // would like to work on polishing/fading in text but again.
-        // in time.
-        f32 y = 100;
-        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
-        GameUI::label(V2(50, y), string_literal("DEAD"), color32f32(1, 1, 1, alpha), 4);
-        y += 45;
-        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+    float text_width = font_cache_text_width(font, text, text_scale);
+    float text_height = font_cache_text_height(font) * text_scale;
+    V2 text_position = V2(commands->screen_width / 2 - text_width / 2, commands->screen_height / 2 - text_height / 2);
 
-        y += 30;
-        if (GameUI::button(V2(50, y), string_literal("Give up"), color32f32(1, 1, 1, alpha), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-            state->gameplay_data.paused_from_death = false;
+    switch (deathscreen_data.phase) {
+        case DEATH_SCREEN_PHASE_SLIDE_IN: {
+            if (deathscreen_data.black_fade_t < MAX_DEATH_BLACK_FADE_T) {
+                deathscreen_data.black_fade_t += dt;
+            } else {
+                deathscreen_data.phase = DEATH_SCREEN_PHASE_FADE_IN_TEXT;
+            }
+        } break;
+        case DEATH_SCREEN_PHASE_FADE_IN_TEXT: {
+            f32 effective_t = clamp<f32>(deathscreen_data.text_fade_t / MAX_DEATH_TEXT_FADE_T, 0.0f, 1.0f);
+
+            if (deathscreen_data.text_fade_t < MAX_DEATH_TEXT_PHASE_LENGTH_T) {
+                deathscreen_data.text_fade_t += dt;
+            } else {
+                deathscreen_data.text_fade_t = 0;
+                deathscreen_data.phase = DEATH_SCREEN_PHASE_FADE_OUT_TEXT;
+            }
+
+            render_commands_push_text(
+                commands,
+                font,
+                text_scale,
+                text_position,
+                text,
+                color32f32(1, 1, 1, effective_t),
+                BLEND_MODE_ALPHA
+            );
+        } break;
+        case DEATH_SCREEN_PHASE_FADE_OUT_TEXT: {
+            f32 effective_t = clamp<f32>(deathscreen_data.text_fade_t / MAX_DEATH_TEXT_FADE_T, 0.0f, 1.0f);
+            
+            if (deathscreen_data.text_fade_t < MAX_DEATH_TEXT_PHASE_LENGTH_T) {
+                deathscreen_data.text_fade_t += dt;
+            } else {
+                deathscreen_data.phase = DEATH_SCREEN_PHASE_BYE;
+            }
+
+            render_commands_push_text(
+                commands,
+                font,
+                text_scale,
+                text_position,
+                text,
+                color32f32(1, 1, 1, 1 - effective_t),
+                BLEND_MODE_ALPHA
+            );
+        } break;
+        case DEATH_SCREEN_PHASE_BYE: {
             switch_ui(UI_STATE_REPLAY_ASK_TO_SAVE);
-        }
-        y += 30;
+        } break;
     }
-    GameUI::end_frame();
-    GameUI::update(dt);
 }
 
 void Game::update_and_render_achievement_notifications(struct render_commands* commands, f32 dt) {
@@ -2362,6 +2393,53 @@ void Game::update_and_render_achievements_menu(struct render_commands* commands,
 }
 
 void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt) {
+
+    // Special Case for ingame timed transitions
+    // since the fixed update loop seems to have peculiar issues
+    // whenever it works with the regular transitions which are not fixed
+    // framerate timed...
+    {
+        // Death Screen Horizontal Fade
+        if (state->screen_mode == GAME_SCREEN_INGAME) {
+            f32 effective_t = clamp<f32>(
+                state->deathscreen_data.black_fade_t / MAX_DEATH_BLACK_FADE_T,
+                0.0f,
+                1.0f
+            );
+
+            union color32f32 render_color = color32f32(0.0f, 0.0f, 0.0f, 1.0f);
+            f32 position_to_draw          = lerp_f32(-(s32)commands->screen_width, 0, effective_t);
+            render_commands_push_quad(commands,
+                                      rectangle_f32(
+                                          position_to_draw,
+                                          0,
+                                          commands->screen_width,
+                                          commands->screen_height),
+                                      color32f32_to_color32u8(render_color),
+                                      BLEND_MODE_ALPHA
+            );
+
+            // I want to have a neat slice effect to make it less
+            // boring than a standard screen slide.
+            {
+                u32 slices_to_draw = commands->screen_height * 0.9;
+                u32 slice_height   = commands->screen_height / slices_to_draw;
+                for (unsigned slice = 0; slice < commands->screen_height; ++slice) {
+                    f32 slice_width_variance = 40 % (slice+1);
+                    render_commands_push_quad(commands,
+                                              rectangle_f32(
+                                                  position_to_draw,
+                                                  0,
+                                                  commands->screen_width + slice_width_variance,
+                                                  slice_height),
+                                              color32f32_to_color32u8(render_color),
+                                              BLEND_MODE_ALPHA
+                    );
+                }
+            }
+        }
+    }
+
     switch (state->ui_state) {
         case UI_STATE_INACTIVE: {
             bool should_empty_ui_id = state->screen_mode != GAME_SCREEN_CREDITS &&
@@ -3604,8 +3682,7 @@ void Game::on_player_death() {
             state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
             state->complete_stage.stage_timer = Timer(0.35f);
         } else {
-            // Would like to trigger a death cutscene
-            // but now is not the time.
+            // Start the game over fade animation.
             switch_ui(UI_STATE_DEAD_MAYBE_RETRY);
         }
     }
@@ -3939,6 +4016,13 @@ void Game::switch_ui(s32 ui) {
         } break;
         case UI_STATE_REPLAY_COLLECTION: {
             state->gameplay_data.demo_collection_ui.current_page = 0;
+        } break;
+        case UI_STATE_DEAD_MAYBE_RETRY: {
+            auto& death_screen_data = state->deathscreen_data;
+            death_screen_data.reset();
+        } break;
+        default: {
+            // unused
         } break;
     }
 }
@@ -4495,5 +4579,13 @@ void Visual_Sparkling_Star_Data::draw(struct render_commands* commands, Game_Res
 
 }
 // End Visual_Sparkling_Star_Data
+
+// DeathScreen_Data
+void DeathScreen_Data::reset(void) {
+    black_fade_t = 0.0f;
+    text_fade_t  = 0.0f;
+    phase        = DEATH_SCREEN_PHASE_SLIDE_IN;
+}
+// End DeathScreen_Data
 
 #include "demo_recording.cpp"
