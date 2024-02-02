@@ -3299,6 +3299,11 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         }
 
         if (simulate_frame) {
+            // Avoid total death spiral...
+            if (dt < (1.0f / 24.0f)) {
+                dt = 1.0f/60.0f;
+            }
+
             state->fixed_tickrate_timer += dt * timescale;
 
             while (state->fixed_tickrate_timer >= FIXED_TICKTIME) {

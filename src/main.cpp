@@ -54,9 +54,7 @@ extern "C" {
 enum graphics_device_type {
     GRAPHICS_DEVICE_SOFTWARE = 0,
     GRAPHICS_DEVICE_OPENGL = 1,
-#ifdef _WIN32
     GRAPHICS_DEVICE_D3D11 = 2,
-#endif
     GRAPHICS_DEVICE_NULL = 3,
 };
 s32 last_graphics_device_id = GRAPHICS_DEVICE_NULL;
@@ -587,6 +585,17 @@ bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
         if (preferences->renderer_type == GRAPHICS_DEVICE_NULL) {
             preferences->renderer_type = GRAPHICS_DEVICE_SOFTWARE;
         }
+
+#ifndef _WIN32
+        // Use the other hardware renderer if we're not on windows.
+        // Also side-note, ironically the DirectX11 renderer on windows is
+        // the next best renderer behind the software renderer, even though I've
+        // written more OpenGL. There are some minor graphical issues regarding
+        // asset loadings as of this.
+        if (preferences->renderer_type == GRAPHICS_DEVICE_D3D11) {
+            preferences->renderer_type = GRAPHICS_DEVICE_OPENGL;
+        }
+#endif
     }
     {
         int t = lua_getglobal(L, "controller_vibration");
