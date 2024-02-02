@@ -266,6 +266,9 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
 }
 
 void Entity::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
+    if (!visible)
+        return;
+
     auto r = get_rect();
 
     V2 interpolated_position = V2(
@@ -491,6 +494,9 @@ void Entity::update_firing_behavior(f32 dt) {
 // it couldn't, but it would take time that I would not like to spend to rewrite
 // at least some parts of it as SSE code...
 void Entity::update(Game_State* state, f32 dt) {
+    if (!visible)
+        return;
+
     const auto& play_area = state->gameplay_data.play_area;
 
     update_ghost_trails(dt);
@@ -613,6 +619,9 @@ f32 Player::get_grazing_score_modifier(s32 amount) {
 }
 
 void Player::update(Game_State* state, f32 dt) {
+    if (!visible)
+        return;
+
     const auto& play_area    = state->gameplay_data.play_area;
     const auto& input_packet = state->gameplay_data.current_input_packet;
     auto pet_data            = game_get_pet_data(state->gameplay_data.selected_pet);
@@ -756,6 +765,9 @@ void Bullet::handle_movement(Game_State* state, f32 dt) {
 }
 
 void Bullet::update(Game_State* state, f32 dt) {
+    if (!visible)
+        return;
+
     handle_lifetime(dt);
     handle_movement(state, dt);
 
@@ -777,6 +789,9 @@ void Bullet::reset_movement() {
 // Enemy_Entity
 
 void Enemy_Entity::update(Game_State* state, f32 dt) {
+    if (!visible)
+        return;
+
     const auto& play_area = state->gameplay_data.play_area;
 
     auto rect = get_rect();
@@ -1101,6 +1116,9 @@ void Pickup_Entity::default_behavior_update(Game_State* state, f32 dt) {
 }
 
 void Pickup_Entity::update(Game_State* state, f32 dt) {
+    if (!visible)
+        return;
+
     if (awarded || (!seek_towards_player && lifetime.triggered())) {
         die = true;  
         return;
@@ -1121,6 +1139,9 @@ void Pickup_Entity::update(Game_State* state, f32 dt) {
 }
 
 void Pickup_Entity::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
+    if (!visible)
+        return;
+
     auto  sprite_img = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_border_vignette);
     V2    sprite_image_size = V2(32, 32) * (1 + normalized_sinf(Global_Engine()->global_elapsed_time*1.25 + 1234) * 0.55);
 
@@ -1143,7 +1164,7 @@ void Pickup_Entity::draw(Game_State* const state, struct render_commands* render
             sprite.modulation.r,
             sprite.modulation.g,
             sprite.modulation.b,
-            sprite.modulation.a * 0.45,
+            sprite.modulation.a * 0.45
         ),
         V2(0, 0),
         0,
@@ -1158,6 +1179,9 @@ void Pickup_Entity::draw(Game_State* const state, struct render_commands* render
 }
 
 void Pickup_Entity::on_picked_up(Game_State* state) {
+    if (!visible)
+        return;
+
     if (awarded || die)
         return;
 

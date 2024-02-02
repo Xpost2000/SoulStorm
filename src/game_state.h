@@ -611,6 +611,30 @@ struct DeathScreen_Data {
     void reset(void);
 };
 
+/*
+  NOTE:
+  2/1/2024,
+
+  Better animation tooling would take much more time, and coding animations
+  like this is relatively comfortable to be honest in C++ since everything
+  is pretty easy to reason about.
+
+  Although I admit I should utilize methods more to separate stuff, as a solo
+  person I find it easier for me to personally to go through big functions demarked
+  with something like #region.
+
+  If there were someone else with me, I would most definitely not do this lol.
+*/
+enum DeathAnimation_Phase {
+    DEATH_ANIMATION_PHASE_INACTIVE = 0,
+    DEATH_ANIMATION_PHASE_ACTIVE   = 1,
+};
+struct DeathAnimation_Data {
+    // sprout 5 times outward (kinda like megaman!)
+    u8 phase = DEATH_ANIMATION_PHASE_INACTIVE;
+    Particle_Emitter player_explosion_emitter;
+};
+
 struct Game_State {
     s32 screen_mode      = GAME_SCREEN_DEFAULT_MODE;
     s32 last_screen_mode = GAME_SCREEN_DEFAULT_MODE;
@@ -619,6 +643,8 @@ struct Game_State {
     s32 last_completion_state = -1;
 
     Controller_LED_State led_state;
+
+    DeathAnimation_Data deathanimation_data;
 
     DeathScreen_Data deathscreen_data;
     Gameplay_Data    gameplay_data;

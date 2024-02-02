@@ -117,6 +117,7 @@ struct Entity {
 
     // NOTE: this should become a bit field in the future.
     //like... now.
+    bool  visible                         = true;  // this flag is used precisely (once!)
     bool  die                             = false; // force dead flag
 
     // TODO: allow flashing color adjustment
