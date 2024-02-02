@@ -120,8 +120,8 @@ void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
                         V2_direction_from_degree(random_ranged_float(prng, angle_range.x, angle_range.y));
                     p->velocity     =
                         direction * (velocity.x + random_ranged_float(prng, velocity_x_variance.x, velocity_x_variance.y));
-                    p->velocity     =
-                        direction * (velocity.y + random_ranged_float(prng, acceleration_y_variance.x, acceleration_y_variance.y));
+                    p->acceleration     =
+                        direction * (acceleration.x + random_ranged_float(prng, acceleration_y_variance.x, acceleration_y_variance.y));
                 } else {
                     p->velocity     =
                         velocity + V2(
