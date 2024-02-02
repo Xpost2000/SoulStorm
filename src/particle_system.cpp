@@ -141,6 +141,14 @@ void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
                 p->use_attraction_point = use_attraction_point;
                 p->attraction_point = attraction_point;
                 p->attraction_force = attraction_force;
+
+                if (use_color_fade) {
+                    p->target_modulation = target_modulation;
+                } else {
+                    p->target_modulation = modulation;
+                }
+
+                p->flame_mode = flame_mode;
             }
         }
 
@@ -190,6 +198,13 @@ void Particle_Pool::draw(struct render_commands* commands, Game_Resources* resou
 
         color32f32 modulation = particle.modulation;
         f32 effective_t = clamp<f32>(particle.lifetime/particle.lifetime_max, 0.0f, 1.0f);
+
+        {
+            modulation.r = lerp_f32(modulation.r, particle.target_modulation.r, 1.0f - effective_t);
+            modulation.g = lerp_f32(modulation.g, particle.target_modulation.g, 1.0f - effective_t);
+            modulation.b = lerp_f32(modulation.b, particle.target_modulation.b, 1.0f - effective_t);
+        }
+
         modulation.a *= effective_t;
 
         auto sprite_object = graphics_get_sprite_by_id(&resources->graphics_assets, particle.sprite.id);
@@ -203,15 +218,36 @@ void Particle_Pool::draw(struct render_commands* commands, Game_Resources* resou
             particle.position.y - particle.scale/2 + (particle.sprite.offset.y - sprite_image_size.y/2)
         );
 
-        render_commands_push_image(
-            commands,
-            sprite_img,
-            rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-            sprite_frame->source_rect,
-            modulation,
-            0,
-            particle.blend_mode
-        );
+        if (particle.flame_mode) {
+            render_commands_push_image(
+                commands,
+                sprite_img,
+                rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+                sprite_frame->source_rect,
+                modulation,
+                0,
+                BLEND_MODE_ALPHA
+            );
+            render_commands_push_image(
+                commands,
+                sprite_img,
+                rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+                sprite_frame->source_rect,
+                modulation,
+                0,
+                BLEND_MODE_ADDITIVE
+            );
+        } else {
+            render_commands_push_image(
+                commands,
+                sprite_img,
+                rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+                sprite_frame->source_rect,
+                modulation,
+                0,
+                particle.blend_mode
+            );
+        }
     }
 }
 

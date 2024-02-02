@@ -1083,9 +1083,10 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 emitter.sprite                  = sprite_instance(resources->circle_sprite);
                 emitter.sprite.scale            = V2(0.250, 0.250);
                 emitter.shape                   = particle_emit_shape_circle(position, radius, false);
-                emitter.modulation              = color32f32(249/255.0f, 180/255.0f, 45.0f/255.0f, 1.0f);
-                emitter.lifetime                = 1.00f;
-                emitter.scale_variance          = V2(-0.055, 0.055);
+                emitter.modulation              = color32f32(222.0f/255.0f, 180.0f/255.0f, 45.0f/255.0f, 1.0f);
+                emitter.target_modulation       = color32f32(59/255.0f, 59/255.0f, 56/255.0f, 127/255.0f);
+                emitter.lifetime                = 0.75f;
+                emitter.scale_variance          = V2(-0.15, 0.0f);
                 emitter.angle_range             = V2(-360, 360);
                 emitter.velocity                = V2(40.0f);
                 emitter.velocity_x_variance     = V2(15, 15);
@@ -1093,11 +1094,13 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 emitter.lifetime_variance       = V2(-0.25f, 0.2f);
                 emitter.emission_max_timer      = 0.035f;
                 emitter.max_emissions           = 1;
-                emitter.emit_per_emission       = 256;
+                emitter.emit_per_emission       = 512;
+                emitter.use_color_fade          = true;
                 emitter.use_angular             = true;
+                emitter.flame_mode              = true;
                 emitter.active                  = true;
                 emitter.scale                   = 1;
-                emitter.blend_mode              = BLEND_MODE_ADDITIVE;
+                emitter.blend_mode              = BLEND_MODE_ALPHA;
             }
 
             // inner
@@ -1174,7 +1177,7 @@ void Explosion_Hazard::draw(Game_State* const state, struct render_commands* ren
                                    graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
                                    rectangle_f32(position.x - radius, position.y - radius, radius*2, radius*2),
                                    RECTANGLE_F32_NULL,
-                                   color32f32(0, 0, 0, 1),
+                                   color32f32(0, 0, 0, 0.5f),
                                    0,
                                    BLEND_MODE_ALPHA);
 
@@ -1190,9 +1193,9 @@ void Explosion_Hazard::draw(Game_State* const state, struct render_commands* ren
     } else {
         if (warning.presenting_flash) {
             render_commands_push_text(render_commands,
-                                      resources->get_font(MENU_FONT_COLOR_GOLD),
+                                      resources->get_font(MENU_FONT_COLOR_BLOODRED),
                                       2, position,
-                                      string_literal("!!"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+                                      string_literal("!!!!"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
         }
     }
 }

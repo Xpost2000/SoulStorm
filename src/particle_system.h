@@ -12,11 +12,14 @@ struct Particle {
     V2 velocity;
     V2 acceleration;
     u32 blend_mode = BLEND_MODE_ALPHA;
+    bool flame_mode = false;
 
     f32 scale;
     f32 lifetime, lifetime_max;
     Sprite_Instance sprite;
+
     color32f32 modulation;
+    color32f32 target_modulation;
 
     bool use_attraction_point;
     V2 attraction_point;
@@ -78,6 +81,9 @@ struct Particle_Emitter {
     V2              acceleration = V2(0,0);
     color32f32      modulation = color32f32(1, 1, 1, 1);
 
+    // only if use_color_fade is on.
+    color32f32      target_modulation = color32f32(1, 1, 1, 1);
+
     V2 scale_variance          = V2(0,0); // particles are going to be "square/quads" only.
     V2 velocity_x_variance     = V2(0,0);
     V2 velocity_y_variance     = V2(0,0);
@@ -91,9 +97,14 @@ struct Particle_Emitter {
     V2 angle_range             = V2(0,0);
     V2 attraction_point;
 
+    // NOTE: need to refer back to legends-jrpg for a more robust particle
+    // system since I liked some of the stuff I did there,
+    bool use_color_fade       = false;
     bool use_attraction_point = false;
     bool use_angular          = false;
+    bool flame_mode           = false;
     bool active = false;
+
     u32 blend_mode = BLEND_MODE_ALPHA;
 
     f32 attraction_force;
