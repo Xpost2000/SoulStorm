@@ -1094,7 +1094,7 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 emitter.lifetime_variance       = V2(-0.25f, 0.2f);
                 emitter.emission_max_timer      = 0.035f;
                 emitter.max_emissions           = 1;
-                emitter.emit_per_emission       = 512;
+                emitter.emit_per_emission       = 256;
                 emitter.use_color_fade          = true;
                 emitter.use_angular             = true;
                 emitter.flame_mode              = true;
@@ -1111,7 +1111,8 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 emitter.sprite.scale            = V2(0.185/2, 0.185/2);
                 emitter.shape                   = particle_emit_shape_point(position);
                 emitter.modulation              = color32f32(108/255.0f, 122/255.0f, 137/255.0f, 1.0f);
-                emitter.lifetime                = 1.56;
+                emitter.target_modulation       = color32f32(59/255.0f, 59/255.0f, 56/255.0f, 127/255.0f);
+                emitter.lifetime                = 1.25;
                 emitter.scale_variance          = V2(-0.055, 0.055);
                 emitter.angle_range             = V2(-360, 360);
                 emitter.velocity                = V2(40.0f);
@@ -1120,8 +1121,10 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 emitter.lifetime_variance       = V2(-0.25f, 0.2f);
                 emitter.emission_max_timer      = 0.035f;
                 emitter.max_emissions           = 1;
-                emitter.emit_per_emission       = 128;
+                emitter.emit_per_emission       = 256;
                 emitter.use_angular             = true;
+                emitter.use_color_fade          = true;
+                emitter.flame_mode              = true;
                 emitter.active                  = true;
                 emitter.scale                   = 1;
                 emitter.blend_mode              = BLEND_MODE_ALPHA;
@@ -1132,7 +1135,7 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 auto& emitter = dust_emitter;
                 emitter.reset();
                 emitter.sprite                  = sprite_instance(resources->circle_sprite);
-                emitter.sprite.scale            = V2(0.125/4, 0.125/4);
+                emitter.sprite.scale            = V2(0.125/3, 0.125/3);
                 emitter.shape                   = particle_emit_shape_circle(position, radius, true);
                 emitter.modulation              = color32f32(108/255.0f, 122/255.0f, 137/255.0f, 1.0f);
                 emitter.lifetime                = 2.0f;
@@ -1144,7 +1147,7 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 emitter.lifetime_variance       = V2(-0.25f, 0.2f);
                 emitter.emission_max_timer      = 0.035f;
                 emitter.max_emissions           = 1;
-                emitter.emit_per_emission       = 128;
+                emitter.emit_per_emission       = 256;
                 emitter.use_angular             = true;
                 emitter.active                  = true;
                 emitter.scale                   = 1;
