@@ -16,13 +16,13 @@
 #include "game_task_scheduler.h"
 #include "game_ui.h"
 
-#define MAX_PICKUP_ENTITIES     (10000)
-#define MAX_BULLETS             (3000)
-#define MAX_SCORE_NOTIFICATIONS (5000)
+#define MAX_PICKUP_ENTITIES     (8000)
+#define MAX_BULLETS             (3500)
+#define MAX_SCORE_NOTIFICATIONS (2500)
 #define MAX_ENEMIES             (128)
 #define MAX_EXPLOSION_HAZARDS   (32)
 #define MAX_LASER_HAZARDS       (32)
-#define MAX_SCRIPTABLE_RENDER_OBJECTS (1000)
+#define MAX_SCRIPTABLE_RENDER_OBJECTS (512)
 #define MAX_TRACKED_SCRIPT_LOADABLE_IMAGES (64)
 #define MAX_TRACKED_SCRIPT_LOADABLE_SOUNDS (64)
 

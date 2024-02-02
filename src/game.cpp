@@ -897,7 +897,7 @@ void Game::init(Graphics_Driver* driver) {
         state->prng_unessential        = random_state();
         state->main_camera             = camera(V2(0, 0), 1.0);
         state->main_camera.rng         = &state->prng;
-        state->particle_pool.init(arena, 8192);
+        state->particle_pool.init(arena, 2048);
         state->death_particle_pool.init(arena, 512);
 
         // creation queues
