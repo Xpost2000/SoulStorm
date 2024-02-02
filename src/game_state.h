@@ -634,7 +634,7 @@ enum DeathAnimation_Phase {
 };
 
 #define DEATH_ANIMATION_MAX_T_PER_FLASH (0.15)
-#define DEATH_ANIMATION_LINGER_MAX_T    (2.25f)
+#define DEATH_ANIMATION_LINGER_MAX_T    (2.00f)
 #define DEATH_ANIMATION_FLASH_AMOUNT    (5)
 struct DeathAnimation_Data {
     // sprout 5 times outward (kinda like megaman!)

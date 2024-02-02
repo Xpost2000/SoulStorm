@@ -679,8 +679,8 @@ void Player::update(Game_State* state, f32 dt) {
         emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_SPARKLING_STAR]);
 
         auto r = get_rect();
-        f32 left   = r.x;
-        f32 bottom = r.y + r.h;
+        f32 left   = position.x - 5;
+        f32 bottom = position.y + 34;
 
         emitter.scale  = 1.0f;
         emitter.emit_per_emission = 8;
@@ -691,7 +691,7 @@ void Player::update(Game_State* state, f32 dt) {
         emitter.acceleration_y_variance = V2(0, 20);
         emitter.lifetime_variance   = V2(-0.1f, 0.7f);
         emitter.emission_max_timer = 0.045f;
-        emitter.shape = particle_emit_shape_line(V2(left, bottom), V2(left + r.w*1.5f, bottom));
+        emitter.shape = particle_emit_shape_line(V2(left, bottom), V2(left + r.w*2, bottom));
     }
 
     // Sprite animation
