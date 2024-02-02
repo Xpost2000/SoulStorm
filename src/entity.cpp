@@ -274,7 +274,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
     V2 interpolated_position = V2(
         lerp_f32(last_position.x, position.x, state->gameplay_data.fixed_tickrate_remainder),
         lerp_f32(last_position.y, position.y, state->gameplay_data.fixed_tickrate_remainder)
-    );
+    ) + relative_position;
 
     r.x = interpolated_position.x - scale.x;
     r.y = interpolated_position.y - scale.y;
@@ -378,7 +378,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         // center point
         render_commands_push_quad(
             render_commands,
-            rectangle_f32(position.x - 1, position.y-1, 2, 2),
+            rectangle_f32(position.x+relative_position.x - 1, position.y+relative_position.y-1, 2, 2),
             color32u8(255, 0, 0, 255),
             BLEND_MODE_ALPHA
         );
@@ -407,7 +407,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
 
         render_commands_push_quad(
             render_commands,
-            rectangle_f32(position.x - 1, position.y-1, 2, 2),
+            rectangle_f32(position.x+relative_position.x - 1, position.y+relative_position.y-1, 2, 2),
             color32u8(255, 0, 0, 255),
             BLEND_MODE_ALPHA
         );
