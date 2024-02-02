@@ -562,19 +562,19 @@ void Cosmetic_Pet::update(Game_State* state, f32 dt) {
      *
      */
     {
-        f32 radius_hover = 75;
+        f32 radius_hover = 79;
 
         V2 player_position   = player.get_real_position();
         V2 target_position   = V2(player_position.x - radius_hover, player_position.y);
 
-        if (player_position.x <= play_area.width/2) {
+        if (player_position.x <= (play_area.width/2) * 0.75) {
             target_position   = V2(player_position.x + radius_hover, player_position.y);
         }
 
         V2 direction_towards = V2_direction(position, target_position);
         f32 distance         = V2_distance_sq(target_position, position);
 
-        f32 max_move_mag = 55;
+        f32 max_move_mag = 120;
         f32 percent      = clamp<f32>(fabs(distance-radius_hover) / radius_hover, 0.0f, 1.0f);
         // make this look a little nicer.
         velocity = direction_towards * max_move_mag * percent;
