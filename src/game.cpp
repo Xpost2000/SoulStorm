@@ -2777,7 +2777,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
 
 void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     auto state = &this->state->gameplay_data;
-
+    f32 dt = update_packet_data->dt;
     bool in_conversation = this->state->dialogue_state.in_conversation;
 
     // conversations are not recorded into playback. This is fine. I hope.
@@ -2800,7 +2800,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
         }
     }
 
-    this->state->coroutine_tasks.schedule_by_type(this->state, FIXED_TICKTIME, GAME_TASK_SOURCE_GAME_FIXED);
+    this->state->coroutine_tasks.schedule_by_type(this->state, dt, GAME_TASK_SOURCE_GAME_FIXED);
     if (!in_conversation) {
 #if 1
         Thread_Pool::add_job(
@@ -2934,27 +2934,26 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
         {
             for (s32 particle_emitter_index = 0; particle_emitter_index < state->particle_emitters.size; ++particle_emitter_index) {
                 auto& particle_emitter = state->particle_emitters[particle_emitter_index];
-                particle_emitter.update(&state->particle_pool, &state->prng, FIXED_TICKTIME);
+                particle_emitter.update(&state->particle_pool, &state->prng, dt);
 
                 if (!particle_emitter.active) {
                     state->particle_emitters.pop_and_swap(particle_emitter_index);
                 }
             }
 
-            state->particle_pool.update(this->state, FIXED_TICKTIME);
+            state->particle_pool.update(this->state, dt);
         }
 
-        handle_all_explosions(FIXED_TICKTIME);
-        handle_all_lasers(FIXED_TICKTIME);
-        handle_player_pickup_collisions(FIXED_TICKTIME);
-        handle_player_enemy_collisions(FIXED_TICKTIME);
-        handle_all_bullet_collisions(FIXED_TICKTIME);
-        handle_bomb_usage(FIXED_TICKTIME);
-        handle_all_dead_entities(FIXED_TICKTIME);
+        handle_all_explosions(dt);
+        handle_all_lasers(dt);
+        handle_player_pickup_collisions(dt);
+        handle_player_enemy_collisions(dt);
+        handle_all_bullet_collisions(dt);
+        handle_bomb_usage(dt);
+        handle_all_dead_entities(dt);
         state->reify_all_creation_queues();
 
-
-        camera_update(&state->main_camera, FIXED_TICKTIME);
+        camera_update(&state->main_camera, dt);
     }
 }
 
