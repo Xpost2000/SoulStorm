@@ -561,21 +561,20 @@ void Cosmetic_Pet::update(Game_State* state, f32 dt) {
      * the player is. This might ship tbh, since making this look nicer is a lot of work.
      *
      */
+    f32 radius_hover = 85;
+
+    V2 player_position   = player.get_real_position();
+    V2 target_position   = V2(player_position.x - radius_hover, player_position.y);
     {
-        f32 radius_hover = 79;
-
-        V2 player_position   = player.get_real_position();
-        V2 target_position   = V2(player_position.x - radius_hover, player_position.y);
-
-        if (player_position.x <= (play_area.width/2) * 0.75) {
+        if (player_position.x <= (play_area.width/2) * 0.72) {
             target_position   = V2(player_position.x + radius_hover, player_position.y);
         }
 
         V2 direction_towards = V2_direction(position, target_position);
         f32 distance         = V2_distance_sq(target_position, position);
 
-        f32 max_move_mag = 120;
         f32 percent      = clamp<f32>(fabs(distance-radius_hover) / radius_hover, 0.0f, 1.0f);
+        f32 max_move_mag = 125 + ((percent*percent) * 47);
         // make this look a little nicer.
         velocity = direction_towards * max_move_mag * percent;
     }
@@ -601,9 +600,74 @@ void Cosmetic_Pet::update(Game_State* state, f32 dt) {
         emitter.emission_max_timer = 0.045f;
         emitter.shape = particle_emit_shape_line(V2(left, bottom), V2(left + r.w*2.5, bottom));
     }
-    sprite.offset.y = sinf(t_since_spawn * 0.795) * 10.5 + 5;
+    {
+        {
+            const f32 MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING                    = 0.360f;
+            const f32 MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING = 0.12f;
+            const f32 MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING           = MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING + MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING;
+            const f32 MAX_ANGLE_LEAN                                           = 40.5f;
+            V2        direction_towards                                        = V2_direction(position, target_position);
+            f32       horizontal_axis_magnitude                                = fabs(direction_towards.x);
+            s32 sign = sign_f32(direction_towards.x);
 
+            // angle
+            {
+                const f32 effective_t = clamp<f32>(sprite.angle_offset / (MAX_ANGLE_LEAN*0.90), 0.0f, 1.0f);
+                f32 decay_factor = lerp_f32(0.020f, 0.170f, effective_t);
+                sprite.angle_offset *= pow(decay_factor, dt);
+            }
+
+            if (horizontal_axis_magnitude >= MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING) {
+                if (horizontal_axis_magnitude >= (MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING)) {
+                    sprite.angle_offset = ((horizontal_axis_magnitude - MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING) * sign) * MAX_ANGLE_LEAN;
+                }
+            }
+        }
+    }
+    sprite.offset.y = sinf(t_since_spawn * 0.795) * 13.5 + 5;
+
+    const auto& input_packet = state->gameplay_data.current_input_packet;
     Entity::update(state, dt); 
+
+    bool firing   = input_packet.actions & BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT);
+#if 1
+    // not sure if pets should attack as well...
+    firing = false;
+#endif
+    switch (id) {
+        case GAME_PET_ID_CAT: {
+            firing_cooldown = DEFAULT_FIRING_COOLDOWN;
+
+            if (firing) {
+                // okay these are normal real bullets
+                if (attack()) {
+                    auto resources = state->resources;
+
+                    state->set_led_target_color_anim(
+                        color32u8(255, 0, 0, 255),
+                        DEFAULT_FIRING_COOLDOWN/4,
+                        false,
+                        true
+                    );
+                    Audio::play(
+                        resources->random_attack_sound(
+                            &state->gameplay_data.prng
+                        )
+                    );
+                    spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 1000.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_DISK);
+                } else {
+                }
+            } else {
+                stop_attack();
+            }
+        } break;
+        case GAME_PET_ID_DOG: {
+            
+        } break;
+        case GAME_PET_ID_FISH: {
+
+        } break;
+    }
 }
 
 void Cosmetic_Pet::set_id(s32 id, Game_Resources* resources) {
