@@ -1066,12 +1066,87 @@ Explosion_Hazard::Explosion_Hazard(V2 position, f32 radius, f32 amount_of_time_f
 }
 
 void Explosion_Hazard::update(Game_State* state, f32 dt) {
+    auto resources = state->resources;
+
     if (warning.finished_presenting()) {
         explosion_timer.start();
 
         if (explosion_timer.triggered()) {
             // a big bang!
             exploded = true;
+
+            // Spawn explosion particles here
+            // explosion heat ring
+            {
+                auto& emitter = outer_ring_emitter;
+                emitter.reset();
+                emitter.sprite                  = sprite_instance(resources->circle_sprite);
+                emitter.sprite.scale            = V2(0.250, 0.250);
+                emitter.shape                   = particle_emit_shape_circle(position, radius, false);
+                emitter.modulation              = color32f32(249/255.0f, 180/255.0f, 45.0f/255.0f, 1.0f);
+                emitter.lifetime                = 1.00f;
+                emitter.scale_variance          = V2(-0.055, 0.055);
+                emitter.angle_range             = V2(-360, 360);
+                emitter.velocity                = V2(40.0f);
+                emitter.velocity_x_variance     = V2(15, 15);
+                emitter.acceleration_x_variance = V2(0, 20);
+                emitter.lifetime_variance       = V2(-0.25f, 0.2f);
+                emitter.emission_max_timer      = 0.035f;
+                emitter.max_emissions           = 1;
+                emitter.emit_per_emission       = 256;
+                emitter.use_angular             = true;
+                emitter.active                  = true;
+                emitter.scale                   = 1;
+                emitter.blend_mode              = BLEND_MODE_ADDITIVE;
+            }
+
+            // inner
+            {
+                auto& emitter = inner_emitter;
+                emitter.reset();
+                emitter.sprite                  = sprite_instance(resources->circle_sprite);
+                emitter.sprite.scale            = V2(0.185/2, 0.185/2);
+                emitter.shape                   = particle_emit_shape_point(position);
+                emitter.modulation              = color32f32(108/255.0f, 122/255.0f, 137/255.0f, 1.0f);
+                emitter.lifetime                = 1.56;
+                emitter.scale_variance          = V2(-0.055, 0.055);
+                emitter.angle_range             = V2(-360, 360);
+                emitter.velocity                = V2(40.0f);
+                emitter.velocity_x_variance     = V2(25, 45);
+                emitter.acceleration_x_variance = V2(0, 20);
+                emitter.lifetime_variance       = V2(-0.25f, 0.2f);
+                emitter.emission_max_timer      = 0.035f;
+                emitter.max_emissions           = 1;
+                emitter.emit_per_emission       = 128;
+                emitter.use_angular             = true;
+                emitter.active                  = true;
+                emitter.scale                   = 1;
+                emitter.blend_mode              = BLEND_MODE_ALPHA;
+            }
+
+            //gray
+            {
+                auto& emitter = dust_emitter;
+                emitter.reset();
+                emitter.sprite                  = sprite_instance(resources->circle_sprite);
+                emitter.sprite.scale            = V2(0.125/4, 0.125/4);
+                emitter.shape                   = particle_emit_shape_circle(position, radius, true);
+                emitter.modulation              = color32f32(108/255.0f, 122/255.0f, 137/255.0f, 1.0f);
+                emitter.lifetime                = 2.0f;
+                emitter.scale_variance          = V2(-0.055, 0.055);
+                emitter.angle_range             = V2(-360, 360);
+                emitter.velocity                = V2(40.0f);
+                emitter.velocity_x_variance     = V2(15, 15);
+                emitter.acceleration_x_variance = V2(0, 20);
+                emitter.lifetime_variance       = V2(-0.25f, 0.2f);
+                emitter.emission_max_timer      = 0.035f;
+                emitter.max_emissions           = 1;
+                emitter.emit_per_emission       = 128;
+                emitter.use_angular             = true;
+                emitter.active                  = true;
+                emitter.scale                   = 1;
+                emitter.blend_mode              = BLEND_MODE_ADDITIVE;
+            }
         }
     } else {
         on_presenting_flash_events = false;
@@ -1085,6 +1160,10 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
 
     warning.update(dt);
     explosion_timer.update(dt);
+
+    inner_emitter.update(&state->gameplay_data.particle_pool, &state->gameplay_data.prng_unessential, dt);
+    outer_ring_emitter.update(&state->gameplay_data.particle_pool, &state->gameplay_data.prng_unessential, dt);
+    dust_emitter.update(&state->gameplay_data.particle_pool, &state->gameplay_data.prng_unessential, dt);
 }
 
 void Explosion_Hazard::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {

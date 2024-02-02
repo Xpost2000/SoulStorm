@@ -248,15 +248,18 @@ struct Explosion_Hazard {
     Explosion_Hazard(V2 position, f32 radius, f32 amount_of_time_for_warning, f32 time_until_explosion);
     Explosion_Hazard();
 
+    Particle_Emitter outer_ring_emitter;
+    Particle_Emitter inner_emitter;
+    Particle_Emitter dust_emitter;
+
     V2  position;
     f32 radius;
 
     Hazard_Warning warning;
-    bool on_presenting_flash_events;
-
     Timer explosion_timer;
 
     bool exploded = false;
+    bool on_presenting_flash_events;
 
     void update(Game_State* state, f32 dt);
     void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
