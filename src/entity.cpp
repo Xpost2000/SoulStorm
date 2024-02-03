@@ -1147,7 +1147,7 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 emitter.lifetime_variance       = V2(-0.25f, 0.2f);
                 emitter.emission_max_timer      = 0.035f;
                 emitter.max_emissions           = 1;
-                emitter.emit_per_emission       = 256;
+                emitter.emit_per_emission       = 128;
                 emitter.use_angular             = true;
                 emitter.active                  = true;
                 emitter.scale                   = 1;
@@ -1238,6 +1238,9 @@ bool Laser_Hazard::ready() {
 }
 
 void Laser_Hazard::update(Game_State* state, f32 dt) {
+    const auto& play_area = state->gameplay_data.play_area;
+    auto        rectangle = get_rect(&play_area);
+
     if (warning.finished_presenting()) {
         lifetime.start();
         // default update
@@ -1247,6 +1250,48 @@ void Laser_Hazard::update(Game_State* state, f32 dt) {
             // live until killed by something else
         } else {
             lifetime.update(dt);
+            
+            {
+                auto& emitter = outer_ring_emitter;
+                emitter.sprite                  = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
+                emitter.sprite.scale            = V2(0.65f);
+                emitter.shape                   = particle_emit_shape_quad(V2(rectangle.x + rectangle.w/2, rectangle.y + rectangle.h/2), V2(rectangle.w/2, rectangle.h/2), true);
+                emitter.modulation              = color32f32(1, 1, 1, 1);
+                emitter.lifetime                = 1.27f;
+                emitter.scale_variance          = V2(-0.25, 0.25f);
+                emitter.lifetime_variance       = V2(-0.25f, 0.2f);
+                emitter.emission_max_timer      = 0.030f;
+                emitter.max_emissions           = -1;
+                emitter.emit_per_emission       = 48;
+                // emitter.flame_mode              = true;
+                emitter.active                  = true;
+                emitter.scale                   = 1;
+                emitter.blend_mode              = BLEND_MODE_ADDITIVE;
+            }
+
+            // //gray
+            {
+                auto& emitter = dust_emitter;
+                emitter.reset();
+                emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
+                emitter.sprite.scale            = V2(0.125f, 0.125);
+                emitter.shape                   = particle_emit_shape_quad(V2(rectangle.x + rectangle.w/2, rectangle.y + rectangle.h/2), V2(rectangle.w/2, rectangle.h/2), true);
+                emitter.modulation              = color32f32(108/255.0f, 122/255.0f, 137/255.0f, 1.0f);
+                emitter.lifetime                = 2.0f;
+                emitter.scale_variance          = V2(-0.055, 0.085);
+                emitter.angle_range             = V2(-360, 360);
+                emitter.velocity                = V2(40.0f);
+                emitter.velocity_x_variance     = V2(15, 35);
+                emitter.acceleration_x_variance = V2(0, 20);
+                emitter.lifetime_variance       = V2(-0.25f, 0.2f);
+                emitter.emission_max_timer      = 0.030f;
+                emitter.max_emissions           = -1;
+                emitter.emit_per_emission       = 8;
+                emitter.use_angular             = true;
+                emitter.active                  = true;
+                emitter.scale                   = 1;
+                emitter.blend_mode              = BLEND_MODE_ADDITIVE;
+            }
 
             if (lifetime.triggered()) {
                 die = true;
@@ -1261,6 +1306,8 @@ void Laser_Hazard::update(Game_State* state, f32 dt) {
         }
     }
 
+    dust_emitter.update(&state->gameplay_data.particle_pool, &state->gameplay_data.prng_unessential, dt);
+    outer_ring_emitter.update(&state->gameplay_data.particle_pool, &state->gameplay_data.prng_unessential, dt);
     warning.update(dt);
 }
 

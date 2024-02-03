@@ -211,9 +211,6 @@ struct Enemy_Entity : public Entity {
 
     void update(Game_State* state, f32 dt);
 
-    // NOTE: I would like to multithread the bullets and particles and entity movements
-    //       however for specifically entities that fire things, this is not possible
-    //       to multithread because Fixed_Array is not thread_safe (and also it would defeat the purpose of threading in this architecture.)
     void try_and_fire(Game_State* state, f32 dt);
     void reset_movement();
 };
@@ -232,6 +229,7 @@ struct Hazard_Warning {
 };
 
 /* Hazard types */
+// TODO: hazard types should have color settings cause bullet hells love flashiness!
 //
 // While technically "entities" per say, they're not
 // really meant to be big objects like regular entities,
@@ -273,6 +271,9 @@ enum Laser_Hazard_Direction {
 struct Laser_Hazard {
     Laser_Hazard(float position, float radius, int direction, float amount_of_time_for_warning, float how_long_to_live);
     Laser_Hazard();
+
+    Particle_Emitter outer_ring_emitter;
+    Particle_Emitter dust_emitter;
 
     float radius    = 0.0f;
     float position  = 0.0f;
