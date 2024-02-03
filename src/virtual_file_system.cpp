@@ -160,3 +160,11 @@ int _lua_bind_engine_dofile(lua_State* L) {
 void bind_vfs_lualib(lua_State* L) {
     lua_register(L, "engine_dofile", _lua_bind_engine_dofile);
 }
+
+s32 vfs_lua_dofile(lua_State* L, const char* lua_filename) {
+    auto scripttext = VFS_read_entire_file(heap_allocator(), string_from_cstring((char*)lua_filename));
+    s32 error = (luaL_dostring(L, (const char*)scripttext.buffer));
+    _debugprintf("Text Buffer: scripttext.buffer:\n%s", scripttext.buffer);
+    file_buffer_free(&scripttext);
+    return error;
+}

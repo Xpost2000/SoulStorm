@@ -44,5 +44,6 @@ struct file_buffer VFS_read_entire_file(IAllocator allocator, string path, bool 
 
 struct lua_State;
 void bind_vfs_lualib(lua_State* L);
+s32  vfs_lua_dofile(lua_State* L, const char* lua_filename);
 
 #endif
