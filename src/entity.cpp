@@ -1262,7 +1262,7 @@ void Laser_Hazard::update(Game_State* state, f32 dt) {
                 emitter.lifetime_variance       = V2(-0.25f, 0.2f);
                 emitter.emission_max_timer      = 0.030f;
                 emitter.max_emissions           = -1;
-                emitter.emit_per_emission       = 48;
+                emitter.emit_per_emission       = 16;
                 // emitter.flame_mode              = true;
                 emitter.active                  = true;
                 emitter.scale                   = 1;
@@ -1274,7 +1274,7 @@ void Laser_Hazard::update(Game_State* state, f32 dt) {
                 auto& emitter = dust_emitter;
                 emitter.reset();
                 emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
-                emitter.sprite.scale            = V2(0.125f, 0.125);
+                emitter.sprite.scale            = V2(0.255f, 0.255);
                 emitter.shape                   = particle_emit_shape_quad(V2(rectangle.x + rectangle.w/2, rectangle.y + rectangle.h/2), V2(rectangle.w/2, rectangle.h/2), true);
                 emitter.modulation              = color32f32(108/255.0f, 122/255.0f, 137/255.0f, 1.0f);
                 emitter.lifetime                = 2.0f;
@@ -1284,9 +1284,9 @@ void Laser_Hazard::update(Game_State* state, f32 dt) {
                 emitter.velocity_x_variance     = V2(15, 35);
                 emitter.acceleration_x_variance = V2(0, 20);
                 emitter.lifetime_variance       = V2(-0.25f, 0.2f);
-                emitter.emission_max_timer      = 0.030f;
+                emitter.emission_max_timer      = 0.055f;
                 emitter.max_emissions           = -1;
-                emitter.emit_per_emission       = 8;
+                emitter.emit_per_emission       = 4;
                 emitter.use_angular             = true;
                 emitter.active                  = true;
                 emitter.scale                   = 1;
