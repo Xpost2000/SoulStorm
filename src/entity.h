@@ -73,6 +73,56 @@ struct Position_Trail_Ghost {
 
 #define ENTITY_MAX_PARTICLE_EMITTERS (4)
 
+#define MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING                    (0.360f)
+#define MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING (0.12f)
+#define DEFAULT_DECAY_FACTOR_MIN                                 (0.020f)
+#define DEFAULT_DECAY_FACTOR_MAX                                 (0.170f)
+
+// NOTE: I wish C++ had C99 designated initializers...
+// I'll use the builder pattern to copy it for now...
+struct Entity_Rotation_Lean_Params {
+    Entity_Rotation_Lean_Params(f32 max_angle_lean) :
+        max_angle_lean(max_angle_lean)
+    {
+    }
+
+    f32 minimum_magnitude_to_consider_leaning                     = MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING;
+    f32 minimum_additional_magnitude_to_consider_rotation_leaning = MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING;
+    f32 max_angle_lean                                            = 0.0f;
+    f32 decay_factor_min                                          = DEFAULT_DECAY_FACTOR_MIN;
+    f32 decay_factor_max                                          = DEFAULT_DECAY_FACTOR_MAX;
+
+    Entity_Rotation_Lean_Params& update_minimum_magnitude_to_lean(f32 x) {
+        this->minimum_magnitude_to_consider_leaning = x;
+        return *this;
+    }
+
+    Entity_Rotation_Lean_Params& update_minimum_additional_magnitude_to_lean(f32 x) {
+        this->minimum_additional_magnitude_to_consider_rotation_leaning = x;
+        return *this;
+    }
+
+    Entity_Rotation_Lean_Params& update_max_angle_lean(f32 x) {
+        this->max_angle_lean = x;
+        return *this;
+    }
+
+    Entity_Rotation_Lean_Params& update_decay_factor_min(f32 x) {
+        this->decay_factor_min = x;
+        return *this;
+    }
+
+    Entity_Rotation_Lean_Params& update_decay_factor_max(f32 x) {
+        this->decay_factor_max = x;
+        return *this;
+    }
+};
+enum Rotation_Lean_Influence_Direction {
+    ROTATION_LEAN_INFLUENCE_DIRECTION_NOT_ROTATING,
+    ROTATION_LEAN_INFLUENCE_DIRECTION_LEFT,
+    ROTATION_LEAN_INFLUENCE_DIRECTION_RIGHT,
+};
+
 // Need to start removing some redundant fields or fields
 // that some smaller entities don't really need.
 // since I inherit from this for shared behavior regarding kinematics,
@@ -193,6 +243,8 @@ protected:
 
     void handle_play_area_edge_behavior(const Play_Area& play_area);
 
+    // returns the leaned direction.
+    s32  update_sprite_leaning_influence(f32 dt, V2 axes, Entity_Rotation_Lean_Params params);
 private:
     inline void update_ghost_trails(f32 dt);
     inline void handle_out_of_bounds_behavior(const Play_Area& play_area, f32 dt);

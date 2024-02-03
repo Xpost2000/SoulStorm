@@ -59,9 +59,48 @@ float Timer::percentage() {
 }
 
 // Entity Base
+s32 Entity::update_sprite_leaning_influence(f32 dt, V2 axes, Entity_Rotation_Lean_Params params) {
+    // Procedural animation components
+    s32 result                    = ROTATION_LEAN_INFLUENCE_DIRECTION_NOT_ROTATING;
+    s32 sign                      = sign_f32(axes[0]);
+    f32 horizontal_axis_magnitude = fabs(axes[0]);
+
+    const f32 minimum_magnitude_to_consider_leaning                     = params.minimum_magnitude_to_consider_leaning;
+    const f32 minimum_additional_magnitude_to_consider_rotation_leaning = params.minimum_additional_magnitude_to_consider_rotation_leaning;
+    const f32 minimum_magnitude_to_consider_rotation_leaning            = minimum_magnitude_to_consider_leaning + minimum_additional_magnitude_to_consider_rotation_leaning;
+    const f32 max_angle_lean                                            = params.max_angle_lean;
+    const f32 decay_factor_min                                          = params.decay_factor_min;
+    const f32 decay_factor_max                                          = params.decay_factor_max;
+    {
+
+        // angle
+        {
+            const f32 effective_t   = clamp<f32>(sprite.angle_offset / (max_angle_lean*0.90), 0.0f, 1.0f);
+            f32       decay_factor  = lerp_f32(decay_factor_min, decay_factor_max, effective_t);
+            sprite.angle_offset    *= pow(decay_factor, dt);
+        }
+
+        if (horizontal_axis_magnitude >= minimum_magnitude_to_consider_leaning) {
+            if (sign == -1) {
+                result = ROTATION_LEAN_INFLUENCE_DIRECTION_LEFT;
+            } else if (sign == 1) {
+                result = ROTATION_LEAN_INFLUENCE_DIRECTION_RIGHT;
+            }
+
+
+            if (horizontal_axis_magnitude >= (minimum_magnitude_to_consider_rotation_leaning)) {
+                sprite.angle_offset = ((horizontal_axis_magnitude - minimum_magnitude_to_consider_rotation_leaning) * sign) * max_angle_lean;
+            }
+        }
+    }
+
+    return result;
+}
+
 f32 Entity::hp_percentage() {
     return (f32)hp / max_hp;
 }
+
 bool Entity::touching_left_border(const Play_Area& play_area, bool as_point) {
     if (as_point)
         return (position.x < 0);
@@ -601,28 +640,13 @@ void Cosmetic_Pet::update(Game_State* state, f32 dt) {
         emitter.shape = particle_emit_shape_line(V2(left, bottom), V2(left + r.w*2.5, bottom));
     }
     {
-        {
-            const f32 MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING                    = 0.360f;
-            const f32 MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING = 0.12f;
-            const f32 MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING           = MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING + MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING;
-            const f32 MAX_ANGLE_LEAN                                           = 40.5f;
-            V2        direction_towards                                        = V2_direction(position, target_position);
-            f32       horizontal_axis_magnitude                                = fabs(direction_towards.x);
-            s32 sign = sign_f32(direction_towards.x);
-
-            // angle
-            {
-                const f32 effective_t = clamp<f32>(sprite.angle_offset / (MAX_ANGLE_LEAN*0.90), 0.0f, 1.0f);
-                f32 decay_factor = lerp_f32(0.020f, 0.170f, effective_t);
-                sprite.angle_offset *= pow(decay_factor, dt);
-            }
-
-            if (horizontal_axis_magnitude >= MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING) {
-                if (horizontal_axis_magnitude >= (MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING)) {
-                    sprite.angle_offset = ((horizontal_axis_magnitude - MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING) * sign) * MAX_ANGLE_LEAN;
-                }
-            }
-        }
+        V2 direction_towards = V2_direction(position, target_position);
+        s32 leaning_direction =
+            update_sprite_leaning_influence(
+                dt,
+                direction_towards,
+                Entity_Rotation_Lean_Params(40.5f)
+            );
     }
     sprite.offset.y = sinf(t_since_spawn * 0.795) * 13.5 + 5;
 
@@ -826,43 +850,30 @@ void Player::update(Game_State* state, f32 dt) {
         s32 frame_start = 0;
         s32 frame_end   = 1;
 
-        // Procedural animation components
-        s32 sign = sign_f32(axes[0]);
-        {
-            const f32 MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING                    = 0.360f;
-            const f32 MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING = 0.12f;
-            const f32 MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING           = MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING + MINIMUM_ADDITIONAL_MAGNITUDE_TO_CONSIDER_ROTATON_LEANING;
-            const f32 MAX_ANGLE_LEAN                                           =
-                (under_focus) ?
-                27.5f :
-                45.5f;
-            f32       horizontal_axis_magnitude                                = fabs(axes[0]);
+        f32 lean_angle =
+            (under_focus) ?
+            27.5f :
+            45.5f;
+        s32 leaning_direction =
+            update_sprite_leaning_influence(
+                dt,
+                axes,
+                Entity_Rotation_Lean_Params(lean_angle)
+            );
 
-            // angle
-            {
-                const f32 effective_t = clamp<f32>(sprite.angle_offset / (MAX_ANGLE_LEAN*0.90), 0.0f, 1.0f);
-                f32 decay_factor = lerp_f32(0.020f, 0.170f, effective_t);
-                sprite.angle_offset *= pow(decay_factor, dt);
-            }
-
-            if (horizontal_axis_magnitude >= MINIMUM_MAGNITUDE_TO_CONSIDER_LEANING) {
-                if (sign == -1) {
-                    frame_start = 1;
-                    frame_end = 2;
-                } else if (sign == 1) {
-                    frame_start = 2;
-                    frame_end = 3;
-                }
-
-
-                if (horizontal_axis_magnitude >= (MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING)) {
-                    sprite.angle_offset = ((horizontal_axis_magnitude - MINIMUM_MAGNITUDE_TO_CONSIDER_ROTATION_LEANING) * sign) * MAX_ANGLE_LEAN;
-                }
-            }
-
-            sprite.offset.y = sinf(t_since_spawn * 0.775) * 6.5 + 8; // NOTE: +7 is to adjust visual location to make the hit box look less "unintuitive"
+        switch (leaning_direction) {
+            case ROTATION_LEAN_INFLUENCE_DIRECTION_LEFT: {
+                frame_start = 1;
+                frame_end = 2;
+            } break;
+            case ROTATION_LEAN_INFLUENCE_DIRECTION_RIGHT: {
+                frame_start = 2;
+                frame_end = 3;
+            } break;
+            default: {} break;
         }
 
+        sprite.offset.y = sinf(t_since_spawn * 0.775) * 6.5 + 8; // NOTE: +7 is to adjust visual location to make the hit box look less "unintuitive"
         sprite.animate(
             &state->resources->graphics_assets,
             dt,
