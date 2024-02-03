@@ -1254,10 +1254,10 @@ void Laser_Hazard::update(Game_State* state, f32 dt) {
             {
                 auto& emitter = outer_ring_emitter;
                 emitter.sprite                  = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
-                emitter.sprite.scale            = V2(0.65f);
+                emitter.sprite.scale            = V2(0.67f);
                 emitter.shape                   = particle_emit_shape_quad(V2(rectangle.x + rectangle.w/2, rectangle.y + rectangle.h/2), V2(rectangle.w/2, rectangle.h/2), true);
                 emitter.modulation              = color32f32(1, 1, 1, 1);
-                emitter.lifetime                = 1.27f;
+                emitter.lifetime                = 1.20f;
                 emitter.scale_variance          = V2(-0.25, 0.25f);
                 emitter.lifetime_variance       = V2(-0.25f, 0.2f);
                 emitter.emission_max_timer      = 0.030f;
