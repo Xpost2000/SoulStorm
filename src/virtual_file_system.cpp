@@ -150,10 +150,7 @@ int _lua_bind_engine_dofile(lua_State* L) {
     lua_remove(L, 1);
     _debugprintf("Engine dofile: %s", file_name);
 
-    auto scripttext = VFS_read_entire_file(heap_allocator(), string_from_cstring((char*)file_name));
-    s32 error = (luaL_dostring(L, (const char*)scripttext.buffer));
-    _debugprintf("DOFILE: Text Buffer: scripttext.buffer:\n%s", scripttext.buffer);
-    file_buffer_free(&scripttext);
+    vfs_lua_dofile(L, file_name);
     return 0;
 }
 
