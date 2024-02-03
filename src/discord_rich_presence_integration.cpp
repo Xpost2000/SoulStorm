@@ -1,7 +1,33 @@
 #include "discord_rich_presence_integration.h"
-#include <discord_game_sdk.h>
-
 #include "string.h"
+
+#ifndef COMPILE_DISCORD_RICH_PRESENCE
+Discord_Activity_Info discord_activity(void) {
+    return Discord_Activity_Info {};
+}
+
+Discord_Activity_Info discord_timestamped_activity(u64 t) {
+    return Discord_Activity_Info {
+        .timestamp_start = t
+    };
+}
+
+namespace Discord_Integration {
+    void initialize(void) {
+    }
+
+    void deinitialize(void) {
+    }
+
+    void update_activity(Discord_Activity_Info info) {
+    }
+
+    void per_frame_update(f32 dt) {
+    }
+}
+
+#else
+#include <discord_game_sdk.h>
 
 // NOTE: make your own discord api key.
 // even if I'm sharing source code, sharing the key is a bad idea.
@@ -68,3 +94,5 @@ namespace Discord_Integration {
         core->run_callbacks(core);
     }
 }
+
+#endif
