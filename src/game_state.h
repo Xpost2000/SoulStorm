@@ -56,14 +56,16 @@ enum menu_font_variation {
     MENU_FONT_COUNT,
 };
 
-enum Entity_Sprite_Type {
-    ENTITY_SPRITE_FIRST = 0,
-    ENTITY_SPRITE_TYPES
-};
-
 /* NOTE:
    I am probably leaving these constants hardcoded, even if I push
    it to be more data driven.
+
+   NOTE: these are the "assumed" default projectile sprites the game always assumes
+   we have.
+
+   Additional sprites are added through the manifest.lua file. Removing any of the
+   original existing sprites will cause the game/engine to crash though or not work
+   properly.
 */
 enum Projectile_Sprite_Type {
     PROJECTILE_SPRITE_BLUE = 0,
@@ -100,15 +102,13 @@ enum Projectile_Sprite_Type {
      */
     PROJECTILE_SPRITE_SPARKLING_STAR,
 
-    PROJECTILE_SPRITE_TYPES
+    // maximum assumed allowed.
+    PROJECTILE_SPRITE_TYPES = 256
 };
 
-local int projectile_sprites_requiring_rotation[] = {
-    PROJECTILE_SPRITE_BLUE_DISK,
-    PROJECTILE_SPRITE_RED_DISK,
-    PROJECTILE_SPRITE_HOT_PINK_DISK,
-    PROJECTILE_SPRITE_NEGATIVE_DISK,
-    PROJECTILE_SPRITE_GREEN_DISK
+enum Entity_Sprite_Type {
+    // NOTE: there are no hardcoded entity sprites in the engine.
+    ENTITY_SPRITE_TYPES = 128,
 };
 
 #define PLAY_AREA_WIDTH_PX (375)
@@ -819,16 +819,7 @@ struct Game_Resources {
     // require rotation.
     //
     // It's being used by entity rendering as a hint basically.
-    inline bool sprite_id_should_be_rotated(sprite_id id) {
-        for (int i = 0; i < array_count(projectile_sprites_requiring_rotation); ++i) {
-            auto projectile_sprite_id = projectile_sprites[projectile_sprites_requiring_rotation[i]];
-            if (projectile_sprite_id.index == id.index) {
-                return true;
-            }
-        }
-
-        return false;
-    }
+    bool sprite_id_should_be_rotated(sprite_id id);
 
     inline Audio::Sound_ID random_attack_sound(struct random_state* prng) {
         return attack_sounds[

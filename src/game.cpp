@@ -19,6 +19,10 @@
 #include "action_mapper.h"
 #include "virtual_file_system.h"
 
+local int projectile_sprites_requiring_rotation_count = 0;
+local int projectile_sprites_requiring_rotation[PROJECTILE_SPRITE_TYPES] = {
+};
+
 local float replay_timescale_choices[] = {
     0.25f,
     0.5f,
@@ -223,92 +227,113 @@ Game::~Game() {
     
 }
 
-
 void Game::load_projectile_sprites(Graphics_Driver* driver, lua_State* L) {
-    // Sprites have their timings automatically done, so
-    // so they don't store auto timing information.
-    // also yes these projectiles are going to be hard coded.
-    local int projectile_sprite_frame_count[] = {
-        1, 2, 4,
+    /*
+     * Well... The raw lua api isn't very pretty but it just needs to work.
+     */
 
-        1, 2, 4,
+    lua_getglobal(L, "projectiles");
+    // projectiles table loaded
+    s32 sprite_count = lua_rawlen(L, -1);
+    assertion(sprite_count <= PROJECTILE_SPRITE_TYPES && "Too many sprites!");
+    _debugprintf("LUA Sprites to load: %d", sprite_count);
 
-        1, 2, 4,
+    for (int projectile_sprite_id = 0; projectile_sprite_id < sprite_count; ++projectile_sprite_id) {
+        lua_pushinteger(L, projectile_sprite_id+1);
+        lua_gettable(L, -2);
 
-        1, 2, 4,
-
-        1, 2, 4,
-
-        1,
-        1,
-        1,
-        1,
-        1,
-        9
-    };
-
-    // NOTE: I would like these to become sprite atlases at some point.
-    local string projectile_sprite_locations[PROJECTILE_SPRITE_TYPES][16] = {
-        {string_literal("projectiles/projectile1.png")},
-        {string_literal("projectiles/projectile1.png"), string_literal("projectiles/projectile1_1.png"),},
-        {string_literal("projectiles/projectile1.png"), string_literal("projectiles/projectile1_1.png"), string_literal("projectiles/projectile1_1_2.png"), string_literal("projectiles/projectile1_2.png")},
-
-        {string_literal("projectiles/projectile1_r.png")},
-        {string_literal("projectiles/projectile1_r.png"), string_literal("projectiles/projectile1_1_r.png"),},
-        {string_literal("projectiles/projectile1_r.png"), string_literal("projectiles/projectile1_1_r.png"), string_literal("projectiles/projectile1_1_2_r.png"), string_literal("projectiles/projectile1_2_r.png")},
-
-        {string_literal("projectiles/projectile1_inv.png")},
-        {string_literal("projectiles/projectile1_inv.png"), string_literal("projectiles/projectile1_1_inv.png"),},
-        {string_literal("projectiles/projectile1_inv.png"), string_literal("projectiles/projectile1_1_inv.png"), string_literal("projectiles/projectile1_1_2_inv.png"), string_literal("projectiles/projectile1_2_inv.png")},
-
-        {string_literal("projectiles/projectile1_hp.png")},
-        {string_literal("projectiles/projectile1_hp.png"), string_literal("projectiles/projectile1_1_hp.png"),},
-        {string_literal("projectiles/projectile1_hp.png"), string_literal("projectiles/projectile1_1_hp.png"), string_literal("projectiles/projectile1_1_2_hp.png"), string_literal("projectiles/projectile1_2_hp.png")},
-
-        {string_literal("projectiles/projectile1_g.png")},
-        {string_literal("projectiles/projectile1_g.png"), string_literal("projectiles/projectile1_1_g.png"),},
-        {string_literal("projectiles/projectile1_g.png"), string_literal("projectiles/projectile1_1_g.png"), string_literal("projectiles/projectile1_1_2_g.png"), string_literal("projectiles/projectile1_2_g.png")},
-
-        // NOTE: reauthor these. (I'm manually scaling these so these are unlikely to be animated yet.)
-        // they'll look decent enough since they're small but yeah.
-        {string_literal("projectiles/projectile1_flat.png")},
-        {string_literal("projectiles/projectile1_r_flat.png")},
-        {string_literal("projectiles/projectile1_hp_flat.png")},
-        {string_literal("projectiles/projectile1_inv_flat.png")},
-        {string_literal("projectiles/projectile1_g_flat.png")},
-
+        // NOTE: table format is
+        // { angled/directed_projectile, framelist }
         {
-            string_literal("projectiles/star_sparkle_1.png"),
-            string_literal("projectiles/star_sparkle_2.png"),
-            string_literal("projectiles/star_sparkle_3.png"),
-            string_literal("projectiles/star_sparkle_4.png"),
-            string_literal("projectiles/star_sparkle_5.png"),
-            string_literal("projectiles/star_sparkle_4.png"),
-            string_literal("projectiles/star_sparkle_3.png"),
-            string_literal("projectiles/star_sparkle_2.png"),
-            string_literal("projectiles/star_sparkle_1.png")
-        }
-    };
+            lua_rawgeti(L, -1, 1);
+            bool requires_rotation = lua_toboolean(L, -1);
 
-    for (int projectile_sprite_id = 0; projectile_sprite_id < PROJECTILE_SPRITE_TYPES; ++projectile_sprite_id) {
-        int   frames_to_alloc = projectile_sprite_frame_count[projectile_sprite_id];
-        auto& sprite          = resources->projectile_sprites[projectile_sprite_id];
+            if (requires_rotation) {
+                projectile_sprites_requiring_rotation[projectile_sprites_requiring_rotation_count++] = projectile_sprite_id;
+            }
+
+            lua_pop(L, 1);
+
+            // frame table in
+            lua_rawgeti(L, -1, 2);
+        }
+
+        s32 frames_to_alloc = lua_rawlen(L, -1);
+        _debugprintf("Frames to load %d", frames_to_alloc);
+        auto& sprite = resources->projectile_sprites[projectile_sprite_id];
+
         if (sprite.index == 0) {
-            sprite                = graphics_assets_alloc_sprite(&resources->graphics_assets, frames_to_alloc);
+            sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, frames_to_alloc);
 
             for (int frame_index = 0; frame_index < frames_to_alloc; ++frame_index) {
-                string frame_img_name     = projectile_sprite_locations[projectile_sprite_id][frame_index];
-                string frame_img_location = string_from_cstring(format_temp("res/img/%.*s", frame_img_name.length, frame_img_name.data));
+                lua_pushinteger(L, frame_index+1);
+                lua_gettable(L, -2);
+
+                // { filename, src rect (nil for now), timing (ignored for now) }
+                lua_rawgeti(L, -1, 1);
+                char* file_name = (char*)lua_tostring(L, -1);
+                _debugprintf("FILENAME: %s", file_name);
+                // lua_rawgeti(L, -1, 2); rectangle.
+                // lua_rawgeti(L, -1, 3); timing.
+                string frame_img_location = string_from_cstring(file_name);
                 auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), frame_index);
                 frame->img = graphics_assets_load_image(&resources->graphics_assets, frame_img_location);
                 frame->source_rect = RECTANGLE_F32_NULL;
+
+                // pop filename, table
+                lua_pop(L, 2);
             }
         }
+        _debugprintf("Finished loading a sprite");
+        lua_pop(L, 2);
     }
 }
 
 void Game::load_entity_sprites(Graphics_Driver* driver, lua_State* L) {
-    
+    lua_getglobal(L, "entities");
+    s32 sprite_count = lua_rawlen(L, -1);
+    assertion(sprite_count <= ENTITY_SPRITE_TYPES && "Too many sprites!");
+    _debugprintf("LUA Sprites to load: %d", sprite_count);
+
+    for (int entity_sprite_id = 0; entity_sprite_id < sprite_count; ++entity_sprite_id) {
+        lua_pushinteger(L, entity_sprite_id+1);
+        lua_gettable(L, -2);
+
+        // NOTE: table format is
+        {
+            // frame table in
+            lua_rawgeti(L, -1, 1);
+        }
+
+        s32 frames_to_alloc = lua_rawlen(L, -1);
+        _debugprintf("Frames to load %d", frames_to_alloc);
+        auto& sprite = resources->entity_sprites[entity_sprite_id];
+
+        if (sprite.index == 0) {
+            sprite = graphics_assets_alloc_sprite(&resources->graphics_assets, frames_to_alloc);
+
+            for (int frame_index = 0; frame_index < frames_to_alloc; ++frame_index) {
+                lua_pushinteger(L, frame_index+1);
+                lua_gettable(L, -2);
+
+                // { filename, src rect (nil for now), timing (ignored for now) }
+                lua_rawgeti(L, -1, 1);
+                char* file_name = (char*)lua_tostring(L, -1);
+                _debugprintf("FILENAME: %s", file_name);
+                // lua_rawgeti(L, -1, 2); rectangle.
+                // lua_rawgeti(L, -1, 3); timing.
+                string frame_img_location = string_from_cstring(file_name);
+                auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, sprite), frame_index);
+                frame->img = graphics_assets_load_image(&resources->graphics_assets, frame_img_location);
+                frame->source_rect = RECTANGLE_F32_NULL;
+
+                // pop filename, table
+                lua_pop(L, 2);
+            }
+        }
+        _debugprintf("Finished loading a sprite");
+        lua_pop(L, 2);
+    }
 }
 /*
  * Basically all these assets are hardcoded, and while I don't totally like this fact,
@@ -345,6 +370,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
     {
         lua_State* L = luaL_newstate();
+        {bind_vfs_lualib(L);}
         s32 error = vfs_lua_dofile(L, "./res/manifest.lua");
         load_projectile_sprites(driver, L);
         load_entity_sprites(driver, L);
@@ -3505,6 +3531,17 @@ void Game::update_and_render_game_ingame(struct render_commands* game_render_com
         state->scriptable_render_objects.zero();
     }
 }
+
+bool Game_Resources::sprite_id_should_be_rotated(sprite_id id) {
+    for (int i = 0; i < projectile_sprites_requiring_rotation_count; ++i) {
+        auto projectile_sprite_id = projectile_sprites[projectile_sprites_requiring_rotation[i]];
+        if (projectile_sprite_id.index == id.index) {
+            return true;
+        }
+    }
+
+        return false;
+    }
 
 void Game_State::set_led_primary_color(color32u8 color) {
     led_state.primary_color = color;
