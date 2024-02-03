@@ -59,6 +59,18 @@ float Timer::percentage() {
 }
 
 // Entity Base
+
+
+void Entity::set_sprite_frame_region(s32 a, s32 b) {
+    sprite_frame_begin = a;
+    sprite_frame_end   = b;
+}
+
+void Entity::reset_sprite_animation_frames(void)  {
+    set_sprite_frame_region(-1, -1);
+}
+
+
 s32 Entity::update_sprite_leaning_influence(f32 dt, V2 axes, Entity_Rotation_Lean_Params params) {
     // Procedural animation components
     s32 result                    = ROTATION_LEAN_INFLUENCE_DIRECTION_NOT_ROTATING;
@@ -847,8 +859,8 @@ void Player::update(Game_State* state, f32 dt) {
 
     // Sprite animation
     {
-        s32 frame_start = 0;
-        s32 frame_end   = 1;
+        sprite_frame_begin = 0;
+        sprite_frame_end   = 1;
 
         f32 lean_angle =
             (under_focus) ?
@@ -863,12 +875,12 @@ void Player::update(Game_State* state, f32 dt) {
 
         switch (leaning_direction) {
             case ROTATION_LEAN_INFLUENCE_DIRECTION_LEFT: {
-                frame_start = 1;
-                frame_end = 2;
+                sprite_frame_begin = 1;
+                sprite_frame_end = 2;
             } break;
             case ROTATION_LEAN_INFLUENCE_DIRECTION_RIGHT: {
-                frame_start = 2;
-                frame_end = 3;
+                sprite_frame_begin = 2;
+                sprite_frame_end = 3;
             } break;
             default: {} break;
         }
@@ -878,8 +890,8 @@ void Player::update(Game_State* state, f32 dt) {
             &state->resources->graphics_assets,
             dt,
             0.035,
-            frame_start,
-            frame_end
+            sprite_frame_begin,
+            sprite_frame_end
         );
     }
 

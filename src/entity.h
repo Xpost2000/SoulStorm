@@ -221,7 +221,18 @@ struct Entity {
     s8 edge_left_behavior_override = -1;
     s8 edge_right_behavior_override = -1;
 
+    // Due to the intentionally very simple animation system
+    // the game requires, we have to very manually control the way
+    // animations are done.
+
+    // Complex animations (sprite ones at least) aren't really a thing for
+    // this engine, so I don't need much more than this...
+    s32 sprite_frame_begin = -1;
+    s32 sprite_frame_end   = -1;
+
 protected:
+    void set_sprite_frame_region(s32 a=-1, s32 b=-1);
+    void reset_sprite_animation_frames(void);
     bool touching_left_border(const Play_Area& play_area, bool as_point=false);
     bool touching_right_border(const Play_Area& play_area, bool as_point=false);
     bool touching_top_border(const Play_Area& play_area, bool as_point=false);
