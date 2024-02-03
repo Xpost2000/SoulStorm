@@ -404,6 +404,7 @@ struct Gameplay_Data {
     s32 max_tries = MAX_BASE_TRIES;
     s32 current_score = 0;
     f32 current_stage_timer = 0;
+    u64 started_system_time = 0; // for API integrations.
 
     Fixed_Array<image_id> script_loaded_images;
     Fixed_Array<Audio::Sound_ID> script_loaded_sounds;

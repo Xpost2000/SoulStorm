@@ -783,6 +783,7 @@ void Game::reset_stage_simulation_state() {
     state->current_score = 0;
     state->paused_from_death = false;
     state->current_stage_timer = 0.0f;
+    state->started_system_time = system_get_current_time();
     state->triggered_stage_completion_cutscene = false;
     state->queue_bomb_use = false;
 
@@ -3051,18 +3052,29 @@ void Game::simulate_game_frames_until(int nth_frame) {
 #include "dialogue_ui.cpp"
 
 void Game::update_and_render_game_ingame(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
+    auto state = &this->state->gameplay_data;
+
     {
-        s32 stage_id = state->mainmenu_data.stage_id_level_select;
-        s32 level_id = state->mainmenu_data.stage_id_level_in_stage_select;
-        Discord_Integration::update_activity(
-            discord_activity()
-            .State(string_literal("Conquering perils!"))
-            .Details(string_from_cstring(format_temp("Playing through Stage %d-%d!", stage_id+1, level_id+1)))
-            .Large_Image(DISCORD_GAMEICON_ASSET_KEY)
-        );
+        s32 stage_id = this->state->mainmenu_data.stage_id_level_select;
+        s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
+
+        if (state->recording.in_playback) {
+            Discord_Integration::update_activity(
+                discord_activity()
+                .State(string_literal("Reflecting and growing."))
+                .Details(string_from_cstring(format_temp("Watching replay of Stage %d-%d", stage_id+1, level_id+1)))
+                .Large_Image(DISCORD_GAMEICON_ASSET_KEY)
+            );
+        } else {
+            Discord_Integration::update_activity(
+                discord_timestamped_activity(state->started_system_time)
+                .State(string_literal("Conquering perils!"))
+                .Details(string_from_cstring(format_temp("Stage %d-%d - Score: %d", stage_id+1, level_id+1, state->current_score)))
+                .Large_Image(DISCORD_GAMEICON_ASSET_KEY)
+            );
+        }
     }
 
-    auto state = &this->state->gameplay_data;
     V2 resolution = V2(game_render_commands->screen_width, game_render_commands->screen_height);
     {
         state->play_area.x      = resolution.x / 2 - state->play_area.width * 0.75;

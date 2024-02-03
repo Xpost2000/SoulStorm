@@ -50,7 +50,7 @@ struct Discord_Activity_Info {
 };
 
 Discord_Activity_Info discord_activity(void);
-Discord_Activity_Info discord_timestamped_activity(void);
+Discord_Activity_Info discord_timestamped_activity(u64 t);
 
 namespace Discord_Integration {
     void initialize(void);

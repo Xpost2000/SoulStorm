@@ -23,9 +23,9 @@ Discord_Activity_Info discord_activity(void) {
     return Discord_Activity_Info {};
 }
 
-Discord_Activity_Info discord_timestamped_activity(void) {
+Discord_Activity_Info discord_timestamped_activity(u64 t) {
     return Discord_Activity_Info {
-        .timestamp_start = system_get_current_time()
+        .timestamp_start = t
     };
 }
 
