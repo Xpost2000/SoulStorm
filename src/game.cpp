@@ -6,6 +6,7 @@
 
 // NOTE: game units are in 640x480 pixels now.
 #include "game.h"
+#include "discord_rich_presence_integration.h"
 #include "fade_transition.h"
 #include "entity.h"
 #include "fixed_array.h"
@@ -3050,6 +3051,17 @@ void Game::simulate_game_frames_until(int nth_frame) {
 #include "dialogue_ui.cpp"
 
 void Game::update_and_render_game_ingame(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
+    {
+        s32 stage_id = state->mainmenu_data.stage_id_level_select;
+        s32 level_id = state->mainmenu_data.stage_id_level_in_stage_select;
+        Discord_Integration::update_activity(
+            discord_activity()
+            .State(string_literal("Conquering perils!"))
+            .Details(string_from_cstring(format_temp("Playing through Stage %d-%d!", stage_id+1, level_id+1)))
+            .Large_Image(DISCORD_GAMEICON_ASSET_KEY)
+        );
+    }
+
     auto state = &this->state->gameplay_data;
     V2 resolution = V2(game_render_commands->screen_width, game_render_commands->screen_height);
     {

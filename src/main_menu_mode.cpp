@@ -1064,7 +1064,14 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
     V2 resolution = V2(game_render_commands->screen_width, game_render_commands->screen_height);
     game_render_commands->camera = main_menu_state.main_camera;
 
-    Discord_Integration::update_activity(string_literal("Wandering around in space..."), string_literal("Wande"));
+    // Discord_Integration::update_activity(string_literal("Wandering around in space..."), string_literal("Wande"));
+
+    Discord_Integration::update_activity(
+        discord_activity()
+        .State(string_literal("Alone in space."))
+        .Details(string_literal("Pondering life's greatest questions :)"))
+        .Large_Image(DISCORD_GAMEICON_ASSET_KEY)
+    );
 
     main_menu_state.adjust_entities_for_screen_resolution(game_render_commands->screen_width, game_render_commands->screen_height);
     // TODO: Fix Draw_Main_Menu_Stars

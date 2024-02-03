@@ -1,3 +1,4 @@
+#include "discord_rich_presence_integration.h"
 // NOTE: meant to be included inside of game.cpp
 // title screen code
 
@@ -334,6 +335,12 @@ void Game::title_data_initialize(Graphics_Driver* driver) {
 }
 
 void Game::update_and_render_game_title_screen(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
+    Discord_Integration::update_activity(
+        discord_activity()
+        .Details(string_literal("About to start a new adventure!"))
+        .Large_Image(DISCORD_GAMEICON_ASSET_KEY)
+    );
+
     auto commands = ui_render_commands;
     auto resolution = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);
 

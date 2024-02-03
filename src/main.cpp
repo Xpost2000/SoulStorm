@@ -722,6 +722,7 @@ int main(int argc, char** argv) {
     SetProcessDPIAware();
 #endif
     initialize();
+    Discord_Integration::update_activity(discord_activity());
     {
         string s = get_preference_directory(string_null, string_literal("Soulstorm"));
         _debugprintf("Preference Writing Path: %.*s", _string_unwrap(s));

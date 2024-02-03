@@ -19,6 +19,16 @@ void DISCORD_CALLBACK update_activity_callback(void* data, enum EDiscordResult r
     }
 }
 
+Discord_Activity_Info discord_activity(void) {
+    return Discord_Activity_Info {};
+}
+
+Discord_Activity_Info discord_timestamped_activity(void) {
+    return Discord_Activity_Info {
+        .timestamp_start = system_get_current_time()
+    };
+}
+
 namespace Discord_Integration {
     void initialize(void) {
         zero_memory(&core_events, sizeof(core_events));
@@ -39,12 +49,18 @@ namespace Discord_Integration {
         core->destroy(core);
     }
 
-    void update_activity(string details, string state, string large_icon) {
+    void update_activity(Discord_Activity_Info info) {
         struct DiscordActivity activity;
         zero_memory(&activity, sizeof(activity));
-        copy_string_into_cstring(details, activity.details, array_count(activity.details));
-        copy_string_into_cstring(state, activity.state, array_count(activity.state));
-        copy_string_into_cstring(large_icon, activity.assets.large_image, array_count(activity.assets.large_image));
+        copy_string_into_cstring(info.state, activity.state, array_count(activity.state));
+        copy_string_into_cstring(info.details, activity.details, array_count(activity.details));
+
+        copy_string_into_cstring(info.large_image, activity.assets.large_image, array_count(activity.assets.large_image));
+        copy_string_into_cstring(info.large_text, activity.assets.large_text, array_count(activity.assets.large_text));
+
+        copy_string_into_cstring(info.small_image, activity.assets.small_image, array_count(activity.assets.small_image));
+        copy_string_into_cstring(info.small_text, activity.assets.small_text, array_count(activity.assets.small_text));
+        activity.timestamps.start = info.timestamp_start;
         activities->update_activity(activities, &activity, nullptr, update_activity_callback);
     }
 

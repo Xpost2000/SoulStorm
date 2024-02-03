@@ -1,3 +1,4 @@
+#include "discord_rich_presence_integration.h"
 /*
   NOTE: Images should be drawn as 16:9 and maybe scroll in 4:3 mode,
   I don't want to draw multiple image variations or crop them or whatever, so I think it'd just be
