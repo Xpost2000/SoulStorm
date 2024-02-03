@@ -272,6 +272,7 @@
     <ClCompile Include="..\src\graphics_driver_opengl.cpp" />
     <ClCompile Include="..\src\graphics_driver_software.cpp" />
     <ClCompile Include="..\src\particle_system.cpp" />
+    <ClCompile Include="..\src\particle_system_lua_bindings.cpp" />
     <ClCompile Include="..\src\software_renderer.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
       <IntrinsicFunctions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</IntrinsicFunctions>

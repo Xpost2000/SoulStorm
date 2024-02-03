@@ -70,6 +70,12 @@ void Entity::reset_sprite_animation_frames(void)  {
     set_sprite_frame_region(-1, -1);
 }
 
+void Entity::disable_all_particle_emitters(void) {
+    for (s32 particle_emitter_index = 0; particle_emitter_index < ENTITY_MAX_PARTICLE_EMITTERS; ++particle_emitter_index) {
+        auto& particle_emitter = emitters[particle_emitter_index];
+        particle_emitter.active = false;
+    }
+}
 
 s32 Entity::update_sprite_leaning_influence(f32 dt, V2 axes, Entity_Rotation_Lean_Params params) {
     // Procedural animation components

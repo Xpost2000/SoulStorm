@@ -3943,6 +3943,7 @@ void Game::handle_all_dead_entities(f32 dt) {
             Gameplay_Data* state = (Gameplay_Data*) ctx;
             for (int i = 0; i < state->bullets.size; ++i) {
                 auto& b = state->bullets[i];
+                b.disable_all_particle_emitters();
                 if (b.die) {state->bullets.pop_and_swap(i);}
             }
             return 0;
@@ -3953,6 +3954,7 @@ void Game::handle_all_dead_entities(f32 dt) {
             Gameplay_Data* state = (Gameplay_Data*) ctx;
             for (int i = 0; i < state->enemies.size; ++i) {
                 auto& e = state->enemies[i];
+                e.disable_all_particle_emitters();
                 if (e.die) {state->enemies.pop_and_swap(i);}
             }
             return 0;
@@ -3980,10 +3982,12 @@ void Game::handle_all_dead_entities(f32 dt) {
     }
     for (int i = 0; i < state->bullets.size; ++i) {
         auto& b = state->bullets[i];
+        b.disable_all_particle_emitters();
         if (b.die) {state->bullets.pop_and_swap(i);}
     }
     for (int i = 0; i < state->enemies.size; ++i) {
         auto& e = state->enemies[i];
+        e.disable_all_particle_emitters();
         if (e.die) {state->enemies.pop_and_swap(i);}
     }
     for (int i = 0; i < state->explosion_hazards.size; ++i) {

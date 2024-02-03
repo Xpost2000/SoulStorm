@@ -798,6 +798,7 @@ lua_State* Game_State::alloc_lua_bindings() {
     {bind_v2_lualib(L); }
     {bind_entity_lualib(L); }
     {bind_vfs_lualib(L);}
+    {bind_particle_emitter_lualib(L);}
     {
         Audio::bind_audio_lualib(L);
         lua_register(L, "load_sound", _lua_bind_load_sound);

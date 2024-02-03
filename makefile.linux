@@ -83,6 +83,7 @@ SOURCE_FILES= src/achievements.cpp \
 		src/game_lua_bindings.cpp \
 		src/virtual_file_system.cpp \
 		src/particle_system.cpp \
+		src/particle_system_lua_bindings.cpp \
 		src/input.cpp \
 		src/lightmask_buffer.cpp \
 		src/main.cpp \

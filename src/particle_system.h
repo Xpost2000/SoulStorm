@@ -123,6 +123,9 @@ struct Particle_Emitter {
     void reset();
 };
 
+struct lua_State;
+void bind_particle_emitter_lualib(lua_State* L);
+
 struct Game_State;
 struct Game_Resources;
 /*

@@ -230,6 +230,7 @@ struct Entity {
     s32 sprite_frame_begin = -1;
     s32 sprite_frame_end   = -1;
 
+    void disable_all_particle_emitters(void);
 protected:
     void set_sprite_frame_region(s32 a=-1, s32 b=-1);
     void reset_sprite_animation_frames(void);

@@ -325,6 +325,17 @@ int _lua_bind_enemy_hp_percent(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_enemy_get_particle_emitter(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_enemy(uid);
+    if (e) {
+        lua_pushlightuserdata(L, &e->emitters[luaL_checkinteger(L, 2)]);
+        return 1;
+    }
+    return 0;
+}
+
 int _lua_bind_enemy_to_ptr(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
@@ -831,6 +842,17 @@ int _lua_bind_bullet_lifetime_percent(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_bullet_get_particle_emitter(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    u64 uid = luaL_checkinteger(L, 1);
+    auto e = state->gameplay_data.lookup_bullet(uid);
+    if (e) {
+        lua_pushlightuserdata(L, &e->emitters[luaL_checkinteger(L, 2)]);
+        return 1;
+    }
+    return 0;
+}
+
 
 int _lua_bind_bullet_kill(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
@@ -998,6 +1020,7 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "enemy_get_max_speed", _lua_bind_enemy_get_max_speed);
         lua_register(L, "enemy_hp", _lua_bind_enemy_hp);
         lua_register(L, "enemy_hp_percent", _lua_bind_enemy_hp_percent);
+        lua_register(L, "enemy_get_particle_emitter", _lua_bind_enemy_get_particle_emitter);
 
         // bullet behavior setting. (there is no reason to read from a bullet)
         lua_register(L, "_bullet_ptr", _lua_bind_bullet_to_ptr);
@@ -1034,6 +1057,7 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "bullet_lifetime", _lua_bind_bullet_lifetime);
         lua_register(L, "bullet_lifetime_max", _lua_bind_bullet_lifetime_max);
         lua_register(L, "bullet_lifetime_percent", _lua_bind_bullet_lifetime_percent);
+        lua_register(L, "bullet_get_particle_emitter", _lua_bind_bullet_get_particle_emitter);
 
         // Player is READONLY. All things done to the player are only through the engine code.
         lua_register(L, "_player_ptr", _lua_bind_player_to_ptr);
