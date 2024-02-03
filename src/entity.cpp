@@ -1094,7 +1094,7 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 emitter.sprite                  = sprite_instance(resources->circle_sprite);
                 emitter.sprite.scale            = V2(0.250, 0.250);
                 emitter.shape                   = particle_emit_shape_circle(position, radius, false);
-                emitter.modulation              = color32f32(222.0f/255.0f, 180.0f/255.0f, 45.0f/255.0f, 1.0f);
+                emitter.modulation              = outer_ring_color;
                 emitter.target_modulation       = color32f32(59/255.0f, 59/255.0f, 56/255.0f, 127/255.0f);
                 emitter.lifetime                = 0.75f;
                 emitter.scale_variance          = V2(-0.15, 0.15f);
@@ -1121,7 +1121,7 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 emitter.sprite                  = sprite_instance(resources->circle_sprite);
                 emitter.sprite.scale            = V2(0.185/2, 0.185/2);
                 emitter.shape                   = particle_emit_shape_point(position);
-                emitter.modulation              = color32f32(108/255.0f, 122/255.0f, 137/255.0f, 1.0f);
+                emitter.modulation              = inner_ring_color;
                 emitter.target_modulation       = color32f32(59/255.0f, 59/255.0f, 56/255.0f, 127/255.0f);
                 emitter.lifetime                = 1.25;
                 emitter.scale_variance          = V2(-0.085, 0.085);
@@ -1261,10 +1261,14 @@ void Laser_Hazard::update(Game_State* state, f32 dt) {
             // live until killed by something else
         } else {
             lifetime.update(dt);
+
+            if (projectile_sprite_id == -1) {
+                projectile_sprite_id = PROJECTILE_SPRITE_RED_ELECTRIC;
+            }
             
             {
                 auto& emitter = outer_ring_emitter;
-                emitter.sprite                  = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
+                emitter.sprite                  = sprite_instance(state->resources->projectile_sprites[projectile_sprite_id]);
                 emitter.sprite.scale            = V2(0.67f);
                 emitter.shape                   = particle_emit_shape_quad(V2(rectangle.x + rectangle.w/2, rectangle.y + rectangle.h/2), V2(rectangle.w/2, rectangle.h/2), true);
                 emitter.modulation              = color32f32(1, 1, 1, 1);

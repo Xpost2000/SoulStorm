@@ -305,6 +305,9 @@ struct Explosion_Hazard {
     V2  position;
     f32 radius;
 
+    color32f32 outer_ring_color = color32f32(222.0f/255.0f, 180.0f/255.0f, 45.0f/255.0f, 1.0f);
+    color32f32 inner_ring_color = color32f32(108/255.0f, 122/255.0f, 137/255.0f, 1.0f);
+
     Hazard_Warning warning;
     Timer explosion_timer;
 
@@ -323,6 +326,9 @@ enum Laser_Hazard_Direction {
 struct Laser_Hazard {
     Laser_Hazard(float position, float radius, int direction, float amount_of_time_for_warning, float how_long_to_live);
     Laser_Hazard();
+
+    // NOTE: should be a projectile_sprite_id
+    s32 projectile_sprite_id = -1;
 
     Particle_Emitter outer_ring_emitter;
     Particle_Emitter dust_emitter;
