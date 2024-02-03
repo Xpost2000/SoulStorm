@@ -223,38 +223,8 @@ Game::~Game() {
     
 }
 
-/*
- * Basically all these assets are hardcoded, and while I don't totally like this fact,
- * this is a relatively small game, and I'm the only programmer (and everything else too I guess).
- *
- * Some stuff is probably going to be pushed out to be data driven, but a lot of core stuff is hard coded.
- */
-// TODO: convert some of these to be sprite atlases
-// in order to reduce draw call overhead on hardware paths.
-// Although the game seems to run quite acceptably...
-void Game::init_graphics_resources(Graphics_Driver* driver) {
-    if (!initialized) {
-        return;
-    }
-    graphics_assets_update_graphics_driver(&resources->graphics_assets, driver);
 
-    for (unsigned index = 0; index < array_count(menu_font_variation_string_names); ++index) {
-        string current = menu_font_variation_string_names[index];
-        // HACKME FIX
-        // didn't have too much foresight for changing graphics devices.
-        // not a big deal but yeah.
-        if (resources->menu_fonts[index].index == 0)
-            resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
-    }
-
-    resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
-    resources->ui_marquee_bkrnd = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee1.png"));
-
-    resources->ui_vignette_borders[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_left.png"));
-    resources->ui_vignette_borders[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_bottom.png"));
-    resources->ui_rays_gradient = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/uieffect0.png"));
-    resources->ui_border_vignette = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette.png"));
-
+void Game::load_projectile_sprites(Graphics_Driver* driver) {
     // Sprites have their timings automatically done, so
     // so they don't store auto timing information.
     // also yes these projectiles are going to be hard coded.
@@ -335,6 +305,45 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             }
         }
     }
+}
+void Game::load_entity_sprites(Graphics_Driver* driver) {
+    
+}
+/*
+ * Basically all these assets are hardcoded, and while I don't totally like this fact,
+ * this is a relatively small game, and I'm the only programmer (and everything else too I guess).
+ *
+ * Some stuff is probably going to be pushed out to be data driven, but a lot of core stuff is hard coded.
+ */
+// TODO: convert some of these to be sprite atlases
+// in order to reduce draw call overhead on hardware paths.
+// Although the game seems to run quite acceptably...
+void Game::init_graphics_resources(Graphics_Driver* driver) {
+    if (!initialized) {
+        return;
+    }
+    graphics_assets_update_graphics_driver(&resources->graphics_assets, driver);
+
+    for (unsigned index = 0; index < array_count(menu_font_variation_string_names); ++index) {
+        string current = menu_font_variation_string_names[index];
+        // HACKME FIX
+        // didn't have too much foresight for changing graphics devices.
+        // not a big deal but yeah.
+        if (resources->menu_fonts[index].index == 0)
+            resources->menu_fonts[index] = graphics_assets_load_bitmap_font(&resources->graphics_assets, current, 5, 12, 5, 20);
+    }
+
+    resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
+    resources->ui_marquee_bkrnd = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee1.png"));
+
+    resources->ui_vignette_borders[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_left.png"));
+    resources->ui_vignette_borders[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_bottom.png"));
+    resources->ui_rays_gradient = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/uieffect0.png"));
+    resources->ui_border_vignette = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette.png"));
+
+
+    load_projectile_sprites(driver);
+    load_entity_sprites(driver);
 
     // load sprite images for main menu assets
     {

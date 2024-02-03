@@ -76,6 +76,8 @@ public:
     // submodes can feel free to store handles to their own "private" stuff
     // if they want.
     void init_graphics_resources(Graphics_Driver* driver);
+    void load_projectile_sprites(Graphics_Driver* driver);
+    void load_entity_sprites(Graphics_Driver* driver);
     void init_audio_resources();
     void deinit();
 

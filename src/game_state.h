@@ -56,8 +56,17 @@ enum menu_font_variation {
     MENU_FONT_COUNT,
 };
 
+enum Entity_Sprite_Type {
+    ENTITY_SPRITE_FIRST = 0,
+    ENTITY_SPRITE_TYPES
+};
+
+/* NOTE:
+   I am probably leaving these constants hardcoded, even if I push
+   it to be more data driven.
+*/
 enum Projectile_Sprite_Type {
-    PROJECTILE_SPRITE_BLUE,
+    PROJECTILE_SPRITE_BLUE = 0,
     PROJECTILE_SPRITE_BLUE_STROBING,
     PROJECTILE_SPRITE_BLUE_ELECTRIC,
 
@@ -758,6 +767,7 @@ struct Game_Resources {
     // I can't really hot reload these because of the way sprites work and my memory allocation
     // scheme which doesn't really support lots of dynamic shifting like this would require.
     sprite_id       projectile_sprites[PROJECTILE_SPRITE_TYPES];
+    sprite_id       entity_sprites[ENTITY_SPRITE_TYPES];
 
     sprite_id       player_sprite;
     sprite_id       circle_sprite;
