@@ -252,6 +252,7 @@
     <ClCompile Include="..\src\color.cpp" />
     <ClCompile Include="..\src\common.cpp" />
     <ClCompile Include="..\src\debug_ui.cpp" />
+    <ClCompile Include="..\src\discord_rich_presence_integration.cpp" />
     <ClCompile Include="..\src\engine.cpp" />
     <ClCompile Include="..\src\entity.cpp">
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EditAndContinue</DebugInformationFormat>
@@ -313,6 +314,7 @@
     <ClInclude Include="..\src\color.h" />
     <ClInclude Include="..\src\common.h" />
     <ClInclude Include="..\src\debug_ui.h" />
+    <ClInclude Include="..\src\discord_rich_presence_integration.h" />
     <ClInclude Include="..\src\duffcoroutine.h" />
     <ClInclude Include="..\src\engine.h" />
     <ClInclude Include="..\src\entity.h" />

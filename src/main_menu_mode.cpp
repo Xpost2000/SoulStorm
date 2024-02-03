@@ -1,3 +1,4 @@
+#include "discord_rich_presence_integration.h"
 // NOTE: meant to be included inside of game.cpp
 // main menu code
 
@@ -1062,6 +1063,8 @@ void Game::update_and_render_game_main_menu(struct render_commands* game_render_
     auto& main_menu_state = state->mainmenu_data;
     V2 resolution = V2(game_render_commands->screen_width, game_render_commands->screen_height);
     game_render_commands->camera = main_menu_state.main_camera;
+
+    Discord_Integration::update_activity(string_literal("Wandering around in space..."), string_literal("Wande"));
 
     main_menu_state.adjust_entities_for_screen_resolution(game_render_commands->screen_width, game_render_commands->screen_height);
     // TODO: Fix Draw_Main_Menu_Stars

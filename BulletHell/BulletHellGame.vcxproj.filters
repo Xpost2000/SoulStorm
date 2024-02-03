@@ -138,6 +138,9 @@
     <ClCompile Include="..\src\particle_system_lua_bindings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\discord_rich_presence_integration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\allocators.h">
@@ -291,6 +294,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\discord_rich_presence_integration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

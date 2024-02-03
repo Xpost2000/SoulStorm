@@ -51,6 +51,10 @@ extern "C" {
 #include <lualib.h>
 }
 
+
+// NOTE: only desktop targets!
+#include "discord_rich_presence_integration.h"
+
 enum graphics_device_type {
     GRAPHICS_DEVICE_SOFTWARE = 0,
     GRAPHICS_DEVICE_OPENGL = 1,
@@ -486,6 +490,7 @@ void initialize() {
      */
     game.init(global_graphics_driver);
     Input::initialize();
+    Discord_Integration::initialize();
 }
 
 void update_preferences(Game_Preferences* a, Game_Preferences* b) {
@@ -620,6 +625,7 @@ void deinitialize() {
 
     Audio::deinitialize();
     SDL_Quit();
+    Discord_Integration::deinitialize();
 }
 
 void engine_main_loop() {
@@ -740,6 +746,7 @@ int main(int argc, char** argv) {
             &game.preferences,
             game.resources
         );
+        Discord_Integration::per_frame_update(Global_Engine()->last_elapsed_delta_time);
     }
     deinitialize();
     return 0; 

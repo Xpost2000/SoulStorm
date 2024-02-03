@@ -16,6 +16,7 @@ HEADER_FILES= src/achievement_list.h \
 		src/duffcoroutine.h \
 		src/engine.h \
 		src/entity.h \
+		src/discord_rich_presence_integration.h \
 		src/entity_prototypes.h \
 		src/fade_transition.h \
 		src/file_buffer.h \
@@ -85,6 +86,7 @@ SOURCE_FILES= src/achievements.cpp \
 		src/game_lua_bindings.cpp \
 		src/virtual_file_system.cpp \
 		src/particle_system.cpp \
+		src/discord_rich_presence_integration.cpp \
 		src/particle_system_lua_bindings.cpp \
 		src/input.cpp \
 		src/lightmask_buffer.cpp \
