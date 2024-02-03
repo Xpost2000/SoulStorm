@@ -25,6 +25,7 @@ local string save_file_name = string_literal("game_save.save");
 // forward decl some opaque types
 struct Game_State;
 struct Game_Resources;
+struct lua_State;
 
 // since this is strictly animation only + the fact it
 // does not affect any actual game state means I can just put this here.
@@ -76,8 +77,8 @@ public:
     // submodes can feel free to store handles to their own "private" stuff
     // if they want.
     void init_graphics_resources(Graphics_Driver* driver);
-    void load_projectile_sprites(Graphics_Driver* driver);
-    void load_entity_sprites(Graphics_Driver* driver);
+    void load_projectile_sprites(Graphics_Driver* driver, lua_State* L);
+    void load_entity_sprites(Graphics_Driver* driver, lua_State* L);
     void init_audio_resources();
     void deinit();
 

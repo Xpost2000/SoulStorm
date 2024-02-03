@@ -224,7 +224,7 @@ Game::~Game() {
 }
 
 
-void Game::load_projectile_sprites(Graphics_Driver* driver) {
+void Game::load_projectile_sprites(Graphics_Driver* driver, lua_State* L) {
     // Sprites have their timings automatically done, so
     // so they don't store auto timing information.
     // also yes these projectiles are going to be hard coded.
@@ -306,7 +306,8 @@ void Game::load_projectile_sprites(Graphics_Driver* driver) {
         }
     }
 }
-void Game::load_entity_sprites(Graphics_Driver* driver) {
+
+void Game::load_entity_sprites(Graphics_Driver* driver, lua_State* L) {
     
 }
 /*
@@ -342,8 +343,13 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     resources->ui_border_vignette = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette.png"));
 
 
-    load_projectile_sprites(driver);
-    load_entity_sprites(driver);
+    {
+        lua_State* L = luaL_newstate();
+        s32 error = vfs_lua_dofile(L, "./res/manifest.lua");
+        load_projectile_sprites(driver, L);
+        load_entity_sprites(driver, L);
+        lua_close(L);
+    }
 
     // load sprite images for main menu assets
     {
