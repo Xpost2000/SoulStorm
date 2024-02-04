@@ -16,7 +16,7 @@
 #include "game_task_scheduler.h"
 #include "game_ui.h"
 
-#define MAX_PICKUP_ENTITIES     (8000)
+#define MAX_PICKUP_ENTITIES     (7000)
 #define MAX_BULLETS             (3500)
 #define MAX_SCORE_NOTIFICATIONS (2500)
 #define MAX_ENEMIES             (128)
