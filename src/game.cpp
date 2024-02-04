@@ -939,7 +939,7 @@ void Game::init(Graphics_Driver* driver) {
         state->pickups                 = Fixed_Array<Pickup_Entity>(arena, MAX_PICKUP_ENTITIES);
         state->score_notifications     = Fixed_Array<Gameplay_UI_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
         state->hit_score_notifications = Fixed_Array<Gameplay_UI_Hitmark_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
-        state->particle_emitters       = Fixed_Array<Particle_Emitter>(arena, 256 + MAX_ENEMIES + MAX_PICKUP_ENTITIES + MAX_BULLETS + MAX_LASER_HAZARDS);
+        state->particle_emitters       = Fixed_Array<Particle_Emitter>(arena, 128);
         state->prng                    = random_state();
         state->prng_unessential        = random_state();
         state->main_camera             = camera(V2(0, 0), 1.0);
