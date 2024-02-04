@@ -87,13 +87,11 @@ void cutscene_completed_maingame_task(jdr_duffcoroutine_t* co) {
 
     *trauma_timer = 0;
 
-    main_menu_state->screen_message_add(string_literal("Congratulations!"));
-    while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
-    main_menu_state->screen_message_add(string_literal("I hope you enjoyed your time!"));
+    main_menu_state->screen_message_add(string_literal("Congratulations for beating SoulStorm!"));
     while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
     main_menu_state->screen_message_add(string_literal("Feel free to maximize your score!"));
     while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
-    main_menu_state->screen_message_add(string_literal("Otherwise, I hope to see you again!"));
+    main_menu_state->screen_message_add(string_literal("Practice makes perfect!"));
     while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
 
 
@@ -788,9 +786,6 @@ void MainMenu_Data::start_unlock_pet_cutscene(Game_State* game_state) {
     if (!cutscene3.triggered) {
         _debugprintf("Starting pet unlock cutscene!");
         cutscene3.triggered            = true;
-        cutscene3.phase                = 1;
-        cutscene3.pet_spin_timer       = 0;
-        cutscene3.pet_facing_direction = 0;
         cutscene_queue_add(MAINMENU_CUTSCENE_ID_UNLOCK_PET);
     }
 }
@@ -799,14 +794,12 @@ void MainMenu_Data::start_completed_maingame_cutscene(Game_State* game_state) {
     if (!cutscene1.triggered) {
         _debugprintf("Starting main game completion cutscene!");
         cutscene1.triggered        = true;
-        cutscene1.phase            = 1;
         cutscene_queue_add(MAINMENU_CUTSCENE_ID_COMPLETED_MAIN_GAME);
     }
 }
 
 void MainMenu_Data::start_introduction_cutscene(Game_State* game_state, bool fasttrack){
     if (!cutscene2.triggered) {
-        cutscene2.phase     = 1;
         cutscene2.triggered = true;
         _debugprintf("Triggering cutscene introduction");
 
@@ -1065,18 +1058,24 @@ void MainMenu_Data::cutscene_queue_start_and_play_cutscenes(Game_State* game_sta
         } break;
         case MAINMENU_CUTSCENE_ID_COMPLETED_MAIN_GAME: {
             _debugprintf("Finished game cutscene");
+            cutscene1.phase            = 1;
             game_state->coroutine_tasks.add_task(game_state, cutscene_completed_maingame_task);
         } break;
         case MAINMENU_CUTSCENE_ID_INTRODUCTION: {
             _debugprintf("Cutscene introduction");
+            cutscene2.phase     = 1;
             game_state->coroutine_tasks.add_task(game_state, cutscene_introduction_firsttime_task);
         } break;
         case MAINMENU_CUTSCENE_ID_INTRODUCTION_FASTTRACK: {
             _debugprintf("Cutscene introduction fast track");
+            cutscene2.phase     = 1;
             game_state->coroutine_tasks.add_task(game_state, cutscene_introduction_fasttrack_task);
         } break;
         case MAINMENU_CUTSCENE_ID_UNLOCK_PET: {
             _debugprintf("Cutscene unlock pet");
+            cutscene3.phase                = 1;
+            cutscene3.pet_spin_timer       = 0;
+            cutscene3.pet_facing_direction = 0;
             game_state->coroutine_tasks.add_task(game_state, cutscene_unlocked_pet_task);
         } break;
     }
@@ -1214,6 +1213,10 @@ GAME_SCREEN(update_and_render_game_main_menu) {
     }
     if (Input::is_key_pressed(KEY_O)) {
         main_menu_state.start_unlock_pet_cutscene(state);
+    }
+    if (Input::is_key_pressed(KEY_P)) {
+        main_menu_state.start_unlock_pet_cutscene(state);
+        main_menu_state.start_completed_maingame_cutscene(state);
     }
 #endif
 
@@ -1367,7 +1370,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
             main_menu_state.screen_message_fade_t = clamp<f32>(main_menu_state.screen_message_fade_t, 0.0f, 1.0f);
 
             auto font = resources->get_font(MENU_FONT_COLOR_WHITE);
-            f32 text_scale = 4.0f;
+            f32 text_scale = 2.5f;
 
             render_commands_push_quad_ext(
                 ui_render_commands,
