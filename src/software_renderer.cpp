@@ -476,21 +476,13 @@ void software_framebuffer_draw_image_ext_clipped_scalar(struct software_framebuf
         f32 clamp_start_diff_y = unclamped_start_y - start_y;
         f32 clamp_start_diff_x = unclamped_start_x - start_x;
 
-        for (s32 y_cursor = unclamped_start_y; y_cursor < unclamped_end_y; ++y_cursor) {
-            if (y_cursor < destination.y || y_cursor > destination.y + destination.h) {
-                continue;
-            }
-
+        for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
             s32 image_sample_y = (s32)fabs(fmodf((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h), image->height));
 
             if ((flags & DRAW_IMAGE_FLIP_VERTICALLY))
                 image_sample_y = (s32)((((unclamped_end_y-1) - y_cursor) * scale_ratio_h) + src.y);
 
-            for (s32 x_cursor = unclamped_start_x; x_cursor < unclamped_end_x; ++x_cursor) {
-            if (x_cursor < destination.x || x_cursor > destination.x + destination.w) {
-                continue;
-            }
-
+            for (s32 x_cursor = start_x; x_cursor < end_x; ++x_cursor) {
                 s32 image_sample_x = (s32)fabs(fmodf((src.x + src.w) - ((unclamped_end_x - x_cursor) * scale_ratio_w), image->width));
 
                 if ((flags & DRAW_IMAGE_FLIP_HORIZONTALLY))
@@ -541,10 +533,6 @@ void software_framebuffer_draw_image_ext_clipped_scalar(struct software_framebuf
                     f32 sample_approx_y = ceilf(dy + sample.y);
 
                     if (_framebuffer_scissor_cull(framebuffer, sample_approx_x, sample_approx_y)) continue;
-                    if (sample_approx_x < clip_rect.x || sample_approx_x > clip_rect.x + clip_rect.w ||
-                        sample_approx_y < clip_rect.y || sample_approx_y > clip_rect.y + clip_rect.h) {
-                        continue;
-                    }
                     _BlendPixel_Scalar(framebuffer, (s32)(sample_approx_x), (s32)(sample_approx_y), sampled_pixel, blend_mode);
                 }
 

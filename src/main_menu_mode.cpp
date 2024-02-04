@@ -1527,8 +1527,8 @@ GAME_SCREEN(update_and_render_game_main_menu) {
 
                     {
                         auto& texture_atlas = resources->ui_texture_atlas;
-                        auto box_width = 480;
-                        auto box_height = 480;
+                        auto box_width = 600;
+                        auto box_height = 600;
                         render_commands_push_image_ext(
                             ui_render_commands,
                             graphics_assets_get_image_by_id(&resources->graphics_assets, texture_atlas.atlas_image_id),
@@ -1536,7 +1536,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
                             texture_atlas.get_subrect(resources->ui_rays_gradient),
                             color32f32(0.8,0.8,1, 0.9),
                             V2(0.5,0.5),
-                            Global_Engine()->global_elapsed_time * 200.0f,
+                            0,
                             NO_FLAGS,
                             BLEND_MODE_ALPHA
                         );
@@ -1615,8 +1615,8 @@ GAME_SCREEN(update_and_render_game_main_menu) {
 
                         {
                             auto& texture_atlas = resources->ui_texture_atlas;
-                            auto box_width = 480;
-                            auto box_height = 480;
+                            auto box_width = 600;
+                            auto box_height = 600;
                             render_commands_push_image_ext(
                                 ui_render_commands,
                                 graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_rays_gradient),
@@ -1624,7 +1624,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
                                 texture_atlas.get_subrect(resources->ui_rays_gradient),
                                 color32f32(0.8,0.8,1, 0.9 * alpha),
                                 V2(0.5,0.5),
-                                Global_Engine()->global_elapsed_time * 200.0f,
+                                0,
                                 NO_FLAGS,
                                 BLEND_MODE_ALPHA
                             );
