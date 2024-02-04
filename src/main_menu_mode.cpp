@@ -1536,7 +1536,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
                             texture_atlas.get_subrect(resources->ui_rays_gradient),
                             color32f32(0.8,0.8,1, 0.9),
                             V2(0.5,0.5),
-                            Global_Engine()->global_elapsed_time * 200.0f,
+                            0,
                             NO_FLAGS,
                             BLEND_MODE_ALPHA
                         );
@@ -1624,7 +1624,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
                                 texture_atlas.get_subrect(resources->ui_rays_gradient),
                                 color32f32(0.8,0.8,1, 0.9 * alpha),
                                 V2(0.5,0.5),
-                                Global_Engine()->global_elapsed_time * 200.0f,
+                                0,
                                 NO_FLAGS,
                                 BLEND_MODE_ALPHA
                             );

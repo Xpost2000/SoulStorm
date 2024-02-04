@@ -161,8 +161,8 @@ void software_framebuffer_render_commands(struct software_framebuffer* framebuff
 #ifndef MULTITHREADED_EXPERIMENTAL
     software_framebuffer_render_commands_tiled(framebuffer, commands, rectangle_f32(0,0,framebuffer->width,framebuffer->height));
 #else
-    s32 JOB_W  = 4;
-    s32 JOB_H  = 4;
+    s32 JOB_W  = 2;
+    s32 JOB_H  = 2;
     s32 TILE_W = framebuffer->width / JOB_W;
     s32 TILE_H = framebuffer->height / JOB_H;
     s32 TILE_W_remainder = framebuffer->width % TILE_W;

@@ -84,6 +84,7 @@ V2 camera_project(struct camera* camera, V2 point, s32 screen_width, s32 screen_
 V2 camera_displacement_from_trauma(struct camera* camera) {
     struct random_state* rng           = camera->rng;
     if (!rng) {
+        _debugprintf("No camera prng source? Weird");
         return V2(0, 0);
     }
 

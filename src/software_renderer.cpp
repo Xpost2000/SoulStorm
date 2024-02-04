@@ -360,17 +360,18 @@ void software_framebuffer_draw_image_ext_clipped_scalar(struct software_framebuf
     f32 c1 = cosf(degree_to_radians(angle_y));
     f32 s1 = sinf(degree_to_radians(angle_y));
     
+#if 0
     for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
         s32 image_sample_y = (s32)fabs(fmodf((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h), image->height));
+
+        if ((flags & DRAW_IMAGE_FLIP_VERTICALLY))
+            image_sample_y = (s32)((((unclamped_end_y-1) - y_cursor) * scale_ratio_h) + src.y);
 
         for (s32 x_cursor = start_x; x_cursor < end_x; ++x_cursor) {
             s32 image_sample_x = (s32)fabs(fmodf((src.x + src.w) - ((unclamped_end_x - x_cursor) * scale_ratio_w), image->width));
 
             if ((flags & DRAW_IMAGE_FLIP_HORIZONTALLY))
                 image_sample_x = (s32)((((unclamped_end_x-1) - x_cursor) * scale_ratio_w) + src.x);
-
-            if ((flags & DRAW_IMAGE_FLIP_VERTICALLY))
-                image_sample_y = (s32)((((unclamped_end_y-1) - y_cursor) * scale_ratio_h) + src.y);
 
             union color32f32 sampled_pixel = color32f32(image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 0] / 255.0f,
                                                         image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 1] / 255.0f,
@@ -403,6 +404,9 @@ void software_framebuffer_draw_image_ext_clipped_scalar(struct software_framebuf
                 dx       += (unclamped_start_x + origin_off_x);
                 dy       += (unclamped_start_y + origin_off_y);
 
+                // dx = clamp<f32>((f32)dx, clip_rect.x, clip_rect.x+clip_rect.w);
+                // dy = clamp<f32>((f32)dy, clip_rect.y, clip_rect.y+clip_rect.h);
+
                 /*
                   for rotation need more sampling
                 */
@@ -413,6 +417,16 @@ void software_framebuffer_draw_image_ext_clipped_scalar(struct software_framebuf
                 for (auto& sample : subsamples) {
                     f32 sample_approx_x = ceilf(dx + sample.x);
                     f32 sample_approx_y = ceilf(dy + sample.y);
+
+                    // if (sample_approx_x < clip_rect.x || sample_approx_x >= clip_rect.x + clip_rect.w ||
+                    //     sample_approx_y < clip_rect.y || sample_approx_y >= clip_rect.y + clip_rect.h) {
+                    //     continue;
+                    // }
+
+                    // f32 sample_approx_xf = ceilf(dx + sample.x);
+                    // f32 sample_approx_yf = ceilf(dy + sample.y);
+                    // s32 sample_approx_x = clamp<s32>((s32)sample_approx_xf, clip_rect.x, clip_rect.x+clip_rect.w);
+                    // s32 sample_approx_y = clamp<s32>((s32)sample_approx_yf, clip_rect.y, clip_rect.y+clip_rect.h);
                     if (_framebuffer_scissor_cull(framebuffer, sample_approx_x, sample_approx_y)) continue;
                     _BlendPixel_Scalar(framebuffer, (s32)(sample_approx_x), (s32)(sample_approx_y), sampled_pixel, blend_mode);
                 }
@@ -420,6 +434,106 @@ void software_framebuffer_draw_image_ext_clipped_scalar(struct software_framebuf
 
         }
     }
+#else
+    if (angle == 0 && angle_y == 0) {
+        for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
+            s32 image_sample_y = (s32)fabs(fmodf((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h), image->height));
+
+            if ((flags & DRAW_IMAGE_FLIP_VERTICALLY))
+                image_sample_y = (s32)((((unclamped_end_y-1) - y_cursor) * scale_ratio_h) + src.y);
+
+            for (s32 x_cursor = start_x; x_cursor < end_x; ++x_cursor) {
+                s32 image_sample_x = (s32)fabs(fmodf((src.x + src.w) - ((unclamped_end_x - x_cursor) * scale_ratio_w), image->width));
+
+                if ((flags & DRAW_IMAGE_FLIP_HORIZONTALLY))
+                    image_sample_x = (s32)((((unclamped_end_x-1) - x_cursor) * scale_ratio_w) + src.x);
+
+                union color32f32 sampled_pixel = color32f32(image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 0] / 255.0f,
+                                                            image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 1] / 255.0f,
+                                                            image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 2] / 255.0f,
+                                                            image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 3] / 255.0f);
+
+                if (shader) {
+                    sampled_pixel = shader(framebuffer, sampled_pixel, V2(x_cursor, y_cursor), shader_ctx);
+                }
+                sampled_pixel.r *= 255.0f;
+                sampled_pixel.g *= 255.0f;
+                sampled_pixel.b *= 255.0f;
+                sampled_pixel.a *= 255.0f;
+
+                sampled_pixel.r *= modulation.r;
+                sampled_pixel.g *= modulation.g;
+                sampled_pixel.b *= modulation.b;
+                sampled_pixel.a *= modulation.a;
+
+                if (_framebuffer_scissor_cull(framebuffer, x_cursor, y_cursor)) continue;
+                _BlendPixel_Scalar(framebuffer, x_cursor, y_cursor, sampled_pixel, blend_mode);
+
+            }
+        }
+    } else {
+        // NOTE: this fix needs to be applied to flat quads.
+        f32 clamp_start_diff_y = unclamped_start_y - start_y;
+        f32 clamp_start_diff_x = unclamped_start_x - start_x;
+
+        for (s32 y_cursor = start_y; y_cursor < end_y; ++y_cursor) {
+            s32 image_sample_y = (s32)fabs(fmodf((src.y + src.h) - ((unclamped_end_y - y_cursor) * scale_ratio_h), image->height));
+
+            if ((flags & DRAW_IMAGE_FLIP_VERTICALLY))
+                image_sample_y = (s32)((((unclamped_end_y-1) - y_cursor) * scale_ratio_h) + src.y);
+
+            for (s32 x_cursor = start_x; x_cursor < end_x; ++x_cursor) {
+                s32 image_sample_x = (s32)fabs(fmodf((src.x + src.w) - ((unclamped_end_x - x_cursor) * scale_ratio_w), image->width));
+
+                if ((flags & DRAW_IMAGE_FLIP_HORIZONTALLY))
+                    image_sample_x = (s32)((((unclamped_end_x-1) - x_cursor) * scale_ratio_w) + src.x);
+
+                union color32f32 sampled_pixel = color32f32(image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 0] / 255.0f,
+                                                            image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 1] / 255.0f,
+                                                            image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 2] / 255.0f,
+                                                            image->pixels[image_sample_y * image_stride * 4 + image_sample_x * 4 + 3] / 255.0f);
+
+                if (shader) {
+                    sampled_pixel = shader(framebuffer, sampled_pixel, V2(x_cursor, y_cursor), shader_ctx);
+                }
+                sampled_pixel.r *= 255.0f;
+                sampled_pixel.g *= 255.0f;
+                sampled_pixel.b *= 255.0f;
+                sampled_pixel.a *= 255.0f;
+
+                sampled_pixel.r *= modulation.r;
+                sampled_pixel.g *= modulation.g;
+                sampled_pixel.b *= modulation.b;
+                sampled_pixel.a *= modulation.a;
+
+                s32 adjx  = x_cursor - (unclamped_start_x + origin_off_x);
+                s32 adjy  = y_cursor - (unclamped_start_y + origin_off_y);
+                f32 dx    = adjx;
+                f32 dy    = adjy;
+                _rotate_f32_xy_as_pseudo_zyx(&dx, &dy, c, s, c1, s1);
+
+                dx       += (unclamped_start_x + origin_off_x);
+                dy       += (unclamped_start_y + origin_off_y);
+
+                /*
+                  for rotation need more sampling
+                */
+                static const V2 subsamples[] = {
+                    V2(0, 0), V2(0.5, 0), V2(0.5, 0.5), V2(0, 0.5), V2(-0.5, 0.0), V2(0.0, -0.5), V2(-0.5, -0.5)
+                };
+
+                for (auto& sample : subsamples) {
+                    f32 sample_approx_x = ceilf(dx + sample.x);
+                    f32 sample_approx_y = ceilf(dy + sample.y);
+
+                    if (_framebuffer_scissor_cull(framebuffer, sample_approx_x, sample_approx_y)) continue;
+                    _BlendPixel_Scalar(framebuffer, (s32)(sample_approx_x), (s32)(sample_approx_y), sampled_pixel, blend_mode);
+                }
+
+            }
+        }
+    }
+#endif
 }
 
 #ifndef USE_SIMD_OPTIMIZATIONS
