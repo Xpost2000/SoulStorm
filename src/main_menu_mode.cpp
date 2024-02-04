@@ -1024,6 +1024,49 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                                              random_ranged_float(prng, 130.0f, 360.0f));
             }
         }
+
+        for (s32 cutscene_id = 0; cutscene_id < MAINMENU_CUTSCENE_ID_TYPES; ++cutscene_id) {
+            state->cutscene_queue[cutscene_id] = MAINMENU_CUTSCENE_ID_NONE;
+        }
+    }
+}
+
+void MainMenu_Data::cutscene_queue_add(u8 cutscene_type) {
+    cutscene_queue[cutscene_queue_count++] = cutscene_type;
+}
+
+void MainMenu_Data::cutscene_queue_start_and_play_cutscenes(void) {
+    // There is an *implicit* priority. The end game cutscene is a bit more important.
+    // everything else is technically mutually exclusive. So first come first served.
+    s32 cutscene_to_start = MAINMENU_CUTSCENE_ID_NONE;
+
+    for (s32 index = 0; index < cutscene_queue_count; ++index) {
+        if (cutscene_queue[index] == MAINMENU_CUTSCENE_ID_COMPLETED_MAIN_GAME) {
+            cutscene_to_start = cutscene_queue[index];
+            cutscene_queue[index] = cutscene_queue[--cutscene_queue_count];
+            break;
+        }
+    }
+
+    if (cutscene_to_start == MAINMENU_CUTSCENE_ID_NONE && cutscene_queue_count > 0) {
+        cutscene_to_start = cutscene_queue[0];
+        // eh.
+        cutscene_queue[0] = cutscene_queue[--cutscene_queue_count];
+    }
+
+    switch (cutscene_to_start) {
+        case MAINMENU_CUTSCENE_ID_NONE: {
+            return;
+        } break;
+        case MAINMENU_CUTSCENE_ID_COMPLETED_MAIN_GAME: {
+            
+        } break;
+        case MAINMENU_CUTSCENE_ID_INTRODUCTION: {
+            
+        } break;
+        case MAINMENU_CUTSCENE_ID_UNLOCK_PET: {
+            
+        } break;
     }
 }
 

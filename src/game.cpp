@@ -2836,7 +2836,9 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                     completion_type = game_complete_stage_level(stage_id, level_id, state->gameplay_data.playing_practice_mode);
 
                     if (completion_type == GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE) {
-                        state->mainmenu_data.start_unlock_pet_cutscene(state);
+                        if (state->gameplay_data.unlocked_pets < 3) {
+                            state->mainmenu_data.start_unlock_pet_cutscene(state);
+                        }
                     }
                 }
 

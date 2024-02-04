@@ -164,8 +164,33 @@ struct MainMenu_Clutter_Poop {
     void draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources);
 };
 
+
+enum MainMenu_Cutscene_ID {
+    MAINMENU_CUTSCENE_ID_NONE                = -1,
+    MAINMENU_CUTSCENE_ID_COMPLETED_MAIN_GAME = 0,
+    MAINMENU_CUTSCENE_ID_INTRODUCTION        = 1,
+    MAINMENU_CUTSCENE_ID_UNLOCK_PET          = 2,
+    MAINMENU_CUTSCENE_ID_TYPES               = 3,
+};
+
 struct MainMenu_Data {
     Particle_Pool particle_pool;
+
+    /*
+      This solely exists to solve one edge case for the final stage,
+      where it will unlock the "fish" and start the "end game" congratulations,
+      cutscenes.
+
+      The coroutines will... behave very unusually if they are both spawned at the
+      same time, so this is just to force order them.
+
+      Also useful if I happen to add more coroutine cutscenes once this is reorganized
+      a little more, but it's probably not super duper important.
+     */
+    s32 cutscene_queue_count = 0;
+    s32 cutscene_queue[MAINMENU_CUTSCENE_ID_TYPES];
+    void cutscene_queue_add(u8 cutscene_type);
+    void cutscene_queue_start_and_play_cutscenes(void);
 
     MainMenu_Completed_MainGame_Cutscene_Data cutscene1;
     MainMenu_Introduction_Cutscene_Data       cutscene2;
