@@ -132,6 +132,7 @@ private:
     GAME_SCREEN(update_and_render_game_ingame);
     GAME_SCREEN(update_and_render_game_credits);
     GAME_SCREEN(update_and_render_game_title_screen);
+    GAME_SCREEN(update_and_render_game_ending);
 
     void ingame_update_introduction_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);
     void ingame_update_complete_stage_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);

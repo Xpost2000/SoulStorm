@@ -1607,14 +1607,16 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
                 Transitions::register_on_finish(
                     [&](void*) mutable {
                         switch_ui(UI_STATE_INACTIVE);
-                        switch_screen(GAME_SCREEN_MAIN_MENU);
                         _debugprintf("Hi main menu. We can do some more stuff like demonstrate if we unlocked a new stage!");
 
                         // Check for postgame cutscene playing
                         {
                             auto& main_menu_state = state->mainmenu_data;
                             if (!main_menu_state.cutscene1.triggered && can_access_stage(3)) {
+                                switch_screen(GAME_SCREEN_ENDING);
                                 main_menu_state.start_completed_maingame_cutscene(state);
+                            } else {
+                                switch_screen(GAME_SCREEN_MAIN_MENU);
                             }
                         }
 
@@ -3660,6 +3662,9 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         case GAME_SCREEN_OPENING: {
             update_and_render_game_opening(&game_render_commands, &ui_render_commands, dt);
         } break;
+        case GAME_SCREEN_ENDING: {
+            update_and_render_game_ending(&game_render_commands, &ui_render_commands, dt);
+        } break;
         case GAME_SCREEN_MAIN_MENU: {
             update_and_render_game_main_menu(&game_render_commands, &ui_render_commands, dt);
         } break;
@@ -4516,6 +4521,7 @@ u64 UID::enemy_uid() {
 #include "title_screen_mode.cpp"
 #include "main_menu_mode.cpp"
 #include "opening_mode.cpp"
+#include "ending_mode.cpp"
 
 // Boss_Healthbar_Displays
 // This is a big parameter list, but that's alright

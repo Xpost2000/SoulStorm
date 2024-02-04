@@ -165,7 +165,11 @@ enum Game_Screen_Modes {
      * Honestly, if I wanted to play with it more I could add some interactivity.
      */
     GAME_SCREEN_CREDITS   = 4,
-    GAME_SCREEN_COUNT     = 5,
+
+    // Only one ending. Need to draw more assets for this one!
+    // Probably just a cheesy congratulations screen.
+    GAME_SCREEN_ENDING    = 5,
+    GAME_SCREEN_COUNT     = 6,
 
 /* #ifndef RELEASE */
 /*     GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_TITLE_SCREEN, */
@@ -202,6 +206,7 @@ struct Visual_Sparkling_Star_Data {
 #include "title_screen_mode.h"
 #include "main_menu_mode.h"
 #include "opening_mode.h"
+#include "ending_mode.h"
 
 // I do like using state machines for this kind of thing
 // at least when you have to write code for animation.
@@ -679,6 +684,7 @@ struct Game_State {
     MainMenu_Data    mainmenu_data;
     TitleScreen_Data titlescreen_data;
     OpeningMode_Data opening_data;
+    EndingMode_Data  ending_data;
     Achievement_Menu_Data achievement_menu;
 
     Dialogue_State dialogue_state;
