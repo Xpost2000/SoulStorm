@@ -166,11 +166,12 @@ struct MainMenu_Clutter_Poop {
 
 
 enum MainMenu_Cutscene_ID {
-    MAINMENU_CUTSCENE_ID_NONE                = -1,
-    MAINMENU_CUTSCENE_ID_COMPLETED_MAIN_GAME = 0,
-    MAINMENU_CUTSCENE_ID_INTRODUCTION        = 1,
-    MAINMENU_CUTSCENE_ID_UNLOCK_PET          = 2,
-    MAINMENU_CUTSCENE_ID_TYPES               = 3,
+    MAINMENU_CUTSCENE_ID_NONE                   = -1,
+    MAINMENU_CUTSCENE_ID_COMPLETED_MAIN_GAME    = 0,
+    MAINMENU_CUTSCENE_ID_INTRODUCTION           = 1,
+    MAINMENU_CUTSCENE_ID_INTRODUCTION_FASTTRACK = 2,
+    MAINMENU_CUTSCENE_ID_UNLOCK_PET             = 3,
+    MAINMENU_CUTSCENE_ID_TYPES                  = 4,
 };
 
 struct MainMenu_Data {
@@ -190,7 +191,7 @@ struct MainMenu_Data {
     s32 cutscene_queue_count = 0;
     s32 cutscene_queue[MAINMENU_CUTSCENE_ID_TYPES];
     void cutscene_queue_add(u8 cutscene_type);
-    void cutscene_queue_start_and_play_cutscenes(void);
+    void cutscene_queue_start_and_play_cutscenes(Game_State* game_state);
 
     MainMenu_Completed_MainGame_Cutscene_Data cutscene1;
     MainMenu_Introduction_Cutscene_Data       cutscene2;

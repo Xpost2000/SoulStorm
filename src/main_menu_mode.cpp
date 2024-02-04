@@ -791,7 +791,7 @@ void MainMenu_Data::start_unlock_pet_cutscene(Game_State* game_state) {
         cutscene3.phase                = 1;
         cutscene3.pet_spin_timer       = 0;
         cutscene3.pet_facing_direction = 0;
-        game_state->coroutine_tasks.add_task(game_state, cutscene_unlocked_pet_task);
+        cutscene_queue_add(MAINMENU_CUTSCENE_ID_UNLOCK_PET);
     }
 }
 
@@ -800,7 +800,7 @@ void MainMenu_Data::start_completed_maingame_cutscene(Game_State* game_state) {
         _debugprintf("Starting main game completion cutscene!");
         cutscene1.triggered        = true;
         cutscene1.phase            = 1;
-        game_state->coroutine_tasks.add_task(game_state, cutscene_completed_maingame_task);
+        cutscene_queue_add(MAINMENU_CUTSCENE_ID_COMPLETED_MAIN_GAME);
     }
 }
 
@@ -812,10 +812,10 @@ void MainMenu_Data::start_introduction_cutscene(Game_State* game_state, bool fas
 
         if (fasttrack) {
             _debugprintf("Fast track intro");
-            game_state->coroutine_tasks.add_task(game_state, cutscene_introduction_fasttrack_task);
+            cutscene_queue_add(MAINMENU_CUTSCENE_ID_INTRODUCTION_FASTTRACK);
         } else {
             _debugprintf("Standard intro");
-            game_state->coroutine_tasks.add_task(game_state, cutscene_introduction_firsttime_task);
+            cutscene_queue_add(MAINMENU_CUTSCENE_ID_INTRODUCTION);
         }
     }
 }
@@ -1035,7 +1035,11 @@ void MainMenu_Data::cutscene_queue_add(u8 cutscene_type) {
     cutscene_queue[cutscene_queue_count++] = cutscene_type;
 }
 
-void MainMenu_Data::cutscene_queue_start_and_play_cutscenes(void) {
+void MainMenu_Data::cutscene_queue_start_and_play_cutscenes(Game_State* game_state) {
+    if (cutscene_queue_count == 0) {
+        return;
+    }
+
     // There is an *implicit* priority. The end game cutscene is a bit more important.
     // everything else is technically mutually exclusive. So first come first served.
     s32 cutscene_to_start = MAINMENU_CUTSCENE_ID_NONE;
@@ -1048,7 +1052,7 @@ void MainMenu_Data::cutscene_queue_start_and_play_cutscenes(void) {
         }
     }
 
-    if (cutscene_to_start == MAINMENU_CUTSCENE_ID_NONE && cutscene_queue_count > 0) {
+    if (cutscene_to_start == MAINMENU_CUTSCENE_ID_NONE) {
         cutscene_to_start = cutscene_queue[0];
         // eh.
         cutscene_queue[0] = cutscene_queue[--cutscene_queue_count];
@@ -1056,16 +1060,24 @@ void MainMenu_Data::cutscene_queue_start_and_play_cutscenes(void) {
 
     switch (cutscene_to_start) {
         case MAINMENU_CUTSCENE_ID_NONE: {
+            _debugprintf("No cutscene to play?");
             return;
         } break;
         case MAINMENU_CUTSCENE_ID_COMPLETED_MAIN_GAME: {
-            
+            _debugprintf("Finished game cutscene");
+            game_state->coroutine_tasks.add_task(game_state, cutscene_completed_maingame_task);
         } break;
         case MAINMENU_CUTSCENE_ID_INTRODUCTION: {
-            
+            _debugprintf("Cutscene introduction");
+            game_state->coroutine_tasks.add_task(game_state, cutscene_introduction_firsttime_task);
+        } break;
+        case MAINMENU_CUTSCENE_ID_INTRODUCTION_FASTTRACK: {
+            _debugprintf("Cutscene introduction fast track");
+            game_state->coroutine_tasks.add_task(game_state, cutscene_introduction_fasttrack_task);
         } break;
         case MAINMENU_CUTSCENE_ID_UNLOCK_PET: {
-            
+            _debugprintf("Cutscene unlock pet");
+            game_state->coroutine_tasks.add_task(game_state, cutscene_unlocked_pet_task);
         } break;
     }
 }
@@ -1338,6 +1350,12 @@ GAME_SCREEN(update_and_render_game_main_menu) {
 
     // screen messages
     if (state->ui_state == UI_STATE_INACTIVE) {
+        if (!main_menu_state.cutscene_active()) {
+            main_menu_state.cutscene_queue_start_and_play_cutscenes(state);
+        } else {
+            // cutscene probably active.
+        }
+
         // Screen_Message
         {
             if (main_menu_state.screen_messages.size > 0) {
