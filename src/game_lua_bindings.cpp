@@ -666,6 +666,19 @@ int _lua_bind_game_difficulty_binding(lua_State* L) {
     return 1;
 }
 
+s32 _lua_bind_alloc_particle_emitter(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    auto gameplay_data = state->gameplay_data;
+    Particle_Emitter* emitter = gameplay_data.particle_emitters.alloc();
+    
+    if (emitter) {
+        lua_pushlightuserdata(L, emitter);
+        return 1;
+    }
+
+    return 0;
+}
+
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     /*
@@ -683,7 +696,7 @@ lua_State* Game_State::alloc_lua_bindings() {
         lua_setglobal(L, "_gamestate"); // we'll store this implicitly
 
         lua_register(L, "t_wait", _lua_bind_Task_Yield_Wait);
-
+        lua_register(L, "alloc_particle_emitter", _lua_bind_alloc_particle_emitter);
         // TODO:
         // 1_1 is designed with all these timings being "absolute", and gradually
         // changing to "safe" waits is pretty hard.
