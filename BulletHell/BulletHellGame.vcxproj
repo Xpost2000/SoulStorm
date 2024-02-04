@@ -179,7 +179,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;OpenGL32.lib;d3d11.lib;d3dcompiler.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;OpenGL32.lib;d3d11.lib;d3dcompiler.lib;dxguid.lib;discord_game_sdk.dll.lib;kernel32.lib;shell32.lib;user32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Users\xpost\project-repositories\git\SoulStorm\dependencies\msvc-x86-64\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -203,7 +203,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;OpenGL32.lib;d3d11.lib;d3dcompiler.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;OpenGL32.lib;d3d11.lib;d3dcompiler.lib;dxguid.lib;discord_game_sdk.dll.lib;kernel32.lib;shell32.lib;user32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Users\xpost\project-repositories\git\SoulStorm\dependencies\msvc-x86-64\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
@@ -237,7 +237,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;OpenGL32.lib;d3d11.lib;d3dcompiler.lib;dxguid.lib;discord_game_sdk.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;OpenGL32.lib;d3d11.lib;d3dcompiler.lib;dxguid.lib;discord_game_sdk.dll.lib;kernel32.lib;shell32.lib;user32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Users\xpost\project-repositories\git\SoulStorm\dependencies\msvc-x86-64\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
