@@ -20,6 +20,9 @@
 #include "action_mapper.h"
 #include "virtual_file_system.h"
 
+#define GAME_UI_SCREEN(name) void Game::name(struct render_commands* commands, f32 dt)
+#define GAME_SCREEN(name) void Game::name(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt)
+
 local int projectile_sprites_requiring_rotation_count = 0;
 local int projectile_sprites_requiring_rotation[PROJECTILE_SPRITE_TYPES] = {
 };
@@ -1327,7 +1330,7 @@ bool Game::can_access_stage(s32 id) {
     return true;
 }
 
-void Game::update_and_render_options_menu(struct render_commands* commands, f32 dt) {
+GAME_UI_SCREEN(update_and_render_options_menu) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -1422,7 +1425,7 @@ void Game::update_and_render_options_menu(struct render_commands* commands, f32 
     GameUI::end_frame();
 }
 
-void Game::update_and_render_confirm_back_to_main_menu(struct render_commands* commands, f32 dt) {
+GAME_UI_SCREEN(update_and_render_confirm_back_to_main_menu) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -1454,7 +1457,7 @@ void Game::update_and_render_confirm_back_to_main_menu(struct render_commands* c
     GameUI::end_frame();
 }
 
-void Game::update_and_render_confirm_exit_to_windows(struct render_commands* commands, f32 dt) {
+GAME_UI_SCREEN(update_and_render_confirm_exit_to_windows) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -1505,7 +1508,7 @@ void Game::update_and_render_confirm_exit_to_windows(struct render_commands* com
 // NOTE:
 // this function reroutes to handle all the "transition back to menu" stages
 // so it's sort of monolithic.
-void Game::update_and_render_replay_save_menu(struct render_commands* commands, f32 dt) {
+GAME_UI_SCREEN(update_and_render_replay_save_menu) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
 
     GameUI::set_ui_id((char*)"ui_replay_save_menu");
@@ -1675,7 +1678,7 @@ void Game::update_and_render_replay_save_menu(struct render_commands* commands, 
     GameUI::update(dt);
 }
 
-void Game::update_and_render_replay_collection_menu(struct render_commands* commands, f32 dt) {
+GAME_UI_SCREEN(update_and_render_replay_collection_menu) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
 
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
@@ -1736,43 +1739,49 @@ void Game::update_and_render_replay_collection_menu(struct render_commands* comm
                         auto serializer = open_read_file_serializer(fullname);
                         serializer.expected_endianess = ENDIANESS_LITTLE;
 
-                        gameplay_recording_file_serialize(
+                        bool recording_load_result = gameplay_recording_file_serialize(
                             &state->gameplay_data.recording,
                             &Global_Engine()->main_arena,
                             &serializer
                         );
+
                         serializer_finish(&serializer);
 
-                        Transitions::do_shuteye_in(
-                            color32f32(0, 0, 0, 1),
-                            0.15f,
-                            0.3f
-                        );
+                        if (recording_load_result) {
+                            Transitions::do_shuteye_in(
+                                color32f32(0, 0, 0, 1),
+                                0.15f,
+                                0.3f
+                            );
 
-                        Transitions::register_on_finish(
-                            [&](void*) mutable {
-                                this->state->mainmenu_data.stage_id_level_select          = state->gameplay_data.recording.stage_id;
-                                this->state->mainmenu_data.stage_id_level_in_stage_select = state->gameplay_data.recording.level_id;
+                            Transitions::register_on_finish(
+                                [&](void*) mutable {
+                                    this->state->mainmenu_data.stage_id_level_select = state->gameplay_data.recording.stage_id;
+                                    this->state->mainmenu_data.stage_id_level_in_stage_select = state->gameplay_data.recording.level_id;
 
-                                switch_ui(UI_STATE_INACTIVE);
-                                switch_screen(GAME_SCREEN_INGAME);
+                                    switch_ui(UI_STATE_INACTIVE);
+                                    switch_screen(GAME_SCREEN_INGAME);
 
-                                // Reset Demo Viewer
-                                {
-                                    state->gameplay_data.demo_viewer.paused          = false;
-                                    state->gameplay_data.demo_viewer.timescale_index = 3;
+                                    // Reset Demo Viewer
+                                    {
+                                        state->gameplay_data.demo_viewer.paused = false;
+                                        state->gameplay_data.demo_viewer.timescale_index = 3;
+                                    }
+                                    gameplay_recording_file_start_playback(
+                                        &state->gameplay_data.recording
+                                    );
+                                    setup_stage_start();
+                                    Transitions::do_shuteye_out(
+                                        color32f32(0, 0, 0, 1),
+                                        0.15f,
+                                        0.3f
+                                    );
                                 }
-                                gameplay_recording_file_start_playback(
-                                    &state->gameplay_data.recording
-                                );
-                                setup_stage_start();
-                                Transitions::do_shuteye_out(
-                                    color32f32(0, 0, 0, 1),
-                                    0.15f,
-                                    0.3f
-                                );
-                            }
-                        );
+                            );
+                        }
+                        else {
+                            switch_ui(UI_STATE_REPLAY_NOT_SUPPORTED);
+                        }
                     }
                 }
                 y += 30;
@@ -1791,7 +1800,7 @@ void Game::update_and_render_replay_collection_menu(struct render_commands* comm
     GameUI::update(dt);
 }
 
-void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt) {
+GAME_UI_SCREEN(update_and_render_pause_menu) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
 
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
@@ -1902,7 +1911,7 @@ void Game::update_and_render_pause_menu(struct render_commands* commands, f32 dt
     GameUI::update(dt);
 }
 
-void Game::update_and_render_stage_select_menu(struct render_commands* commands, f32 dt) {
+GAME_UI_SCREEN(update_and_render_stage_select_menu) {
     bool cancel = false;
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 64), BLEND_MODE_ALPHA);
 
@@ -2159,9 +2168,7 @@ bool Game::safely_resurrect_player() {
     return worked;
 }
 
-// TODO: planning to deprecate this and
-// make a new death menu.
-void Game::update_and_render_game_death_maybe_retry_menu(struct render_commands* commands, f32 dt) {
+GAME_UI_SCREEN(update_and_render_game_death_maybe_retry_menu) {
     auto& deathscreen_data = state->deathscreen_data;
     auto  font             = resources->get_font(MENU_FONT_COLOR_BLOODRED);
     string text            = string_literal("GAME OVER");
@@ -2368,7 +2375,7 @@ void Game::game_ui_draw_achievement_icon(const Achievement& achievement, struct 
     render_commands_push_image(commands, sprite_img, rectangle_f32(where.x + 16, where.y + 16, sprite_image_size.x*2, sprite_image_size.y*2), sprite_frame->source_rect, modulation_color, NO_FLAGS, BLEND_MODE_ALPHA);
 }
 
-void Game::update_and_render_achievements_menu(struct render_commands* commands, f32 dt) {
+GAME_UI_SCREEN(update_and_render_achievements_menu) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     auto achievements = Achievements::get_all();
     // I want a very simple layout so it'll just be a basic "list", not a table.
@@ -3051,7 +3058,7 @@ void Game::simulate_game_frames_until(int nth_frame) {
 
 #include "dialogue_ui.cpp"
 
-void Game::update_and_render_game_ingame(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
+GAME_SCREEN(update_and_render_game_ingame) {
     auto state = &this->state->gameplay_data;
 
     {

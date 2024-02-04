@@ -21,7 +21,7 @@ local void open_web_browser(const char* url) {
 #endif
 }
 
-void Game::update_and_render_game_credits(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
+GAME_SCREEN(update_and_render_game_credits) {
     GameUI::set_ui_id((char*)"ui_game_credits");
     GameUI::begin_frame(ui_render_commands, &resources->graphics_assets);
     {

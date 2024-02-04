@@ -62,7 +62,9 @@ bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memor
     );
 
     switch (recording->version) {
-        case GAMEPLAY_RECORDING_FILE_VERSION_1: {
+        case GAMEPLAY_RECORDING_FILE_CURRENT_VERSION:
+        //case GAMEPLAY_RECORDING_FILE_VERSION_1: 
+        {
             if (arena) {
                 recording->memory_arena = arena;
                 recording->memory_arena_cursor = arena->used;
@@ -81,7 +83,7 @@ bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memor
         default: {
             // TODO: should make this error more pleasantly in the future.
             // Although the game has little to no UI to speak of.
-            assert(0 && "Unsupported version of replay.");
+            return false;
         } break;
     }
 

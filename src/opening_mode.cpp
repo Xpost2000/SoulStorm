@@ -208,7 +208,7 @@ void OpeningMode_Data::update_and_render_skipper_box(f32 dt, Game_Resources* res
     }
 }
 
-void Game::update_and_render_game_opening(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
+GAME_SCREEN(update_and_render_game_opening) {
     auto& state = this->state->opening_data;
 
     OpeningMode_SlideData* first_slide = &state.slides[state.slide_index];

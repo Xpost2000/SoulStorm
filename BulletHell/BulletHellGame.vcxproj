@@ -314,6 +314,7 @@
     <ClInclude Include="..\src\color.h" />
     <ClInclude Include="..\src\common.h" />
     <ClInclude Include="..\src\debug_ui.h" />
+    <ClInclude Include="..\src\demo_recording.h" />
     <ClInclude Include="..\src\discord_rich_presence_integration.h" />
     <ClInclude Include="..\src\duffcoroutine.h" />
     <ClInclude Include="..\src\engine.h" />

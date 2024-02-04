@@ -1059,7 +1059,7 @@ void MainMenu_Data::adjust_entities_for_screen_resolution(int new_screen_width, 
     }
 }
 
-void Game::update_and_render_game_main_menu(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
+GAME_SCREEN(update_and_render_game_main_menu) {
     auto& main_menu_state = state->mainmenu_data;
     V2 resolution = V2(game_render_commands->screen_width, game_render_commands->screen_height);
     game_render_commands->camera = main_menu_state.main_camera;

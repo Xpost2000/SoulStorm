@@ -66,6 +66,9 @@ struct Entity_Loop_Update_Packet {
     f32         dt;
 };
 
+#define GAME_UI_SCREEN(name) void name(struct render_commands* commands, f32 dt)
+#define GAME_SCREEN(name) void name(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt)
+
 class Game {
 public:
     Game();
@@ -104,17 +107,18 @@ private:
       This happens to be just fine when working with a controller though because
       you can't use a mouse to go through lots of stuff...
     */
-    void update_and_render_replay_save_menu(struct render_commands* commands, f32 dt);
-    void update_and_render_replay_collection_menu(struct render_commands* commands, f32 dt);
-    void update_and_render_pause_menu(struct render_commands* commands, f32 dt);
-    void update_and_render_options_menu(struct render_commands* commands, f32 dt);
-    void update_and_render_stage_pet_select_menu(struct render_commands* commands, f32 dt);
-    void update_and_render_stage_select_menu(struct render_commands* commands, f32 dt);
-    void update_and_render_achievements_menu(struct render_commands* commands, f32 dt);
-    void update_and_render_game_death_maybe_retry_menu(struct render_commands* commands, f32 dt);
-    void update_and_render_achievement_notifications(struct render_commands* commands, f32 dt);
-    void update_and_render_confirm_back_to_main_menu(struct render_commands* commands, f32 dt);
-    void update_and_render_confirm_exit_to_windows(struct render_commands* commands, f32 dt);
+    GAME_UI_SCREEN(update_and_render_replay_save_menu);
+    GAME_UI_SCREEN(update_and_render_replay_collection_menu);
+    GAME_UI_SCREEN(update_and_render_replay_not_supported_menu);
+    GAME_UI_SCREEN(update_and_render_pause_menu);
+    GAME_UI_SCREEN(update_and_render_options_menu);
+    GAME_UI_SCREEN(update_and_render_stage_pet_select_menu);
+    GAME_UI_SCREEN(update_and_render_stage_select_menu);
+    GAME_UI_SCREEN(update_and_render_achievements_menu);
+    GAME_UI_SCREEN(update_and_render_game_death_maybe_retry_menu);
+    GAME_UI_SCREEN(update_and_render_achievement_notifications);
+    GAME_UI_SCREEN(update_and_render_confirm_back_to_main_menu);
+    GAME_UI_SCREEN(update_and_render_confirm_exit_to_windows);
 
     void update_dialogue_speaker(f32 dt, s32 speaker_index);
     void render_dialogue_speaker(struct render_commands* commands, f32 dt, s32 speaker_index);
@@ -123,11 +127,11 @@ private:
     void update_and_render_dialogue_ui(struct render_commands* commands, f32 dt);
 
     // Game Modes
-    void update_and_render_game_opening(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt);
-    void update_and_render_game_main_menu(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt);
-    void update_and_render_game_ingame(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt);
-    void update_and_render_game_credits(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt);
-    void update_and_render_game_title_screen(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt);
+    GAME_SCREEN(update_and_render_game_opening);
+    GAME_SCREEN(update_and_render_game_main_menu);
+    GAME_SCREEN(update_and_render_game_ingame);
+    GAME_SCREEN(update_and_render_game_credits);
+    GAME_SCREEN(update_and_render_game_title_screen);
 
     void ingame_update_introduction_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);
     void ingame_update_complete_stage_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);

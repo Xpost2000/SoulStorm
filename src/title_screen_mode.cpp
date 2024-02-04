@@ -334,7 +334,7 @@ void Game::title_data_initialize(Graphics_Driver* driver) {
     }
 }
 
-void Game::update_and_render_game_title_screen(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt) {
+GAME_SCREEN(update_and_render_game_title_screen) {
     Discord_Integration::update_activity(
         discord_activity()
         .Details(string_literal("About to start a new adventure!"))
