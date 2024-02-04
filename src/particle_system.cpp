@@ -98,11 +98,11 @@ void Particle_Emitter::reset() {
 }
 
 void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
-    if (!active)
+    if (!(flags & PARTICLE_EMITTER_FLAGS_ACTIVE))
         return;
 
     if (max_emissions != -1 && emissions >= max_emissions) {
-        active = false;
+        flags &= ~(PARTICLE_EMITTER_FLAGS_ACTIVE);
         return;
     }
 
@@ -115,7 +115,7 @@ void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
             {
                 p->sprite       = sprite;
                 p->scale        = scale + random_ranged_float(prng, scale_variance.x, scale_variance.y);
-                if (use_angular) {
+                if (flags & PARTICLE_EMITTER_FLAGS_USE_ANGULAR) {
                     V2 direction =
                         V2_direction_from_degree(random_ranged_float(prng, angle_range.x, angle_range.y));
                     p->velocity     =
@@ -134,21 +134,25 @@ void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
                             random_ranged_float(prng, acceleration_y_variance.x, acceleration_y_variance.y)
                         );
                 }
-                p->modulation   = modulation;
+                p->modulation   = color32f32_to_color32u8(modulation);
                 p->lifetime     = p->lifetime_max = lifetime + random_ranged_float(prng, lifetime_variance.x, lifetime_variance.y);
                 p->blend_mode   = blend_mode;
 
-                p->use_attraction_point = use_attraction_point;
+                if (flags & PARTICLE_EMITTER_FLAGS_USE_ATTRACTION_POINT) {
+                    p->flags |= PARTICLE_FLAGS_USE_ATTRACTION_POINT;
+                }
                 p->attraction_point = attraction_point;
                 p->attraction_force = attraction_force;
 
-                if (use_color_fade) {
-                    p->target_modulation = target_modulation;
+                if (flags & PARTICLE_EMITTER_FLAGS_USE_COLOR_FADE) {
+                    p->target_modulation = color32f32_to_color32u8(target_modulation);
                 } else {
-                    p->target_modulation = modulation;
+                    p->target_modulation = color32f32_to_color32u8(modulation);
                 }
 
-                p->flame_mode = flame_mode;
+                if (flags & PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE) {
+                    p->flags |= PARTICLE_FLAGS_USE_FLAME_MODE;
+                }
             }
         }
 
@@ -178,7 +182,7 @@ void Particle_Pool::update(Game_State* state, f32 dt) {
 
         V2 effective_acceleration = particle.acceleration;
 
-        if (particle.use_attraction_point) {
+        if (particle.flags & PARTICLE_FLAGS_USE_ATTRACTION_POINT) {
             V2 direction_to_attraction_point =
                 V2_direction(particle.position, particle.attraction_point);
 
@@ -196,13 +200,14 @@ void Particle_Pool::draw(struct render_commands* commands, Game_Resources* resou
     for (s32 particle_index = 0; particle_index < particles.size; ++particle_index) {
         auto& particle = particles[particle_index];
 
-        color32f32 modulation = particle.modulation;
+        color32f32 modulation = color32u8_to_color32f32(particle.modulation);
+        color32f32 target_modulation = color32u8_to_color32f32(particle.target_modulation);
         f32 effective_t = clamp<f32>(particle.lifetime/particle.lifetime_max, 0.0f, 1.0f);
 
         {
-            modulation.r = lerp_f32(modulation.r, particle.target_modulation.r, 1.0f - effective_t);
-            modulation.g = lerp_f32(modulation.g, particle.target_modulation.g, 1.0f - effective_t);
-            modulation.b = lerp_f32(modulation.b, particle.target_modulation.b, 1.0f - effective_t);
+            modulation.r = lerp_f32(modulation.r, target_modulation.r, 1.0f - effective_t);
+            modulation.g = lerp_f32(modulation.g, target_modulation.g, 1.0f - effective_t);
+            modulation.b = lerp_f32(modulation.b, target_modulation.b, 1.0f - effective_t);
         }
 
         modulation.a *= effective_t;
@@ -218,7 +223,7 @@ void Particle_Pool::draw(struct render_commands* commands, Game_Resources* resou
             particle.position.y - particle.scale/2 + (particle.sprite.offset.y - sprite_image_size.y/2)
         );
 
-        if (particle.flame_mode) {
+        if (particle.flags & PARTICLE_FLAGS_USE_FLAME_MODE) {
             render_commands_push_image(
                 commands,
                 sprite_img,

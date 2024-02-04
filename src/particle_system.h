@@ -6,24 +6,42 @@
 #include "fixed_array.h"
 #include "prng.h"
 
+
+enum Particle_Emitter_Flags {
+    PARTICLE_EMITTER_FLAGS_NONE                 = 0,
+    PARTICLE_EMITTER_FLAGS_ACTIVE               = BIT(0),
+    PARTICLE_EMITTER_FLAGS_USE_ATTRACTION_POINT = BIT(1),
+    PARTICLE_EMITTER_FLAGS_USE_COLOR_FADE       = BIT(3),
+    PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE       = BIT(3),
+    PARTICLE_EMITTER_FLAGS_USE_ANGULAR          = BIT(4),
+    PARTICLE_EMITTER_FLAG_COUNT                 = 5
+};
+
+enum Particle_Flags {
+    PARTICLE_FLAGS_USE_ATTRACTION_POINT = BIT(0),
+    PARTICLE_FLAGS_USE_FLAME_MODE       = BIT(1),
+    PARTICLE_FLAG_COUNT                 = 2
+};
+
 // Would like to simd this one day.
 struct Particle {
     V2 position;
     V2 velocity;
     V2 acceleration;
+    V2 attraction_point;
+
     u32 blend_mode = BLEND_MODE_ALPHA;
-    bool flame_mode = false;
+    u32 flags      = 0;
 
     f32 scale;
     f32 lifetime, lifetime_max;
+    f32 attraction_force;
+
     Sprite_Instance sprite;
 
-    color32f32 modulation;
-    color32f32 target_modulation;
+    color32u8 modulation;
+    color32u8 target_modulation;
 
-    bool use_attraction_point;
-    V2 attraction_point;
-    f32 attraction_force;
 };
 
 enum Particle_Emit_Shape_Type {
@@ -74,7 +92,6 @@ Particle_Emit_Shape particle_emit_shape_line(V2 start, V2 end);
 struct Particle_Pool;
 // NOTE: particle sizes are based off image size.
 
-// NOTE: this is a little big. I can shrink this for some decent savings.
 struct Particle_Emitter {
     Particle_Emit_Shape shape;
 
@@ -99,13 +116,7 @@ struct Particle_Emitter {
     V2 angle_range             = V2(0,0);
     V2 attraction_point;
 
-    // NOTE: need to refer back to legends-jrpg for a more robust particle
-    // system since I liked some of the stuff I did there,
-    bool use_color_fade       = false;
-    bool use_attraction_point = false;
-    bool use_angular          = false;
-    bool flame_mode           = false;
-    bool active = false;
+    u32 flags = PARTICLE_EMITTER_FLAGS_NONE;
 
     u32 blend_mode = BLEND_MODE_ALPHA;
 

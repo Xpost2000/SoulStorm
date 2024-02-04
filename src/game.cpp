@@ -20,6 +20,8 @@
 #include "action_mapper.h"
 #include "virtual_file_system.h"
 
+#undef GAME_UI_SCREEN
+#undef GAME_SCREEN
 #define GAME_UI_SCREEN(name) void Game::name(struct render_commands* commands, f32 dt)
 #define GAME_SCREEN(name) void Game::name(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt)
 
@@ -193,7 +195,7 @@ Particle_Emitter& spawn_game_entity_hit_particle_emitter(Fixed_Array<Particle_Em
     emitter.emission_max_timer      = 0.035f;
     emitter.max_emissions           = 1;
     emitter.emit_per_emission       = 8;
-    emitter.active                  = true;
+    emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE;
     emitter.scale                   = 1;
 
     return emitter;
@@ -215,7 +217,7 @@ Particle_Emitter& spawn_game_entity_death_particle_emitter(Fixed_Array<Particle_
     emitter.emission_max_timer      = 0.035f;
     emitter.max_emissions           = 1;
     emitter.emit_per_emission       = 8;
-    emitter.active                  = true;
+    emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE;
     emitter.scale                   = 1;
 
     return emitter;
@@ -704,7 +706,7 @@ void Game::reset_stage_simulation_state() {
         deathanimation_emitter.emission_max_timer = (DEATH_ANIMATION_MAX_T_PER_FLASH)*2;
         deathanimation_emitter.scale              = 1;
         deathanimation_emitter.emit_per_emission  = 16;
-        deathanimation_emitter.use_angular        = true;
+        deathanimation_emitter.flags = PARTICLE_EMITTER_FLAGS_USE_ANGULAR;
         deathanimation_emitter.angle_range        = V2(-360, 360);
         deathanimation_emitter.velocity           = V2(250, 0.0f);
         deathanimation_emitter.acceleration       = V2(0, 0.0f);
@@ -3024,7 +3026,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
                 auto& particle_emitter = state->particle_emitters[particle_emitter_index];
                 particle_emitter.update(&state->particle_pool, &state->prng, dt);
 
-                if (!particle_emitter.active) {
+                if (!(particle_emitter.flags & PARTICLE_EMITTER_FLAGS_ACTIVE)) {
                     state->particle_emitters.pop_and_swap(particle_emitter_index);
                 }
             }
@@ -3445,7 +3447,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
             // regular fixed frame update.
             // NOTE: the original fixed particle update is guaranteed to not happen by this point so this is not a big deal.
             {
-                if (deathanimation_data.player_explosion_emitter.active) {
+                if (deathanimation_data.player_explosion_emitter.flags & PARTICLE_EMITTER_FLAGS_ACTIVE) {
                     deathanimation_data.player_explosion_emitter.update(&state->death_particle_pool, &state->prng_unessential, dt);
                 }
 
@@ -3928,7 +3930,7 @@ void Game::on_player_death() {
                 deathanimation_data.flash_t                         = 0.0f;
                 deathanimation_data.flash_count                     = DEATH_ANIMATION_FLASH_AMOUNT;
                 deathanimation_data.flashing                        = false;
-                deathanimation_data.player_explosion_emitter.active = true;
+                deathanimation_data.player_explosion_emitter.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE;
                 deathanimation_data.player_explosion_emitter.shape  = particle_emit_shape_point(state->player.position);
                 deathanimation_data.player_explosion_emitter.reset();
             }

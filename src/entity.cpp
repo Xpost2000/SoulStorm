@@ -73,7 +73,7 @@ void Entity::reset_sprite_animation_frames(void)  {
 void Entity::disable_all_particle_emitters(void) {
     for (s32 particle_emitter_index = 0; particle_emitter_index < ENTITY_MAX_PARTICLE_EMITTERS; ++particle_emitter_index) {
         auto& particle_emitter = emitters[particle_emitter_index];
-        particle_emitter.active = false;
+        particle_emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
     }
 }
 
@@ -602,7 +602,7 @@ rectangle_f32 Entity::get_rect() {
 void Cosmetic_Pet::update(Game_State* state, f32 dt) {
     if (!visible) {
         auto& emitter = emitters[0];
-        emitter.active = false;
+        emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
         return;
     }
 
@@ -639,7 +639,7 @@ void Cosmetic_Pet::update(Game_State* state, f32 dt) {
     // same particle emitter as player
     {
         auto& emitter = emitters[0];
-        emitter.active = true;
+        emitter.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE;
         emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_SPARKLING_STAR]);
 
         auto r = get_rect();
@@ -815,7 +815,7 @@ f32 Player::get_grazing_score_modifier(s32 amount) {
 void Player::update(Game_State* state, f32 dt) {
     if (!visible) {
         auto& emitter = emitters[0];
-        emitter.active = false;
+        emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
         return;
     }
 
@@ -844,7 +844,7 @@ void Player::update(Game_State* state, f32 dt) {
     // Particle Emitter
     {
         auto& emitter = emitters[0];
-        emitter.active = true;
+        emitter.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE;
         emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_SPARKLING_STAR]);
 
         auto r = get_rect();
@@ -1124,10 +1124,10 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 emitter.emission_max_timer      = 0.035f;
                 emitter.max_emissions           = 1;
                 emitter.emit_per_emission       = 128;
-                emitter.use_color_fade          = true;
-                emitter.use_angular             = true;
-                emitter.flame_mode              = true;
-                emitter.active                  = true;
+                emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE |
+                    PARTICLE_EMITTER_FLAGS_USE_ANGULAR |
+                    PARTICLE_EMITTER_FLAGS_USE_COLOR_FADE |
+                    PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
                 emitter.scale                   = 1;
                 emitter.blend_mode              = BLEND_MODE_ALPHA;
             }
@@ -1151,10 +1151,10 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 emitter.emission_max_timer      = 0.035f;
                 emitter.max_emissions           = 1;
                 emitter.emit_per_emission       = 256;
-                emitter.use_angular             = true;
-                emitter.use_color_fade          = true;
-                emitter.flame_mode              = true;
-                emitter.active                  = true;
+                emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE |
+                    PARTICLE_EMITTER_FLAGS_USE_ANGULAR |
+                    PARTICLE_EMITTER_FLAGS_USE_COLOR_FADE |
+                    PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
                 emitter.scale                   = 1;
                 emitter.blend_mode              = BLEND_MODE_ALPHA;
             }
@@ -1177,8 +1177,8 @@ void Explosion_Hazard::update(Game_State* state, f32 dt) {
                 emitter.emission_max_timer      = 0.035f;
                 emitter.max_emissions           = 1;
                 emitter.emit_per_emission       = 128;
-                emitter.use_angular             = true;
-                emitter.active                  = true;
+                emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE |
+                    PARTICLE_EMITTER_FLAGS_USE_ANGULAR;
                 emitter.scale                   = 1;
                 emitter.blend_mode              = BLEND_MODE_ADDITIVE;
             }
@@ -1297,7 +1297,7 @@ void Laser_Hazard::update(Game_State* state, f32 dt) {
                 emitter.max_emissions           = -1;
                 emitter.emit_per_emission       = 16;
                 // emitter.flame_mode              = true;
-                emitter.active                  = true;
+                emitter.flags                  = PARTICLE_EMITTER_FLAGS_ACTIVE;
                 emitter.scale                   = 1;
                 emitter.blend_mode              = BLEND_MODE_ADDITIVE;
             }
@@ -1320,8 +1320,8 @@ void Laser_Hazard::update(Game_State* state, f32 dt) {
                 emitter.emission_max_timer      = 0.055f;
                 emitter.max_emissions           = -1;
                 emitter.emit_per_emission       = 4;
-                emitter.use_angular             = true;
-                emitter.active                  = true;
+                emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE |
+                    PARTICLE_EMITTER_FLAGS_USE_ANGULAR;
                 emitter.scale                   = 1;
                 emitter.blend_mode              = BLEND_MODE_ADDITIVE;
             }

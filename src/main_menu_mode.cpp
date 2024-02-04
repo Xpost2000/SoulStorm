@@ -464,7 +464,12 @@ void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
     }
 
     {
-        emitter.active = visible;
+        if (visible) {
+            emitter.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE;
+        }
+        else {
+            emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
+        }
         emitter.scale  = 0.5f;
         emitter.emit_per_emission = 2;
         emitter.lifetime = 0.55f;
@@ -854,7 +859,7 @@ local void initialize_portal_particle_emitters(MainMenu_Stage_Portal* portal,
         emitter.scale  = 0.15f;
         emitter.lifetime = 2.0f;
         emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-        emitter.use_attraction_point = true;
+        emitter.flags |= PARTICLE_EMITTER_FLAGS_USE_ATTRACTION_POINT;
         emitter.attraction_force     = 100.0f;
         emitter.emission_max_timer = 0.028f;
     }
@@ -973,7 +978,7 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
                     emitter.scale  = 0.5;
                     emitter.lifetime = 2.0f;
                     emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.use_attraction_point = true;
+                    emitter.flags |= PARTICLE_EMITTER_FLAGS_USE_ATTRACTION_POINT; // use_attraction_point = true;
                     emitter.attraction_force     = 100.0f;
                     emitter.emission_max_timer = 0.025f;
                 }
@@ -1254,7 +1259,13 @@ GAME_SCREEN(update_and_render_game_main_menu) {
 
     for (int i = 0; i < main_menu_state.portals.size; ++i) {
         auto& p = main_menu_state.portals[i];
-        p.emitter_main.active   = p.visible;
+
+        if (p.visible) {
+            p.emitter_main.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE;
+        }
+        else {
+            p.emitter_main.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
+        }
 
         p.emitter_main.update(&main_menu_state.particle_pool, &main_menu_state.prng, dt);
         p.emitter_vortex.update(&main_menu_state.particle_pool, &main_menu_state.prng, dt);
@@ -1317,7 +1328,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
             }
 
             p.triggered_level_selection = false;
-            p.emitter_vortex.active = false;
+            p.emitter_vortex.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
         } 
 
         if (focus_portal) {
@@ -1325,7 +1336,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
                 focus_portal->triggered_level_selection = true;
 
                 focus_portal->emitter_vortex.reset();
-                focus_portal->emitter_vortex.active = true;
+                focus_portal->emitter_vortex.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE;
 
                 main_menu_state.stage_id_level_select = focus_portal->stage_id;
                 switch_ui(UI_STATE_STAGE_SELECT);

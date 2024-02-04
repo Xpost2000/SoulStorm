@@ -202,7 +202,12 @@ int _lua_bind_particle_emitter_set_use_flame_mode(lua_State* L) {
     auto e = userdata_to_emitter(L, 1);
     s32  a = lua_toboolean(L, 2);
     if (e) {
-        e->flame_mode = a;
+        if (a) {
+            e->flags |= PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
+        }
+        else {
+            e->flags &= ~PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
+        }
     }
     return 0;
 }
@@ -211,7 +216,12 @@ int _lua_bind_particle_emitter_set_use_angular(lua_State* L) {
     auto e = userdata_to_emitter(L, 1);
     s32  a = lua_toboolean(L, 2);
     if (e) {
-        e->use_angular = a;
+        if (a) {
+            e->flags |= PARTICLE_EMITTER_FLAGS_USE_ANGULAR;
+        }
+        else {
+            e->flags &= ~PARTICLE_EMITTER_FLAGS_USE_ANGULAR;
+        }
     }
     return 0;
 }
@@ -220,7 +230,12 @@ int _lua_bind_particle_emitter_set_use_attraction_point(lua_State* L) {
     auto e = userdata_to_emitter(L, 1);
     s32  a = lua_toboolean(L, 2);
     if (e) {
-        e->use_attraction_point = a;
+        if (a) {
+            e->flags |= PARTICLE_EMITTER_FLAGS_USE_ATTRACTION_POINT;
+        }
+        else {
+            e->flags &= ~PARTICLE_EMITTER_FLAGS_USE_ATTRACTION_POINT;
+        }
     }
     return 0;
 }
@@ -229,7 +244,12 @@ int _lua_bind_particle_emitter_set_use_color_fade(lua_State* L) {
     auto e = userdata_to_emitter(L, 1);
     s32  a = lua_toboolean(L, 2);
     if (e) {
-        e->use_color_fade = a;
+        if (a) {
+            e->flags |= PARTICLE_EMITTER_FLAGS_USE_COLOR_FADE;
+        }
+        else {
+            e->flags &= ~PARTICLE_EMITTER_FLAGS_USE_COLOR_FADE;
+        }
     }
     return 0;
 }
@@ -238,7 +258,12 @@ int _lua_bind_particle_emitter_set_active(lua_State* L) {
     auto e = userdata_to_emitter(L, 1);
     s32  a = lua_toboolean(L, 2);
     if (e) {
-        e->active = a;
+        if (a) {
+            e->flags |= PARTICLE_EMITTER_FLAGS_ACTIVE;
+        }
+        else {
+            e->flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
+        }
     }
     return 0;
 }

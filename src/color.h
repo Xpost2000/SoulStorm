@@ -2,17 +2,23 @@
 #define COLOR_H
 
 #include "common.h"
+union color32f32;
+union color32u8;
+union color32s32;
 
 union color32u8 {
     struct { u8 r, g, b, a; };
     u8  rgba[4];
     u32 rgba_packed;
+
+    operator color32f32() const;
 };
 
 /* for percentage and modulations */
 union color32f32 {
     struct { f32 r, g, b, a; };
     f32  rgba[4];
+    operator color32u8() const;
 };
 /* NOTE: for optimizing out floating point operations with close enough integer ops... */
 union color32s32 {
