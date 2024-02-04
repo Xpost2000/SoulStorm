@@ -1678,6 +1678,38 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
     GameUI::update(dt);
 }
 
+GAME_UI_SCREEN(update_and_render_replay_not_supported_menu) {
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+    GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+    GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+
+    GameUI::set_ui_id((char*)"ui_replay_not_supported_menu");
+
+    GameUI::begin_frame(commands, &resources->graphics_assets);
+    {
+        f32 y = 100;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(50, y),
+            string_literal("REPLAY NOT SUPPORTED / CANNOT PLAY"),
+            color32f32(1, 1, 1, 1), 4);
+
+        y += 45;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        GameUI::label(
+            V2(75, y),
+            string_literal("Unfortunately this replay is either:\noutdated or invalid/corrupt!"),
+            color32f32(1, 1, 1, 1), 4
+        );
+
+        y += 80;
+        
+        if (GameUI::button(V2(100, y), string_literal("Return"), color32f32(1, 1, 1, 1), !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            switch_ui(state->last_ui_state);
+        }
+    }
+    GameUI::end_frame();
+}
+
 GAME_UI_SCREEN(update_and_render_replay_collection_menu) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
 
@@ -2582,6 +2614,9 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
         } break;
         case UI_STATE_ACHIEVEMENTS: {
             update_and_render_achievements_menu(commands, dt);
+        } break;
+        case UI_STATE_REPLAY_NOT_SUPPORTED: {
+            update_and_render_replay_not_supported_menu(commands, dt);
         } break;
         default: {
             unimplemented("Unknown ui state type");
