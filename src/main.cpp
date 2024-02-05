@@ -479,6 +479,8 @@ void initialize() {
     Global_Engine()->real_screen_width  = REAL_SCREEN_WIDTH;
     Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
     Global_Engine()->fullscreen         = SCREEN_IS_FULLSCREEN;
+    Audio::set_volume_sound(game.preferences.sound_volume);
+    Audio::set_volume_music(game.preferences.music_volume);
 
     if (Global_Engine()->fullscreen) {
         flags |= SDL_WINDOW_FULLSCREEN;
