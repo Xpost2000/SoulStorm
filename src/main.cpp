@@ -155,12 +155,13 @@ local void initialize_framebuffer(void) {
     Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
     Global_Engine()->virtual_screen_width  = SCREEN_WIDTH;
     Global_Engine()->virtual_screen_height = SCREEN_HEIGHT;
+
     if (last_screen_width == SCREEN_WIDTH && last_screen_height == SCREEN_HEIGHT) {
         _debugprintf("Framebuffer did not change resolutions. No change needed.");
     } else {
         _debugprintf("framebuffer resolution is: (%d, %d) vs (%d, %d) real resolution", SCREEN_WIDTH, SCREEN_HEIGHT, REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
+        global_graphics_driver->initialize(global_game_window, framebuffer_resolution.x, framebuffer_resolution.y);
     }
-    global_graphics_driver->initialize(global_game_window, framebuffer_resolution.x, framebuffer_resolution.y);
 }
 
 local const f32 r16by9Ratio  = 16/9.0f;
@@ -488,6 +489,7 @@ void initialize() {
      *       retain any resources, and the Graphics_Assets system does not reload stuff from
      *       disk!
      */
+    game.handle_preferences();
     game.init(global_graphics_driver);
     Input::initialize();
     Discord_Integration::initialize();

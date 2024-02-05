@@ -91,6 +91,7 @@ public:
     void title_data_initialize(Graphics_Driver* driver);
 
     void update_and_render(Graphics_Driver* driver, f32 dt);
+    void handle_preferences(void);
 
     Game_Preferences preferences;
     Game_State*     state;
@@ -186,6 +187,7 @@ private:
     void update_from_save_data(Save_File* save_data);
 
     void notify_new_achievement(s32 id);
+
 
     Memory_Arena*   arena;
     bool initialized = false;

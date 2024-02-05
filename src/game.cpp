@@ -854,6 +854,18 @@ void Game::setup_stage_start() {
     }
 }
 
+void Game::handle_preferences(void) {
+    if (load_preferences_from_disk(&preferences, string_literal("preferences.lua"))) {
+    }
+    else {
+        // the main code will provide us with a default
+        // preferences struct.
+        save_preferences_to_disk(&preferences, string_literal("preferences.lua"));
+    }
+    confirm_preferences(&preferences, resources);
+    update_preferences(&temp_preferences, &preferences);
+}
+
 void Game::init(Graphics_Driver* driver) {
     this->arena     = &Global_Engine()->main_arena;
     this->resources = (Game_Resources*)arena->push_unaligned(sizeof(*this->resources));
@@ -904,16 +916,6 @@ void Game::init(Graphics_Driver* driver) {
     }
 
     resources->graphics_assets   = graphics_assets_create(arena, 16, 512, 512);
-    if (load_preferences_from_disk(&preferences, string_literal("preferences.lua"))) {
-    }
-    else {
-        // the main code will provide us with a default
-        // preferences struct.
-        save_preferences_to_disk(&preferences, string_literal("preferences.lua"));
-    }
-    confirm_preferences(&preferences, resources);
-    update_preferences(&temp_preferences, &preferences);
-
     
     // initialize achievement notifier
     {
