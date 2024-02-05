@@ -3,12 +3,6 @@
  *
  * Platform layer
  *
- * While there is a planned primary Windows path
- * (DirectX rendering), I am still going to use SDL2
- * simply because it has a nicer API for handling controller
- * support, and audio is an animal that I'm admittedly not experienced
- * at tackling (beyond some waveOut tests).
- *
  * Most of the other code is otherwise pretty independent.
  *
  */
@@ -320,6 +314,8 @@ local void update_all_controller_inputs(void) {
 }
 
 local void change_resolution(s32 new_resolution_x, s32 new_resolution_y) {
+    REAL_SCREEN_WIDTH  = new_resolution_x;
+    REAL_SCREEN_HEIGHT = new_resolution_y;
     SDL_SetWindowSize(global_game_window, new_resolution_x, new_resolution_y);
     Global_Engine()->real_screen_width = new_resolution_x;
     Global_Engine()->real_screen_height = new_resolution_y;
@@ -339,6 +335,8 @@ local void set_fullscreen(bool v) {
             SDL_SetWindowAlwaysOnTop(global_game_window, SDL_FALSE);
         }
     }
+
+    Global_Engine()->fullscreen = preferences->fullscreen;
 }
 
 local void toggle_fullscreen(void) {
@@ -465,14 +463,19 @@ void initialize() {
         preferences.controller_vibration = true;
     }
 
+    // load preferences file primarily.
     game.handle_preferences();
 
-    // partial preference update
-    // to avoid double initialization of graphics device quirk.
-    // This platform layer is not that great but it is working at least.
+    /*
+     * NOTE: the initialization regarding preferences in this engine is a bit weird, and the main thing
+     * is because I can switch graphics drivers at runtime. Some things are also to prevent undefined state
+     * from stale pointers and other weird problems due to some architectural mistakes I made pretty early on, and are
+     * annoying for me to go back and correct, especially since this is otherwise pretty stable.
+     */
     REAL_SCREEN_WIDTH = game.preferences.width;
     REAL_SCREEN_HEIGHT = game.preferences.height;
     SCREEN_IS_FULLSCREEN = game.preferences.fullscreen;
+
     Global_Engine()->real_screen_width  = REAL_SCREEN_WIDTH;
     Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
     Global_Engine()->fullscreen         = SCREEN_IS_FULLSCREEN;
@@ -517,10 +520,6 @@ void actually_confirm_and_update_preferences(Game_Preferences* preferences, Game
     if (!queued_preference_update) {
         return;
     }
-
-    REAL_SCREEN_WIDTH  = preferences->width;
-    REAL_SCREEN_HEIGHT = preferences->height;
-    Global_Engine()->fullscreen = preferences->fullscreen;
     set_fullscreen(preferences->fullscreen);
     set_graphics_device(preferences->renderer_type);
 
@@ -546,7 +545,6 @@ bool save_preferences_to_disk(Game_Preferences* preferences, string path) {
     FILE* f = fopen(path.data, "wb+");
     {
         fprintf(f, "---- Preferences generated from the game\n");
-        fprintf(f, "---- NOTE: while this is a lua file, you can't really use any thing special :P\n");
         fprintf(f, "width = %d\n",    preferences->width);
         fprintf(f, "height = %d\n",    preferences->height);
         fprintf(f, "music_volume = %3.3f\n", preferences->music_volume);
