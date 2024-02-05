@@ -558,6 +558,23 @@ GAME_SCREEN(update_and_render_game_title_screen) {
                 );
             }
             y += 30;
+            if (GameUI::button(V2(ui_x, y), string_literal("Opening"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
+                Transitions::do_shuteye_in(
+                    color32f32(0, 0, 0, 1),
+                    0.15f,
+                    0.3f
+                );
+                
+
+                Transitions::register_on_finish(
+                    [&](void*) mutable {
+                        opening_data_initialize(Global_Engine()->driver);
+                        switch_ui(UI_STATE_INACTIVE);
+                        switch_screen(GAME_SCREEN_OPENING);
+                    }
+                );
+            }
+            y += 30;
             if (GameUI::button(V2(ui_x, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(UI_STATE_CONFIRM_EXIT_TO_WINDOWS);
             }

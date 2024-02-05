@@ -333,8 +333,10 @@ local void set_fullscreen(bool v) {
         if (SCREEN_IS_FULLSCREEN) {
             // exclusive fullscreen now.
             SDL_SetWindowFullscreen(global_game_window, SDL_WINDOW_FULLSCREEN);
+            SDL_SetWindowAlwaysOnTop(global_game_window, SDL_TRUE);
         } else {
-            SDL_SetWindowFullscreen(global_game_window, 0);
+            SDL_SetWindowFullscreen(global_game_window, SDL_FALSE);
+            SDL_SetWindowAlwaysOnTop(global_game_window, SDL_FALSE);
         }
     }
 }
@@ -449,32 +451,12 @@ void initialize() {
 
     u32 flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL;
 
-    global_game_window = SDL_CreateWindow("SoulStorm",
-                                          SDL_WINDOWPOS_CENTERED,
-                                          SDL_WINDOWPOS_CENTERED,
-                                          REAL_SCREEN_WIDTH,
-                                          REAL_SCREEN_HEIGHT,
-                                          flags);
-    Global_Engine()->real_screen_width  = REAL_SCREEN_WIDTH;
-    Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
-    Global_Engine()->fullscreen         = SCREEN_IS_FULLSCREEN;
-    Thread_Pool::initialize();
-
-    Graphics_Driver::populate_display_mode_list(global_game_window); // update internal list of display modes.
-
-#ifndef NO_FANCY_FADEIN_INTRO
-    set_window_transparency(0);
-#endif
-    SDL_ShowWindow(global_game_window);
-
-    set_graphics_device(GRAPHICS_DEVICE_SOFTWARE);
-    // set_graphics_device(GRAPHICS_DEVICE_OPENGL);
-
     // initialize game_preferences structure here.
     {
         auto& preferences = game.preferences;
         preferences.width = REAL_SCREEN_WIDTH;
         preferences.height = REAL_SCREEN_HEIGHT;
+        // NOTE: not populated yet...
         preferences.resolution_option_index = Graphics_Driver::find_index_of_resolution(preferences.width, preferences.height);
         preferences.music_volume = 0.5f;
         preferences.sound_volume = 0.5f;
@@ -483,13 +465,31 @@ void initialize() {
         preferences.controller_vibration = true;
     }
 
-    /*
-     * NOTE: since graphics resources aren't initialized yet. It's generally safe
-     *       to set_graphics_device one last time, from here. Any point after, I do not
-     *       retain any resources, and the Graphics_Assets system does not reload stuff from
-     *       disk!
-     */
     game.handle_preferences();
+
+    Global_Engine()->real_screen_width  = REAL_SCREEN_WIDTH;
+    Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
+    Global_Engine()->fullscreen         = SCREEN_IS_FULLSCREEN;
+
+
+    if (Global_Engine()->fullscreen) {
+        flags |= SDL_WINDOW_FULLSCREEN;
+    }
+
+    global_game_window = SDL_CreateWindow("SoulStorm",
+                                          SDL_WINDOWPOS_CENTERED,
+                                          SDL_WINDOWPOS_CENTERED,
+                                          REAL_SCREEN_WIDTH,
+                                          REAL_SCREEN_HEIGHT,
+                                          flags);
+    Thread_Pool::initialize();
+
+    Graphics_Driver::populate_display_mode_list(global_game_window); // update internal list of display modes.
+
+#ifndef NO_FANCY_FADEIN_INTRO
+    set_window_transparency(0);
+#endif
+    SDL_ShowWindow(global_game_window);
     game.init(global_graphics_driver);
     Input::initialize();
     Discord_Integration::initialize();
@@ -497,6 +497,10 @@ void initialize() {
 
 void update_preferences(Game_Preferences* a, Game_Preferences* b) {
     *a = *b;
+
+    // NOTE: only happens at "fresh" start.
+    if (b->resolution_option_index == -1)
+        return;
 
     auto display_mode = Graphics_Driver::get_display_modes()[b->resolution_option_index];
     a->width          = display_mode.width;
@@ -724,6 +728,7 @@ int main(int argc, char** argv) {
     SetProcessDPIAware();
 #endif
     initialize();
+
     Discord_Integration::update_activity(discord_activity());
     {
         string s = get_preference_directory(string_null, string_literal("Soulstorm"));

@@ -14,6 +14,12 @@
 
 void Game::opening_data_initialize(Graphics_Driver* driver) {
     auto& state = this->state->opening_data;
+    state.slide_count = 0;
+    state.slide_index = 0;
+    state.fade_timer  = 0.0f;
+    state.skipper_visibility_t = 0.0f;
+    state.skipper_progress_t = 0.0f;
+    state.phase = OPENING_MODE_PHASE_FADE_IN;
     /*
      * I'm not an excellent writer, but I also don't need a very complicated story.
      */
