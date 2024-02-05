@@ -467,10 +467,15 @@ void initialize() {
 
     game.handle_preferences();
 
+    // partial preference update
+    // to avoid double initialization of graphics device quirk.
+    // This platform layer is not that great but it is working at least.
+    REAL_SCREEN_WIDTH = game.preferences.width;
+    REAL_SCREEN_HEIGHT = game.preferences.height;
+    SCREEN_IS_FULLSCREEN = game.preferences.fullscreen;
     Global_Engine()->real_screen_width  = REAL_SCREEN_WIDTH;
     Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
     Global_Engine()->fullscreen         = SCREEN_IS_FULLSCREEN;
-
 
     if (Global_Engine()->fullscreen) {
         flags |= SDL_WINDOW_FULLSCREEN;
@@ -482,6 +487,7 @@ void initialize() {
                                           REAL_SCREEN_WIDTH,
                                           REAL_SCREEN_HEIGHT,
                                           flags);
+    set_graphics_device(game.preferences.renderer_type);
     Thread_Pool::initialize();
 
     Graphics_Driver::populate_display_mode_list(global_game_window); // update internal list of display modes.
@@ -514,10 +520,10 @@ void actually_confirm_and_update_preferences(Game_Preferences* preferences, Game
 
     REAL_SCREEN_WIDTH  = preferences->width;
     REAL_SCREEN_HEIGHT = preferences->height;
+    Global_Engine()->fullscreen = preferences->fullscreen;
     set_fullscreen(preferences->fullscreen);
     set_graphics_device(preferences->renderer_type);
 
-    Global_Engine()->fullscreen = preferences->fullscreen;
     global_graphics_driver->change_resolution(REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
 
     Audio::set_volume_sound(preferences->sound_volume);
