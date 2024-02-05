@@ -1350,6 +1350,7 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
         GameUI::label(V2(100, y), string_literal("OPTIONS"), color32f32(1, 1, 1, 1), 4);
         y += 45;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+#if 1
         {
             auto display_modes = Graphics_Driver::get_display_modes();
 
@@ -1357,12 +1358,14 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
             for (s32 index = 0; index < display_modes.length; ++index) {
                 auto&  dm = display_modes[index];
                 string s = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("%d x %d", dm.width, dm.height)));
+                _debugprintf("Str: %s\n", s.data);
                 options_list.push(s);
             }
-
+            _debugprintf("displaymode sz: %d", display_modes.length);
             GameUI::option_selector(V2(100, y), string_literal("Resolution: "), color32f32(1, 1, 1, 1), 2, options_list.data, options_list.size, &temp_preferences.resolution_option_index);
             y += 30;
         }
+#endif
         {
             Fixed_Array<string> options_list = Fixed_Array<string>(&Global_Engine()->scratch_arena, 5);
             options_list.push(string_literal("Software Renderer"));

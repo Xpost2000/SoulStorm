@@ -495,6 +495,10 @@ void initialize() {
 
     Graphics_Driver::populate_display_mode_list(global_game_window); // update internal list of display modes.
 
+    // properly populate the resolution_option_index field
+    game.preferences.resolution_option_index = Graphics_Driver::find_index_of_resolution(game.preferences.width, game.preferences.height);
+    update_preferences(&game.temp_preferences, &game.preferences);
+
 #ifndef NO_FANCY_FADEIN_INTRO
     set_window_transparency(0);
 #endif

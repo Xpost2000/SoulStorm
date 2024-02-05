@@ -96,6 +96,10 @@ public:
     Game_Preferences preferences;
     Game_State*     state;
     Game_Resources* resources;
+
+    // used for writing into from the settings before I
+    // actually apply them.
+    Game_Preferences temp_preferences;
 private: 
     void handle_ui_update_and_render(struct render_commands* commands, f32 dt);
 
@@ -192,9 +196,6 @@ private:
     Memory_Arena*   arena;
     bool initialized = false;
 
-    // used for writing into from the settings before I
-    // actually apply them.
-    Game_Preferences temp_preferences;
     Achievement_Notification_State achievement_state;
 
     f32 total_playtime;
