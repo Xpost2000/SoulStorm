@@ -61,6 +61,10 @@ enum TitleScreen_Animation_Phase {
     TITLE_SCREEN_ANIMATION_PHASE_IDLE,
 };
 
+// Idling for 45 seconds is... pretty rare.
+// so just in-case.
+#define ATTRACT_MODE_TIMER_MAX (45.0f)
+
 struct TitleScreen_Data {
     // there might not be anything
     // here, but it's just to keep the pattern
@@ -76,6 +80,8 @@ struct TitleScreen_Data {
 
     s32 phase      = TITLE_SCREEN_ANIMATION_PHASE_CLOSE_UP_OF_FACE;
     f32 anim_timer = 0.0f;
+
+    f32 attract_mode_timer = 0.0f;
 
     V2 star_positions[MAX_TITLE_SCREEN_OUTERSPACE_STARS];
     Visual_Sparkling_Star_Data sparkling_stars[MAX_TITLE_SCREEN_SPARKLING_STARS];

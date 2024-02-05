@@ -76,6 +76,11 @@ namespace Input {
         global_input.current_state.mouse_buttons[button_id] = state;
     }
 
+    void get_last_mouse_location(s32* mx, s32* my) {
+        safe_assignment(mx) = global_input.last_state.mouse_x;
+        safe_assignment(my) = global_input.last_state.mouse_y;
+    }
+
     void get_mouse_location(s32* mx, s32* my) {
         safe_assignment(mx) = global_input.current_state.mouse_x;
         safe_assignment(my) = global_input.current_state.mouse_y;
@@ -331,6 +336,32 @@ namespace Input {
         }
 
         return false;
+    }
+
+    V2 last_mouse_location(void) {
+        s32 mouse_positions[2];
+        get_last_mouse_location(mouse_positions, mouse_positions+1);
+
+        return V2(mouse_positions[0], mouse_positions[1]);
+    }
+
+    bool any_input_activity(void) {
+        V2 last_mouse = last_mouse_location();
+        V2 current_mouse = mouse_location();
+
+        V2 diff = current_mouse - last_mouse;
+
+        if (!f32_close_enough(diff.x, 0) ||
+            !f32_close_enough(diff.y, 0)) {
+            return true;
+        }
+
+        return
+            controller_any_button_down(get_gamepad(0)) ||
+            any_key_down()                             ||
+            mouse_left()                               ||
+            mouse_right()                              ||
+            mouse_middle();
     }
 
     V2 mouse_location(void) {

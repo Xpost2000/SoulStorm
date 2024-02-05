@@ -336,7 +336,7 @@ local void set_fullscreen(bool v) {
         }
     }
 
-    Global_Engine()->fullscreen = preferences->fullscreen;
+    Global_Engine()->fullscreen = SCREEN_IS_FULLSCREEN;
 }
 
 local void toggle_fullscreen(void) {

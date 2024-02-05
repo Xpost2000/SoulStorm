@@ -341,6 +341,33 @@ GAME_SCREEN(update_and_render_game_title_screen) {
         .Large_Image(DISCORD_GAMEICON_ASSET_KEY)
     );
 
+    {
+        auto& state = this->state->titlescreen_data;
+        if (state.phase == TITLE_SCREEN_ANIMATION_PHASE_IDLE) {
+            state.attract_mode_timer += dt;
+            if (Input::any_input_activity()) {
+                state.attract_mode_timer = 0.0f;
+            } else {
+                if (state.attract_mode_timer >= ATTRACT_MODE_TIMER_MAX && !Transitions::fading()) {
+                    Transitions::do_shuteye_in(
+                        color32f32(0, 0, 0, 1),
+                        0.15f,
+                        0.3f
+                    );
+                    state.attract_mode_timer = 0.0f;
+
+                    Transitions::register_on_finish(
+                        [&](void*) mutable {
+                            opening_data_initialize(Global_Engine()->driver);
+                            switch_ui(UI_STATE_INACTIVE);
+                            switch_screen(GAME_SCREEN_OPENING);
+                        }
+                    );
+                }
+            }
+        }
+    }
+
     auto commands = ui_render_commands;
     auto resolution = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);
 

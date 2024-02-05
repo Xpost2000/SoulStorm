@@ -475,6 +475,8 @@ namespace Input {
     bool is_editing_text(void);
     char* current_text_buffer(void);
 
+    bool any_input_activity(void);
+
     int luaL_open_game_inputlib(lua_State* L);
 }
 
