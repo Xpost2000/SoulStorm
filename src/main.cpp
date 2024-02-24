@@ -535,7 +535,7 @@ void actually_confirm_and_update_preferences(Game_Preferences* preferences, Game
     set_fullscreen(preferences->fullscreen);
     set_graphics_device(preferences->renderer_type);
 
-    global_graphics_driver->change_resolution(REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
+    global_graphics_driver->change_resolution(preferences->width, preferences->height);
 
     Audio::set_volume_sound(preferences->sound_volume);
     Audio::set_volume_music(preferences->music_volume);
