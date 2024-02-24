@@ -432,6 +432,42 @@ int _lua_bind_kill_all_enemies(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_disable_grazing(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    state->gameplay_data.disable_grazing = true;
+    return 0;
+}
+
+int _lua_bind_enable_grazing(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    state->gameplay_data.disable_grazing = false;
+    return 0;
+}
+
+int _lua_bind_disable_bullet_to_points(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    state->gameplay_data.disable_bullet_to_points = true;
+    return 0;
+}
+
+int _lua_bind_disable_enemy_to_points(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    state->gameplay_data.disable_enemy_to_points = true;
+    return 0;
+}
+
+int _lua_bind_enable_bullet_to_points(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    state->gameplay_data.disable_bullet_to_points = false;
+    return 0;
+}
+
+int _lua_bind_enable_enemy_to_points(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    state->gameplay_data.disable_enemy_to_points = false;
+    return 0;
+}
+
 int _lua_bind_dialogue_start(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     auto& dialogue_state = state->dialogue_state;
@@ -805,6 +841,15 @@ lua_State* Game_State::alloc_lua_bindings() {
         lua_register(L, "convert_all_enemies_to_score", _lua_bind_convert_all_enemies_to_score);
         lua_register(L, "kill_all_bullets", _lua_bind_kill_all_bullets);
         lua_register(L, "kill_all_enemies", _lua_bind_kill_all_enemies);
+
+        lua_register(L, "disable_grazing", _lua_bind_disable_grazing);
+        lua_register(L, "enable_grazing", _lua_bind_enable_grazing);
+
+        lua_register(L, "disable_bullet_to_points", _lua_bind_disable_bullet_to_points);
+        lua_register(L, "disable_enemy_to_points", _lua_bind_disable_enemy_to_points);
+
+        lua_register(L, "enable_bullet_to_points", _lua_bind_enable_bullet_to_points);
+        lua_register(L, "enable_enemy_to_points", _lua_bind_enable_enemy_to_points);
 #endif
     }
     {lua_register(L, "get_difficulty_modifier", _lua_bind_game_difficulty_binding);}

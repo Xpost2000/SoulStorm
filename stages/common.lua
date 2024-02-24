@@ -4,6 +4,12 @@ engine_dofile("stages/constants.lua")
 -- This Bullet Hell's engine 
 -- uses very simple lua. No meta tables please!
 --
+function normalized_sin(t)
+   return (math.sin(t)+1)/2.0;
+end
+function normalized_cos(t)
+   return (math.cos(t)+1)/2.0;
+end
 function spawn_bullet_line(center, how_many, spacing, scale, direction, speed, src)
    local new_bullets = {};
    local direction     = v2_normalized(direction);
@@ -374,6 +380,8 @@ end
 -- They will look semi random.
 --
 --
+
+-- NOTE: might have issue. LOL
 function Make_BrainDead_Enemy_Popcorn1(
       amount,
       start_position,
@@ -386,31 +394,31 @@ function Make_BrainDead_Enemy_Popcorn1(
       sign_modv,
       sign_modh)
    local enemies = {};
-      for i=1, amount do
-         local e = enemy_new();
-         local vsgn = 1;
-         local hsgn = 1;
-         if sign_modv ~= -1 then
-            if (i % sign_modv == 0) then
-               vsgn = -1;
-            end
+   for i=1, amount do
+      local e = enemy_new();
+      local vsgn = 1;
+      local hsgn = 1;
+      if sign_modv ~= -1 then
+         if (i % sign_modv == 0) then
+            vsgn = -1;
          end
-
-         if sign_modh ~= -1 then
-            if (i % sign_modh == 0) then
-               hsgn = -1;
-            end
-         end
-
-         enemy_set_hp(e, per_hp);
-         enemy_set_position(e,
-                            start_position[1] + math.sin(i*10) * x_vary,
-                            start_position[2] + math.sin(i*10) * h_vary);
-         enemy_set_velocity(e, hspeed * hsgn, vspeed * vsgn);
-         t_wait(spawn_delay);
-
-         enemies[i] = e;
       end
+
+      if sign_modh ~= -1 then
+         if (i % sign_modh == 0) then
+            hsgn = -1;
+         end
+      end
+
+      enemy_set_hp(e, per_hp);
+      enemy_set_position(e,
+                         start_position[1] + math.sin(i*10) * x_vary,
+                         start_position[2] + math.sin(i*10) * h_vary);
+      enemy_set_velocity(e, hspeed * hsgn, vspeed * vsgn);
+      t_wait(spawn_delay);
+
+      enemies[i] = e;
+   end
 
    return enemies;
 end
@@ -478,7 +486,10 @@ function Make_Enemy_Spinner_1_1_2(hp,
                                   fire_delay_per_burst,
                                   initial_delay,
                                   bspeed,
-                                  bullet_visual)
+                                  radiusx,
+                                  radiusy,
+                                  bullet_visual
+                                 )
    local e = enemy_new();
    enemy_set_hp(e, hp);
    enemy_set_position(e, initial_position[1], initial_position[2]);
@@ -488,8 +499,6 @@ function Make_Enemy_Spinner_1_1_2(hp,
    enemy_task_lambda(
       e,
       function (e)
-         local radiusx = 50;
-         local radiusy = 25;
          local angle = 0;
          while enemy_valid(e) do
             -- enemy_set_relative_position(e, 1, 2);
@@ -497,7 +506,9 @@ function Make_Enemy_Spinner_1_1_2(hp,
             angle = angle + 2;
             t_yield();
          end
-      end
+      end,
+      radiusx,
+      radiusy
    )
    enemy_task_lambda(
       e,
@@ -525,4 +536,114 @@ function Make_Enemy_Spinner_1_1_2(hp,
       bspeed
    )
    return e;
+end
+
+-- This is a very bullet hell style attack
+-- obviously it's pretty hard to dodge a lot of this, so I have to be pretty careful.
+-- I've concluded it *is* possible to dodge but it's really hard, and I might need to reduce some visual noise.
+
+-- RAIN STORM ATTACK: try to dodge
+function MainBoss1_RainCloud_Attack1(phase_cycle, duration)
+   local stop_task = 0;
+
+   local spread = 40;
+   local x_adv = play_area_width() / (spread - 5);
+
+   async_task_lambda(
+      function()
+         async_task_lambda(
+            function()
+               local cycle_point = phase_cycle;
+               local gap_space   = 4;
+               local ticks       = 1;
+               while stop_task == 0 do
+                  local gap_mid_x_range1 = normalized_sin(player_position_x() + phase_cycle * ticks) * spread + 3;
+                  local gap_mid_x_range2 = normalized_sin(player_position_x() + phase_cycle/2 * ticks) * spread - 5;
+                  local gap_mid_x_range3 = normalized_sin(player_position_x() + phase_cycle * ticks) * spread + 10;
+                  local gap_mid_x_range4 = normalized_sin(player_position_x() + phase_cycle/4 * ticks) * spread - 3;
+                  for i=1, 40 do
+                     local variance_x = math.sin(i + phase_cycle*i + duration * i * ticks + player_position_x()) * 5;
+                     local variance_y = math.sin(i + phase_cycle*i + duration * i * ticks + player_position_x()) * 5;
+                     local variance_v = math.sin((i+4) + phase_cycle + duration/2 * i * ticks + player_position_x()) * 48;
+
+                     if i > gap_mid_x_range1-gap_space and i < gap_mid_x_range1+gap_space or
+                        i > gap_mid_x_range2-gap_space and i < gap_mid_x_range2+gap_space or
+                        i > gap_mid_x_range3-gap_space and i < gap_mid_x_range3+gap_space or
+                        i > gap_mid_x_range4-gap_space and i < gap_mid_x_range4+gap_space
+                     then
+                     else
+                        local bullet = bullet_new(BULLET_SOURCE_ENEMY);
+                        bullet_set_position(bullet, i * x_adv - 10 + variance_x, -10 + variance_y);
+                        bullet_set_scale(bullet, 0.25, 0.25);
+                        bullet_set_visual(bullet, PROJECTILE_SPRITE_BLUE_DISK);
+                        bullet_set_visual_scale(bullet, 0.25, 0.25);
+                        bullet_start_trail(bullet, 12);
+                        bullet_set_trail_modulation(bullet, 0.8, 0.8, 0.8, 0.3);
+                        bullet_set_velocity(bullet, 0, 180 + variance_v);
+                     end
+                  end
+                  cycle_point = cycle_point + phase_cycle / 2;
+                  ticks = ticks + 1;
+                  t_wait(0.354);
+               end
+            end
+         )
+
+         t_wait(duration)
+         stop_task = 1;
+      end
+   )
+end
+
+function MainBoss1_RainCloud_Attack2(phase_cycle, duration)
+   local stop_task = 0;
+
+   local spread = 35;
+   local x_adv = play_area_width() / (spread);
+
+   async_task_lambda(
+      function()
+         async_task_lambda(
+            function()
+               local cycle_point = phase_cycle;
+               local gap_space   = 4;
+               local ticks       = 1;
+               while stop_task == 0 do
+                  local gap_mid_x_range1 = normalized_sin(player_position_x() + phase_cycle * ticks) * spread + 3;
+                  local gap_mid_x_range2 = normalized_sin(player_position_x() + phase_cycle/2 * ticks) * spread - 5;
+                  local gap_mid_x_range3 = normalized_sin(player_position_x() + phase_cycle * ticks) * spread + 10;
+                  local gap_mid_x_range4 = normalized_sin(player_position_x() + phase_cycle/4 * ticks) * spread - 3;
+                  for i=1, 35 do
+                     local variance_x = math.sin(i + phase_cycle*i + duration * i * ticks + player_position_x()) * 5;
+                     local variance_y = math.sin(i + phase_cycle*i + duration * i * ticks + player_position_x()) * 15;
+                     local variance_v = normalized_sin((i+4) + phase_cycle + duration/2 * i * ticks + player_position_x()) * 50;
+
+                     if i > gap_mid_x_range1-gap_space and i < gap_mid_x_range1+gap_space or
+                        i > gap_mid_x_range2-gap_space and i < gap_mid_x_range2+gap_space or
+                        i > gap_mid_x_range3-gap_space and i < gap_mid_x_range3+gap_space or
+                        i > gap_mid_x_range4-gap_space and i < gap_mid_x_range4+gap_space
+                     then
+                     else
+                        local bullet = bullet_new(BULLET_SOURCE_ENEMY);
+                        bullet_set_position(bullet, i * x_adv - 10 + variance_x, -10 + variance_y);
+                        bullet_set_scale(bullet, 0.25, 0.25);
+                        bullet_set_visual(bullet, PROJECTILE_SPRITE_RED_DISK);
+                        bullet_set_visual_scale(bullet, 0.25, 0.25);
+                        bullet_start_trail(bullet, 16);
+                        bullet_set_trail_modulation(bullet, 0.8, 0.8, 0.8, 0.3);
+                        bullet_set_velocity(bullet, 0, 225 - variance_v);
+                        bullet_set_acceleration(bullet, 0, 5);
+                     end
+                  end
+                  cycle_point = cycle_point + phase_cycle / 2;
+                  ticks = ticks + 1;
+                  t_wait(0.200);
+               end
+            end
+         )
+
+         t_wait(duration)
+         stop_task = 1;
+      end
+   )
 end

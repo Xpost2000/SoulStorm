@@ -386,6 +386,11 @@ struct Gameplay_Data {
     Boss_Healthbar_Displays boss_health_displays;
     Play_Area play_area;
 
+    // Allow these to be disabled within lua.
+    bool disable_grazing = false;
+    bool disable_bullet_to_points = false;
+    bool disable_enemy_to_points = false;
+
     random_state prng;
 
     // this prng is not replicated. Used for currently only the dialogue system.

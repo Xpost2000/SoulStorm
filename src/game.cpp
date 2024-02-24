@@ -691,7 +691,6 @@ void Game::reset_stage_simulation_state() {
     // s32 pet_id   = this->state->
 
     this->state->deathscreen_data.reset();
-
     {
         auto& deathanimation_data = this->state->deathanimation_data;
         auto& deathanimation_emitter = deathanimation_data.player_explosion_emitter;
@@ -737,6 +736,10 @@ void Game::reset_stage_simulation_state() {
     UID::reset();
 
     {
+        state->disable_bullet_to_points = false;
+        state->disable_grazing          = false;
+        state->disable_enemy_to_points  = false;
+        
         state->player.position                         = state->player.last_position = V2(state->play_area.width / 2, 300);
         state->pet.position                            = state->pet.last_position = state->player.position;
         state->player.visible                          = true;
@@ -2992,7 +2995,8 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
 
             state->player.update(game_state, dt);
             state->pet.update(game_state, dt);
-            state->player.handle_grazing_behavior(game_state, dt);
+            if (!state->disable_grazing)
+                state->player.handle_grazing_behavior(game_state, dt);
         }
 #else
         // Single-Threaded path for truth testing.
@@ -3029,7 +3033,8 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
 
             state->player.update(game_state, dt);
             state->pet.update(game_state, dt);
-            state->player.handle_grazing_behavior(game_state, dt);
+            if (!state->disable_grazing)
+                state->player.handle_grazing_behavior(game_state, dt);
         }
 
 #endif
@@ -3846,6 +3851,9 @@ void Game_State::convert_bullets_to_score_pickups(float radius) {
         // This will overflow, but the effect is pretty minor that I don't think it matters tbh...
         // spawn_game_entity_death_particle_emitter(state->particle_emitters, b.position, resources);
 
+        if (state->disable_bullet_to_points) {
+            continue;
+        }
         auto pe = pickup_score_entity(
             this,
             b.position,
@@ -3872,6 +3880,10 @@ void Game_State::convert_enemies_to_score_pickups(float radius) {
 
         e.kill();
         spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources);
+
+        if (state->disable_enemy_to_points) {
+            continue;
+        }
 
         auto pe = pickup_score_entity(
             this,

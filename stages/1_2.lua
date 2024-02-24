@@ -289,9 +289,11 @@ function wave1_sub3()
       function () -- CONCERN: might be visually hard to see?
          do
             local radius = 40;
-            for i=1, 3 do
-               Make_Enemy_Spinner_1_1_2(25, v2(-45, radius), v2(1, 0), 120, 1.0, 1.00, 40, PROJECTILE_SPRITE_SPARKLING_STAR);
-               Make_Enemy_Spinner_1_1_2(25, v2(-45, play_area_height() - radius), v2(1, 0), 120, 1.0, 1.00, 40, PROJECTILE_SPRITE_SPARKLING_STAR);
+            for i=1, 2 do
+               local rx = 50 - i*10;
+               local ry = 25 + i*10;
+               Make_Enemy_Spinner_1_1_2(25, v2(-45, radius), v2(1, 0), 120, 1.0, 1.00, 30, rx, ry, PROJECTILE_SPRITE_SPARKLING_STAR);
+               Make_Enemy_Spinner_1_1_2(25, v2(-45, play_area_height() - radius), v2(1, 0), 120, 1.0, 1.00, 30, rx, ry, PROJECTILE_SPRITE_SPARKLING_STAR);
                t_wait(4.0);
             end
             -- TODO: add trail. I want these to be shooting stars. literally.
@@ -301,7 +303,82 @@ function wave1_sub3()
    -- flood with popcorn from left and right
    -- TODO:
    t_wait(5.0);
+   do
+      Make_Enemy_Burst360_1_1_2(
+         35, v2(-10, -10), v2(play_area_width()/2, 30), 0.5,
+
+         0.7,
+         3,
+
+         40, 45,
+
+         50,
+         70,
+
+         v2(0, 1),
+         45,
+         45,
+         
+         PROJECTILE_SPRITE_HOT_PINK_ELECTRIC
+      );
+
+      t_wait(0.5);
+      Make_Enemy_Burst360_1_1_2(
+         35, v2(-10, play_area_height() + 40), v2(play_area_width()/2 - 40, 80), 0.5,
+
+         0.7,
+         3,
+
+         40, 45,
+
+         50,
+         70,
+
+         v2(-1, 1),
+         70,
+         45,
+         
+         PROJECTILE_SPRITE_GREEN_DISK
+      );
+
+      Make_Enemy_Burst360_1_1_2(
+         35, v2(play_area_width()-10, play_area_height() + 40), v2(play_area_width()/2 + 40, 80), 0.5,
+
+         0.7,
+         3,
+
+         40, 45,
+
+         50,
+         70,
+
+         v2(1, 1),
+         70,
+         45,
+         
+         PROJECTILE_SPRITE_BLUE_DISK
+      );
+
+      t_wait(1);
+      do -- NOTE: need these to happen at the same time
+         local popcorn_radius = 250;
+         local popcorn_flood_width = 40;
+         async_task_lambda(
+            function()
+               Make_BrainDead_Enemy_Popcorn1(8, v2(play_area_width()/2 - popcorn_radius, -20), 0.20, 5, 20, 120, popcorn_flood_width, 20, -1, 2);
+            end
+         );
+         async_task_lambda(
+            function()
+               Make_BrainDead_Enemy_Popcorn1(8, v2(play_area_width()/2 + popcorn_radius, -20), 0.20, 5, -20, 120, popcorn_flood_width, 20, -1, 2);
+            end
+         );
+      end
+   end
+   t_wait(3);
    -- Time Mark : 0:18
+   MainBoss1_RainCloud_Attack1(1337, 12);
+   -- Time Mark : 0:30
 end
 
 function wave_1()
@@ -315,13 +392,20 @@ function wave_1()
 
    -- Time Mark:  0:22
    -- screen should be empty again
-   wave1_sub3()
+   -- wave1_sub3()
+   MainBoss1_RainCloud_Attack1(1337, 12);
+   t_wait(13.5);
+   convert_all_bullets_to_score();
+   t_wait(2);
+   MainBoss1_RainCloud_Attack2(4918, 7);
+   t_wait(16);
+
+   -- Time Mark: 0:50? approx
 end
 
 function stage_task()
    t_wait(2);
    wave_1();
-   t_wait(5);
    wait_no_danger();
    t_complete_stage();
 end
