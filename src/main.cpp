@@ -150,11 +150,17 @@ local void initialize_framebuffer(void) {
     Global_Engine()->virtual_screen_width  = SCREEN_WIDTH;
     Global_Engine()->virtual_screen_height = SCREEN_HEIGHT;
 
-    if (global_graphics_driver->is_initialized() && last_screen_width == SCREEN_WIDTH && last_screen_height == SCREEN_HEIGHT) {
+    if (!global_graphics_driver->is_initialized()) {
+        global_graphics_driver->initialize(global_game_window, framebuffer_resolution.x, framebuffer_resolution.y);
+        _debugprintf("first time initialize");
+    }
+
+    if (last_screen_width == SCREEN_WIDTH && last_screen_height == SCREEN_HEIGHT) {
         _debugprintf("Framebuffer did not change resolutions. No change needed.");
     } else {
         _debugprintf("framebuffer resolution is: (%d, %d) vs (%d, %d) real resolution", SCREEN_WIDTH, SCREEN_HEIGHT, REAL_SCREEN_WIDTH, REAL_SCREEN_HEIGHT);
-        global_graphics_driver->initialize(global_game_window, framebuffer_resolution.x, framebuffer_resolution.y);
+        global_graphics_driver->initialize_backbuffer(framebuffer_resolution);
+        // global_graphics_driver->initialize(global_game_window, framebuffer_resolution.x, framebuffer_resolution.y);
     }
 }
 

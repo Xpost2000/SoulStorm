@@ -1025,7 +1025,7 @@ function _wave2_sub5_goon_initial(e, goon_number)
    elseif goon_number == 1 then
       -- This one will vomit out a mass of bullets
       -- that are slow, and will last a fair while.
-      for i=1, 45 do
+      for i=1, 40 do
          local ep = v2(enemy_position_x(e), enemy_position_y(e));
          local bullets = spawn_bullet_arc_pattern2(
             ep,
