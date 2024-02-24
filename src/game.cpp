@@ -1532,11 +1532,11 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
     int action = REPLAY_SAVE_MENU_ACTION_PENDING;
 
     if (state->gameplay_data.recording.in_playback) {
-        if (state->last_completion_state != -1) {
+        // if (state->last_completion_state != -1) {
             // NOTE: last_completion_state will be set to negative one
             // after the callbacks are setup below.
-            action = REPLAY_SAVE_MENU_ACTION_DO_NOT_SAVE_RECORDING; // just skip the prompt and don't do anything.
-        }
+        action = REPLAY_SAVE_MENU_ACTION_DO_NOT_SAVE_RECORDING; // just skip the prompt and don't do anything.
+        // }
     } else {
         {
             f32 y = 50;
@@ -3062,13 +3062,6 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
 void Game::simulate_game_frames_until(int nth_frame) {
     auto state = &this->state->gameplay_data;
 
-    // partial clean up of resources...
-    state->unload_all_script_loaded_resources(this->state, this->state->resources);
-    state->prng = state->recording.old_prng;
-    state->recording.playback_frame_index = 0;
-    state->recording.frames_run           = 0;
-    reset_stage_simulation_state();
-
     int  desired_frame = nth_frame;
     bool  simulate_frame = true;
 
@@ -3097,6 +3090,7 @@ void Game::simulate_game_frames_until(int nth_frame) {
         }
 
         while (desired_frame) {
+            this->state->coroutine_tasks.schedule_by_type(this->state, FIXED_TICKTIME, GAME_TASK_SOURCE_GAME);
             simulate_game_frame(update_packet_data);
             if (!this->state->dialogue_state.in_conversation) {
                 state->current_stage_timer  += FIXED_TICKTIME;
@@ -3351,6 +3345,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
                 reset_stage_simulation_state();
             }
             y += 30;
+#ifndef RELEASE
             if (GameUI::button(V2(play_area_x+play_area_width + 20, y), string_literal("[TO END]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
                 viewer_ui.arbitrary_frame_visit = true;
                 simulate_game_frames_until(state->recording.frame_count);
@@ -3358,6 +3353,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
                 viewer_ui.paused = true;
             }
             y += 30;
+#endif
             if (GameUI::button(V2(play_area_x+play_area_width + 20, y), media_button_string, color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
                 viewer_ui.paused ^= 1;
             }
@@ -3371,6 +3367,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
             y += 30;
             GameUI::label(V2(play_area_x+play_area_width + 20, y), string_from_cstring(format_temp("FRAME %d/%d", state->recording.playback_frame_index+1, state->recording.frame_count)), color32f32(1, 1, 1, 1), 2);
             y += 30;
+#ifndef RELEASE
             if (viewer_ui.paused) {
                 int  desired_frame   = state->recording.playback_frame_index;
                 bool change_to_frame = false;
@@ -3400,6 +3397,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
                     viewer_ui.arbitrary_frame_visit = false;
                 }
             }
+#endif
             GameUI::end_frame();
             GameUI::update(dt);
         }
@@ -3958,56 +3956,8 @@ void Game::on_player_death() {
     }
 }
 
-void Game::handle_all_dead_entities(f32 dt) {
-    auto state = &this->state->gameplay_data;
-
-    /*
-     * TODO:
-     *
-     * Accidental inconsistency point
-     * just rewrite special case animations for this...
-     */
-    if (state->player.die) {
-        if (state->recording.in_playback &&
-            (state->demo_viewer.arbitrary_frame_visit ||
-             state->demo_viewer.timescale_index != DEFAULT_DEMO_VIEWER_TIMESCALE_INDEX))
-        {
-            // NOTE:
-            // unideal simulation conditions.
-            // the transition would interrupt the simulation, so I cannot play the transition
-            // without risking a desync.
-
-            // TODO:
-            // I... don't like skipping the animation, but the simulation requires the animation
-            // for timing...
-            // however, I also am unaware of a way to do so given my replay method because I do not record any
-            // animations.
-            on_player_death();
-        } else {
-            if (state->paused_from_death == false) {
-                state->paused_from_death = true;
-                Transitions::do_color_transition_in(color32f32(1, 1, 1, 1), 0.10f, 0.05f);
-
-                Transitions::register_on_finish(
-                    [&](void*) {
-                        Transitions::do_color_transition_out(
-                            color32f32(1, 1, 1, 1),
-                            0.1f,
-                            0.025f
-                        );
-
-                        Transitions::register_on_finish(
-                            [&](void*) {
-                                on_player_death();
-                            }
-                        );
-                    }
-                );
-            }
-        }
-    }
-
-#if 1
+void Game::cleanup_dead_entities(void) {
+#if 0
     Thread_Pool::add_job(
         [](void* ctx) {
             Gameplay_Data* state = (Gameplay_Data*) ctx;
@@ -4062,6 +4012,7 @@ void Game::handle_all_dead_entities(f32 dt) {
 
     Thread_Pool::synchronize_tasks();
 #else
+    Gameplay_Data* state = &this->state->gameplay_data;
     for (int i = 0; i < state->laser_hazards.size; ++i) {
         auto& h = state->laser_hazards[i];
         if (h.die) {state->laser_hazards.pop_and_swap(i);}
@@ -4085,6 +4036,60 @@ void Game::handle_all_dead_entities(f32 dt) {
         if (h.exploded) {state->explosion_hazards.pop_and_swap(i);}
     }
 #endif
+}
+
+void Game::handle_all_dead_entities(f32 dt) {
+    auto state = &this->state->gameplay_data;
+
+    /*
+      NOTE:
+
+      The transition system uses the callback system which can "pause" execution and I only want to
+      clean up entities consistently so I have to do this weird thing.
+     */
+    if (state->player.die) {
+        if (state->recording.in_playback &&
+            (state->demo_viewer.arbitrary_frame_visit ||
+             state->demo_viewer.timescale_index != DEFAULT_DEMO_VIEWER_TIMESCALE_INDEX))
+        {
+            // NOTE:
+            // unideal simulation conditions.
+            // the transition would interrupt the simulation, so I cannot play the transition
+            // without risking a desync.
+
+            // TODO:
+            // I... don't like skipping the animation, but the simulation requires the animation
+            // for timing...
+            // however, I also am unaware of a way to do so given my replay method because I do not record any
+            // animations.
+            on_player_death();
+            cleanup_dead_entities();
+        } else {
+            if (state->paused_from_death == false) {
+                state->paused_from_death = true;
+                Transitions::do_color_transition_in(color32f32(1, 1, 1, 1), 0.10f, 0.05f);
+
+                Transitions::register_on_finish(
+                    [&](void*) {
+                        Transitions::do_color_transition_out(
+                            color32f32(1, 1, 1, 1),
+                            0.1f,
+                            0.025f
+                        );
+
+                        Transitions::register_on_finish(
+                            [&](void*) {
+                                on_player_death();
+                                cleanup_dead_entities();
+                            }
+                        );
+                    }
+                );
+            }
+        }
+    } else {
+        cleanup_dead_entities();
+    }
 }
 
 void Game::handle_all_lasers(f32 dt) {

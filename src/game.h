@@ -149,6 +149,7 @@ private:
     void handle_all_explosions(f32 dt);
     void handle_all_lasers(f32 dt);
     void handle_all_dead_entities(f32 dt);
+    void cleanup_dead_entities(void);
     void handle_bomb_usage(f32 dt);
 
     /*

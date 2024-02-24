@@ -579,7 +579,7 @@ void Entity::update(Game_State* state, f32 dt) {
 
     for (unsigned particle_emitter_index = 0; particle_emitter_index < ENTITY_MAX_PARTICLE_EMITTERS; ++particle_emitter_index) {
         auto& emitter = emitters[particle_emitter_index];
-        emitter.update(&state->gameplay_data.particle_pool, &state->gameplay_data.prng, dt);
+        emitter.update(&state->gameplay_data.particle_pool, &state->gameplay_data.prng_unessential, dt);
     }
 }
 
