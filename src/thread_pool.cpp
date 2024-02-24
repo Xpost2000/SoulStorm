@@ -2,7 +2,10 @@
 #include "thread_pool.h"
 #include "memory_arena.h"
 
-// #define SIMULATE_SYNCHRONOUS
+#ifdef __EMSCRIPTEN__
+// The workers in emscripten I do not trust.
+#define SIMULATE_SYNCHRONOUS
+#endif
 
 #include "engine.h"
 

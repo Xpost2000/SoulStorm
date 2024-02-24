@@ -2,7 +2,9 @@
 #define COMMON_H
 #define NO_FLAGS (0)
 
+#ifndef __EMSCRIPTEN__
 #include <immintrin.h> 
+#endif
 //#include <x86intrin.h>
 
 // NOTE: I know there's a lot of redundantly compiled

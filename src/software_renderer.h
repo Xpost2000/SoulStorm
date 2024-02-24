@@ -10,8 +10,10 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#ifndef __EMSCRIPTEN__
 #define USE_SIMD_OPTIMIZATIONS
 #define MULTITHREADED_EXPERIMENTAL
+#endif
 
 #include "graphics_common.h"
 
