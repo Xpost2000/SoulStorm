@@ -523,16 +523,20 @@ function preboss_wave()
       t_wait(1.2);
    end
    MainBoss1_RainCloud_Attack2(1997, 3.5)
-   t_wait(4.0);
+   t_wait(6.0);
    convert_all_bullets_to_score()
-   t_wait(5.0);
+   t_wait(10.0);
+
+   Stage1_Batflood();
 end
 
 function stage_task()
    t_wait(2);
-   wave_1();
-   wave_2();
-   preboss_wave();
+   Stage1_Batflood();
+   t_wait(10);
+   -- wave_1();
+   -- wave_2();
+   -- preboss_wave();
    wait_no_danger();
    t_complete_stage();
 end
