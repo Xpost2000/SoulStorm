@@ -477,24 +477,26 @@ end
 function Stage1_Batflood()
    -- Bat flood
    -- free popcorn points
-   for i=1,10 do
-      for j=1,40 do
+   local wave_count = 15;
+   local per_wave   = 15;
+   for i=1,wave_count do
+      for j=1,per_wave do
          local e = enemy_new();
-         enemy_set_hp(e, 12);
-         enemy_set_position(e, j * (play_area_width() / (42)), -30);
+         enemy_set_hp(e, 5);
+         enemy_set_position(e, j * (play_area_width() / (per_wave)) - 18, -30);
          enemy_task_lambda(
             e,
             function (e)
-               enemy_set_velocity(e, 0, 230);
-               t_wait(3.5);
-               if j >= 20 then
-                  enemy_set_acceleration(e, 50, 0);
+               enemy_set_velocity(e, 0, 125);
+               t_wait(1.0);
+               if j > per_wave/2 then
+                  enemy_set_acceleration(e, 40, 0);
                else
-                  enemy_set_acceleration(e, -50, 0);
+                  enemy_set_acceleration(e, -40, 0);
                end
             end
          )
       end
-      t_wait(0.5);
+      t_wait(0.25);
    end
 end

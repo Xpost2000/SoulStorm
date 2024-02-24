@@ -525,18 +525,20 @@ function preboss_wave()
    MainBoss1_RainCloud_Attack2(1997, 3.5)
    t_wait(6.0);
    convert_all_bullets_to_score()
-   t_wait(10.0);
-
+   t_wait(6.0);
    Stage1_Batflood();
+   t_wait(12.0); -- TODO check if they're actually off the screen.
+   kill_all_enemies();
+   -- Dialogue point with midboss!
+   -- fight the midboss! EXP 30 seconds
 end
 
 function stage_task()
    t_wait(2);
-   Stage1_Batflood();
    t_wait(10);
-   -- wave_1();
-   -- wave_2();
-   -- preboss_wave();
+   wave_1();
+   wave_2();
+   preboss_wave();
    wait_no_danger();
    t_complete_stage();
 end
