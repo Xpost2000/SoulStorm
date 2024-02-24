@@ -305,7 +305,7 @@ namespace Input {
     s32 any_key_pressed(void) {
         for (unsigned index = 0; index < array_count(global_input.current_state.keys); ++index) {
             if (!global_input.last_state.keys[index] && global_input.current_state.keys[index]) {
-                return return index;
+                return index;
             }
         }
 
