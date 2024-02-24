@@ -292,50 +292,50 @@ namespace Input {
         return (char*)"";
     }
 
-    bool any_key_down(void) {
+    s32 any_key_down(void) {
         for (unsigned index = 0; index < array_count(global_input.current_state.keys); ++index) {
             if (global_input.current_state.keys[index]) {
-                return true;
+                return index;
             }
         }
 
-        return false;
+        return 0;
     }
 
-    bool any_key_pressed(void) {
+    s32 any_key_pressed(void) {
         for (unsigned index = 0; index < array_count(global_input.current_state.keys); ++index) {
             if (!global_input.last_state.keys[index] && global_input.current_state.keys[index]) {
-                return true;
+                return return index;
             }
         }
 
-        return false;
+        return 0;
     }
 
-    bool controller_any_button_pressed(struct game_controller* controller) {
+    s32 controller_any_button_pressed(struct game_controller* controller) {
         if (!controller)
-            return false;
+            return 0;
 
         for (unsigned index = 0; index < array_count(controller->buttons); ++index) {
             if (!controller->last_buttons[index] && controller->buttons[index]) {
-                return true;
+                return index;
             }
         }
 
-        return false;
+        return 0;
     }
 
-    bool controller_any_button_down(struct game_controller* controller) {
+    s32 controller_any_button_down(struct game_controller* controller) {
         if (!controller)
-            return false;
+            return 0;
 
         for (unsigned index = 0; index < array_count(controller->buttons); ++index) {
             if (controller->buttons[index]) {
-                return true;
+                return index;
             }
         }
 
-        return false;
+        return 0;
     }
 
     V2 last_mouse_location(void) {

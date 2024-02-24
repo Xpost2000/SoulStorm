@@ -71,50 +71,159 @@ static const char* gamepad_axis_strings_lua(int key) {
 #define INVALID_INPUT (-1)
 enum keyboard_button {
     KEY_UNKNOWN = 0,
-    KEY_A, KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G,
-    KEY_H, KEY_I, KEY_J, KEY_K, KEY_L, KEY_M, KEY_N,
-    KEY_O, KEY_P, KEY_Q, KEY_R, KEY_S, KEY_T, KEY_U,
-    KEY_V, KEY_W, KEY_X, KEY_Y, KEY_Z,
-    KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5,
-    KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10,
-    KEY_F11, KEY_F12, KEY_UP, KEY_DOWN, KEY_RIGHT, KEY_LEFT,
-    KEY_0, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9,
-    KEY_MINUS, KEY_BACKQUOTE, KEY_EQUALS,
-    KEY_SEMICOLON, KEY_QUOTE, KEY_COMMA,
-    KEY_PERIOD, KEY_RETURN, KEY_BACKSPACE, KEY_ESCAPE,
+    KEY_A,
+    KEY_B,
+    KEY_C,
+    KEY_D,
+    KEY_E,
+    KEY_F,
+    KEY_G,
 
-    KEY_INSERT, KEY_HOME, KEY_PAGEUP, KEY_PAGEDOWN, KEY_DELETE, KEY_END,
+    KEY_H,
+    KEY_I,
+    KEY_J,
+    KEY_K,
+    KEY_L,
+    KEY_M,
+    KEY_N,
+
+    KEY_O,
+    KEY_P,
+    KEY_Q,
+    KEY_R,
+    KEY_S,
+    KEY_T,
+    KEY_U,
+
+    KEY_V,
+    KEY_W,
+    KEY_X,
+    KEY_Y,
+    KEY_Z,
+
+    KEY_F1,
+    KEY_F2,
+    KEY_F3,
+    KEY_F4,
+    KEY_F5,
+
+    KEY_F6,
+    KEY_F7,
+    KEY_F8,
+    KEY_F9,
+    KEY_F10,
+
+    KEY_F11,
+    KEY_F12,
+    KEY_UP,
+    KEY_DOWN,
+    KEY_RIGHT,
+    KEY_LEFT,
+
+    KEY_0,
+    KEY_1,
+    KEY_2,
+    KEY_3,
+    KEY_4,
+    KEY_5,
+    KEY_6,
+    KEY_7,
+    KEY_8,
+    KEY_9,
+
+    KEY_MINUS,
+    KEY_BACKQUOTE,
+    KEY_EQUALS,
+
+    KEY_SEMICOLON,
+    KEY_QUOTE,
+    KEY_COMMA,
+
+    KEY_PERIOD,
+    KEY_RETURN,
+    KEY_BACKSPACE,
+    KEY_ESCAPE,
+
+
+    KEY_INSERT,
+    KEY_HOME,
+    KEY_PAGEUP,
+    KEY_PAGEDOWN,
+    KEY_DELETE,
+    KEY_END,
+
     KEY_PRINTSCREEN,
+
 
     /*
       I probably don't actually care about mapping these keys.
     */
-    KEY_PAUSE, KEY_SCROLL_LOCK, KEY_NUMBER_LOCK,
-    KEYPAD_0, KEYPAD_1, KEYPAD_2, KEYPAD_3, KEYPAD_4,
-    KEYPAD_5, KEYPAD_6, KEYPAD_7, KEYPAD_8, KEYPAD_9,
+    KEY_PAUSE,
+    KEY_SCROLL_LOCK,
+    KEY_NUMBER_LOCK,
 
-    KEYPAD_LEFT, KEYPAD_RIGHT, KEYPAD_UP, KEYPAD_DOWN,
-    KEYPAD_ASTERISK, KEYPAD_BACKSLASH,
-    KEYPAD_MINUS, KEYPAD_PLUS, KEYPAD_PERIOD,
+    KEYPAD_0,
+    KEYPAD_1,
+    KEYPAD_2,
+    KEYPAD_3,
+    KEYPAD_4,
 
-    KEY_LEFT_BRACKET, KEY_RIGHT_BRACKET,
-    KEY_FORWARDSLASH, KEY_BACKSLASH,
+    KEYPAD_5,
+    KEYPAD_6,
+    KEYPAD_7,
+    KEYPAD_8,
+    KEYPAD_9,
 
-    KEY_TAB, KEY_SHIFT,
-    KEY_META, KEY_SUPER, KEY_SPACE,
+    KEYPAD_LEFT,
+    KEYPAD_RIGHT,
+    KEYPAD_UP,
+    KEYPAD_DOWN,
 
-    KEY_CTRL, KEY_ALT,
+    KEYPAD_ASTERISK,
+    KEYPAD_BACKSLASH,
+
+    KEYPAD_MINUS,
+    KEYPAD_PLUS,
+    KEYPAD_PERIOD,
+
+    KEY_LEFT_BRACKET,
+    KEY_RIGHT_BRACKET,
+
+    KEY_FORWARDSLASH,
+    KEY_BACKSLASH,
+
+
+    KEY_TAB,
+    KEY_SHIFT,
+
+    KEY_META,
+    KEY_SUPER,
+    KEY_SPACE,
+
+
+    KEY_CTRL,
+    KEY_ALT,
+
 
     KEY_COUNT,
 };
 
 enum controller_button {
-    BUTTON_UNKNOWN,
-    BUTTON_A, BUTTON_B, BUTTON_X, BUTTON_Y,
-    BUTTON_RS, BUTTON_LS,
-    BUTTON_RB, BUTTON_LB,
-    BUTTON_START, BUTTON_BACK,
-    DPAD_UP,DPAD_DOWN,DPAD_LEFT,DPAD_RIGHT,
+    BUTTON_UNKNOWN = 0,
+    BUTTON_A,
+    BUTTON_B,
+    BUTTON_X,
+    BUTTON_Y,
+    BUTTON_RS,
+    BUTTON_LS,
+    BUTTON_RB,
+    BUTTON_LB,
+    BUTTON_START,
+    BUTTON_BACK,
+    DPAD_UP,
+    DPAD_DOWN,
+    DPAD_LEFT,
+    DPAD_RIGHT,
     BUTTON_COUNT,
 };
 
@@ -446,10 +555,10 @@ namespace Input {
     bool is_key_down(s32 keyid);
     bool is_key_down_with_repeat(s32 keyid);
     bool is_key_pressed(s32 keyid);
-    bool any_key_down(void);
-    bool any_key_pressed(void);
-    bool controller_any_button_down(struct game_controller* controller);
-    bool controller_any_button_pressed(struct game_controller* controller);
+    s32 any_key_down(void);
+    s32 any_key_pressed(void);
+    s32 controller_any_button_down(struct game_controller* controller);
+    s32 controller_any_button_pressed(struct game_controller* controller);
 
     void get_mouse_location(s32* mx, s32* my);
     void get_mouse_buttons(bool* left, bool* middle, bool* right);
