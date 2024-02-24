@@ -457,48 +457,6 @@ function Make_BrainDead_Enemy_Popcorn1(
    return enemies;
 end
 
-function Make_BrainDead_Enemy_Popcorn1_Explosive(
-      amount,
-      start_position,
-      spawn_delay,
-      per_hp,
-      hspeed,
-      vspeed,
-      x_vary,
-      h_vary,
-      sign_modv,
-      sign_modh)
-   local enemies = {};
-   for i=1, amount do
-      local e = enemy_new();
-      local vsgn = 1;
-      local hsgn = 1;
-      if sign_modv ~= -1 then
-         if (i % sign_modv == 0) then
-            vsgn = -1;
-         end
-      end
-
-      if sign_modh ~= -1 then
-         if (i % sign_modh == 0) then
-            hsgn = -1;
-         end
-      end
-
-      enemy_set_hp(e, per_hp);
-      enemy_set_position(e,
-                         start_position[1] + math.sin(i*10) * x_vary,
-                         start_position[2] + math.sin(i*10) * h_vary);
-      enemy_set_velocity(e, hspeed * hsgn, vspeed * vsgn);
-      Enemy_AddExplodeOnDeathBehavior(e, 60, 0, 1.0);
-      t_wait(spawn_delay);
-
-      enemies[i] = e;
-   end
-
-   return enemies;
-end
-
 --function spawn_bullet_arc_pattern2(center, how_many, arc_degrees, direction, speed, distance_from_center, src)
 -- basic arc shooter similar to burst360_1_1_2
 function Make_Enemy_ArcPattern2_1_1_2(
@@ -600,6 +558,7 @@ function Make_Enemy_Spinner_1_1_2(hp,
                bullet_set_visual(bullet, bullet_visual)
                bullet_set_lifetime(bullet, 15);
                bullet_set_scale(bullet, 5, 5);
+               bullet_set_visual_scale(bullet, 0.5, 0.5);
 
                local bdir = v2_direction_from_degree(angle + displacement);
                bullet_set_velocity(bullet, bdir[1] * bspeed, bdir[2] * bspeed);

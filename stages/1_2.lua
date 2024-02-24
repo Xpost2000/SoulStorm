@@ -375,9 +375,9 @@ function wave1_sub3()
          );
       end
    end
-   t_wait(3);
+   t_wait(5);
    convert_all_bullets_to_score();
-   t_wait(1.5);
+   t_wait(3);
 
    -- Play thunder sound or something
    -- and start the rain!
@@ -392,17 +392,17 @@ function wave1_sub3()
 end
 
 function wave_1()
-   -- wave1_sub1();
+   wave1_sub1();
 
    -- Time Mark : 0:18
    -- Bullets should've just been cleared at this point
 
-   -- wave1_sub2();
-   -- t_wait(4);
+   wave1_sub2();
+   t_wait(4);
 
    -- Time Mark:  0:22
    -- screen should be empty again
-   -- wave1_sub3()
+   wave1_sub3()
 
    -- Time Mark : 1:10
    do -- NOTE: need these to happen at the same time
@@ -410,21 +410,100 @@ function wave_1()
       local popcorn_flood_width = 50;
       async_task_lambda(
          function()
-            local enemies = Make_BrainDead_Enemy_Popcorn1_Explosive(16, v2(play_area_width()/2 - popcorn_radius, -20), 0.20, 5, 30, 120, popcorn_flood_width, 45, -1, -1);
+            local enemies = Make_BrainDead_Enemy_Popcorn1(16, v2(play_area_width()/2 - popcorn_radius, -20), 0.20, 5, 30, 120, popcorn_flood_width, 45, -1, -1);
+            for i,e in ipairs(enemies) do
+               Enemy_AddExplodeOnDeathBehavior(e, 60, 0.1, 1.0);
+            end
          end
       );
       async_task_lambda(
          function()
-            local enemies = Make_BrainDead_Enemy_Popcorn1_Explosive(16, v2(play_area_width()/2 + popcorn_radius, -20), 0.20, 5, -30, 120, popcorn_flood_width, 45, -1, -1);
+            local enemies = Make_BrainDead_Enemy_Popcorn1(16, v2(play_area_width()/2 + popcorn_radius, -20), 0.20, 5, -30, 120, popcorn_flood_width, 45, -1, -1);
+            for i,e in ipairs(enemies) do
+               Enemy_AddExplodeOnDeathBehavior(e, 60, 0.1, 1.0);
+            end
          end
       );
    end
    t_wait(10);
 end
 
+function wave_2()
+   async_task_lambda(
+      function () -- CONCERN: might be visually hard to see?
+         do
+            for i=1, 1 do
+               local rx = 50 - i*10;
+               local ry = 50 + i*10;
+               Make_Enemy_Spinner_1_1_2(25, v2(45, -30), v2(0, 1), 200, 0.5, 0.5, 25, rx, ry, PROJECTILE_SPRITE_GREEN_DISK);
+               Make_Enemy_Spinner_1_1_2(25, v2(play_area_width()-45, -30), v2(0, 1), 200, 0.5, 0.5, 25, rx, ry, PROJECTILE_SPRITE_RED_DISK);
+               t_wait(1.0);
+            end
+            t_wait(1.5);
+
+            -- introduce first laser.
+
+            laser_hazard_new(player_position_y(), 15, 0, 0.05, 0.5);
+            Make_Enemy_Burst360_1_1_2(
+               10, v2(-10, -10), v2(120, 125), 1.5,
+
+               0.12, 4,
+               40, 45,
+
+               75,
+               100,
+
+               v2(1, 1),
+               45,
+               45,
+               
+               PROJECTILE_SPRITE_NEGATIVE_DISK
+            );
+
+            Make_Enemy_Burst360_1_1_2(
+               10, v2(play_area_width(), -10), v2(play_area_width()-120, 125), 1.5,
+
+               0.12, 4,
+               40, 45,
+
+               75,
+               100,
+
+               v2(1, 1),
+               45,
+               45,
+
+               PROJECTILE_SPRITE_NEGATIVE_DISK
+            );
+
+            -- bottom left
+            Make_BrainDead_Enemy_Popcorn1(
+               32,
+               v2(-30, play_area_height()/2),
+               0.14,
+               5,
+               120,
+               -100,
+               30,
+               25,
+               2,
+               2
+            );
+         end
+      end
+   )
+   t_wait(13.5);
+   convert_all_enemies_to_score();
+   convert_all_bullets_to_score();
+   t_wait(2);
+   -- laser frenzy
+end
+
 function stage_task()
    t_wait(2);
    wave_1();
+   wave_2();
+   t_wait(10);
    wait_no_danger();
    t_complete_stage();
 end

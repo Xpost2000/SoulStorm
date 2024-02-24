@@ -3663,8 +3663,8 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     V2 resolution = driver->resolution();
     bool take_screenshot = false;
 
-    auto game_render_commands = render_commands(&Global_Engine()->scratch_arena, 10000, camera(V2(0, 0), 1));
-    auto ui_render_commands   = render_commands(&Global_Engine()->scratch_arena, 2048,  camera(V2(0, 0), 1));
+    auto game_render_commands = render_commands(&Global_Engine()->scratch_arena, 36000, camera(V2(0, 0), 1));
+    auto ui_render_commands   = render_commands(&Global_Engine()->scratch_arena, 4096,  camera(V2(0, 0), 1));
 
     {
         ui_render_commands.screen_width  = game_render_commands.screen_width  = resolution.x;
