@@ -84,8 +84,16 @@ function dir_to_player(a)
    return v2_direction(a, player_position());
 end
 
+function bullet_relative_position(e)
+   return v2(bullet_relative_position_x(e), bullet_relative_position_y(e))
+end
 function bullet_position(e)
    return v2(bullet_position_x(e), bullet_position_y(e));
+end
+function bullet_final_position(e)
+   local relative_position = bullet_relative_position(e);
+   local base_position     = bullet_position(e);
+   return v2(relative_position[1] + base_position[1], relative_position[2] + base_position[2])
 end
 function bullet_velocity(e)
    return v2(bullet_velocity_x(e), bullet_velocity_y(e));
@@ -94,8 +102,16 @@ function bullet_acceleration(e)
    return v2(bullet_acceleration_x(e), bullet_acceleration_y(e));
 end
 
+function enemy_relative_position(e)
+   return v2(enemy_relative_position_x(e), enemy_relative_position_y(e));
+end
 function enemy_position(e)
    return v2(enemy_position_x(e), enemy_position_y(e));
+end
+function enemy_final_position(e)
+   local relative_position = enemy_relative_position(e);
+   local base_position     = enemy_position(e);
+   return v2(relative_position[1] + base_position[1], relative_position[2] + base_position[2])
 end
 function enemy_velocity(e)
    return v2(enemy_velocity_x(e), enemy_velocity_y(e));
@@ -236,6 +252,30 @@ function clamp(x, a, b)
    return x;
 end
 
+
+-- Basic selector function for difficulty settings
+-- NOTE: level 1 has no difficulty selection because it's the "introductory" level
+-- meant to expose all the mechanics of the game...
+function difficulty(a, b, c, d)
+   local modifier = get_difficulty_modifier();
+   if modifier == 0 then
+      return a;
+   elseif modifier == 1 then
+      return b;
+   elseif modifier == 2 then
+      return c;
+   elseif modifier == 3 then
+      return d;
+   end
+end
+
+------------------
+-- Game preset enemy types because I realized programming enemies individually is dumb.
+-- name scheme
+--
+-- Make_Enemy_Description_{Variation_Stage_Level}
+------------------
+
 -- Some enemy prototypes here
 -- NOTE: Please... avoid touching these because editting them a lot might
 -- significantly break older levels...
@@ -327,20 +367,6 @@ function Make_Enemy_Burst360_1_1_2(
    return e;
 end
 
--- Basic selector function for difficulty settings
-function difficulty(a, b, c, d)
-   local modifier = get_difficulty_modifier();
-   if modifier == 0 then
-      return a;
-   elseif modifier == 1 then
-      return b;
-   elseif modifier == 2 then
-      return c;
-   elseif modifier == 3 then
-      return d;
-   end
-end
-
 --
 --
 -- Will spawn a sprinkle of really dumb pop corn enemies that move linearly
@@ -387,4 +413,116 @@ function Make_BrainDead_Enemy_Popcorn1(
       end
 
    return enemies;
+end
+
+--function spawn_bullet_arc_pattern2(center, how_many, arc_degrees, direction, speed, distance_from_center, src)
+-- basic arc shooter similar to burst360_1_1_2
+function Make_Enemy_ArcPattern2_1_1_2(
+      hp,
+      initial_position,
+      target_position,
+      target_position_lerp_t,
+
+      fire_delay,
+      burst_count,
+
+      arc_degrees,
+      bullets_per_burst,
+      bullet_velocity,
+      bullet_distance_from_center,
+
+      exit_direction,
+      exit_velocity,
+      exit_acceleration,
+
+      bullet_visual
+   )
+
+   local e = enemy_new();
+   enemy_set_hp(e, hp);
+   enemy_set_position(e, initial_position[1], initial_position[2]);
+
+   exit_direction = v2_normalized(exit_direction);
+
+   enemy_task_lambda(
+      e,
+      function(e)
+         -- cannot use asymptopic movement yet
+         enemy_linear_move_to(e, target_position[1], target_position[2], target_position_lerp_t);
+         t_wait(fire_delay);
+         for displacement=0,burst_count do
+            local bullets = spawn_bullet_arc_pattern2(enemy_position(e), bullets_per_burst, arc_degrees, v2_normalized(bullet_velocity), v2_magnitude(bullet_velocity), bullet_distance_from_center, BULLET_SOURCE_ENEMY);
+            for i,b in ipairs(bullets) do
+               bullet_set_visual(b, bullet_visual)
+               bullet_set_visual_scale(b, 0.5, 0.5);
+            end
+            play_sound(random_attack_sound());
+            t_wait(0.37);
+         end
+
+         t_wait(0.75);
+         enemy_set_velocity(e, exit_direction[1] * exit_velocity, exit_direction[2] * exit_velocity);
+         enemy_set_acceleration(e, exit_direction[1] * exit_acceleration, exit_direction[2] * exit_acceleration);
+      end
+   );
+
+   return e;
+end
+
+-- Linearly travels across the screen,
+-- while spinning and firing "star/sakura" 
+function Make_Enemy_Spinner_1_1_2(hp,
+                                  initial_position,
+                                  direction,
+                                  velocity,
+                                  fire_delay_per_burst,
+                                  initial_delay,
+                                  bspeed,
+                                  bullet_visual)
+   local e = enemy_new();
+   enemy_set_hp(e, hp);
+   enemy_set_position(e, initial_position[1], initial_position[2]);
+
+   enemy_move_linear(e, direction, velocity);
+
+   enemy_task_lambda(
+      e,
+      function (e)
+         local radiusx = 50;
+         local radiusy = 25;
+         local angle = 0;
+         while enemy_valid(e) do
+            -- enemy_set_relative_position(e, 1, 2);
+            enemy_set_relative_position(e, math.cos(math.rad(angle)) * radiusx, math.sin(math.rad(angle)) * radiusy);
+            angle = angle + 2;
+            t_yield();
+         end
+      end
+   )
+   enemy_task_lambda(
+      e,
+      function (e, bspeed)
+         t_wait(initial_delay);
+         local displacement = 10;
+         while enemy_valid(e) do
+            for angle=1,360,30 do
+               local eposition = enemy_final_position(e);
+               local bullet = bullet_new(BULLET_SOURCE_ENEMY);
+               bullet_set_position(bullet, eposition[1], eposition[2]);
+               bullet_set_visual(bullet, bullet_visual)
+               bullet_set_lifetime(bullet, 15);
+               bullet_set_scale(bullet, 5, 5);
+
+               local bdir = v2_direction_from_degree(angle + displacement);
+               bullet_set_velocity(bullet, bdir[1] * bspeed, bdir[2] * bspeed);
+
+               displacement = displacement + 25;
+            end
+            play_sound(random_attack_sound());
+            t_wait(fire_delay_per_burst);
+         end
+      end,
+      bspeed
+   )
+   return e;
 end

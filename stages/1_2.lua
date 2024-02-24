@@ -169,13 +169,13 @@ function wave1_sub1()
 end
 
 function wave1_sub2()
-   -- enemies form semi circle fire some bullets to the sides, and then close in
-   -- some popcorn enemies for population factor.
-
    -- Use popcorn to funnel player into center lane.
+   -- and have some enemies that try to take pot shots
+   -- and a tankier enemy that comes down the center lane near the end.
 
+   -- Time Mark: +0:18 for the popcorns
    do -- NOTE: need these to happen at the same time
-      local popcorn_radius = 60;
+      local popcorn_radius = 120;
       local popcorn_flood_width = 30;
       async_task_lambda(
          function()
@@ -188,13 +188,134 @@ function wave1_sub2()
          end
       );
    end
+   t_wait(1.5);
+
+   Make_Enemy_ArcPattern2_1_1_2(
+      15,
+      v2(-15, 50),
+      v2(30, 50),
+      1.5,
+
+      0.25,
+      4,
+
+      45,
+      4,
+      v2(100, 60),
+      5,
+
+      v2(-1, -1),
+      50,
+      10,
+
+      PROJECTILE_SPRITE_GREEN_ELECTRIC
+   )
+
+   t_wait(1.5);
+   Make_Enemy_ArcPattern2_1_1_2(
+      15,
+      v2(play_area_width()+15, 100),
+      v2(play_area_width()-15, 400),
+      1.5,
+
+      0.25,
+      4,
+
+      45,
+      4,
+      v2(-100, -70),
+      5,
+
+      v2(1, -1),
+      50,
+      10,
+
+      PROJECTILE_SPRITE_GREEN_ELECTRIC
+   )
+   t_wait(1.5);
+   Make_Enemy_ArcPattern2_1_1_2(
+      15,
+      v2(play_area_width()+15, 100),
+      v2(play_area_width()-15, 100),
+      1.5,
+
+      0.25,
+      4,
+
+      45,
+      4,
+      v2(-100, 70),
+      5,
+
+      v2(1, -1),
+      50,
+      10,
+
+      PROJECTILE_SPRITE_GREEN_ELECTRIC
+   )
+   t_wait(2.0);
+
+   -- two tunneling bigger enemies
+   do
+      for i=1,6  do
+         do
+            local e = enemy_new();
+            enemy_set_hp(e, 50); -- requires focus to break
+            enemy_set_position(e, play_area_width()/2 - 25, -30);
+            enemy_set_scale(e, 20, 20);
+            enemy_move_linear(e, v2(0, 1), 120);
+         end
+         do
+            local e = enemy_new();
+            enemy_set_hp(e, 50); -- requires focus to break
+            enemy_set_position(e, play_area_width()/2 + 25, -30);
+            enemy_set_scale(e, 20, 20);
+            enemy_move_linear(e, v2(0, 1), 120);
+         end
+         t_wait(1.25);
+      end
+   end
+end
+
+function wave1_sub3()
+   -- new enemy type, crazy spinster
+   -- have two of them run along the screen of it running across the screen
+
+   -- along with a few regular enemies that shoot a lingering firework pattern
+   -- then a generous amount of random popcorns
+
+   -- Theoretically : 0:12
+   async_task_lambda(
+      function () -- CONCERN: might be visually hard to see?
+         do
+            local radius = 40;
+            for i=1, 3 do
+               Make_Enemy_Spinner_1_1_2(25, v2(-45, radius), v2(1, 0), 120, 1.0, 1.00, 40, PROJECTILE_SPRITE_SPARKLING_STAR);
+               Make_Enemy_Spinner_1_1_2(25, v2(-45, play_area_height() - radius), v2(1, 0), 120, 1.0, 1.00, 40, PROJECTILE_SPRITE_SPARKLING_STAR);
+               t_wait(4.0);
+            end
+            -- TODO: add trail. I want these to be shooting stars. literally.
+         end
+      end
+   )
+   -- flood with popcorn from left and right
+   -- TODO:
+   t_wait(5.0);
+   -- Time Mark : 0:18
 end
 
 function wave_1()
    -- wave1_sub1();
+
    -- Time Mark : 0:18
    -- Bullets should've just been cleared at this point
-   wave1_sub2();
+
+   -- wave1_sub2();
+   -- t_wait(4);
+
+   -- Time Mark:  0:22
+   -- screen should be empty again
+   wave1_sub3()
 end
 
 function stage_task()
