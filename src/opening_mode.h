@@ -62,9 +62,10 @@ enum OpeningMode_Phase {
      *  flies through.
      *
      */
-    OPENING_MODE_PHASE_FADE_IN = 0,
-    OPENING_MODE_PHASE_SLIDESHOW = 1,
-    OPENING_MODE_PHASE_FADE_OUT = 2,
+    OPENING_MODE_PHASE_LOGO    = 0,
+    OPENING_MODE_PHASE_FADE_IN = 1,
+    OPENING_MODE_PHASE_SLIDESHOW = 2,
+    OPENING_MODE_PHASE_FADE_OUT = 3,
 };
 
 #define OPENING_MODE_FADE_TIMER_MAX (3.0f)
@@ -73,12 +74,31 @@ enum OpeningMode_Phase {
 #define OPENING_MODE_DATA_SKIPPER_VISIBILITY_MAX_T (0.35f)
 #define OPENING_MODE_DATA_SKIPPER_PROGRESS_MAX_T (1.0f)
 
+#define OPENING_MODE_LOGO_TYPE_SPEED (0.085f)
+
+/*
+ * NOTE:
+ *
+ * You know, I don't really have a lot of "typer" things, but I do
+ * the typer thing enough, you'd think I'd actually have a small abstraction for these
+ * things, but it's not super difficult to make these, and also these things aren't very
+ * frequent because they're used in a few locations in the codebase.
+ */
+struct OpeningMode_Logo_Data {
+    s32  characters_visible = 0;
+    f32  type_timer         = 0;
+    f32  delay_timer        = 2.5f;
+    bool untyping_text      = false;
+};
+
 struct OpeningMode_Data {
-    int phase = OPENING_MODE_PHASE_FADE_IN;
+    int phase = OPENING_MODE_PHASE_LOGO;
     OpeningMode_SlideData slides[32];
     uint8_t               slide_count = 0; 
     uint8_t               slide_index = 0;
     f32                   fade_timer  = 0.0f;
+
+    OpeningMode_Logo_Data logo_presentation;
 
     // NOTE: I need controller prompts and such in order to actually
     //       "show things", for now I'll have an abstract "skip bar"

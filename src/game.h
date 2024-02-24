@@ -136,6 +136,7 @@ private:
     GAME_SCREEN(update_and_render_game_main_menu);
     GAME_SCREEN(update_and_render_game_ingame);
     GAME_SCREEN(update_and_render_game_credits);
+    void       title_screen_replay_opening(void);
     GAME_SCREEN(update_and_render_game_title_screen);
     GAME_SCREEN(update_and_render_game_ending);
 

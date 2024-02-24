@@ -530,7 +530,7 @@ function preboss_wave()
    t_wait(12.0); -- TODO check if they're actually off the screen.
    kill_all_enemies();
    -- Dialogue point with midboss!
-   -- fight the midboss! EXP 30 seconds
+   -- fight the midboss! EXPECT 30 seconds
 end
 
 function stage_task()

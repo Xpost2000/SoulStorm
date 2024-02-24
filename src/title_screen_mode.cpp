@@ -334,6 +334,24 @@ void Game::title_data_initialize(Graphics_Driver* driver) {
     }
 }
 
+void Game::title_screen_replay_opening(void) {
+    Transitions::do_shuteye_in(
+        color32f32(0, 0, 0, 1),
+        0.15f,
+        0.3f
+    );
+    state->titlescreen_data.attract_mode_timer = 0.0f;
+
+    Transitions::register_on_finish(
+        [&](void*) mutable {
+            opening_data_initialize(Global_Engine()->driver);
+            this->state->opening_data.phase = OPENING_MODE_PHASE_FADE_IN;
+            switch_ui(UI_STATE_INACTIVE);
+            switch_screen(GAME_SCREEN_OPENING);
+        }
+    );
+}
+
 GAME_SCREEN(update_and_render_game_title_screen) {
     Discord_Integration::update_activity(
         discord_activity()
@@ -349,20 +367,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
                 state.attract_mode_timer = 0.0f;
             } else {
                 if (state.attract_mode_timer >= ATTRACT_MODE_TIMER_MAX && !Transitions::fading()) {
-                    Transitions::do_shuteye_in(
-                        color32f32(0, 0, 0, 1),
-                        0.15f,
-                        0.3f
-                    );
-                    state.attract_mode_timer = 0.0f;
-
-                    Transitions::register_on_finish(
-                        [&](void*) mutable {
-                            opening_data_initialize(Global_Engine()->driver);
-                            switch_ui(UI_STATE_INACTIVE);
-                            switch_screen(GAME_SCREEN_OPENING);
-                        }
-                    );
+                    title_screen_replay_opening();
                 }
             }
         }
@@ -384,7 +389,6 @@ GAME_SCREEN(update_and_render_game_title_screen) {
                 state->titlescreen_data.last_screen_height  = new_screen_height;
                 state->titlescreen_data.main_camera.xy = V2(new_screen_width/2, new_screen_height/2);
             }
-
         }
 
         // Handle_Title_Screen_Animation_Phase
@@ -586,20 +590,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
             }
             y += 30;
             if (GameUI::button(V2(ui_x, y), string_literal("Opening"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
-                Transitions::do_shuteye_in(
-                    color32f32(0, 0, 0, 1),
-                    0.15f,
-                    0.3f
-                );
-                
-
-                Transitions::register_on_finish(
-                    [&](void*) mutable {
-                        opening_data_initialize(Global_Engine()->driver);
-                        switch_ui(UI_STATE_INACTIVE);
-                        switch_screen(GAME_SCREEN_OPENING);
-                    }
-                );
+                title_screen_replay_opening();
             }
             y += 30;
             if (GameUI::button(V2(ui_x, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {

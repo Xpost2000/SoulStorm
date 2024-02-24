@@ -19,7 +19,7 @@ void Game::opening_data_initialize(Graphics_Driver* driver) {
     state.fade_timer  = 0.0f;
     state.skipper_visibility_t = 0.0f;
     state.skipper_progress_t = 0.0f;
-    state.phase = OPENING_MODE_PHASE_FADE_IN;
+    state.phase = OPENING_MODE_PHASE_LOGO;
     /*
      * I'm not an excellent writer, but I also don't need a very complicated story.
      */
@@ -143,7 +143,7 @@ void OpeningMode_Data::update_slide(OpeningMode_SlideData* slide, f32 dt) {
 }
 
 void OpeningMode_Data::update_and_render_skipper_box(f32 dt, Game_Resources* resources, struct render_commands* ui_render_commands) {
-    if (phase < OPENING_MODE_PHASE_FADE_OUT) {
+    if (phase < OPENING_MODE_PHASE_FADE_OUT && phase != OPENING_MODE_PHASE_LOGO) {
         f32 skip_box_x = 35;
         f32 skip_box_y = 20;
         f32 skip_box_w = 90;
@@ -323,6 +323,84 @@ GAME_SCREEN(update_and_render_game_opening) {
 
     // NOTE: this is after, so I can draw the transition fades myself.
     switch (state.phase) {
+        case OPENING_MODE_PHASE_LOGO: {
+            f32    font_scale = 8.0f;
+            auto   font       = resources->get_font(MENU_FONT_COLOR_STEEL);
+            auto&  logo_data  = state.logo_presentation;
+            V2     resolution = V2(ui_render_commands->screen_width, ui_render_commands->screen_height);
+            string fulltext   = string_literal("By Xpost2000");
+
+            if (logo_data.untyping_text == false) {
+                if (logo_data.characters_visible < fulltext.length) {
+                    if (logo_data.type_timer <= 0.0f) {
+                        logo_data.characters_visible += 1;
+                        logo_data.type_timer = OPENING_MODE_LOGO_TYPE_SPEED;
+
+                        Audio::play(this->state->resources->opening_beep_type);
+                    } else {
+                        logo_data.type_timer -= dt;
+                    }
+                } else {
+                    if (logo_data.delay_timer > 0) {
+                        logo_data.delay_timer -= dt;
+                    } else {
+                        logo_data.delay_timer = 3.5f;
+                        logo_data.untyping_text = true;
+                    }
+                }
+            } else {
+                if (logo_data.characters_visible > 0) {
+                    if (logo_data.type_timer <= 0.0f) {
+                        logo_data.characters_visible -= 1;
+                        logo_data.type_timer = OPENING_MODE_LOGO_TYPE_SPEED;
+                    } else {
+                        logo_data.type_timer -= dt;
+                    }
+                } else {
+                    if (logo_data.delay_timer > 0) {
+                        logo_data.delay_timer -= dt;
+                    } else {
+                        state.phase = OPENING_MODE_PHASE_FADE_IN;
+                    }
+                }
+            }
+
+            string presented_portion = string_concatenate(&Global_Engine()->scratch_arena, string_slice(fulltext, 0, logo_data.characters_visible), string_literal("_"));
+            float text_width_full = font_cache_text_width(font, string_concatenate(&Global_Engine()->scratch_arena, fulltext, string_literal("_ ")), font_scale);
+            float  text_width        = font_cache_text_width(font, presented_portion, font_scale);
+            float  text_height       = font_cache_text_height(font) * font_scale;
+
+            {
+				render_commands_push_quad(
+					ui_render_commands,
+					rectangle_f32(0, 0, resolution.x, resolution.y),
+					color32u8(0, 0, 0, 255),
+					BLEND_MODE_ALPHA
+				);
+
+                {
+                    // background for text to make it easier to read.
+                    render_commands_push_quad(
+                        ui_render_commands,
+                        rectangle_f32(resolution.x/2 - (text_width_full/2) - 7.5f, resolution.y/2 - (text_height*1.5f)/2, 15, text_height*1.5f),
+                        color32u8(255, 255, 255, 255),
+                        BLEND_MODE_ALPHA
+                    );
+                }
+
+                {
+                    render_commands_push_text(
+                        ui_render_commands,
+                        font,
+                        font_scale,
+                        V2(resolution.x/2 - text_width/2, resolution.y/2 - text_height/2),
+                        presented_portion,
+                        color32f32(1, 1, 1, 1),
+                        BLEND_MODE_ALPHA
+                    );
+                }
+            }
+        } break;
         case OPENING_MODE_PHASE_FADE_IN: {
             f32 alpha = clamp<f32>(state.fade_timer / OPENING_MODE_FADE_TIMER_MAX, 0.0f, 1.0f);
             render_commands_push_quad(

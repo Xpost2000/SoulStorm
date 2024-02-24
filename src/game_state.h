@@ -828,6 +828,7 @@ struct Game_Resources {
     // I should have more of these...
     Audio::Sound_ID        attack_sounds[2];
     Audio::Sound_ID        hit_sounds[2];
+    Audio::Sound_ID        opening_beep_type;
 
     // weird special case for bullets since those actually
     // require rotation.
