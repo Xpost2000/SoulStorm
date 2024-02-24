@@ -802,6 +802,7 @@ void Game::reset_stage_simulation_state() {
             );
             state->recording.stage_id = stage_id;
             state->recording.level_id = level_id;
+            state->recording.selected_pet = pet_id;
         } else {
             state->recording.old_prng = state->prng;
             state->prng               = state->recording.prng;
@@ -1034,6 +1035,11 @@ void Scriptable_Render_Object::render(Game_Resources* resources, struct render_c
 }
 
 // Gameplay_Data
+void Gameplay_Data::set_pet_id(s8 id, Game_Resources* resources) {
+    selected_pet = id;
+    pet.set_id(id, resources);
+}
+
 void Gameplay_Data::remove_life(void) {
     if (tries > 0) {
         tries -= 1;
@@ -1797,8 +1803,10 @@ GAME_UI_SCREEN(update_and_render_replay_collection_menu) {
 
                             Transitions::register_on_finish(
                                 [&](void*) mutable {
-                                    this->state->mainmenu_data.stage_id_level_select = state->gameplay_data.recording.stage_id;
+                                    // NOTE: register gameplay recording data
+                                    this->state->mainmenu_data.stage_id_level_select          = state->gameplay_data.recording.stage_id;
                                     this->state->mainmenu_data.stage_id_level_in_stage_select = state->gameplay_data.recording.level_id;
+                                    this->state->gameplay_data.set_pet_id(state->gameplay_data.recording.selected_pet, state->resources);
 
                                     switch_ui(UI_STATE_INACTIVE);
                                     switch_screen(GAME_SCREEN_INGAME);
@@ -2126,8 +2134,7 @@ void Game::update_and_render_stage_pet_select_menu(struct render_commands* comma
 
             if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 load_game = true;
-                gameplay_data.selected_pet = pet_id_list[state->mainmenu_data.stage_pet_selection];
-                gameplay_data.pet.set_id(gameplay_data.selected_pet, state->resources);
+                gameplay_data.set_pet_id(pet_id_list[state->mainmenu_data.stage_pet_selection], state->resources);
                 _debugprintf("%.*s\n", pet_data->name.length, pet_data->name.data);
             }
 

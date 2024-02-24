@@ -54,6 +54,11 @@ bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memor
     serialize_s32(serializer, &recording->frame_count);
     serialize_u8(serializer,  &recording->stage_id);
     serialize_u8(serializer,  &recording->level_id);
+    if (recording->version > GAMEPLAY_RECORDING_FILE_VERSION_2) {
+        serialize_s8(serializer,  &recording->selected_pet);
+    } else {
+        recording->selected_pet = GAME_PET_ID_NONE;
+    }
     _debugprintf("Serializing recording version: %d", recording->version);
     _debugprintf("Serializing recording tickrate: %d", recording->tickrate);
     _debugprintf(

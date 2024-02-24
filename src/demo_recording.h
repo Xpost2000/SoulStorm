@@ -4,6 +4,9 @@
 #define DEFAULT_DEMO_VIEWER_TIMESCALE_INDEX (3)
 enum Gameplay_Recording_File_Version {
     GAMEPLAY_RECORDING_FILE_VERSION_1 = 0,
+
+    // Pets added to recording file
+    GAMEPLAY_RECORDING_FILE_VERSION_2 = 1,
     GAMEPLAY_RECORDING_FILE_CURRENT_VERSION = GAMEPLAY_RECORDING_FILE_VERSION_1
 };
 
@@ -29,6 +32,7 @@ struct Gameplay_Recording_File {
     s32                          frame_count;
     u8                           stage_id;
     u8                           level_id;
+    s8                           selected_pet;
 
     /*
       NOTE:

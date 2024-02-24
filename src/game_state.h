@@ -414,6 +414,7 @@ struct Gameplay_Data {
     Fixed_Array<image_id> script_loaded_images;
     Fixed_Array<Audio::Sound_ID> script_loaded_sounds;
 
+    void set_pet_id(s8 id, Game_Resources* resources);
     void remove_life(void);
     void add_life(void);
 
