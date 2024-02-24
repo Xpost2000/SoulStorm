@@ -3071,6 +3071,8 @@ void Game::simulate_game_frames_until(int nth_frame) {
 
     int  desired_frame = nth_frame;
     bool  simulate_frame = true;
+
+    Audio::disable();
     {
         auto update_packet_data = (Entity_Loop_Update_Packet*)Global_Engine()->scratch_arena.push_unaligned(sizeof(Entity_Loop_Update_Packet));
         update_packet_data->dt = FIXED_TICKTIME;
@@ -3096,10 +3098,17 @@ void Game::simulate_game_frames_until(int nth_frame) {
 
         while (desired_frame) {
             simulate_game_frame(update_packet_data);
-            state->current_stage_timer  += FIXED_TICKTIME;
+            if (!this->state->dialogue_state.in_conversation) {
+                state->current_stage_timer  += FIXED_TICKTIME;
+            } else {
+                // no dialogue during replays
+                // might still play the waits the dialogues have... Which is a problem...
+                this->state->dialogue_state.in_conversation = false;
+            }
             desired_frame -= 1;
         }
     }
+    Audio::enable();
 }
 
 #include "dialogue_ui.cpp"
@@ -4156,9 +4165,12 @@ void Game::handle_all_bullet_collisions(f32 dt) {
 
                     if (e.die) {
                         state->notify_score_with_hitmarker(e.score_value * e.death_multiplier, e.position);   
-                        Achievements::get(ACHIEVEMENT_ID_KILLER)->report((s32)1);
-                        Achievements::get(ACHIEVEMENT_ID_MURDERER)->report((s32)1);
-                        Achievements::get(ACHIEVEMENT_ID_SLAYER)->report((s32)1);
+
+                        if (!(state->recording.in_playback)) {
+                            Achievements::get(ACHIEVEMENT_ID_KILLER)->report((s32)1);
+                            Achievements::get(ACHIEVEMENT_ID_MURDERER)->report((s32)1);
+                            Achievements::get(ACHIEVEMENT_ID_SLAYER)->report((s32)1);
+                        }
 
                         spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources);
                     } else {

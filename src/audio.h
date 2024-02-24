@@ -27,6 +27,11 @@ namespace Audio {
     void stop_music_fadeout(const s32 fadeout_ms);
     void play_fadein(const Sound_ID sound, const s32 fadein_ms);
 
+    void disable(void);
+    void enable(void);
+
+    f32  get_volume_sound(void);
+    f32  get_volume_music(void);
     void set_volume_sound(f32 v);
     void set_volume_music(f32 v);
 

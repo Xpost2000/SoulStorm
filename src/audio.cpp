@@ -21,6 +21,16 @@ namespace Audio {
     local s32        loaded_stream_count                      = 0;
     local string     loaded_sample_filestrings[MAX_LOADED_SAMPLES] = {};
     local string     loaded_stream_filestrings[MAX_LOADED_STREAMS] = {};
+    local f32        current_sound_volume                          = 0.5;
+    local f32        current_music_volume                          = 0.5;
+    local bool       subsystem_enabled                             = true;
+
+    void disable(void) {
+        subsystem_enabled = false;
+    }
+    void enable(void) {
+        subsystem_enabled = true;
+    }
 
     void initialize(void) {
         _debugprintf("Audio hi");
@@ -33,6 +43,14 @@ namespace Audio {
         stop_music();
         stop_sounds();
         Mix_Quit();
+    }
+
+    f32 get_volume_sound(void) {
+        return current_sound_volume;
+    }
+
+    f32 get_volume_music(void) {
+        return current_music_volume;
     }
 
     Sound_ID load(const char* filepath, const bool streamed) {
@@ -151,6 +169,9 @@ namespace Audio {
     }
 
     void play(Sound_ID sound) {
+        if (!subsystem_enabled)
+            return;
+
         if (sound.index == 0) {
             _debugprintf("bad sound");
             return;
@@ -174,6 +195,9 @@ namespace Audio {
     }
 
     void play_fadein(Sound_ID sound, s32 fadein_ms) {
+        if (!subsystem_enabled)
+            return;
+
         if (sound.streaming) {
             Mix_FadeInMusic(loaded_streams[sound.index-1], -1, fadein_ms);
         } else {
@@ -186,10 +210,12 @@ namespace Audio {
     }
 
     void set_volume_sound(f32 v) {
+        current_sound_volume = v;
         Mix_Volume(-1, (s32)(v * MIX_MAX_VOLUME));
     }
 
     void set_volume_music(f32 v) {
+        current_music_volume = v;
         Mix_VolumeMusic((s32)(v * MIX_MAX_VOLUME));
     }
 
