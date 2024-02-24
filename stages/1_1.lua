@@ -767,7 +767,7 @@ function wave_2_sub3()
          enemy_set_position(e, play_area_width()/2 - dist_r, -50);
          enemy_set_task(
             e,
-            "_wave2_enemy_firework", v2(0, 85), 1.5, 4, 10, 0.45, "_wave2_bullet_firework1"
+            "_wave2_enemy_firework", v2(0, 45), 1.5, 4, 10, 0.45, "_wave2_bullet_firework1"
          );
       end
       do
@@ -777,7 +777,7 @@ function wave_2_sub3()
          enemy_set_position(e, play_area_width()/2 + dist_r, -50);
          enemy_set_task(
             e,
-            "_wave2_enemy_firework", v2(0, 85), 1.5, 4, 10, 0.45, "_wave2_bullet_firework1"
+            "_wave2_enemy_firework", v2(0, 45), 1.5, 4, 10, 0.45, "_wave2_bullet_firework1"
          );
       end
    end
@@ -789,7 +789,7 @@ function wave_2_sub3()
       enemy_set_position(e, play_area_width()/2, -50);
       enemy_set_task(
          e,
-         "_wave2_enemy_firework", v2(0, 65), 1.2, 6, 25, 0.45, "_wave2_bullet_firework2"
+         "_wave2_enemy_firework", v2(0, 45), 1.2, 6, 25, 0.45, "_wave2_bullet_firework2"
       );
    end
    t_wait(5.35)
@@ -802,7 +802,7 @@ function wave_2_sub3()
          enemy_set_position(e, play_area_width()/2 - dist_r, -20);
          enemy_set_task(
             e,
-            "_wave2_enemy_firework", v2(0, 50), 1.5, 4, 6, 0.25, "_wave2_bullet_firework1"
+            "_wave2_enemy_firework", v2(0, 30), 2.0, 4, 6, 0.45, "_wave2_bullet_firework1"
          );
       end
       do
@@ -812,7 +812,7 @@ function wave_2_sub3()
          enemy_set_position(e, play_area_width()/2 + dist_r, -20);
          enemy_set_task(
             e,
-            "_wave2_enemy_firework", v2(0, 50), 1.5, 4, 20, 0.15, "_wave2_bullet_firework1"
+            "_wave2_enemy_firework", v2(0, 30), 2.0, 4, 20, 0.45, "_wave2_bullet_firework1"
          );
       end
    end
