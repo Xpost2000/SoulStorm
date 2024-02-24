@@ -505,24 +505,33 @@ function preboss_wave()
       for i=1,3 do
          local offset = i * 45;
          laser_hazard_new(offset, 10, 0, 0.05, 1);
-         laser_hazard_new(play_area_height() - offset, 30, 0, 0.05, 1);
-         t_wait(0.2);
+         laser_hazard_new(play_area_height() - offset, 10, 0, 0.05, 1);
+         t_wait(0.4);
       end
-      t_wait(0.5);
+      t_wait(1.0);
       for i=1,3 do
          local offset = i * 45;
          laser_hazard_new(offset, 10, 1, 0.05, 1);
-         laser_hazard_new(play_area_width() - offset, 30, 1, 0.05, 1);
-         t_wait(0.2);
+         laser_hazard_new(play_area_width() - offset, 10, 1, 0.05, 1);
+         t_wait(0.4);
       end
-      t_wait(5);
+      t_wait(4);
+      for i=1,8 do
+         laser_hazard_new(player_position_x(), 10, 1, 0.05, 1);
+         t_wait(1.5 - i*(1.5/8));
+      end
+      t_wait(1.2);
    end
+   MainBoss1_RainCloud_Attack2(1997, 3.5)
+   t_wait(4.0);
+   convert_all_bullets_to_score()
+   t_wait(5.0);
 end
 
 function stage_task()
    t_wait(2);
-   -- wave_1();
-   -- wave_2();
+   wave_1();
+   wave_2();
    preboss_wave();
    wait_no_danger();
    t_complete_stage();

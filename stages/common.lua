@@ -30,6 +30,16 @@ function player_screen_half_vertical()
    return 1
 end
 
+function out_of_bounds(position)
+   local x = position[1];
+   local y = position[2];
+   if x < 0 or x >= play_area_width() or
+      y < 0 or y >= play_area_heigth() then
+      return true;
+   end
+   return false;
+end
+
 function spawn_bullet_line(center, how_many, spacing, scale, direction, speed, src)
    local new_bullets = {};
    local direction     = v2_normalized(direction);
@@ -398,13 +408,18 @@ function Enemy_AddExplodeOnDeathBehavior(e, explosion_radius, warning_timer, exp
    async_task_lambda(
       function(e)
          local position = enemy_final_position(e);
+         local oob      = false;
          while enemy_valid(e) do
             if enemy_valid(e) then
                position = enemy_final_position(e);
+               oob      = out_of_bounds(position);
             end
             t_yield()
          end
-         explosion_hazard_new(position[1], position[2], explosion_radius, warning_timer, explosion_timer);
+
+         if not oob then
+            explosion_hazard_new(position[1], position[2], explosion_radius, warning_timer, explosion_timer);
+         end
       end,
       e
    );
