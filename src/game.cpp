@@ -693,7 +693,12 @@ void Game::reset_stage_simulation_state() {
     state->main_camera.trauma = 0;
     this->state->deathscreen_data.reset();
     {
-        auto& deathanimation_data = this->state->deathanimation_data;
+        auto& deathanimation_data       = this->state->deathanimation_data;
+        deathanimation_data.phase       = DEATH_ANIMATION_PHASE_INACTIVE;
+        deathanimation_data.t           = 0;
+        deathanimation_data.flash_t     = 0;
+        deathanimation_data.flash_count = 0;
+        deathanimation_data.flashing    = 0;
         auto& deathanimation_emitter = deathanimation_data.player_explosion_emitter;
 
         deathanimation_emitter.reset();
