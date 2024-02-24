@@ -278,9 +278,6 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
     s32 current_ui_state     = state->ui_state;
     s32 current_screen_state = state->screen_mode;
 
-    deregister_all_dead_lua_threads();
-    deregister_all_dead_standard_tasks();
-
     const bool block_game_task_update =
         (
             current_screen_state != GAME_SCREEN_INGAME ||
@@ -431,4 +428,7 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
             }
         }
     }
+
+    deregister_all_dead_lua_threads();
+    deregister_all_dead_standard_tasks();
 }

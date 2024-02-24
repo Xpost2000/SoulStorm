@@ -376,9 +376,19 @@ function wave1_sub3()
       end
    end
    t_wait(3);
+   convert_all_bullets_to_score();
+   t_wait(1.5);
+
+   -- Play thunder sound or something
+   -- and start the rain!
+
    -- Time Mark : 0:18
    MainBoss1_RainCloud_Attack1(1337, 12);
-   -- Time Mark : 0:30
+   t_wait(13.5);
+   convert_all_bullets_to_score();
+   t_wait(2);
+   MainBoss1_RainCloud_Attack2(4938, 8);
+   t_wait(10);
 end
 
 function wave_1()
@@ -393,14 +403,23 @@ function wave_1()
    -- Time Mark:  0:22
    -- screen should be empty again
    -- wave1_sub3()
-   MainBoss1_RainCloud_Attack1(1337, 12);
-   t_wait(13.5);
-   convert_all_bullets_to_score();
-   t_wait(2);
-   MainBoss1_RainCloud_Attack2(4918, 7);
-   t_wait(16);
 
-   -- Time Mark: 0:50? approx
+   -- Time Mark : 1:10
+   do -- NOTE: need these to happen at the same time
+      local popcorn_radius = 200;
+      local popcorn_flood_width = 50;
+      async_task_lambda(
+         function()
+            local enemies = Make_BrainDead_Enemy_Popcorn1_Explosive(16, v2(play_area_width()/2 - popcorn_radius, -20), 0.20, 5, 30, 120, popcorn_flood_width, 45, -1, -1);
+         end
+      );
+      async_task_lambda(
+         function()
+            local enemies = Make_BrainDead_Enemy_Popcorn1_Explosive(16, v2(play_area_width()/2 + popcorn_radius, -20), 0.20, 5, -30, 120, popcorn_flood_width, 45, -1, -1);
+         end
+      );
+   end
+   t_wait(10);
 end
 
 function stage_task()

@@ -280,6 +280,8 @@ end
 -- name scheme
 --
 -- Make_Enemy_Description_{Variation_Stage_Level}
+
+-- NOTE: variation is for behavior. Visually enemies are skinned manually.
 ------------------
 
 -- Some enemy prototypes here
@@ -323,7 +325,6 @@ function Make_Enemy_Burst360_1_1_2(
 
       bullet_visual
    )
-   print("test");
    local e = enemy_new();
    enemy_set_hp(e, hp);
    enemy_set_position(e, initial_position[1], initial_position[2]);
@@ -373,6 +374,38 @@ function Make_Enemy_Burst360_1_1_2(
    return e;
 end
 
+function Enemy_AddExplodeOnDeathBehavior(e, explosion_radius, warning_timer, explosion_timer)
+   async_task_lambda(
+      function(e)
+         local position = enemy_final_position(e);
+         while enemy_valid(e) do
+            if enemy_valid(e) then
+               position = enemy_final_position(e);
+            end
+            t_yield()
+         end
+         explosion_hazard_new(position[1], position[2], explosion_radius, warning_timer, explosion_timer);
+      end,
+      e
+   );
+end
+function Enemy_AddSpinBehavior(e, angle_rotation_per_frame, radiusx, radiusy)
+   enemy_task_lambda(
+      e,
+      function (e)
+         local angle = 0;
+         while enemy_valid(e) do
+            -- enemy_set_relative_position(e, 1, 2);
+            enemy_set_relative_position(e, math.cos(math.rad(angle)) * radiusx, math.sin(math.rad(angle)) * radiusy);
+            angle = angle + angle_rotation_per_frame;
+            t_yield();
+         end
+      end,
+      radiusx,
+      radiusy
+   )
+end
+
 --
 --
 -- Will spawn a sprinkle of really dumb pop corn enemies that move linearly
@@ -381,7 +414,8 @@ end
 --
 --
 
--- NOTE: might have issue. LOL
+-- NOTE: due to how these guys are made I might need to skin these guys *manually* for each
+-- permutation of the function, which is fine since only a select few enemy variations are popcorns.
 function Make_BrainDead_Enemy_Popcorn1(
       amount,
       start_position,
@@ -415,6 +449,48 @@ function Make_BrainDead_Enemy_Popcorn1(
                          start_position[1] + math.sin(i*10) * x_vary,
                          start_position[2] + math.sin(i*10) * h_vary);
       enemy_set_velocity(e, hspeed * hsgn, vspeed * vsgn);
+      t_wait(spawn_delay);
+
+      enemies[i] = e;
+   end
+
+   return enemies;
+end
+
+function Make_BrainDead_Enemy_Popcorn1_Explosive(
+      amount,
+      start_position,
+      spawn_delay,
+      per_hp,
+      hspeed,
+      vspeed,
+      x_vary,
+      h_vary,
+      sign_modv,
+      sign_modh)
+   local enemies = {};
+   for i=1, amount do
+      local e = enemy_new();
+      local vsgn = 1;
+      local hsgn = 1;
+      if sign_modv ~= -1 then
+         if (i % sign_modv == 0) then
+            vsgn = -1;
+         end
+      end
+
+      if sign_modh ~= -1 then
+         if (i % sign_modh == 0) then
+            hsgn = -1;
+         end
+      end
+
+      enemy_set_hp(e, per_hp);
+      enemy_set_position(e,
+                         start_position[1] + math.sin(i*10) * x_vary,
+                         start_position[2] + math.sin(i*10) * h_vary);
+      enemy_set_velocity(e, hspeed * hsgn, vspeed * vsgn);
+      Enemy_AddExplodeOnDeathBehavior(e, 60, 0, 1.0);
       t_wait(spawn_delay);
 
       enemies[i] = e;
@@ -496,20 +572,21 @@ function Make_Enemy_Spinner_1_1_2(hp,
 
    enemy_move_linear(e, direction, velocity);
 
-   enemy_task_lambda(
-      e,
-      function (e)
-         local angle = 0;
-         while enemy_valid(e) do
-            -- enemy_set_relative_position(e, 1, 2);
-            enemy_set_relative_position(e, math.cos(math.rad(angle)) * radiusx, math.sin(math.rad(angle)) * radiusy);
-            angle = angle + 2;
-            t_yield();
-         end
-      end,
-      radiusx,
-      radiusy
-   )
+   Enemy_AddSpinBehavior(e, 2, radiusx, radiusy);
+   -- enemy_task_lambda(
+   --    e,
+   --    function (e)
+   --       local angle = 0;
+   --       while enemy_valid(e) do
+   --          -- enemy_set_relative_position(e, 1, 2);
+   --          enemy_set_relative_position(e, math.cos(math.rad(angle)) * radiusx, math.sin(math.rad(angle)) * radiusy);
+   --          angle = angle + 2;
+   --          t_yield();
+   --       end
+   --    end,
+   --    radiusx,
+   --    radiusy
+   -- )
    enemy_task_lambda(
       e,
       function (e, bspeed)
@@ -551,6 +628,9 @@ function MainBoss1_RainCloud_Attack1(phase_cycle, duration)
 
    async_task_lambda(
       function()
+         disable_grazing();
+         disable_bullet_to_points();
+
          async_task_lambda(
             function()
                local cycle_point = phase_cycle;
@@ -591,6 +671,8 @@ function MainBoss1_RainCloud_Attack1(phase_cycle, duration)
 
          t_wait(duration)
          stop_task = 1;
+         enable_grazing();
+         enable_bullet_to_points();
       end
    )
 end
@@ -603,6 +685,8 @@ function MainBoss1_RainCloud_Attack2(phase_cycle, duration)
 
    async_task_lambda(
       function()
+         disable_grazing();
+         disable_bullet_to_points();
          async_task_lambda(
             function()
                local cycle_point = phase_cycle;
@@ -641,8 +725,9 @@ function MainBoss1_RainCloud_Attack2(phase_cycle, duration)
                end
             end
          )
-
          t_wait(duration)
+         enable_grazing();
+         enable_bullet_to_points();
          stop_task = 1;
       end
    )
