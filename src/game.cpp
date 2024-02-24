@@ -943,12 +943,12 @@ void Game::init(Graphics_Driver* driver) {
         state->pickups                 = Fixed_Array<Pickup_Entity>(arena, MAX_PICKUP_ENTITIES);
         state->score_notifications     = Fixed_Array<Gameplay_UI_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
         state->hit_score_notifications = Fixed_Array<Gameplay_UI_Hitmark_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
-        state->particle_emitters       = Fixed_Array<Particle_Emitter>(arena, 128);
+        state->particle_emitters       = Fixed_Array<Particle_Emitter>(arena, MAX_BULLETS + MAX_ENEMIES + MAX_LASER_HAZARDS + MAX_EXPLOSION_HAZARDS + 128);
         state->prng                    = random_state();
         state->prng_unessential        = random_state();
         state->main_camera             = camera(V2(0, 0), 1.0);
         state->main_camera.rng         = &state->prng;
-        state->particle_pool.init(arena, 8192);
+        state->particle_pool.init(arena, 16384);
         state->death_particle_pool.init(arena, 128);
 
         // creation queues
@@ -3829,7 +3829,8 @@ void Game_State::convert_bullets_to_score_pickups(float radius) {
             continue;
 
         b.kill();
-        spawn_game_entity_death_particle_emitter(state->particle_emitters, b.position, resources);
+        // This will overflow, but the effect is pretty minor that I don't think it matters tbh...
+        // spawn_game_entity_death_particle_emitter(state->particle_emitters, b.position, resources);
 
         auto pe = pickup_score_entity(
             this,

@@ -124,6 +124,9 @@ function bullet_move_linear(b, d, v)
    local d1 = v2_normalized(d);
    bullet_set_velocity(b, d1[1] * v, d1[2] * v);
 end
+
+-- This does not really work, or rather the behavior is hard to predict because it's
+-- hard to come up with a good function for these.
 function bullet_move_asymptopic(e,
                                d,
                                start_velocity,

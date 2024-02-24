@@ -162,46 +162,39 @@ function wave1_sub1()
          2
       );
    end
+   t_wait(5.45);
+
+   -- NOTE: bullets should not make particles as they will overflow the particle emitter spawner
+   convert_all_bullets_to_score();
+end
+
+function wave1_sub2()
+   -- enemies form semi circle fire some bullets to the sides, and then close in
+   -- some popcorn enemies for population factor.
+
+   -- Use popcorn to funnel player into center lane.
+
+   do -- NOTE: need these to happen at the same time
+      local popcorn_radius = 60;
+      local popcorn_flood_width = 30;
+      async_task_lambda(
+         function()
+            Make_BrainDead_Enemy_Popcorn1(64, v2(play_area_width()/2 - popcorn_radius, -20), 0.20, 5, 0, 90, popcorn_flood_width, 20, -1, 2);
+         end
+      );
+      async_task_lambda(
+         function()
+            Make_BrainDead_Enemy_Popcorn1(64, v2(play_area_width()/2 + popcorn_radius, -20), 0.20, 5, 0, 90, popcorn_flood_width, 20, -1, 2);
+         end
+      );
+   end
 end
 
 function wave_1()
-   -- do
-   --    local e = enemy_new();
-   --    enemy_set_position(e, 100, 100);
-   --    enemy_set_velocity(e, 10, 0);
-   --    local shield_r = 35;
-   --    for angle=1,360,40 do
-   --       local current_arc_direction = v2_direction_from_degree(angle % 360);
-   --       local position = enemy_position(e);
-   --       position[1] = position[1] + current_arc_direction[1] * shield_r;
-   --       position[2] = position[2] + current_arc_direction[2] * shield_r;
-   --       local b = bullet_make(
-   --          BULLET_SOURCE_ENEMY,
-   --          position,
-   --          PROJECTILE_SPRITE_HOT_PINK_ELECTRIC,
-   --          v2(0.5, 0.5),
-   --          v2(5, 5)
-   --       );
-
-   --       bullet_task_lambda(
-   --          b,
-   --          function (b, master)
-   --             local starting_angle = dir_to_angle(current_arc_direction);
-   --             local t = 0;
-   --             bullet_reset_movement(b);
-   --             while enemy_valid(e) do
-   --                bullet_set_velocity(b,
-   --                                    -math.sin(math.rad(starting_angle+t)) * shield_r + enemy_velocity_x(master),
-   --                                    math.cos(math.rad(starting_angle+t)) * shield_r  + enemy_velocity_y(master));
-   --                t = t + 1;
-   --                t_yield();
-   --             end
-   --          end,
-   --          e
-   --       );
-   --    end
-   -- end
-   wave1_sub1();
+   -- wave1_sub1();
+   -- Time Mark : 0:18
+   -- Bullets should've just been cleared at this point
+   wave1_sub2();
 end
 
 function stage_task()
