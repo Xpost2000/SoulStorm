@@ -88,10 +88,26 @@ struct Fixed_Array {
         assertion(size >= 0 && size <= capacity && "Over allocated.");
     }
 
+    void push_unimportant(const T x) {
+        if (size >= capacity) {
+            data[size-1] = x;
+        } else {
+            push(x);  
+        }
+    }
+
     T* alloc() {
         T* r = &data[size++];
         assertion(size >= 0 && size <= capacity && "Over allocated.");
         return r;
+    }
+
+    // Will not allow crashing, just reuse the last if we have no space.
+    T* alloc_unimportant() {
+        if (size >= capacity) {
+            return &data[size-1];
+        }
+        return alloc();
     }
 
     void pop() {
