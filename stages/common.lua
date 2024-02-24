@@ -10,6 +10,26 @@ end
 function normalized_cos(t)
    return (math.cos(t)+1)/2.0;
 end
+
+-- 0 = left
+-- 1 = right
+function player_screen_half_horizontal()
+   local player_x = player_position_x();
+   if player_x <= play_area_width()/2 then
+      return 0
+   end
+   return 1;
+end
+-- 0 = up
+-- 1 = down
+function player_screen_half_vertical()
+   local player_y = player_position_y();
+   if (player_y <= play_area_height()/2) then
+      return 0
+   end
+   return 1
+end
+
 function spawn_bullet_line(center, how_many, spacing, scale, direction, speed, src)
    local new_bullets = {};
    local direction     = v2_normalized(direction);

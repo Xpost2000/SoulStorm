@@ -5,7 +5,7 @@
 #include "common.h"
 #include "v2.h"
 
-#define MAX_CAMERA_TRAUMA (3.514)
+#define MAX_CAMERA_TRAUMA (1.5)
 
 #define TRAUMA_FACTOR_WEIGHT_X (0.367)
 #define TRAUMA_FACTOR_WEIGHT_Y (0.24)

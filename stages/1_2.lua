@@ -496,14 +496,34 @@ function wave_2()
    convert_all_enemies_to_score();
    convert_all_bullets_to_score();
    t_wait(2);
+end
+
+function preboss_wave()
    -- laser frenzy
+   -- Curtain Close
+   do
+      for i=1,3 do
+         local offset = i * 45;
+         laser_hazard_new(offset, 10, 0, 0.05, 1);
+         laser_hazard_new(play_area_height() - offset, 30, 0, 0.05, 1);
+         t_wait(0.2);
+      end
+      t_wait(0.5);
+      for i=1,3 do
+         local offset = i * 45;
+         laser_hazard_new(offset, 10, 1, 0.05, 1);
+         laser_hazard_new(play_area_width() - offset, 30, 1, 0.05, 1);
+         t_wait(0.2);
+      end
+      t_wait(5);
+   end
 end
 
 function stage_task()
    t_wait(2);
-   wave_1();
-   wave_2();
-   t_wait(10);
+   -- wave_1();
+   -- wave_2();
+   preboss_wave();
    wait_no_danger();
    t_complete_stage();
 end

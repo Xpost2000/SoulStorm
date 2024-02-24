@@ -690,6 +690,7 @@ void Game::reset_stage_simulation_state() {
     s32 level_id = this->state->mainmenu_data.stage_id_level_in_stage_select;
     // s32 pet_id   = this->state->
 
+    state->main_camera.trauma = 0;
     this->state->deathscreen_data.reset();
     {
         auto& deathanimation_data = this->state->deathanimation_data;
@@ -4121,7 +4122,7 @@ void Game::handle_all_lasers(f32 dt) {
             if (!h.already_emitted) {
                 h.already_emitted = true;
                 controller_rumble(Input::get_gamepad(0), 0.5f, 0.5f, 150);
-                camera_traumatize(&state->main_camera, 0.25f);
+                camera_traumatize(&state->main_camera, 0.15f);
             }
 
             auto laser_rect  = h.get_rect(&state->play_area);
@@ -4144,7 +4145,7 @@ void Game::handle_all_explosions(f32 dt) {
 
         if (h.exploded) {
             controller_rumble(Input::get_gamepad(0), 0.8f, 0.8f, 150);
-            camera_traumatize(&state->main_camera, 0.25f);
+            camera_traumatize(&state->main_camera, 0.15f);
             // check explosion against all entities
             // by all entities, I just mean the player right now.
             {

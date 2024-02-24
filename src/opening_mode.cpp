@@ -80,7 +80,7 @@ void Game::opening_data_initialize(Graphics_Driver* driver) {
 void OpeningMode_Data::update_slide(OpeningMode_SlideData* slide, f32 dt) {
     switch (slide->display_phase) {
         case OPENING_MODE_SLIDE_DATA_PHASE_DISPLAY_DELAY: {
-            if (slide->timer >= OPENING_MODE_SLIDE_DATA_PHASE_DISPLAY_DELAY) {
+            if (slide->timer >= OPENING_MODE_DISPLAY_DELAY_TIME) {
                 slide->display_phase = OPENING_MODE_SLIDE_DATA_PHASE_TYPE_TEXT;
                 slide->timer = 0.0f;
             } else {
