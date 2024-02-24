@@ -178,6 +178,7 @@ void Direct3D11_Graphics_Driver::initialize(SDL_Window* window, int width, int h
         zero_array(blending_states);
     }
     initialize_backbuffer(V2(width, height));
+    initialized = true;
 }
 
 void Direct3D11_Graphics_Driver::initialize_default_rendering_resources(void) {

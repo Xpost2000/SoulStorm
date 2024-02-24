@@ -28,6 +28,7 @@ void Software_Renderer_Graphics_Driver::initialize_backbuffer(V2 resolution) {
     }
 
     game_texture_surface = SDL_CreateTexture(game_sdl_renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, default_framebuffer.width, default_framebuffer.height);
+    initialized = true;
 }
 
 void Software_Renderer_Graphics_Driver::swap_and_present() {

@@ -284,6 +284,7 @@ void OpenGL_Graphics_Driver::initialize(SDL_Window* window, int width, int heigh
     }
 
     initialize_backbuffer(V2(width, height));
+    initialized = true;
 }
 
 void OpenGL_Graphics_Driver::initialize_backbuffer(V2 resolution) {

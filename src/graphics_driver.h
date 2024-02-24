@@ -85,8 +85,11 @@ public:
     virtual void screenshot(char* where) = 0;
 
     virtual const char* get_name(void);
+
+    bool is_initialized() { return initialized; }
 protected:
     SDL_Window* game_window = nullptr;
+    bool        initialized = false;
 private:
     static bool already_have_resolution(s32 w, s32 h);
     /*
