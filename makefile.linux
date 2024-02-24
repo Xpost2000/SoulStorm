@@ -47,6 +47,7 @@ HEADER_FILES= src/achievement_list.h \
 		src/particle_system.h \
 		src/stage.h \
 		src/virtual_file_system.h \
+                src/discord_rich_presence_integration.h \
 		src/stage_list.h \
 		src/stages.h \
 		src/string.h \
@@ -92,6 +93,7 @@ SOURCE_FILES= src/achievements.cpp \
 		src/render_commands.cpp \
 		src/serializer.cpp \
 		src/software_renderer.cpp \
+                src/discord_rich_presence_integration.cpp \
 		src/stage.cpp \
 		src/string.cpp \
 		src/thread_pool.cpp \

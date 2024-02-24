@@ -9,18 +9,18 @@
 // everything else works though.
 
 #undef UNICODE
+#ifndef __EMSCRIPTEN__
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
-#ifndef __EMSCRIPTEN__ // ?
 #include <windows.h>
 #include <shlobj.h>
-#endif
 #else
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/sysmacros.h>
 #include <unistd.h>
+#endif
 #endif
 
 rectangle_f32 rectangle_f32_centered(rectangle_f32 center_region, f32 width, f32 height) {
