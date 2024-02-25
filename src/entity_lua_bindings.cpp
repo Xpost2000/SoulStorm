@@ -4,6 +4,16 @@
 #include "lua_binding_macro.h"
 // BEGIN_LUA_BINDINGS
 
+GAME_LUA_MODULE(
+entity,
+"src/entity_lua_bindings_generated.cpp",
+"Support library to access game entities implemented natively in C++.",
+"This provides access to the entity interface within the engine,\
+through the form of accessor functions. As well as the ability to create the various\
+entities inside the Bullet Hell game\
+The entire interface including all collision shapes are open for access."
+)
+
 int _lua_bind_spawn_bullet_arc_pattern2(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
 
