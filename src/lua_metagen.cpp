@@ -347,13 +347,13 @@ void generate_text_documentation(const char* outloc) {
     for (int i = 0; i < modules.size(); ++i) {
         auto& m = modules[i];
         fprintf(f, "## %s - %s\n\n%s\n", m.name.data(), m.short_description.data(), m.long_description.data());
-        fprintf(f, "### Table of Contents\n");
+        fprintf(f, "\n### Table of Contents\n");
         for (int j = 0; j < m.procedures.size(); ++j) {
             auto& p = m.procedures[j];
             // TODO: wrong links.
             fprintf(f, "%d. [%s(%s)](#%s_%s__func)\n", j+1, p.name.data(), p.param_doc_string.data(), m.name.data(), p.name.data());
         }
-        fprintf(f, "\n### Procedure Description\n");
+        fprintf(f, "\n\n### Procedure Description\n");
         for (int j = 0; j < m.procedures.size(); ++j) {
             auto& p = m.procedures[j];
             fprintf(f, "#### %s(%s) - %s\n\n%s\n\n", p.name.data(), p.param_doc_string.data(), p.short_description.data(), p.long_description.data());
