@@ -155,7 +155,9 @@ int _lua_bind_engine_dofile(lua_State* L) {
 }
 
 void bind_vfs_lualib(lua_State* L) {
+#if 0
     lua_register(L, "engine_dofile", _lua_bind_engine_dofile);
+#endif
 }
 
 s32 vfs_lua_dofile(lua_State* L, const char* lua_filename) {
