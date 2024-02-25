@@ -1,4 +1,5 @@
 -- TODO: should be harder.
+-- I mean, not too much harder, but it's pretty easy as long as you're not intimidated.
 engine_dofile("stages/common.lua")
 
 -- need this to lerp between the angles... Like a gradient
@@ -541,7 +542,7 @@ end
 function stage_task()
    t_wait(2);
    -- print("wave 1");
-   -- wave_1();
+   wave_1();
    -- print("wave 2");
    wave_2();
    print("preboss wave");
