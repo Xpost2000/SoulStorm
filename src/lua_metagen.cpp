@@ -384,6 +384,7 @@ void generate_code_binding_files(void) {
 // Assumed to run in home directory.
 const char* scan_for_bindings_in[] = {
     "./src/core_lua_bindings.cpp",
+    "./src/dialogue_lua_bindings.cpp",
     "./src/v2_lua_bindings.cpp",
 #if 1
     "./src/particle_system_lua_bindings.cpp",
