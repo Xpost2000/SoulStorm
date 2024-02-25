@@ -4,6 +4,17 @@
 
 #include "lua_binding_macro.h"
 
+GAME_LUA_MODULE(
+particle_emitter,
+"src/particle_system_lua_bindings_generated.cpp",
+"Support library to access particle emitter objects implemented natively in C++.",
+"This provides access to the particle emitter interface within the engine,\
+through the form of accessor functions.\
+\
+\
+The entire interface including all collision shapes are open for access."
+)
+
 /*
  * NOTE:
  *

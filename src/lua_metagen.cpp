@@ -254,6 +254,7 @@ std::string read_macro_param(std::vector<std::string>& lines, size_t& i) {
                 i++;
             } else {
                 // lol
+                // slightly buggy
                 paramstring += "\n" + lines[i].substr(0, lines[i].size()-2);
                 good = true;
                 i++;
@@ -313,6 +314,7 @@ Lua_Game_Module read_lua_game_module(const char* filename) {
             i++;
             Lua_Game_Proc proc;
             auto        name_line          = lines[i].substr(0, lines[i].size()-1);
+            i++;
             std::string paramdocstring     = strip_extra_padding(read_macro_param(lines, i)).substr(1);
             std::string shortdescription   = strip_extra_padding(read_macro_param(lines, i)).substr(1);
             std::string longestdescription = strip_extra_padding(read_macro_param(lines, i)).substr(1);
@@ -332,14 +334,47 @@ Lua_Game_Module read_lua_game_module(const char* filename) {
     return module;
 }
 
+void generate_text_documentation(const char* outloc) {
+    FILE* f = fopen(outloc, "wb+");
+
+    fprintf(f, "# Bullet Hell Game Engine API\n");
+    fprintf(f, "## Modules\n");
+    for (int i = 0; i < modules.size(); ++i) {
+        auto& m = modules[i];
+        fprintf(f, "%d. %s - %s\n", i+1, m.name.data(), m.short_description.data());
+    }
+    fprintf(f, "\n\n");
+    for (int i = 0; i < modules.size(); ++i) {
+        auto& m = modules[i];
+        fprintf(f, "## %s - %s\n\n%s\n", m.name.data(), m.short_description.data(), m.long_description.data());
+        fprintf(f, "### Table of Contents\n");
+        for (int j = 0; j < m.procedures.size(); ++j) {
+            auto& p = m.procedures[j];
+            // TODO: wrong links.
+            fprintf(f, "%d. [%s(%s)](#%s_%s__func)\n", j+1, p.name.data(), p.param_doc_string.data(), m.name.data(), p.name.data());
+        }
+        fprintf(f, "\n### Procedure Description\n");
+        for (int j = 0; j < m.procedures.size(); ++j) {
+            auto& p = m.procedures[j];
+            fprintf(f, "#### %s(%s) - %s\n\n%s\n\n", p.name.data(), p.param_doc_string.data(), p.short_description.data(), p.long_description.data());
+        }
+    }
+
+    fflush(f);
+    fclose(f);
+}
+
 // Assumed to run in home directory.
 const char* scan_for_bindings_in[] = {
     "./src/v2_lua_bindings.cpp",
-#if 0
+#if 1
     "./src/particle_system_lua_bindings.cpp",
     "./src/game_lua_bindings.cpp",
     "./src/entity_lua_bindings.cpp"
 #endif
+
+    // NOTE: the action mapper is not in the correct documentation format
+    // yet.
 };
 
 int main(int argc, char** argv) {
@@ -350,9 +385,12 @@ int main(int argc, char** argv) {
         if (module.name.size() == 0) {
             fprintf(stderr, "%s has no modules to scan.\n", fname);
         } else {
-            fprintf(stderr, "Found module: %s with (%d procs)", module.name.data(), module.procedures.size());
+            fprintf(stderr, "Found module: %s with (%d procs)\n", module.name.data(), module.procedures.size());
             modules.push_back(module);
         }
     }
+
+    generate_text_documentation("lua_engine_api.md");
+    // generate_code_binding_file();
     return 0;
 }
