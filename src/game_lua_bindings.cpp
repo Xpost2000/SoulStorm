@@ -6,91 +6,12 @@
 
 #include "lua_binding_macro.h"
 
+#include "core_lua_bindings.cpp"
+
 // Lua bindings
-int _lua_bind_Task_Yield_Wait(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
-    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
-    f32         wait_time = luaL_checknumber(L, 1);
-
-    auto& task = state->coroutine_tasks.tasks[task_id];
-    task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_FOR_SECONDS;
-    task.userdata.yielded.timer = 0.0f;
-    task.userdata.yielded.timer_max = wait_time;
-
-    // _debugprintf("LuaThread(%p) wants to wait for %f seconds", L, wait_time);
-    // _debugprintf("LuaThread(%p)(taskid: %d) wants to wait for %f", L, task_id, wait_time);
-
-    return lua_yield(L, 0);
-}
-
-int _lua_bind_Task_Yield_Finish_Stage(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
-    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
-
-    auto& task = state->coroutine_tasks.tasks[task_id];
-    task.userdata.yielded.reason = TASK_YIELD_REASON_COMPLETE_STAGE;
-
-    return lua_yield(L, 0);
-}
-
-int _lua_bind_Task_Yield_Until_No_Danger(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
-    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
-
-    auto& task = state->coroutine_tasks.tasks[task_id];
-    task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_FOR_NO_DANGER_ON_STAGE;
-
-    return lua_yield(L, 0);
-}
-
-int _lua_bind_Task_Yield_Wait_For_Stage_Intro(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
-    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
-
-    auto& task = state->coroutine_tasks.tasks[task_id];
-    task.userdata.yielded.reason = TASK_YIELD_REASON_WAIT_FOR_INTRODUCTION_SEQUENCE_TO_COMPLETE;
-
-    return lua_yield(L, 0);
-}
-
-int _lua_bind_Task_Yield(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
-    assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
-
-    return lua_yield(L, 0);
-}
-
-
 int _lua_bind_any_living_danger(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     lua_pushboolean(L, state->gameplay_data.any_living_danger());
-    return 1;
-}
-
-int _lua_bind_prng_ranged_float(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    f32 a = luaL_checknumber(L, 1);
-    f32 b = luaL_checknumber(L, 2);
-    lua_pushnumber(L, random_ranged_float(&state->gameplay_data.prng, a, b));
-    return 1;
-}
-
-int _lua_bind_prng_ranged_integer(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    s32 a = luaL_checkinteger(L, 1);
-    s32 b = luaL_checkinteger(L, 2);
-    lua_pushnumber(L, random_ranged_integer(&state->gameplay_data.prng, a, b));
-    return 1;
-}
-
-int _lua_bind_prng_normalized_float(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    lua_pushnumber(L, random_float(&state->gameplay_data.prng));
     return 1;
 }
 
@@ -104,18 +25,6 @@ int _lua_bind_play_area_height(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     lua_pushinteger(L, state->gameplay_data.play_area.height);
     return 1;
-}
-
-int _lua_bind_camera_traumatize(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    camera_traumatize(&state->gameplay_data.main_camera, luaL_checknumber(L, 1));
-    return 0;
-}
-
-int _lua_bind_camera_set_trauma(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    camera_set_trauma(&state->gameplay_data.main_camera, luaL_checknumber(L, 1));
-    return 0;
 }
 
 int _lua_bind_async_task(lua_State* L) {
@@ -323,17 +232,6 @@ int _lua_bind_render_object_get_z_angle(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
     lua_pushinteger(L, scriptable_render_object.z_angle);
-    return 1;
-}
-
-int _lua_bind_global_elapsed_time(lua_State* L) {
-    auto engine = Global_Engine();
-    lua_pushnumber(L, engine->global_elapsed_time);
-    return 1;
-}
-
-int _lua_bind_ticktime(lua_State* L) {
-    lua_pushnumber(L, FIXED_TICKTIME);
     return 1;
 }
 
@@ -704,19 +602,6 @@ int _lua_bind_game_difficulty_binding(lua_State* L) {
     return 1;
 }
 
-s32 _lua_bind_alloc_particle_emitter(lua_State* L) {
-    Game_State* state = lua_binding_get_gamestate(L);
-    auto gameplay_data = state->gameplay_data;
-    Particle_Emitter* emitter = gameplay_data.particle_emitters.alloc();
-    
-    if (emitter) {
-        lua_pushlightuserdata(L, emitter);
-        return 1;
-    }
-
-    return 0;
-}
-
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     /*
@@ -733,33 +618,11 @@ lua_State* Game_State::alloc_lua_bindings() {
         lua_pushlightuserdata(L, this);
         lua_setglobal(L, "_gamestate"); // we'll store this implicitly
 
-        lua_register(L, "t_wait", _lua_bind_Task_Yield_Wait);
-        lua_register(L, "alloc_particle_emitter", _lua_bind_alloc_particle_emitter);
-        // TODO:
-        // 1_1 is designed with all these timings being "absolute", and gradually
-        // changing to "safe" waits is pretty hard.
-        // although I'll add scaffolding code for it.
-        lua_register(L, "t_fwait", _lua_bind_Task_Yield_Wait);
-
-        lua_register(L, "t_yield", _lua_bind_Task_Yield);
-        lua_register(L, "t_wait_for_no_danger", _lua_bind_Task_Yield_Until_No_Danger);
-#if 0
-        // Do not use this. It causes desync galore.
-        // I'll just deal with the mandatory screen intrusion
-        lua_register(L, "t_wait_for_stage_intro", _lua_bind_Task_Yield_Wait_For_Stage_Intro);
-#endif
-        lua_register(L, "t_complete_stage", _lua_bind_Task_Yield_Finish_Stage);
+        bind_core_lualib(L);
 
         lua_register(L, "any_living_danger", _lua_bind_any_living_danger);
         lua_register(L, "play_area_width", _lua_bind_play_area_width);
         lua_register(L, "play_area_height", _lua_bind_play_area_height);
-
-        lua_register(L, "prng_ranged_float", _lua_bind_prng_ranged_float);
-        lua_register(L, "prng_ranged_integer", _lua_bind_prng_ranged_integer);
-        lua_register(L, "prng_normalized_float", _lua_bind_prng_normalized_float);
-
-        lua_register(L, "camera_traumatize", _lua_bind_camera_traumatize);
-        lua_register(L, "camera_set_trauma", _lua_bind_camera_set_trauma);
 
         lua_register(L, "play_area_set_edge_behavior", _lua_bind_play_area_edge_behavior);
     }
@@ -777,7 +640,6 @@ lua_State* Game_State::alloc_lua_bindings() {
     {
         // Some really basic engine bindings.
         lua_register(L, "load_image", _lua_bind_load_image);
-        lua_register(L, "async_task", _lua_bind_async_task);
         lua_register(L, "random_attack_sound", _lua_bind_random_attack_sound);
 
         lua_register(L, "dialogue_start", _lua_bind_dialogue_start);
@@ -833,9 +695,6 @@ lua_State* Game_State::alloc_lua_bindings() {
         lua_register(L, "render_object_get_x_angle", _lua_bind_render_object_get_x_angle);
         lua_register(L, "render_object_get_y_angle", _lua_bind_render_object_get_y_angle);
         lua_register(L, "render_object_get_z_angle", _lua_bind_render_object_get_z_angle);
-
-        lua_register(L, "global_elapsed_time", _lua_bind_global_elapsed_time);
-        lua_register(L, "ticktime", _lua_bind_ticktime);
 
         // NOTE: these should consider "boss filter" enemies
         // but I need ways to adjust entity flags
