@@ -358,7 +358,7 @@ int _lua_bind_particle_emitter_set_sprite_projectile(lua_State* L) {
 }
 
 void bind_particle_emitter_lualib(lua_State* L) {
-#if 0
+#if 1
     // NOTE: particle emitters are write-only.
     lua_register(L, "particle_emitter_set_angle_range",             _lua_bind_particle_emitter_set_angle_range);
     lua_register(L, "particle_emitter_set_attraction_point",        _lua_bind_particle_emitter_set_attraction_point);
