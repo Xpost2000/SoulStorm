@@ -7,6 +7,8 @@ local void setup_generic_task(Game_Task* task, s32 source_type, s32 associated_s
     task->essential           = essential;
     task->userdata.game_state = state;
     task->userdata.userdata   = userdata;
+    task->userdata.yielded.timer = 0;
+    task->userdata.yielded.reason = TASK_YIELD_REASON_NONE;
 }
 
 Game_Task_Scheduler::Game_Task_Scheduler() {

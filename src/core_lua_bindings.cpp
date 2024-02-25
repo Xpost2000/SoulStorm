@@ -77,9 +77,6 @@ t_yield,
     s32 task_id = state->coroutine_tasks.search_for_lua_task(L);
     assertion(task_id != -1 && "Impossible? Or you're not using this from a task!");
 
-    auto& task = state->coroutine_tasks.tasks[task_id];
-    task.userdata.yielded.reason = TASK_YIELD_REASON_COMPLETE_STAGE;
-
     return lua_yield(L, 0);
 }
 

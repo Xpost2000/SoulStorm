@@ -1,11 +1,3 @@
--- NOTE utility file
--- NOTE
---
--- This Bullet Hell's engine 
--- uses very simple lua. No meta tables please!
---
--- 0 = left
--- 1 = right
 function player_screen_half_horizontal()
    local player_x = player_position_x();
    if player_x <= play_area_width()/2 then
@@ -238,7 +230,6 @@ function clamp(x, a, b)
    end
    return x;
 end
-
 
 -- Basic selector function for difficulty settings
 -- NOTE: level 1 has no difficulty selection because it's the "introductory" level

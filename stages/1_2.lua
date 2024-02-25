@@ -1,3 +1,4 @@
+-- TODO: should be harder.
 engine_dofile("stages/common.lua")
 
 -- need this to lerp between the angles... Like a gradient
@@ -168,6 +169,7 @@ function wave1_sub1()
    convert_all_bullets_to_score();
 end
 
+-- Could be harder.
 function wave1_sub2()
    -- Use popcorn to funnel player into center lane.
    -- and have some enemies that try to take pot shots
@@ -392,12 +394,15 @@ function wave1_sub3()
 end
 
 function wave_1()
+   print("wave1 sub1");
    wave1_sub1();
 
    -- Time Mark : 0:18
    -- Bullets should've just been cleared at this point
 
+   print("wave1 sub2");
    wave1_sub2();
+   print("wave1 sub3");
    t_wait(4);
 
    -- Time Mark:  0:22
@@ -432,9 +437,9 @@ function wave_2()
    async_task_lambda(
       function () -- CONCERN: might be visually hard to see?
          do
-            for i=1, 1 do
-               local rx = 50 - i*10;
-               local ry = 50 + i*10;
+            do
+               local rx = 50 - 10;
+               local ry = 50 + 10;
                Make_Enemy_Spinner_1_1_2(25, v2(45, -30), v2(0, 1), 200, 0.5, 0.5, 25, rx, ry, PROJECTILE_SPRITE_GREEN_DISK);
                Make_Enemy_Spinner_1_1_2(25, v2(play_area_width()-45, -30), v2(0, 1), 200, 0.5, 0.5, 25, rx, ry, PROJECTILE_SPRITE_RED_DISK);
                t_wait(1.0);
@@ -535,10 +540,14 @@ end
 
 function stage_task()
    t_wait(2);
-   t_wait(10);
-   wave_1();
+   -- print("wave 1");
+   -- wave_1();
+   -- print("wave 2");
    wave_2();
+   print("preboss wave");
    preboss_wave();
+   print("wait finish");
+   t_wait(5);
    wait_no_danger();
    t_complete_stage();
 end
