@@ -599,6 +599,32 @@ rectangle_f32 Entity::get_rect() {
 }
 
 // Cosmetic Pet Actor
+void Cosmetic_Pet::fire_weapon(Game_State* state) {
+#if 0
+    auto resources = state->resources;
+    switch (id) {
+        case GAME_PET_ID_CAT: {
+            firing_cooldown = DEFAULT_FIRING_COOLDOWN;
+            Audio::play(
+                resources->random_attack_sound(
+                    &state->gameplay_data.prng
+                )
+            );
+            spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 1000.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_DISK);
+        } break;
+        case GAME_PET_ID_DOG: {
+            return;
+        } break;
+        case GAME_PET_ID_FISH: {
+            return;
+        } break;
+    }
+#else
+    // Pets do not attack yet, or are not planned to? Just in case I guess.
+    return;
+#endif
+}
+
 void Cosmetic_Pet::update(Game_State* state, f32 dt) {
     if (!visible) {
         auto& emitter = emitters[0];
@@ -671,48 +697,21 @@ void Cosmetic_Pet::update(Game_State* state, f32 dt) {
     const auto& input_packet = state->gameplay_data.current_input_packet;
     Entity::update(state, dt); 
 
-    bool firing   = input_packet.actions & BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT);
-#if 1
-    // not sure if pets should attack as well...
-    firing = false;
-#endif
-    switch (id) {
-        case GAME_PET_ID_CAT: {
-            firing_cooldown = DEFAULT_FIRING_COOLDOWN;
+    bool firing = input_packet.actions & BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT);
 
-            if (firing) {
-                // okay these are normal real bullets
-                if (attack()) {
-                    auto resources = state->resources;
-
-                    state->set_led_target_color_anim(
-                        color32u8(255, 0, 0, 255),
-                        DEFAULT_FIRING_COOLDOWN/4,
-                        false,
-                        true
-                    );
-                    Audio::play(
-                        resources->random_attack_sound(
-                            &state->gameplay_data.prng
-                        )
-                    );
-                    spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 1000.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_DISK);
-                } else {
-                }
-            } else {
-                stop_attack();
-            }
-        } break;
-        case GAME_PET_ID_DOG: {
+    if (firing) {
+        if (attack()) {
+            fire_weapon(state);
+        } else {
             
-        } break;
-        case GAME_PET_ID_FISH: {
-
-        } break;
+        }
+    } else {
+        stop_attack(); 
     }
 }
 
 void Cosmetic_Pet::set_id(s32 id, Game_Resources* resources) {
+    _debugprintf("Pet id set to: %d", id);
     if (id == GAME_PET_ID_NONE) {
         visible = false;
     } else {
@@ -812,6 +811,96 @@ f32 Player::get_grazing_score_modifier(s32 amount) {
     return base;
 }
 
+void Player::handle_bomb_usage(Game_State* state, u32 bomb_pattern_id) {
+    auto& gameplay_data = state->gameplay_data;
+    auto  resources     = state->resources;
+
+    switch (bomb_pattern_id) {
+        case BOMB_PATTERN_DEFAULT: {
+            if (gameplay_data.tries <= 1) {
+                return;
+            }
+
+            state->convert_enemies_to_score_pickups();
+            state->convert_bullets_to_score_pickups();
+            gameplay_data.notify_score(5000, true);
+            state->set_led_target_color_anim_force(color32u8(255, 165, 0, 255), 0.08, false, true);
+            Audio::play(resources->random_hit_sound(&gameplay_data.prng));
+            controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
+            camera_traumatize(&gameplay_data.main_camera, 0.5f);
+
+            gameplay_data.remove_life();
+        } break;
+        case BOMB_PATTERN_EXTRA1: {
+            unimplemented("BOMB_PATTERN_EXTRA1");
+        } break;
+        case BOMB_PATTERN_EXTRA2: {
+            unimplemented("BOMB_PATTERN_EXTRA2");
+        } break;
+        case BOMB_PATTERN_EXTRA3: {
+            unimplemented("BOMB_PATTERN_EXTRA3");
+        } break;
+    }
+}
+
+void Player::fire_weapon(Game_State* state, u32 attack_pattern_id) {
+    auto resources = state->resources;
+    switch (attack_pattern_id) {
+        case ATTACK_PATTERN_DEFAULT: { // Default Attack Pattern
+            firing_cooldown = (under_focus) ? (DEFAULT_FIRING_COOLDOWN/2) : DEFAULT_FIRING_COOLDOWN;
+
+            state->set_led_target_color_anim(
+                color32u8(255, 0, 0, 255),
+                DEFAULT_FIRING_COOLDOWN/4,
+                false,
+                true
+            );
+            Audio::play(
+                resources->random_attack_sound(
+                    &state->gameplay_data.prng
+                )
+            );
+
+            controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
+            if (under_focus) {
+                spawn_bullet_arc_pattern1(
+                    state,
+                    position,
+                    3,
+                    15,
+                    V2(5, 5),
+                    V2(0, -1),
+                    1000.0f,
+                    BULLET_SOURCE_PLAYER,
+                    PROJECTILE_SPRITE_BLUE_DISK
+                );
+            } else {
+                // spawn_bullet_line_pattern1(state, position, 1, 20.0f, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
+                spawn_bullet_arc_pattern1(
+                    state,
+                    position,
+                    3,
+                    45,
+                    V2(5, 5),
+                    V2(0, -1),
+                    650.0f,
+                    BULLET_SOURCE_PLAYER,
+                    PROJECTILE_SPRITE_BLUE_ELECTRIC
+                );
+            }
+        } break;
+        case ATTACK_PATTERN_EXTRA1: {
+            unimplemented("ATTACK_PATTERN_EXTRA1");
+        } break;
+        case ATTACK_PATTERN_EXTRA2: {
+            unimplemented("ATTACK_PATTERN_EXTRA2");
+        } break;
+        case ATTACK_PATTERN_EXTRA3: {
+            unimplemented("ATTACK_PATTERN_EXTRA3");
+        } break;
+    }
+}
+
 void Player::update(Game_State* state, f32 dt) {
     if (!visible) {
         auto& emitter = emitters[0];
@@ -901,43 +990,12 @@ void Player::update(Game_State* state, f32 dt) {
         );
     }
 
-    switch (pet_data->attack_pattern_id) {
-        // for now I'll only use one attack pattern, if I want more... I'll
-        // think about it.
-        default: {
-            firing_cooldown = (under_focus) ? (DEFAULT_FIRING_COOLDOWN/2) : DEFAULT_FIRING_COOLDOWN;
-
-            if (firing) {
-                // okay these are normal real bullets
-                if (attack()) {
-                    auto resources = state->resources;
-
-                    state->set_led_target_color_anim(
-                        color32u8(255, 0, 0, 255),
-                        DEFAULT_FIRING_COOLDOWN/4,
-                        false,
-                        true
-                    );
-                    Audio::play(
-                        resources->random_attack_sound(
-                            &state->gameplay_data.prng
-                        )
-                    );
-
-                    controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
-                    if (under_focus) {
-                        spawn_bullet_arc_pattern1(state, position, 3, 15, V2(5, 5), V2(0, -1), 1000.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_DISK);
-                    } else {
-                        // spawn_bullet_line_pattern1(state, position, 1, 20.0f, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
-                        spawn_bullet_arc_pattern1(state, position, 3, 45, V2(5, 5), V2(0, -1), 650.0f, BULLET_SOURCE_PLAYER, PROJECTILE_SPRITE_BLUE_ELECTRIC);
-                    }
-                } else {
-                }
-            } else {
-                stop_attack();
-            }
-
-        } break;
+    if (firing) {
+        if (attack()) {
+            fire_weapon(state, pet_data->attack_pattern_id);
+        }
+    } else {
+        stop_attack();
     }
 
     if (use_bomb) {

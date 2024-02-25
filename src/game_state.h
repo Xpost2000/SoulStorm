@@ -1,6 +1,8 @@
 /*
  * structure definitions for resource holder and main game state.
- */
+
+ NOTE: maybe spread some of this out a bit more.
+*/
 #ifndef GAME_STATE_H
 #define GAME_STATE_H
 
@@ -335,12 +337,33 @@ enum Difficulty_Modifier_ID {
     DIFFICULTY_HARD    = 2,
     DIFFICULTY_HARDEST = 3,
 };
+enum Attack_Pattern {
+    // arc_pattern1 and arc_pattern1 but smaller.
+    ATTACK_PATTERN_DEFAULT = 0,
+    ATTACK_PATTERN_EXTRA1  = 1,
+    ATTACK_PATTERN_EXTRA2  = 2,
+    ATTACK_PATTERN_EXTRA3  = 3,
+    ATTACK_PATTERN_COUNT   = 4
+};
+enum Bomb_Pattern {
+    // clear screen, take a life. that sort of thing
+    BOMB_PATTERN_DEFAULT = 0,
+    BOMB_PATTERN_EXTRA1  = 1,
+    BOMB_PATTERN_EXTRA2  = 2,
+    BOMB_PATTERN_EXTRA3  = 3,
+    BOMB_PATTERN_COUNT   = 4,
+};
+
+// NOTE: pets may choose to have their own
+//       attack patterns but that's based on their
+//       ID.
 struct Gameplay_Data_Pet_Information {
     string name;
     string description;
     s8     difficulty_modifier; // NOTE: does not inherently do anything. Only used in level scripts.
     s8     maximum_lives;
     s8     attack_pattern_id; // this will be checked in the player code for things.
+    s8     bomb_pattern_id;   // also checked in player code
     f32    score_modifier;
     // Not really sure how much I want this
     // but I'll have it here anyway.

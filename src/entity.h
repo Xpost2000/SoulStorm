@@ -376,6 +376,8 @@ struct Laser_Hazard {
 struct Player : public Entity {
     // I did have plans for slightly different player types to make it interesting
     // but I'll see about that later.
+    void fire_weapon(Game_State* state, u32 attack_pattern_id);
+    void handle_bomb_usage(Game_State* state, u32 bomb_pattern_id);
     void update(Game_State* state, f32 dt);
     s32  currently_grazing(Game_State* state);
     void handle_grazing_behavior(Game_State* state, f32 dt);
@@ -393,6 +395,8 @@ struct Player : public Entity {
 struct Cosmetic_Pet : public Entity {
     void update(Game_State* state, f32 dt);
     void set_id(s32 id, Game_Resources* resources);
+
+    void fire_weapon(Game_State* state);
 private:
     s32 id;
 };

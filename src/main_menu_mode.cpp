@@ -1630,7 +1630,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
                             auto box_height = 600;
                             render_commands_push_image_ext(
                                 ui_render_commands,
-                                graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_rays_gradient),
+                                graphics_assets_get_image_by_id(&resources->graphics_assets, texture_atlas.atlas_image_id),
                                 rectangle_f32(resolution.x/2 - box_width/2, resolution.y/2 - box_height/2, box_width, box_height), // TODO: fix this image, it's not very good looking but it's good enough for placeholdering
                                 texture_atlas.get_subrect(resources->ui_rays_gradient),
                                 color32f32(0.8,0.8,1, 0.9 * alpha),

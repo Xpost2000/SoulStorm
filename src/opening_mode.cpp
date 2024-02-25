@@ -344,7 +344,7 @@ GAME_SCREEN(update_and_render_game_opening) {
                     if (logo_data.delay_timer > 0) {
                         logo_data.delay_timer -= dt;
                     } else {
-                        logo_data.delay_timer = 3.5f;
+                        logo_data.delay_timer = 1.5f;
                         logo_data.untyping_text = true;
                     }
                 }

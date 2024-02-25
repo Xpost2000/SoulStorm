@@ -2173,7 +2173,10 @@ void Game::update_and_render_stage_pet_select_menu(struct render_commands* comma
                 cancel = true;
             }
         }
+    } else {
+        gameplay_data.set_pet_id(pet_id_list[0], state->resources);
     }
+
     GameUI::end_frame();
     GameUI::update(dt);
 
@@ -3920,28 +3923,16 @@ void Game::convert_enemies_to_score_pickups(float radius) {
 
 void Game::handle_bomb_usage(f32 dt) {
     auto state = &this->state->gameplay_data;
-    if (state->tries <= 1) {
-        return;
-    }
 
     if (!state->queue_bomb_use) {
         return;
     }
 
-    {
-        convert_enemies_to_score_pickups();
-        convert_bullets_to_score_pickups();
-    }
+    auto pet_data = game_get_pet_data(state->selected_pet);
+    auto& player  = state->player;
 
-    state->notify_score(5000, true);
-
-    this->state->set_led_target_color_anim_force(color32u8(255, 165, 0, 255), 0.08, false, true);
-    Audio::play(resources->random_hit_sound(&state->prng));
-    controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
-    camera_traumatize(&state->main_camera, 0.5f);
-
+    player.handle_bomb_usage(this->state, pet_data->bomb_pattern_id);
     state->queue_bomb_use = false;
-    state->tries         -= 1;
 }
 
 void Game::on_player_death() {
