@@ -357,6 +357,9 @@ int _lua_bind_particle_emitter_set_sprite_projectile(lua_State* L) {
     return 0;
 }
 
+#if 0
+#include "particle_system_lua_bindings_generated.cpp"
+#else
 void bind_particle_emitter_lualib(lua_State* L) {
 #if 1
     // NOTE: particle emitters are write-only.
@@ -399,3 +402,5 @@ void bind_particle_emitter_lualib(lua_State* L) {
     lua_register(L, "particle_emitter_set_sprite_projectile",       _lua_bind_particle_emitter_set_sprite_projectile);
 #endif
 }
+#endif
+

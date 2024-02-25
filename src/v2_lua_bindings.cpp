@@ -127,7 +127,7 @@ representing the direction between them."
 
 GAME_LUA_PROC(
 v2_direction_from_degree,
-"angle_degrees: number",
+"angle_degrees: number -> V2",
 "Calculate the direction cooresponding to the degree input.",
 "Will calculate a unit vector which represents the provided degree input."
 )
@@ -139,7 +139,7 @@ v2_direction_from_degree,
 
 GAME_LUA_PROC(
 v2_magnitude,
-"a: V2",
+"a: V2 -> number",
 "Calculate the magnitude of the input vector.",
 "Calculate the magnitude of the input vector."
 )
@@ -151,7 +151,7 @@ v2_magnitude,
 
 GAME_LUA_PROC(
 v2_perp,
-"a: V2",
+"a: V2 -> V2",
 "Calculate a vector perpendicular to the input.",
 "Calculate a vector perpendicular to the input. That is a vector whose dot product \
 with the input is zero."
@@ -164,7 +164,7 @@ with the input is zero."
 
 GAME_LUA_PROC(
 v2_normalized,
-"a: V2",
+"a: V2 -> V2",
 "Return a unit vector with the same direction as the input.",
 "Return a unit vector with the same direction as the input."
 )
@@ -174,16 +174,4 @@ v2_normalized,
     return 1;
 }
 
-void bind_v2_lualib(lua_State* L) {
-    lua_register(L, "v2",                       GAME_LUA_BINDING_NAME(v2));
-    lua_register(L, "v2_add",                   GAME_LUA_BINDING_NAME(v2_add));
-    lua_register(L, "v2_sub",                   GAME_LUA_BINDING_NAME(v2_sub));
-    lua_register(L, "v2_dot",                   GAME_LUA_BINDING_NAME(v2_dot));
-    lua_register(L, "v2_distance",              GAME_LUA_BINDING_NAME(v2_distance));
-    lua_register(L, "v2_distance_sq",           GAME_LUA_BINDING_NAME(v2_distance_sq));
-    lua_register(L, "v2_direction",             GAME_LUA_BINDING_NAME(v2_direction));
-    lua_register(L, "v2_direction_from_degree", GAME_LUA_BINDING_NAME(v2_direction_from_degree));
-    lua_register(L, "v2_magnitude",             GAME_LUA_BINDING_NAME(v2_magnitude));
-    lua_register(L, "v2_perp",                  GAME_LUA_BINDING_NAME(v2_perp));
-    lua_register(L, "v2_normalized",            GAME_LUA_BINDING_NAME(v2_normalized));
-}
+#include "v2_lua_bindings_generated.cpp"
