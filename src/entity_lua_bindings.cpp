@@ -1,6 +1,7 @@
 #include "entity.h"
 #include "game_state.h"
 
+#include "lua_binding_macro.h"
 // BEGIN_LUA_BINDINGS
 
 int _lua_bind_spawn_bullet_arc_pattern2(lua_State* L) {

@@ -4,6 +4,8 @@
 #include "game_uid_generator.h"
 #include "virtual_file_system.h"
 
+#include "lua_binding_macro.h"
+
 // Lua bindings
 int _lua_bind_Task_Yield_Wait(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);

@@ -2,6 +2,8 @@
 #include "game_state.h"
 #include "particle_system.h"
 
+#include "lua_binding_macro.h"
+
 /*
  * NOTE:
  *

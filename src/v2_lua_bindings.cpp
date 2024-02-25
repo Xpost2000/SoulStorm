@@ -1,5 +1,7 @@
 #include "v2.h"
 
+#include "lua_binding_macro.h"
+
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
