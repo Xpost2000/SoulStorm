@@ -9,9 +9,10 @@ extern "C" {
 }
 
 GAME_LUA_MODULE(
-V2_Math,
+v2,
+"src/v2_lua_bindings_generated.cpp",
 "Support library for vector2 implemented natively in C++.",
-"This just provides access to the V2 interface that is defined in C++, \
+"This just provides access to the V2 interface that is defined in C++,\
 which supports all common mathematics operations along with some additional helpers."
 )
 

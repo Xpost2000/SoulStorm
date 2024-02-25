@@ -23,7 +23,7 @@
 // But this complicates the build process slightly...
 #define GAME_LUA_STITCH_STRING(name) __lua_bind_##name
 #define GAME_LUA_BINDING_NAME(name) GAME_LUA_STITCH_STRING(name)
-#define GAME_LUA_MODULE(name, short_description, long_description)
+#define GAME_LUA_MODULE(name, generated_file, short_description, long_description)
 #define GAME_LUA_PROC(name, params_as_string, short_description, long_description) \
     int GAME_LUA_BINDING_NAME(name)(lua_State* L)
 #endif
