@@ -88,13 +88,13 @@ html {
   font-size: 12px;
 }
 
-@media screen and (min-width: 32rem) and (max-width: 48rem) {
+@media screen and (min-width: 45rem) and (max-width: 53rem) {
   html {
     font-size: 15px;
   }
 }
 
-@media screen and (min-width: 48rem) {
+@media screen and (min-width: 53rem) {
   html {
     font-size: 16px;
   }
@@ -176,18 +176,18 @@ textarea {
 @import url(http://fonts.googleapis.com/css?family=Arimo:700,700italic);
 
 html {
-  font-size: 18px;
+  font-size: 12px;
   max-width: 100%;
 }
 
 body {
-  color: #444;
+  color: #777;
   font-family: 'Open Sans Condensed', sans-serif;
   font-weight: 300;
   margin: 0 auto;
-  max-width: 48rem;
+  max-width: 85rem;
   line-height: 1.45;
-  padding: .25rem;
+  padding: .5rem;
 }
 
 h1,
@@ -205,7 +205,7 @@ h3 {
   border-bottom: 2px solid #fafafa;
   margin-bottom: 1.15rem;
   padding-bottom: .5rem;
-  text-align: center;
+  text-align: left;
 }
 
 blockquote {
