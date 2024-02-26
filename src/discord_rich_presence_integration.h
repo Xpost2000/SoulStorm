@@ -3,10 +3,6 @@
 
 #include "common.h"
 
-#ifdef _WIN32
-#define COMPILE_DISCORD_RICH_PRESENCE
-#endif
-
 #define DISCORD_GAMEICON_ASSET_KEY string_literal("icondraft")
 
 // using another builder pattern :)
