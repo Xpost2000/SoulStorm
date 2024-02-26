@@ -1554,9 +1554,7 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
     int action = REPLAY_SAVE_MENU_ACTION_PENDING;
 
     if (state->gameplay_data.recording.in_playback) {
-        if (state->last_completion_state != -1 || !Transitions::fading()) {
-            // NOTE: last_completion_state will be set to negative one
-            // after the callbacks are setup below.
+        if (!Transitions::fading()) {
             action = REPLAY_SAVE_MENU_ACTION_DO_NOT_SAVE_RECORDING; // just skip the prompt and don't do anything.
         }
     } else {
