@@ -12,7 +12,7 @@
 
 -- NOTE: 
 
-engine_dofile("stages/constants.lua");
+engine_dofile("./stages/constants.lua");
 
 projectiles = {
    -- Blue

@@ -176,6 +176,14 @@ Calendar_Time current_calendar_time(void) {
     return calendar_time_from(system_get_current_time());
 }
 
+local void normalize_to_unix_path(char* buffer, size_t buffer_size) {
+    for (size_t index = 0; index < buffer_size; ++index) {
+        if (buffer[index] == '\\') {
+            buffer[index] = '/';
+        }
+    }
+}
+
 bool path_exists(string location) {
 #ifndef __EMSCRIPTEN__
     char tmp_copy[260] = {};
@@ -196,8 +204,10 @@ bool path_exists(string location) {
     }
     return true;
 #else
+    // unsafe
+    normalize_to_unix_path(tmp_copy, array_count(tmp_copy));
     DIR* directory_information;
-    directory_information = opendir(location.data);
+    directory_information = opendir(tmp_copy);
 
     if (directory_information) {
         closedir(directory_information);
@@ -235,10 +245,13 @@ bool is_path_directory(string location) {
 
     return false;
 #else                                          
+    normalize_to_unix_path(tmp_copy, array_count(tmp_copy));
+
     struct stat file_stat_info;
-    int stat_result = stat(location.data, &file_stat_info);
+    int stat_result = stat(tmp_copy, &file_stat_info);
     if(stat_result){
         // error
+        _debugprintf("Stat error: (%s) %d", tmp_copy, stat_result);
     }else{
     }
 
@@ -281,23 +294,28 @@ Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, strin
 #else
     // NOTE: this is broken!
     // linux
-    DIR* directory_information;
-    struct dirent* directory_entry;
-    string acceptable_filepath = string_concatenate(arena, string_literal("./"), location);
-    directory_information = opendir(acceptable_filepath.data);
+    normalize_to_unix_path(result.basename, array_count(result.basename));
 
+    /* string acceptable_filepath = string_concatenate(arena, string_literal("./"), location); */
+    string acceptable_filepath = string_literal(result.basename);
+    _debugprintf("%s\n", acceptable_filepath.data);
     result.files = (Directory_File*)arena->push_unaligned(sizeof(*result.files));
-    if(directory_information){
-        while( (directory_entry = readdir(directory_information)) ){
+    DIR* directory_information = opendir(acceptable_filepath.data);
+
+    if (directory_information) {
+        struct dirent* directory_entry;
+        while((directory_entry = readdir(directory_information))){
             Directory_File* current_file = &result.files[result.count++];
             {
                 cstring_copy(directory_entry->d_name, current_file->name, array_count(current_file->name));
-                struct stat file_stat_info;
 
+                struct stat file_stat_info;
                 string full_path_name = string_from_cstring(format_temp("%s/%s", acceptable_filepath.data, current_file->name));
                 int stat_result = stat(full_path_name.data, &file_stat_info);
+
                 if(stat_result){
                     // error
+                    _debugprintf("Stat error: %d", stat_result);
                 }else{
                     current_file->filesize = file_stat_info.st_size;
                 }

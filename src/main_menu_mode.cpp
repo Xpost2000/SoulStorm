@@ -587,7 +587,7 @@ void MainMenu_Pet::draw(MainMenu_Data* const state, struct render_commands* comm
 
         s32 sign_x      = sign_f32(current_direction.x);
         s32 sign_y      = sign_f32(current_direction.y);
-        _debugprintf("%d, %d", sign_x, sign_y);
+        // _debugprintf("%d, %d", sign_x, sign_y);
         f32 x_magnitude = fabs(current_direction.x);
         f32 y_magnitude = fabs(current_direction.y);
 

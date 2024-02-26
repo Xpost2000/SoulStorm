@@ -155,7 +155,9 @@ int _lua_bind_engine_dofile(lua_State* L) {
 }
 
 void bind_vfs_lualib(lua_State* L) {
-#if 0
+    // NOTE: still need to bind this individually
+    // for the manifest file.
+#if 1
     lua_register(L, "engine_dofile", _lua_bind_engine_dofile);
 #endif
 }

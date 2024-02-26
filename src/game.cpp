@@ -237,7 +237,7 @@ void Game::load_projectile_sprites(Graphics_Driver* driver, lua_State* L) {
     /*
      * Well... The raw lua api isn't very pretty but it just needs to work.
      */
-
+    _debugprintf("Loading projectile sprites.");
     lua_getglobal(L, "projectiles");
     // projectiles table loaded
     s32 sprite_count = lua_rawlen(L, -1);
@@ -278,7 +278,7 @@ void Game::load_projectile_sprites(Graphics_Driver* driver, lua_State* L) {
                 // { filename, src rect (nil for now), timing (ignored for now) }
                 lua_rawgeti(L, -1, 1);
                 char* file_name = (char*)lua_tostring(L, -1);
-                _debugprintf("FILENAME: %s", file_name);
+                _debugprintf("sprite load FILENAME: %s", file_name);
                 // lua_rawgeti(L, -1, 2); rectangle.
                 // lua_rawgeti(L, -1, 3); timing.
                 string frame_img_location = string_from_cstring(file_name);
@@ -375,9 +375,14 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
 
     {
+        _debugprintf("Attempting to load manifest lua file.");
         lua_State* L = luaL_newstate();
         {bind_vfs_lualib(L);}
         s32 error = vfs_lua_dofile(L, "./res/manifest.lua");
+        if (error != LUA_OK) {
+            _debugprintf("LUA_ERROR (%s) error?", lua_tostring(L,-1));
+        }
+        assertion(error == LUA_OK && "Failed to load manifest lua file?");
         load_projectile_sprites(driver, L);
         load_entity_sprites(driver, L);
         lua_close(L);
@@ -1549,11 +1554,7 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
     int action = REPLAY_SAVE_MENU_ACTION_PENDING;
 
     if (state->gameplay_data.recording.in_playback) {
-        if (state->last_completion_state != -1) {
-            // NOTE: last_completion_state will be set to negative one
-            // after the callbacks are setup below.
-            action = REPLAY_SAVE_MENU_ACTION_DO_NOT_SAVE_RECORDING; // just skip the prompt and don't do anything.
-        }
+        action = REPLAY_SAVE_MENU_ACTION_DO_NOT_SAVE_RECORDING; // just skip the prompt and don't do anything.
     } else {
         {
             f32 y = 50;
