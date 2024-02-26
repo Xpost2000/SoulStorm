@@ -14,21 +14,21 @@ EXEC_PATH_PREPEND=
 DISCORD_INTEGRATION=NO
 
 ifeq ($(OS),Windows_NT)
-	TARGET:=WIN32
+	TARGET:=win64
 	EXEC_EXT:=.exe
 else
-	TARGET:=LINUX_GENERIC
+	TARGET:=linux_generic
 	EXEC_EXT:=.out
 	EXEC_PATH_PREPEND=./
 endif
 
-.phony: all clean run run-debug docgen
+.phony: all clean run run-debug docgen distribute build-run-tree zip msbuild-release msbuild-debug msbuild-debug-release
 
 
 # CC=clang++
 CFLAGS:=-Wno-unused -Wno-unused-but-set-variable -std=c++17 -w
 
-ifeq ($(TARGET), WIN32)
+ifeq ($(TARGET), win64)
 	CLIBS:=-lmingw32 -L./dependencies/x86-64/lib/ -L./dependencies/x86-64/bin/ -I./glad/include/\
 		   -I./dependencies/ -I./dependencies/x86-64/include -I./dependencies/x86-64/include/SDL2\
 		   -ld3d11 -ld3dcompiler -ldxguid -lOpenGL32 -lSDL2main -lSDL2 -lSDL2_mixer -llua54 -msse4 -m64
@@ -58,6 +58,7 @@ clean:
 	-rm ./build_intermediaries/*.o
 	-rm game-debug$(EXEC_EXT)
 	-rm game$(EXEC_EXT)
+	-rm run_tree -r
 	-rm data.bigfile
 
 HEADER_FILES= src/achievement_list.h \
@@ -197,7 +198,7 @@ DOBJECT_FILES=./build_intermediaries/achievements_debug.o \
 			  ./build_intermediaries/thread_pool_debug.o \
 			  ./build_intermediaries/v2_debug.o
 
-ifeq ($(TARGET), WIN32)
+ifeq ($(TARGET), win64)
 	HEADER_FILES  += src/graphics_driver_d3d11.h
 	OBJECT_FILES  += ./build_intermediaries/graphics_driver_d3d11.o
 	DOBJECT_FILES += ./build_intermediaries/graphics_driver_d3d11_debug.o
@@ -385,7 +386,7 @@ endif
 docgen: src/lua_metagen.cpp
 	$(CC) src/lua_metagen.cpp -o ./metagen
 	./metagen
-	pandoc -c ./retro.css -s lua_engine_api.md -o lua_engine_api.html
+	-pandoc -c ./retro.css -s lua_engine_api.md -o lua_engine_api.html
 
 ./Bigfilepacker$(EXEC_EXT): Bigfilepacker/bigfile.h Bigfilepacker/bigfile.cpp Bigfilepacker/main.cpp src/memory_arena.cpp src/string.cpp src/common.cpp src/allocators.cpp src/v2.cpp src/serializer.cpp
 	$(CC) $(CFLAGS) -o $@ Bigfilepacker/bigfile.cpp Bigfilepacker/main.cpp src/memory_arena.cpp\
@@ -407,3 +408,24 @@ run: ./game$(EXEC_EXT)
 	$(EXEC_PATH_PREPEND)game
 run-debug: ./game-debug$(EXEC_EXT)
 	$(EXEC_PATH_PREPEND)game-debug
+
+build-run-tree: ./game$(EXEC_EXT)
+	-mkdir run-tree/
+	cp data.bigfile run-tree/
+	cp ./game$(EXEC_EXT) run-tree/
+	cp icon.ico run-tree/
+	cp lua_engine_api.html run-tree/
+	cp gamecontrollerdb.txt run-tree/
+	cp *.dll run-tree/
+
+msbuild-release: docgen ./data.bigfile
+	cmd /c build_msbuild_debug.bat
+msbuild-debug: docgen
+	cmd /c build_msbuild_release.bat
+msbuild-debug-release: docgen
+	cmd /c build_msbuild_release_with_debug.bat
+
+zip: ./game$(EXEC_EXT)
+	zip -r bh-release.zip icon.ico gamecontrollerdb.txt game.exe *.dll data.bigfile lua_engine_api.html
+distribute: build-run-tree
+	butler push run-tree $(ITCHPROJECT):$(TARGET)
