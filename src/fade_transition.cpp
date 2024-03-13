@@ -205,9 +205,22 @@ namespace Transitions {
 
     void clear_effect() {
         struct transition_fader_state* transition_state = &global_transition_fader_state;
+        auto                           on_delay_finish  = transition_state->on_delay_finish;
+        auto                           on_start         = transition_state->on_start;
+        auto                           on_finish        = transition_state->on_finish;
 
         transition_state->type = TRANSITION_FADER_TYPE_NONE;
         transition_state->time = 0;
+
+        on_delay_finish(nullptr);
+        on_finish(nullptr);
+
+        last_global_transition_fader_state = global_transition_fader_state;
+        stop();
+
+        register_on_delay_finish([&](void*){});
+        register_on_finish([&](void*){});
+        register_on_start([&](void*){});
     }
 
     // can be touched for other stuff later I guess.
@@ -252,7 +265,7 @@ namespace Transitions {
             transition_state->delay_time -= dt;
 
             if (transition_state->delay_time <= 0) {
-                transition_state->on_delay_finish(nullptr);
+                on_delay_finish(nullptr);
             }
         } else {
             if (transition_state->time < transition_state->max_time) {

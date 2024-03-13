@@ -2,7 +2,7 @@
   As per usual my game.cpp mega-translation unit is just
   where I glue all the game code together, so this isn't exactly
   the most stellar of code.
- */
+*/
 
 // NOTE: game units are in 640x480 pixels now.
 #include "game.h"
@@ -1721,6 +1721,86 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
     }
 }
 
+GAME_UI_SCREEN(update_and_render_review_script_error_menu) {
+    /*
+      NOTE:
+      Transitions are "finished" pre-emptivel and there might be weird issues with this.
+
+      This is technically a debug feature that also happens to be useful for release reasons like
+      modding if I want that.
+    */
+    Transitions::clear_effect();
+    auto& task_scheduler = state->coroutine_tasks;
+
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+    GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+    GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+
+    GameUI::set_ui_id((char*)"ui_review_script_error");
+    GameUI::begin_frame(commands, &resources->graphics_assets);
+    {
+        f32 y = 100;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(50, y), string_literal("STAGE SCRIPT ERROR"), color32f32(1, 1, 1, 1), 4);
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        y += 45;
+        if (task_scheduler.absolute_failure()) {
+            GameUI::label(V2(50, y), string_literal("Too many script errors."), color32f32(1, 1, 1, 1), 2);
+            y += 30;
+            GameUI::label(V2(50, y), string_literal("Please fix the level script."), color32f32(1, 1, 1, 1), 2);
+            y += 30;
+        }
+        GameUI::label(V2(50, y), string_literal("Lua script error:"), color32f32(1, 1, 1, 1), 2);
+        y += 30;
+        {
+            auto error = task_scheduler.most_recent_error();
+            GameUI::set_font(resources->get_font(MENU_FONT_COLOR_LIME));
+            // NOTE: not copied yet. So this is always an invalid string. Whoops!
+            // some really bad "wrapping" since I don't have proper string wrapping drawing procedures
+            // and this is literally the only time I need them.
+            GameUI::label(V2(50, y), error->task_function_source, color32f32(1, 1, 1, 1), 2);
+            y += 25;
+            GameUI::set_font(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+            {
+                char textbuffer[1024];
+                s32  w = 0;
+                auto errorasstr = error->as_str();
+                for (s32 index = 0; index < errorasstr.length && w < 1024; ++index) {
+                    if ((index+1) % 80 == 0) {
+                        textbuffer[w++] = '\n';
+                    }
+                    textbuffer[w++] = errorasstr.data[index];
+                }
+                GameUI::label(V2(50, y), string_from_cstring(textbuffer), color32f32(1, 1, 1, 1), 2);
+            }
+            y += 150;
+        }
+
+		GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        if (task_scheduler.absolute_failure()) {
+            if (GameUI::button(V2(100, y), string_literal("Resume/Continue"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                switch_ui(UI_STATE_INACTIVE);
+                task_scheduler.address_error();
+            }
+            y += 30;
+        }
+
+        if (GameUI::button(V2(100, y), string_literal("Restart"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            switch_ui(UI_STATE_INACTIVE);
+            task_scheduler.address_error();
+            reset_stage_simulation_state();
+        }
+        y += 30;
+
+        if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+			task_scheduler.address_error();
+            switch_ui(UI_STATE_INACTIVE);
+            switch_screen(GAME_SCREEN_MAIN_MENU);
+        }
+    }
+    GameUI::end_frame();
+}
+
 GAME_UI_SCREEN(update_and_render_confirm_back_to_main_menu) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
@@ -2911,6 +2991,9 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
         case UI_STATE_CONTROLS: {
             update_and_render_controls_menu(commands, dt);
         } break;
+        case UI_STATE_REVIEW_SCRIPT_ERROR: {
+            update_and_render_review_script_error_menu(commands, dt);
+        } break;
         case UI_STATE_STAGE_SELECT: {
             update_and_render_stage_select_menu(commands, dt); 
         } break;
@@ -3198,6 +3281,13 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     }
 
     this->state->coroutine_tasks.schedule_by_type(this->state, dt, GAME_TASK_SOURCE_GAME_FIXED);
+
+    // shouldn't happen during replays.
+    if (this->state->coroutine_tasks.need_to_address_error()) {
+        switch_ui(UI_STATE_REVIEW_SCRIPT_ERROR);
+        return;
+    }
+
     if (!in_conversation) {
 #if 1
         Thread_Pool::add_job(
@@ -3955,6 +4045,10 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
 
     state->coroutine_tasks.schedule_by_type(state, dt, GAME_TASK_SOURCE_UI);
     state->coroutine_tasks.schedule_by_type(state, dt, GAME_TASK_SOURCE_GAME);
+    // shouldn't happen during replays.
+    if (this->state->coroutine_tasks.need_to_address_error()) {
+        switch_ui(UI_STATE_REVIEW_SCRIPT_ERROR);
+    }
 
     switch (state->screen_mode) {
         case GAME_SCREEN_TITLE_SCREEN: {
@@ -4550,6 +4644,10 @@ void Play_Area::set_all_edge_behaviors_to(u8 value) {
 }
 
 void Game::switch_screen(s32 screen) {
+    if (state->last_screen_mode == screen) {
+        return;
+    }
+
     state->last_screen_mode = state->screen_mode;
     state->screen_mode      = screen;
 

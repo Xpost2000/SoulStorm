@@ -295,8 +295,29 @@ void Game_Task_Scheduler::deregister_all_dead_standard_tasks() {
     }
 }
 
+Task_Lua_Error* Game_Task_Scheduler::most_recent_error(void) {
+    if (errors.size == 0) {
+        return nullptr;
+    }
+
+    if (new_error || absolute_failure()) {
+        return &errors[errors.size-1];
+    }
+
+    return nullptr;
+}
+
+void Game_Task_Scheduler::address_error(void) {
+    new_error = false;
+}
+
+bool Game_Task_Scheduler::need_to_address_error(void) {
+    return new_error;
+}
+
 void Game_Task_Scheduler::push_error(string name_source, string error_string) {
     errors.push(Task_Lua_Error(name_source, error_string));
+    new_error = true;
 }
 
 bool Game_Task_Scheduler::absolute_failure(void) {

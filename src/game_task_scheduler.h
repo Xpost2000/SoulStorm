@@ -171,6 +171,10 @@ struct Game_Task_Scheduler {
     void push_error(string name_source, string error_string);
     bool absolute_failure(void);
 
+    Task_Lua_Error* most_recent_error(void);
+    void address_error(void);
+    bool need_to_address_error(void);
+
     /*
       NOTE:
       lua is specifically sandboxed to ONLY work on gameplay scenes.
@@ -195,6 +199,8 @@ struct Game_Task_Scheduler {
     void schedule_by_type(struct Game_State* state, f32 dt, u8 type);
 
 private:
+    bool new_error = false;
+
     bool kill_task(s32 index);
     s32  first_avaliable_task();
 
