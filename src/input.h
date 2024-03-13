@@ -382,7 +382,7 @@ static const char* keyboard_key_strings(int key) {
 
 static const char* keyboard_key_strings_readable(int key) {
     switch (key) {
-        case KEY_UNKNOWN: return "Unknown Key?";
+        case KEY_UNKNOWN: return "None";
         case KEY_A: return "A";
         case KEY_B: return "B";
         case KEY_C: return "C";
