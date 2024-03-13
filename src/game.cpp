@@ -1758,20 +1758,34 @@ GAME_UI_SCREEN(update_and_render_review_script_error_menu) {
             // NOTE: not copied yet. So this is always an invalid string. Whoops!
             // some really bad "wrapping" since I don't have proper string wrapping drawing procedures
             // and this is literally the only time I need them.
-            GameUI::label(V2(50, y), error->task_function_source, color32f32(1, 1, 1, 1), 2);
-            y += 25;
-            GameUI::set_font(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+            GameUI::set_font(resources->get_font(MENU_FONT_COLOR_STEEL));
             {
                 char textbuffer[1024];
                 s32  w = 0;
+                s32 index = 0;
                 auto errorasstr = error->as_str();
-                for (s32 index = 0; index < errorasstr.length && w < 1024; ++index) {
-                    if ((index+1) % 80 == 0) {
-                        textbuffer[w++] = '\n';
+                s32 current_line_length = 1;
+                while (index < errorasstr.length && w < 1024) {
+                    switch (errorasstr.data[index]) {
+                        case ' ': {
+                            textbuffer[w++] = errorasstr.data[index++];
+                            current_line_length++;
+                        } break;
+                        default: {
+                            s32 word_start = index;
+                            while (errorasstr.data[index] != ' ' && index < errorasstr.length && w < 1024) {
+                                textbuffer[w++] = errorasstr.data[index++];
+                                current_line_length++;
+                            }
+                        } break;
                     }
-                    textbuffer[w++] = errorasstr.data[index];
+
+                    if (current_line_length >= 80) {
+                        textbuffer[w++] = '\n';
+                        current_line_length = 0;
+                    }
                 }
-                GameUI::label(V2(50, y), string_from_cstring(textbuffer), color32f32(1, 1, 1, 1), 2);
+                GameUI::label(V2(50, y), string_from_cstring(textbuffer), color32f32(1, 1, 1, 1), 1);
             }
             y += 150;
         }
@@ -1788,6 +1802,8 @@ GAME_UI_SCREEN(update_and_render_review_script_error_menu) {
         if (GameUI::button(V2(100, y), string_literal("Restart"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(UI_STATE_INACTIVE);
             task_scheduler.address_error();
+
+            gameplay_recording_file_finish(&state->gameplay_data.recording);
             reset_stage_simulation_state();
         }
         y += 30;

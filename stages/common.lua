@@ -529,8 +529,6 @@ function Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed)
             );
 
             t_wait(2.0);
-            bug
-
             t_yield();
          end
       end
