@@ -1454,6 +1454,19 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
     GameUI::end_frame();
 }
 
+GAME_UI_SCREEN(update_and_render_controls_menu) {
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+    GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+    GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+
+    GameUI::set_ui_id((char*)"ui_options_menu");
+    GameUI::begin_frame(commands, &resources->graphics_assets);
+    {
+        
+    }
+    GameUI::end_frame();
+}
+
 GAME_UI_SCREEN(update_and_render_confirm_back_to_main_menu) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
@@ -1909,6 +1922,10 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
                 }
             }
             y += 30;
+        }
+
+        if (GameUI::button(V2(100, y), string_literal("Controls"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            switch_ui(UI_STATE_CONTROLS);
         }
 
         if (GameUI::button(V2(100, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
@@ -2635,6 +2652,9 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
         } break;
         case UI_STATE_OPTIONS: {
             update_and_render_options_menu(commands, dt); 
+        } break;
+        case UI_STATE_CONTROLS: {
+            update_and_render_controls_menu(commands, dt);
         } break;
         case UI_STATE_STAGE_SELECT: {
             update_and_render_stage_select_menu(commands, dt); 

@@ -117,6 +117,7 @@ private:
     GAME_UI_SCREEN(update_and_render_replay_not_supported_menu);
     GAME_UI_SCREEN(update_and_render_pause_menu);
     GAME_UI_SCREEN(update_and_render_options_menu);
+    GAME_UI_SCREEN(update_and_render_controls_menu);
     GAME_UI_SCREEN(update_and_render_stage_pet_select_menu);
     GAME_UI_SCREEN(update_and_render_stage_select_menu);
     GAME_UI_SCREEN(update_and_render_achievements_menu);
