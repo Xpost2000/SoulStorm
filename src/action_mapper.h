@@ -12,6 +12,19 @@
 
   NOTE: keys do not have modifiers
 */
+struct Action_Data {
+    s32 key_id[2] = {0, 0};
+    s32 button_id = 0;
+    s32 joystick_id = -1;
+    s32 axis_id = -1;
+
+    // NOTE: all keys will have analog
+    //       value as part of their binding so
+    //       that way utilizing the Action mapping
+    //       in situations which benefit from "analog" input
+    //       will still use the same code.
+    f32 analog_value = 0.0f;
+};
 
 enum Action_ID {
     ACTION_MOVE_UP,
@@ -26,6 +39,33 @@ enum Action_ID {
     ACTION_USE_BOMB,
     ACTION_COUNT,
 };
+
+local const char* action_id_string_readable_name(s32 action_id) {
+    switch (action_id) {
+        case ACTION_MOVE_UP:
+            return "Move Up";
+        case ACTION_MOVE_DOWN:
+            return "Move Down";
+        case ACTION_MOVE_LEFT:
+            return "Move Left";
+        case ACTION_MOVE_RIGHT:
+            return "Move Right";
+        case ACTION_ACTION:
+            return "Action / Fire";
+        case ACTION_FOCUS:
+            return "Focus";
+        case ACTION_CANCEL:
+            return "Cancel";
+        case ACTION_MENU:
+            return "Menu / Pause";
+        case ACTION_SCREENSHOT:
+            return "Screenshot";
+        case ACTION_USE_BOMB: 
+            return "Use Bomb";
+    }
+
+    return "?";
+}
 
 local const char* action_id_strings_lua(s32 action_id) {
     switch (action_id) {
@@ -71,6 +111,8 @@ namespace Action {
 
     bool save(string filename);
     bool load(string filename);
+
+    Action_Data* get_action_data_for(s32 action_id);
 };
 
 #endif

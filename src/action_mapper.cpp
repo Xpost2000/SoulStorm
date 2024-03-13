@@ -6,22 +6,16 @@ extern "C" {
 
 #include "action_mapper.h"
 
-struct Action_Data {
-    s32 key_id[2] = {0, 0};
-    s32 button_id = 0;
-    s32 joystick_id = -1;
-    s32 axis_id = -1;
-
-    // NOTE: all keys will have analog
-    //       value as part of their binding so
-    //       that way utilizing the Action mapping
-    //       in situations which benefit from "analog" input
-    //       will still use the same code.
-    f32 analog_value = 0.0f;
-};
-
 local Action_Data action_map[ACTION_COUNT] = {};
 namespace Action {
+    Action_Data* get_action_data_for(s32 action_id) {
+        if (action_id < 0 && action_id >= ACTION_COUNT) {
+            return nullptr;
+        }
+
+        return &action_map[action_id];
+    }
+
     void register_action_keys(s32 action_id, s32 key_id, s32 key_id2, f32 analog_value) {
         auto& action        = action_map[action_id];
         action.key_id[0]    = key_id;
