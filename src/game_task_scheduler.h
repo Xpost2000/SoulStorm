@@ -135,6 +135,17 @@ struct Game_Task {
     u64        uid                   = 0;
 };
 
+// NOTE: if errors are exceeded it will force "fail" the level.
+//       because you shouldn't really have level bugs...
+#define MAXIMUM_LUA_ERRORS_TO_REPORT (5)
+
+struct Task_Lua_Error {
+    Task_Lua_Error(void);
+    Task_Lua_Error(string task_function_source, string buffer);
+    string task_function_source;
+    char buffer[512];
+    string as_str();
+};
 
 struct Game_Task_Scheduler {
     /*
@@ -147,14 +158,18 @@ struct Game_Task_Scheduler {
     */
     Game_Task_Scheduler();
     Game_Task_Scheduler(Memory_Arena* arena, s32 tasks);
-    Fixed_Array<Game_Task> tasks;
-    Fixed_Array<s32>       active_task_ids;
+    Fixed_Array<Task_Lua_Error> errors;
+    Fixed_Array<Game_Task>      tasks;
+    Fixed_Array<s32>            active_task_ids;
     lua_State* L = nullptr; // set this pointer to the currently owned lua task.
 
     // NOTE: will override non-essential tasks.
     s32  add_task(struct Game_State* state, jdr_duffcoroutine_fn f, bool essential=false);
     s32  add_global_task(jdr_duffcoroutine_fn f);
     s32  add_ui_task(struct Game_State* state, jdr_duffcoroutine_fn f, bool essential=false);
+
+    void push_error(string name_source, string error_string);
+    bool absolute_failure(void);
 
     /*
       NOTE:

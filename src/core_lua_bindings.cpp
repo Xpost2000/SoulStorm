@@ -241,7 +241,7 @@ GAME_LUA_PROC(
 ticktime,
 "-> number",
 "Return the fixed tickrate.",
-"Return the fixed tickrate of the engine for update purposes."
+"Return the fixed tickrate of the engine for update purposes. This is technically not needed because every update is fixed."
 )
 {
     lua_pushnumber(L, FIXED_TICKTIME);

@@ -508,7 +508,7 @@ function Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed)
    async_task_lambda(
       function ()
          local background_image         = load_image(image_resource_location);
-         local background_render_object = render_object_create();
+         local background_rendr_object = render_object_create();
          local scroll_y = 0;
          while true do
             render_object_set_img_id(background_render_object, background_image);

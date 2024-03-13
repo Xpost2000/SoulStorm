@@ -1,6 +1,23 @@
 #include "game_task_scheduler.h"
 #include "game_state.h"
 
+#include "engine.h"
+
+Task_Lua_Error::Task_Lua_Error(void)
+    : task_function_source(string_literal("?"))
+{
+    
+}
+
+Task_Lua_Error::Task_Lua_Error(string task_function_source, string buffer) {
+    this->task_function_source = task_function_source;
+    copy_string_into_cstring(buffer, this->buffer, 512);
+}
+
+string Task_Lua_Error::as_str(void) {
+    return string_from_cstring(buffer);
+}
+
 local void setup_generic_task(Game_Task* task, s32 source_type, s32 associated_state, bool essential, Game_State* state, void* userdata) {
     task->source              = source_type;
     task->associated_state    = associated_state;
@@ -18,6 +35,7 @@ Game_Task_Scheduler::Game_Task_Scheduler() {
 Game_Task_Scheduler::Game_Task_Scheduler(Memory_Arena* arena, s32 task_count) {
     tasks           = Fixed_Array<Game_Task>(arena, task_count);
     active_task_ids = Fixed_Array<s32>(arena, task_count);
+    errors          = Fixed_Array<Task_Lua_Error>(arena, MAXIMUM_LUA_ERRORS_TO_REPORT);
 }
 
 // Game_Task_Scheduler
@@ -199,6 +217,7 @@ void Game_Task_Scheduler::abort_all_lua_tasks() {
         }
     }
 
+    errors.zero();
     deregister_all_dead_lua_threads();
 }
 
@@ -276,8 +295,17 @@ void Game_Task_Scheduler::deregister_all_dead_standard_tasks() {
     }
 }
 
+void Game_Task_Scheduler::push_error(string name_source, string error_string) {
+    errors.push(Task_Lua_Error(name_source, error_string));
+}
+
+bool Game_Task_Scheduler::absolute_failure(void) {
+    return errors.size >= MAXIMUM_LUA_ERRORS_TO_REPORT;
+}
+
 void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 type) {
     s32 current_ui_state     = state->ui_state;
+
     s32 current_screen_state = state->screen_mode;
 
     const bool block_game_task_update =
@@ -418,9 +446,12 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
                         "LUA_ERRERR"
                     };
 
-                    // _debugprintf("LuaTask(%s): Code Status: %d (%s)", task.fn_name, status, lua_codes[status]);
+                    _debugprintf("LuaTask(%s): Code Status: %d (%s)", task.fn_name, status, lua_codes[status]);
                     if (status != LUA_OK) {
-                        _debugprintf("LUA_ERROR (%s) error?", lua_tostring(task.L_C,-1));
+                        const char* cerrorstring = lua_tostring(task.L_C, -1);
+                        auto errorstring = memory_arena_push_string(&Global_Engine()->scratch_arena, string_from_cstring((cstring)cerrorstring));
+                        _debugprintf("LUA_ERROR: %s", errorstring.data);
+                        push_error(string_from_cstring((cstring)task.fn_name), errorstring);
                     }
                     status = JDR_DUFFCOROUTINE_FINISHED; 
                 }
