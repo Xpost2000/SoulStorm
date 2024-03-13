@@ -9,7 +9,9 @@ extern "C" {
 local Action_Data action_map[ACTION_COUNT] = {};
 namespace Action {
     void copy_action_map(Action_Data* source, Action_Data* dest) {
-        *dest = *source;
+        for (s32 index = 0; index < ACTION_COUNT; ++index) {
+            dest[index] = source[index];
+        }
     }
 
     Action_Data* get_action_map(void) {
@@ -102,6 +104,40 @@ namespace Action {
 #endif
 
         return controller_response || keyboard_response;
+    }
+
+    Action_Find_Keybinding_Result get_action_data_with_key_binding(s32 keyid) {
+        Action_Find_Keybinding_Result result;
+        result.binding = nullptr;
+        result.keyinput_slot_id = -1;
+
+        for (s32 index = 0; index < ACTION_COUNT; ++index) {
+            auto& action = action_map[index];
+
+            if (action.key_id[0] == keyid) {
+                result.binding = &action;
+                result.keyinput_slot_id = 0;
+                break;
+            } else if (action.key_id[1] == keyid) {
+                result.binding = &action;
+                result.keyinput_slot_id = 1;
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    Action_Data* get_action_data_with_gamepad_binding(s32 buttonid) {
+        for (s32 index = 0; index < ACTION_COUNT; ++index) {
+            auto& action = action_map[index]; 
+
+            if (action.button_id == buttonid) {
+                return &action;
+            }
+        }
+
+        return nullptr;
     }
 
     int luaL_open_game_actionlib(lua_State* L) {

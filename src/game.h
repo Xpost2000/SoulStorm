@@ -71,6 +71,13 @@ struct Entity_Loop_Update_Packet {
 #define GAME_UI_SCREEN(name) void name(struct render_commands* commands, f32 dt)
 #define GAME_SCREEN(name) void name(struct render_commands* game_render_commands, struct render_commands* ui_render_commands, f32 dt)
 
+enum Controls_Menu_Data_Binding_Slot {
+    CONTROLS_MENU_DATA_BINDING_SLOT_KEY0,
+    CONTROLS_MENU_DATA_BINDING_SLOT_KEY1,
+    CONTROLS_MENU_DATA_BINDING_SLOT_GAMEPAD,
+    CONTROLS_MENU_DATA_BINDING_SLOT_COUNT,
+};
+
 struct Controls_Menu_Data {
     // NOTE: in the case that a controls binding is activated from a key press, I want to
     // eat any key inputs for one frame so that the engine does not automatically take the key that was
@@ -79,7 +86,10 @@ struct Controls_Menu_Data {
     // This is primarily because the engine does not have a real input layer system as it doesn't actually
     // need one for the actual game, so this is being done manually.
     s32              trying_to_bind_controls;
-    Action_Data      temp_action_map;
+    Action_Data      temp_action_map[ACTION_COUNT];
+
+    s32              action_id_to_bind;
+    s32              action_id_to_bind_slot;
 };
 
 class Game {

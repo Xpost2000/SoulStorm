@@ -95,6 +95,12 @@ local const char* action_id_strings_lua(s32 action_id) {
 }
 
 struct lua_State;
+
+struct Action_Find_Keybinding_Result {
+    Action_Data* binding;
+    s32          keyinput_slot_id;
+};
+
 namespace Action {
     // TODO: add with_repeat
     void register_action_keys(s32 action_id, s32 key_id, s32 key_id2=KEY_UNKNOWN, f32 analog_value=1.0);
@@ -113,6 +119,9 @@ namespace Action {
     bool load(string filename);
 
     void copy_action_map(Action_Data* source, Action_Data* dest);
+
+    Action_Find_Keybinding_Result get_action_data_with_key_binding(s32 keyid);
+    Action_Data*                  get_action_data_with_gamepad_binding(s32 buttonid);
 
     Action_Data* get_action_map(void);
     Action_Data* get_action_data_for(s32 action_id);

@@ -1505,16 +1505,32 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
         ACTION_CANCEL,
         ACTION_MENU,
     };
+
+    // NOTE: These keys/buttons are reserved, for screenshot and the UI stuff and cannot be bound without
+    // some inconvenient UI usage.
+    local s32 blacklisted_input_keys[] = {
+        KEY_F12, KEY_RETURN, KEY_BACKSPACE, KEY_ESCAPE, 
+    };
+    local s32 blacklisted_input_buttons[] = {
+        BUTTON_START, BUTTON_BACK, BUTTON_B
+    };
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+
+    bool trying_to_bind_something = control_menu_temp_data.trying_to_bind_controls != 0;
 
     GameUI::set_ui_id((char*)"ui_controls_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
     {
         f32 y = 30;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
-        GameUI::label(V2(50, y), string_literal("CONTROLS"), color32f32(1, 1, 1, 1), 4);
+
+        if (trying_to_bind_something) {
+            GameUI::label(V2(50, y), string_literal("CONTROLS - [PRESS ANY KEY TO BIND]"), color32f32(1, 1, 1, 1), 4);
+        } else {
+            GameUI::label(V2(50, y), string_literal("CONTROLS"), color32f32(1, 1, 1, 1), 4);
+        }
 
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         y += 45;
@@ -1534,9 +1550,9 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
             for (s32 index = 0; index < array_count(action_bindings_order); ++index) {
                 s32    action_id       = action_bindings_order[index];
                 string name            = readable_name_strings[index];
-                bool   bindable        = action_binding_allow_binding[action_id];
+                bool   bindable        = action_binding_allow_binding[action_id] && !trying_to_bind_something;
                 bool   second_bindable = action_binding_allow_second_key_rebinding[action_id] && bindable;
-                auto   action_data     = Action::get_action_data_for(action_id);
+                auto   action_data     = &control_menu_temp_data.temp_action_map[action_id];
 
                 f32 x = 40;
                 GameUI::set_font(resources->get_font(MENU_FONT_COLOR_BLUE)); // I never use blue :P
@@ -1551,30 +1567,55 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
                 // Key1
                 {
                     string binding_string_name = string_from_cstring((cstring)keyboard_key_strings_readable(action_data->key_id[0]));
-                    GameUI::label(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && bindable);
+                    if (GameUI::button(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && bindable) == WIDGET_ACTION_ACTIVATE) {
+                        if (control_menu_temp_data.trying_to_bind_controls == 0) {
+                            control_menu_temp_data.action_id_to_bind       = action_id;
+                            control_menu_temp_data.action_id_to_bind_slot  = CONTROLS_MENU_DATA_BINDING_SLOT_KEY0;
+                            control_menu_temp_data.trying_to_bind_controls = 2;
+                        }
+                    }
                 }
                 x += 150;
                 // Key2
                 {
                     string binding_string_name = string_from_cstring((cstring)keyboard_key_strings_readable(action_data->key_id[1]));
-                    GameUI::label(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && second_bindable);
+                    if (GameUI::button(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && bindable) == WIDGET_ACTION_ACTIVATE) {
+                        if (control_menu_temp_data.trying_to_bind_controls == 0) {
+                            control_menu_temp_data.action_id_to_bind       = action_id;
+                            control_menu_temp_data.action_id_to_bind_slot  = CONTROLS_MENU_DATA_BINDING_SLOT_KEY1;
+                            control_menu_temp_data.trying_to_bind_controls = 2;
+                        }
+                    }
                 }
                 // Gamepad
                 x += 150;
                 {
                     string binding_string_name = string_from_cstring((cstring)controller_button_strings_readable(action_data->button_id));
-                    GameUI::label(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && bindable);
+                    if (GameUI::button(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && bindable) == WIDGET_ACTION_ACTIVATE) {
+                        if (control_menu_temp_data.trying_to_bind_controls == 0) {
+                            control_menu_temp_data.action_id_to_bind       = action_id;
+                            control_menu_temp_data.action_id_to_bind_slot  = CONTROLS_MENU_DATA_BINDING_SLOT_GAMEPAD;
+                            control_menu_temp_data.trying_to_bind_controls = 2;
+                        }
+                    }
                 }
 
                 y += 30;
             }
 
             if (GameUI::button(V2(50, y), string_literal("Apply"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                Action::copy_action_map(control_menu_temp_data.temp_action_map, Action::get_action_map());
+                Action::save(string_literal("controls.lua"));
+                control_menu_temp_data.trying_to_bind_controls = 0;
             }
-			y += 30;
+            y += 30;
             if (GameUI::button(V2(50, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                Action::copy_action_map(control_menu_temp_data.temp_action_map, Action::get_action_map());
+                control_menu_temp_data.trying_to_bind_controls = 0;
+                Action::save(string_literal("controls.lua"));
+                switch_ui(state->last_ui_state);
             }
-			y += 30;
+            y += 30;
             if (GameUI::button(V2(50, y), string_literal("Return"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(state->last_ui_state);
             }
@@ -1585,6 +1626,82 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
         }
     }
     GameUI::end_frame();
+
+    // Handle the actual control binding
+    {
+        switch (control_menu_temp_data.trying_to_bind_controls) {
+            case 0: { } break;
+            case 1: {
+                s32 action_id = control_menu_temp_data.action_id_to_bind;
+                s32 keyid     = Input::any_key_pressed();
+                s32 buttonid  = Input::controller_any_button_pressed(Input::get_gamepad(0));
+
+                Input::eat_key(keyid);
+                Input::eat_controller_button(0, buttonid);
+
+                // blacklisted keys and buttons
+                bool blacklisted = false;
+                {
+                    for (s32 index = 0; index < array_count(blacklisted_input_keys); ++index) {
+                        if (keyid == blacklisted_input_keys[index]) {
+                            blacklisted = true;
+                            break;
+                        }
+                    }
+
+                    for (s32 index = 0; index < array_count(blacklisted_input_buttons); ++index) {
+                        if (buttonid == blacklisted_input_buttons[index]) {
+                            blacklisted = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (blacklisted) {
+                    // skip
+                    _debugprintf("Illegal binding key/button. Do not do anything.");
+                } else {
+                    control_menu_temp_data.trying_to_bind_controls = 0; // binding found.
+                    switch (control_menu_temp_data.action_id_to_bind_slot) {
+                        case CONTROLS_MENU_DATA_BINDING_SLOT_KEY0:
+                        case CONTROLS_MENU_DATA_BINDING_SLOT_KEY1:  {
+                            s32 keyid_slot = 0;
+
+                            if (control_menu_temp_data.action_id_to_bind_slot == CONTROLS_MENU_DATA_BINDING_SLOT_KEY1) {
+                                keyid_slot = 1;
+                            }
+
+                            auto existing_binding =
+                                Action::get_action_data_with_key_binding(keyid);
+
+                            if (existing_binding.binding) {
+                                Swap(existing_binding.binding->key_id[existing_binding.keyinput_slot_id],
+                                     control_menu_temp_data.temp_action_map[action_id].key_id[keyid_slot],
+                                     s32);
+                            } else {
+                                control_menu_temp_data.temp_action_map[action_id].key_id[keyid_slot] = keyid;
+                            }
+                        } break;
+                        case CONTROLS_MENU_DATA_BINDING_SLOT_GAMEPAD: {
+                            auto existing_binding =
+                                Action::get_action_data_with_gamepad_binding(buttonid);
+
+                            if (existing_binding) {
+                                Swap(existing_binding->button_id, control_menu_temp_data.temp_action_map[action_id].button_id, s32);
+                            } else {
+                                control_menu_temp_data.temp_action_map[action_id].button_id = buttonid;
+                            }
+                        } break;
+                            bad_case;
+                    }
+                }
+            } break;
+            case 2: {
+                // skip the frame.
+                control_menu_temp_data.trying_to_bind_controls = 1;
+            } break;
+        }
+    }
 }
 
 GAME_UI_SCREEN(update_and_render_confirm_back_to_main_menu) {
@@ -4465,6 +4582,10 @@ void Game::switch_ui(s32 ui) {
         case UI_STATE_DEAD_MAYBE_RETRY: {
             auto& death_screen_data = state->deathscreen_data;
             death_screen_data.reset();
+        } break;
+        case UI_STATE_CONTROLS: {
+            control_menu_temp_data.trying_to_bind_controls = 0;
+            Action::copy_action_map(Action::get_action_map(), control_menu_temp_data.temp_action_map);
         } break;
         default: {
             // unused
