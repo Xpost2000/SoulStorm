@@ -507,30 +507,26 @@ end
 function Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed)
    async_task_lambda(
       function ()
+         local background_image         = load_image(image_resource_location);
+         local scroll_y = 0;
          while true do
             local background_render_object = render_object_create();
-            local background_image         = load_image(image_resource_location);
-            print("Render object ID:");
-            print(background_render_object);
-
-            -- render_object_set_img_id(background_render_object, background_image);
-            render_object_set_img_id(background_render_object, 0);
+            render_object_set_img_id(background_render_object, background_image);
+            -- render_object_set_img_id(background_render_object, 0);
             render_object_set_scale(background_render_object, 375, 480);
-            render_object_set_position(background_render_object, 100, 100);
+            render_object_set_position(background_render_object, 0, 0);
             render_object_set_layer(background_render_object, 0);
 
             local src_x = render_object_get_src_rect_x(background_render_object);
-            local src_y = render_object_get_src_rect_y(background_render_object);
-            local src_w = render_object_get_src_rect_w(background_render_object);
-            local src_h = render_object_get_src_rect_h(background_render_object);
 
-            -- render_object_set_src_rect(
-            --    background_render_object,
-            --    src_x,
-            --    src_y + scrollspeed,
-            --    src_w,
-            --    src_h
-            -- );
+            scroll_y = scroll_y + scrollspeed;
+            render_object_set_src_rect(
+               background_render_object,
+               src_x,
+               scroll_y,
+               375,
+               480
+            );
 
             t_yield();
          end
