@@ -558,6 +558,11 @@ GAME_SCREEN(update_and_render_game_title_screen) {
             }
             y += 30;
 
+            if (GameUI::button(V2(ui_x, y), string_literal("Controls"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
+                switch_ui(UI_STATE_CONTROLS);
+            }
+            y += 30;
+
             if (GameUI::button(V2(ui_x, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(UI_STATE_OPTIONS);
             }

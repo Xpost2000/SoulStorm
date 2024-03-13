@@ -1454,15 +1454,135 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
     GameUI::end_frame();
 }
 
+/*
+ * NOTE:
+ * due to how the controls are setup in this game and how it links with the UI system,
+ * the controls have to be sort of "carefully setup" because some bindings might make the game
+ * effectively unplayable.
+ *
+ * You could edit controls.lua for a definitive way to change all behaviors but this controls menu
+ * will only allow you to make "safe" edits that don't make it impossible to use the engine.
+ *
+ *
+ * NOTE: does not support joystick/axis rebinding but afaik literally no one would willingly do this.
+ * There might be "inverted axis" support at best.
+ */
 GAME_UI_SCREEN(update_and_render_controls_menu) {
+    // Some local data lists here to control binding behavior.
+    local bool action_binding_allow_binding[] = {
+        /* ACTION_MOVE_UP,  */true,
+        /* ACTION_MOVE_DOWN */true,
+        /* ACTION_MOVE_LEFT */true,
+        /* ACTION_MOVE_RIGHT*/true,
+        /* ACTION_ACTION,   */true,
+        /* ACTION_FOCUS,    */true,
+        /* ACTION_CANCEL,   */false,
+        /* ACTION_MENU,     */false,
+        /* ACTION_SCREENSHOT*/false,
+        /* ACTION_USE_BOMB, */true 
+    };
+    local bool action_binding_allow_second_key_rebinding[] = {
+        /* ACTION_MOVE_UP,  */true,
+        /* ACTION_MOVE_DOWN */true,
+        /* ACTION_MOVE_LEFT */true,
+        /* ACTION_MOVE_RIGHT*/true,
+        /* ACTION_ACTION,   */false,
+        /* ACTION_FOCUS,    */true,
+        /* ACTION_CANCEL,   */false,
+        /* ACTION_MENU,     */false,
+        /* ACTION_SCREENSHOT*/false,
+        /* ACTION_USE_BOMB, */true 
+    };
+    local s32 action_bindings_order[] = {
+        ACTION_MOVE_UP,
+        ACTION_MOVE_DOWN,
+        ACTION_MOVE_LEFT,
+        ACTION_MOVE_RIGHT,
+        ACTION_ACTION,
+        ACTION_USE_BOMB,
+        ACTION_FOCUS,
+        ACTION_SCREENSHOT,
+        ACTION_CANCEL,
+        ACTION_MENU,
+    };
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
 
-    GameUI::set_ui_id((char*)"ui_options_menu");
+    GameUI::set_ui_id((char*)"ui_controls_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
     {
-        
+        f32 y = 30;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(50, y), string_literal("CONTROLS"), color32f32(1, 1, 1, 1), 4);
+
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        y += 45;
+
+        {
+            string* readable_name_strings =
+                (string*)Global_Engine()->scratch_arena.push_unaligned((array_count(action_bindings_order)+1) * sizeof(*readable_name_strings));
+            {
+                for (s32 index = 0; index < array_count(action_bindings_order); ++index) {
+                    s32   action_id              = action_bindings_order[index];
+                    readable_name_strings[index] = string_from_cstring((cstring)action_id_string_readable_name(action_id));
+                }
+            }
+            string longest_string = longest_string_in_list(readable_name_strings, array_count(action_bindings_order));
+            f32    longest_width = font_cache_text_width(resources->get_font(MENU_FONT_COLOR_WHITE), longest_string, 2);
+
+            for (s32 index = 0; index < array_count(action_bindings_order); ++index) {
+                s32    action_id       = action_bindings_order[index];
+                string name            = readable_name_strings[index];
+                bool   bindable        = action_binding_allow_binding[action_id];
+                bool   second_bindable = action_binding_allow_second_key_rebinding[action_id] && bindable;
+                auto   action_data     = Action::get_action_data_for(action_id);
+
+                f32 x = 40;
+                GameUI::set_font(resources->get_font(MENU_FONT_COLOR_BLUE)); // I never use blue :P
+                GameUI::label(V2(x, y), name, color32f32_WHITE, 2, !Transitions::fading());
+                GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+                x += longest_width * 1;
+
+                // NOTE: fixed width because I like to use designated initializers in C and when porting
+                // to C++, they don't seem to have this so I just converted them to jump table functions as
+                // it was the next best thing...
+                x += 25;
+                // Key1
+                {
+                    string binding_string_name = string_from_cstring((cstring)keyboard_key_strings_readable(action_data->key_id[0]));
+                    GameUI::label(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && bindable);
+                }
+                x += 150;
+                // Key2
+                {
+                    string binding_string_name = string_from_cstring((cstring)keyboard_key_strings_readable(action_data->key_id[1]));
+                    GameUI::label(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && second_bindable);
+                }
+                // Gamepad
+                x += 150;
+                {
+                    string binding_string_name = string_from_cstring((cstring)controller_button_strings_readable(action_data->button_id));
+                    GameUI::label(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && bindable);
+                }
+
+                y += 30;
+            }
+
+            if (GameUI::button(V2(50, y), string_literal("Apply"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            }
+			y += 30;
+            if (GameUI::button(V2(50, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            }
+			y += 30;
+            if (GameUI::button(V2(50, y), string_literal("Return"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                switch_ui(state->last_ui_state);
+            }
+        }
+
+        if (Action::is_pressed(ACTION_CANCEL)) {
+            switch_ui(state->last_ui_state);
+        }
     }
     GameUI::end_frame();
 }
@@ -1745,7 +1865,7 @@ GAME_UI_SCREEN(update_and_render_replay_not_supported_menu) {
 
         y += 80;
         
-        if (GameUI::button(V2(100, y), string_literal("Return"), color32f32(1, 1, 1, 1), !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+        if (GameUI::button(V2(100, y), string_literal("Return"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(state->last_ui_state);
         }
     }
@@ -1927,6 +2047,7 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
         if (GameUI::button(V2(100, y), string_literal("Controls"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(UI_STATE_CONTROLS);
         }
+        y += 30;
 
         if (GameUI::button(V2(100, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             _debugprintf("Open the options menu I guess");
