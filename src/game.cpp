@@ -2808,6 +2808,7 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
     
     // NOTE: this is okay because I retain the state of the main menu intentionally.
     s32   stage_id = state->mainmenu_data.stage_id_level_select;
+    s32   level_id = state->mainmenu_data.stage_id_level_in_stage_select;
     auto& stage    = stage_list[stage_id];
 
     auto timer_percentage = clamp<f32>(intro_state.stage_timer.percentage(), 0.0f, 1.0f);
@@ -2835,7 +2836,7 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
             f32 rect_y = commands->screen_height/2-32;
             render_commands_push_quad(commands, rectangle_f32(0, rect_y, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
             {
-                string title = stage.name;
+                string title = string_concatenate(&Global_Engine()->scratch_arena, stage.name, stage.levels[level_id].name);
                 auto   text_width = font_cache_text_width(title_font, title, 4);
                 render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
             }
@@ -2850,7 +2851,7 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
             f32 rect_y = commands->screen_height/2-32;
             render_commands_push_quad(commands, rectangle_f32(0, rect_y, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
             {
-                string title = stage.name;
+                string title = string_concatenate(&Global_Engine()->scratch_arena, stage.name, stage.levels[level_id].name);
                 auto   text_width = font_cache_text_width(title_font, title, 4);
                 render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
@@ -2870,7 +2871,7 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
             f32 rect_y = commands->screen_height/2-32;
             render_commands_push_quad(commands, rectangle_f32(0, rect_y, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
             {
-                string title = stage.name;
+                string title = string_concatenate(&Global_Engine()->scratch_arena, stage.name, stage.levels[level_id].name);
                 auto   text_width = font_cache_text_width(title_font, title, 4);
                 render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
@@ -2891,7 +2892,7 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
             f32 effective_t = (1 - timer_percentage);
             render_commands_push_quad(commands, rectangle_f32(0, rect_y, commands->screen_width, 64), color32u8(0, 0, 0, 128 * effective_t), BLEND_MODE_ALPHA);
             {
-                string title = stage.name;
+                string title = string_concatenate(&Global_Engine()->scratch_arena, stage.name, stage.levels[level_id].name);
                 auto   text_width = font_cache_text_width(title_font, title, 4);
                 render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, effective_t), BLEND_MODE_ALPHA);
             }
