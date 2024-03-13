@@ -112,6 +112,9 @@ namespace Action {
     bool save(string filename);
     bool load(string filename);
 
+    void copy_action_map(Action_Data* source, Action_Data* dest);
+
+    Action_Data* get_action_map(void);
     Action_Data* get_action_data_for(s32 action_id);
 };
 

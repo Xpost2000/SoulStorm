@@ -653,10 +653,14 @@ namespace Input {
     void register_key_down(s32 keyid);
     void register_key_up(s32 keyid);
     void register_controller_down(s32 which, s32 button);
-
     void register_mouse_position(s32 x, s32 y);
     void register_mouse_wheel(s32 x, s32 y);
     void register_mouse_button(s32 button_id, bool state);
+
+    // Consume an input by just setting it to false.
+    void eat_key(s32 keyid);
+    void eat_controller_button(s32 which, s32 button);
+    void eat_mouse_button(s32 button_id);
 
     s32  mouse_wheel_x(void);
     s32  mouse_wheel_y(void);

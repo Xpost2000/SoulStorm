@@ -8,6 +8,14 @@ extern "C" {
 
 local Action_Data action_map[ACTION_COUNT] = {};
 namespace Action {
+    void copy_action_map(Action_Data* source, Action_Data* dest) {
+        *dest = *source;
+    }
+
+    Action_Data* get_action_map(void) {
+        return action_map;
+    }
+
     Action_Data* get_action_data_for(s32 action_id) {
         if (action_id < 0 && action_id >= ACTION_COUNT) {
             return nullptr;

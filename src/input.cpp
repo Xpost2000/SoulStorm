@@ -43,6 +43,27 @@ namespace Input {
         return angle;
     }
 
+    void eat_key(s32 keyid) {
+        global_input.current_state.keys[keyid] = false;
+        global_input.last_state.keys[keyid] = false;
+    }
+
+    void eat_controller_button(s32 which, s32 button) {
+        if (which < 0 || which >= 4) {
+            return;
+        }
+
+        auto& controller = global_controllers[which];
+        controller.buttons[button] = false;
+        controller.last_buttons[button] = false;
+        controller.buttons_that_received_events[button] = false;
+    }
+
+    void eat_mouse_button(s32 button_id) {
+        global_input.current_state.mouse_buttons[button_id] = false;
+        global_input.last_state.mouse_buttons[button_id]    = false;
+    }
+
     void register_key_down(s32 keyid) {
         /*
           I literally don't know anywhere better to put this text editing specific
