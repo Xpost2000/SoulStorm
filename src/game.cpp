@@ -1636,63 +1636,65 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
                 s32 keyid     = Input::any_key_pressed();
                 s32 buttonid  = Input::controller_any_button_pressed(Input::get_gamepad(0));
 
-                Input::eat_key(keyid);
-                Input::eat_controller_button(0, buttonid);
+                if (keyid != KEY_UNKNOWN || buttonid != BUTTON_UNKNOWN) {
+                    Input::eat_key(keyid);
+                    Input::eat_controller_button(0, buttonid);
 
-                // blacklisted keys and buttons
-                bool blacklisted = false;
-                {
-                    for (s32 index = 0; index < array_count(blacklisted_input_keys); ++index) {
-                        if (keyid == blacklisted_input_keys[index]) {
-                            blacklisted = true;
-                            break;
+                    // blacklisted keys and buttons
+                    bool blacklisted = false;
+                    {
+                        for (s32 index = 0; index < array_count(blacklisted_input_keys); ++index) {
+                            if (keyid == blacklisted_input_keys[index]) {
+                                blacklisted = true;
+                                break;
+                            }
+                        }
+
+                        for (s32 index = 0; index < array_count(blacklisted_input_buttons); ++index) {
+                            if (buttonid == blacklisted_input_buttons[index]) {
+                                blacklisted = true;
+                                break;
+                            }
                         }
                     }
 
-                    for (s32 index = 0; index < array_count(blacklisted_input_buttons); ++index) {
-                        if (buttonid == blacklisted_input_buttons[index]) {
-                            blacklisted = true;
-                            break;
+                    if (blacklisted) {
+                        // skip
+                        _debugprintf("Illegal binding key/button. Do not do anything.");
+                    } else {
+                        control_menu_temp_data.trying_to_bind_controls = 0; // binding found.
+                        switch (control_menu_temp_data.action_id_to_bind_slot) {
+                            case CONTROLS_MENU_DATA_BINDING_SLOT_KEY0:
+                            case CONTROLS_MENU_DATA_BINDING_SLOT_KEY1:  {
+                                s32 keyid_slot = 0;
+
+                                if (control_menu_temp_data.action_id_to_bind_slot == CONTROLS_MENU_DATA_BINDING_SLOT_KEY1) {
+                                    keyid_slot = 1;
+                                }
+
+                                auto existing_binding =
+                                    Action::get_action_data_with_key_binding(keyid);
+
+                                if (existing_binding.binding) {
+                                    Swap(existing_binding.binding->key_id[existing_binding.keyinput_slot_id],
+                                         control_menu_temp_data.temp_action_map[action_id].key_id[keyid_slot],
+                                         s32);
+                                } else {
+                                    control_menu_temp_data.temp_action_map[action_id].key_id[keyid_slot] = keyid;
+                                }
+                            } break;
+                            case CONTROLS_MENU_DATA_BINDING_SLOT_GAMEPAD: {
+                                auto existing_binding =
+                                    Action::get_action_data_with_gamepad_binding(buttonid);
+
+                                if (existing_binding) {
+                                    Swap(existing_binding->button_id, control_menu_temp_data.temp_action_map[action_id].button_id, s32);
+                                } else {
+                                    control_menu_temp_data.temp_action_map[action_id].button_id = buttonid;
+                                }
+                            } break;
+                                bad_case;
                         }
-                    }
-                }
-
-                if (blacklisted) {
-                    // skip
-                    _debugprintf("Illegal binding key/button. Do not do anything.");
-                } else {
-                    control_menu_temp_data.trying_to_bind_controls = 0; // binding found.
-                    switch (control_menu_temp_data.action_id_to_bind_slot) {
-                        case CONTROLS_MENU_DATA_BINDING_SLOT_KEY0:
-                        case CONTROLS_MENU_DATA_BINDING_SLOT_KEY1:  {
-                            s32 keyid_slot = 0;
-
-                            if (control_menu_temp_data.action_id_to_bind_slot == CONTROLS_MENU_DATA_BINDING_SLOT_KEY1) {
-                                keyid_slot = 1;
-                            }
-
-                            auto existing_binding =
-                                Action::get_action_data_with_key_binding(keyid);
-
-                            if (existing_binding.binding) {
-                                Swap(existing_binding.binding->key_id[existing_binding.keyinput_slot_id],
-                                     control_menu_temp_data.temp_action_map[action_id].key_id[keyid_slot],
-                                     s32);
-                            } else {
-                                control_menu_temp_data.temp_action_map[action_id].key_id[keyid_slot] = keyid;
-                            }
-                        } break;
-                        case CONTROLS_MENU_DATA_BINDING_SLOT_GAMEPAD: {
-                            auto existing_binding =
-                                Action::get_action_data_with_gamepad_binding(buttonid);
-
-                            if (existing_binding) {
-                                Swap(existing_binding->button_id, control_menu_temp_data.temp_action_map[action_id].button_id, s32);
-                            } else {
-                                control_menu_temp_data.temp_action_map[action_id].button_id = buttonid;
-                            }
-                        } break;
-                            bad_case;
                     }
                 }
             } break;

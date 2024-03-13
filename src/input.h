@@ -292,7 +292,7 @@ static const char* controller_button_strings_lua(int button) {
 
 static const char* keyboard_key_strings(int key) {
     switch (key) {
-        case KEY_UNKNOWN: return "Unknown Key?";
+        case KEY_UNKNOWN: return "None";
         case KEY_A: return "A";
         case KEY_B: return "B";
         case KEY_C: return "C";
