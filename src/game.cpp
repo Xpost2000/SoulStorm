@@ -1112,11 +1112,10 @@ void Gameplay_Data::unload_all_script_loaded_resources(Game_State* game_state, G
             assertion(state->stage_state.L && "This state should not be null?");
             lua_close(state->stage_state.L);
             game_state->coroutine_tasks.L = nullptr;
+            game_state->gameplay_data.scriptable_render_objects.zero();
             state->stage_state.L = nullptr;
         }
     }
-
-    game_state->gameplay_data.scriptable_render_objects.zero();
 }
 
 void Gameplay_Data::add_bullet(Bullet b) {
@@ -1585,7 +1584,7 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
                 // Key2
                 {
                     string binding_string_name = string_from_cstring((cstring)keyboard_key_strings_readable(action_data->key_id[1]));
-                    if (GameUI::button(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && bindable) == WIDGET_ACTION_ACTIVATE) {
+                    if (GameUI::button(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && second_bindable) == WIDGET_ACTION_ACTIVATE) {
                         if (control_menu_temp_data.trying_to_bind_controls == 0) {
                             control_menu_temp_data.action_id_to_bind       = action_id;
                             control_menu_temp_data.action_id_to_bind_slot  = CONTROLS_MENU_DATA_BINDING_SLOT_KEY1;
@@ -3845,9 +3844,10 @@ GAME_SCREEN(update_and_render_game_ingame) {
         stage_draw(&state->stage_state, dt, game_render_commands, this->state);
     }
 
+    
+    Transitions::update_and_render(ui_render_commands, dt);
 
     state->update_and_render_all_background_scriptable_render_objects(this->state->resources, game_render_commands, dt);
-
     {
         for (int i = 0; i < (int)state->bullets.size; ++i) {
             auto& b = state->bullets[i];
@@ -3901,8 +3901,6 @@ GAME_SCREEN(update_and_render_game_ingame) {
         state->pet.draw(this->state, game_render_commands, resources);
         state->particle_pool.draw(game_render_commands, resources);
         state->death_particle_pool.draw(game_render_commands, resources);
-
-        Transitions::update_and_render(ui_render_commands, dt);
     }
     state->update_and_render_all_foreground_scriptable_render_objects(this->state->resources, game_render_commands, dt);
 }
