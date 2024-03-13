@@ -109,7 +109,7 @@ void Particle_Emitter::update(Particle_Pool* pool, random_state* prng, f32 dt) {
     if (emission_timer <= 0.0f) {
         for (s32 index = 0; index < emit_per_emission; ++index) {
             if (pool->particles.size >= pool->particles.capacity) break;
-            auto p = pool->particles.alloc();
+            auto p = pool->particles.alloc_unimportant()();
 
             p->position = shape.emit_position(prng);
             {
