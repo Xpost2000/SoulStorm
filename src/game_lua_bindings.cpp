@@ -53,6 +53,13 @@ int _lua_bind_create_render_object(lua_State* L) {
     return 1;
 }
 
+int _lua_bind_destroy_render_object(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    s32 scriptable_object_index =  luaL_checkinteger(L, 1);
+    state->gameplay_data.scriptable_render_objects.pop_and_swap(scriptable_object_index);
+    return 0;
+}
+
 int _lua_bind_render_object_set_layer(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     auto& scriptable_render_object = state->gameplay_data.scriptable_render_objects[luaL_checkinteger(L, 1)];
@@ -434,6 +441,7 @@ lua_State* Game_State::alloc_lua_bindings() {
          *       but I also don't think it's a big deal as well...
          */
         lua_register(L, "render_object_create", _lua_bind_create_render_object);
+        lua_register(L, "render_object_destroy", _lua_bind_destroy_render_object);
         lua_register(L, "render_object_set_layer", _lua_bind_render_object_set_layer);
         lua_register(L, "render_object_set_position", _lua_bind_render_object_set_position);
         lua_register(L, "render_object_set_src_rect", _lua_bind_render_object_set_src_rect);

@@ -1115,6 +1115,8 @@ void Gameplay_Data::unload_all_script_loaded_resources(Game_State* game_state, G
             state->stage_state.L = nullptr;
         }
     }
+
+    game_state->gameplay_data.scriptable_render_objects.zero();
 }
 
 void Gameplay_Data::add_bullet(Bullet b) {
@@ -3903,18 +3905,6 @@ GAME_SCREEN(update_and_render_game_ingame) {
         Transitions::update_and_render(ui_render_commands, dt);
     }
     state->update_and_render_all_foreground_scriptable_render_objects(this->state->resources, game_render_commands, dt);
-
-
-    /*
-      NOTE: because these are per "task invocation" objects,
-      I need these render objects to still exist when coroutines are paused, otherwise it'll
-      look like the background disappeared!
-
-      TODO: make background tasks also operate without "pausing"
-    */
-    if (!state->paused_from_death && this->state->ui_state == UI_STATE_INACTIVE) {
-        state->scriptable_render_objects.zero();
-    }
 }
 
 bool Game_Resources::sprite_id_should_be_rotated(sprite_id id) {
