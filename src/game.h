@@ -11,6 +11,8 @@
 #include "engine.h"
 #include "graphics_driver.h"
 
+#include "action_mapper.h"
+
 #include "achievements.h"
 #include "serializer.h"
 
