@@ -246,7 +246,17 @@ int _lua_bind_load_image(lua_State* L) {
         string_from_cstring((char*)lua_tostring(L, 1))
     );
 
-    state->gameplay_data.script_loaded_images.push(img_id);
+    bool already_exists = false;
+    for (s32 index = 0; index < state->gameplay_data.script_loaded_images.size; ++index) {
+        if (state->gameplay_data.script_loaded_images[index].index == img_id.index) {
+            already_exists = true;
+            break;
+        }
+    }
+
+    if (!already_exists) {
+        state->gameplay_data.script_loaded_images.push(img_id);
+    }
 
     lua_pushinteger(L, img_id.index);
     return 1;

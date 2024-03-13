@@ -285,12 +285,12 @@ void graphics_assets_unload_image(struct graphics_assets* assets, image_id img) 
     }
 
     if (assets->image_asset_status[index] != ASSET_STATUS_UNLOADED) {
+        assets->graphics_driver->unload_texture(assets, img);
         _debugprintf("Unloading image id %d\n", img.index);
         image_buffer_free(img_buffer);
         assets->image_asset_status[index] = ASSET_STATUS_UNLOADED;
 
         assert(assets->graphics_driver && "Hmm, how do you have no graphics driver?");
-        assets->graphics_driver->unload_texture(assets, img);
     }
 }
 
