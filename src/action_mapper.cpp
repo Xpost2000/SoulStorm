@@ -107,6 +107,14 @@ namespace Action {
     }
 
     Action_Find_Keybinding_Result get_action_data_with_key_binding(s32 keyid) {
+        return action_map_get_action_data_with_key_binding(action_map, keyid);
+    }
+
+    Action_Data* get_action_data_with_gamepad_binding(s32 buttonid) {
+        return action_map_get_action_data_with_gamepad_binding(action_map, buttonid);
+    }
+
+    Action_Find_Keybinding_Result action_map_get_action_data_with_key_binding(Action_Data* action_map, s32 keyid) {
         Action_Find_Keybinding_Result result;
         result.binding = nullptr;
         result.keyinput_slot_id = -1;
@@ -128,7 +136,7 @@ namespace Action {
         return result;
     }
 
-    Action_Data* get_action_data_with_gamepad_binding(s32 buttonid) {
+    Action_Data* action_map_get_action_data_with_gamepad_binding(Action_Data* action_map, s32 buttonid) {
         for (s32 index = 0; index < ACTION_COUNT; ++index) {
             auto& action = action_map[index]; 
 

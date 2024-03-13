@@ -123,6 +123,12 @@ namespace Action {
     Action_Find_Keybinding_Result get_action_data_with_key_binding(s32 keyid);
     Action_Data*                  get_action_data_with_gamepad_binding(s32 buttonid);
 
+    // Ergh. Minor stuff like this is slowly persuading me to never have any global variables or modules even since this
+    // pattern of me having to specify a "parameter" happens for stuff that I keep thinking is "global" so often it's not
+    // even funny anymore.
+    Action_Find_Keybinding_Result action_map_get_action_data_with_key_binding(Action_Data* action_map, s32 keyid);
+    Action_Data*                  action_map_get_action_data_with_gamepad_binding(Action_Data* action_map, s32 buttonid);
+
     Action_Data* get_action_map(void);
     Action_Data* get_action_data_for(s32 action_id);
 };

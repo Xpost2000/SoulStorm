@@ -1524,11 +1524,15 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
     GameUI::begin_frame(commands, &resources->graphics_assets);
     {
         f32 y = 30;
-        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
 
         if (trying_to_bind_something) {
-            GameUI::label(V2(50, y), string_literal("CONTROLS - [PRESS ANY KEY TO BIND]"), color32f32(1, 1, 1, 1), 4);
+            GameUI::set_font(resources->get_font(MENU_FONT_COLOR_BLUE));
+            GameUI::label(V2(50, y),
+                          string_from_cstring(format_temp("BINDING - %s",
+                                                          action_id_string_readable_name(control_menu_temp_data.action_id_to_bind))),
+                          color32f32(1, 1, 1, 1), 4);
         } else {
+            GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
             GameUI::label(V2(50, y), string_literal("CONTROLS"), color32f32(1, 1, 1, 1), 4);
         }
 
@@ -1622,7 +1626,11 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
         }
 
         if (Action::is_pressed(ACTION_CANCEL)) {
-            switch_ui(state->last_ui_state);
+            if (control_menu_temp_data.trying_to_bind_controls != 0) {
+                control_menu_temp_data.trying_to_bind_controls = 0;
+            } else {
+                switch_ui(state->last_ui_state);
+            }
         }
     }
     GameUI::end_frame();
@@ -1673,7 +1681,10 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
                                 }
 
                                 auto existing_binding =
-                                    Action::get_action_data_with_key_binding(keyid);
+                                    Action::action_map_get_action_data_with_key_binding(
+                                        control_menu_temp_data.temp_action_map,
+                                        keyid
+                                    );
 
                                 if (existing_binding.binding) {
                                     Swap(existing_binding.binding->key_id[existing_binding.keyinput_slot_id],
@@ -1685,7 +1696,10 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
                             } break;
                             case CONTROLS_MENU_DATA_BINDING_SLOT_GAMEPAD: {
                                 auto existing_binding =
-                                    Action::get_action_data_with_gamepad_binding(buttonid);
+                                    Action::action_map_get_action_data_with_gamepad_binding(
+                                        control_menu_temp_data.temp_action_map,
+                                        buttonid
+                                    );
 
                                 if (existing_binding) {
                                     Swap(existing_binding->button_id, control_menu_temp_data.temp_action_map[action_id].button_id, s32);
