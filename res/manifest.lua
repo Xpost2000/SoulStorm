@@ -200,4 +200,18 @@ projectiles = {
 };
 
 entities = {
+   {
+      {
+         {"res/img/skull/enemy_skull_a_0.png", nil,  0.0},
+         {"res/img/skull/enemy_skull_a_1.png", nil,  0.0},
+         {"res/img/skull/enemy_skull_a_2.png", nil,  0.0},
+      }
+   },
+   {
+      {
+         {"res/img/skull/enemy_skull_b_0.png", nil,  0.0},
+         {"res/img/skull/enemy_skull_b_1.png", nil,  0.0},
+         {"res/img/skull/enemy_skull_b_2.png", nil,  0.0},
+      }
+   }
 };

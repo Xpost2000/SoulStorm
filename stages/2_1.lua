@@ -53,6 +53,8 @@ function Make_Enemy_SpinTrip_2_1_1(hp,
          enemy_set_acceleration(e, exit_direction[1] * exit_acceleration, exit_direction[2] * exit_acceleration);
       end
    )
+
+   return e;
 end
 
 function wave1()
@@ -65,15 +67,17 @@ function wave1()
             local enemy_position = v2(play_area_width()/2, play_area_height()/2);
             explosion_hazard_new(enemy_position[1], enemy_position[2], 15, 0.05, 0.15);
             t_wait(1.25);
-            Make_Enemy_SpinTrip_2_1_1(9999,
-                                      enemy_position,
-                                      60,
-                                      5,
-                                      v2(0, 1),
-                                      50,
-                                      30,
-                                      30.0,
-                                      PROJECTILE_SPRITE_GREEN);
+            local e = Make_Enemy_SpinTrip_2_1_1(9999,
+                                                enemy_position,
+                                                60,
+                                                5,
+                                                v2(0, 1),
+                                                50,
+                                                30,
+                                                30.0,
+                                                PROJECTILE_SPRITE_GREEN);
+
+            enemy_set_visual(e, ENTITY_SPRITE_SKULL_A);
          end
       end
    )
