@@ -246,3 +246,57 @@ function difficulty(a, b, c, d)
       return d;
    end
 end
+
+--
+-- Asynchronous stage task queue
+--
+--
+-- "Scriptland" helper API to make level scripting a little easier based on absolute
+--  timings instead of relative timings.
+--
+--
+asynchronous_stage_task_queue = {};
+function absolute_stage_scheduler_run()
+   async_task_lambda(
+      function()
+         while true do
+            local current_time      = current_stage_time();
+            local to_remove_indices = {};
+
+            for k, v in pairs(asynchronous_stage_task_queue) do
+               local trigger_time = v[1];
+               if trigger_time >= current_time then
+                  table.insert(to_remove_indices, k);
+                  local fn = v[2];
+                  local a  = v[3];
+                  local b  = v[4];
+                  local c  = v[5];
+                  local d  = v[6];
+                  local e  = v[7];
+                  local f  = v[8];
+                  local g  = v[9];
+                  fn(a, b, c, d, e, f, g);
+               end
+            end
+
+            for k, v in pairs(to_remove_indices) do
+               table.remove(asynchronous_stage_task_queue, v);
+            end
+
+            t_yield();
+         end
+      end
+   );
+end
+
+function stage_async_task_at(absolute_time_in_seconds, fn, a, b, c, d, e, f, g)
+   entry = {
+      -- timer
+      absolute_time_in_seconds,
+      -- callback
+      fn,
+      -- params
+      a, b, c, d, e, f, g
+   };
+   table.insert(asynchronous_stage_task_queue, entry);
+end
