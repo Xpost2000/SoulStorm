@@ -127,7 +127,7 @@ function Make_Enemy_Burst360_1_1_2(
                   b,
                   function(b)
                      bullet_set_velocity(b, current_arc_direction[1] * bullet_present_velocity, current_arc_direction[2] * bullet_present_velocity);
-                     t_wait(clamp(0.10 * displacement), 0.1, 0.5);
+                     t_wait(clamp(0.10 * displacement, 0.1, 0.5));
                      bullet_reset_movement(b);
                      t_wait(0.5);
                      bullet_set_velocity(b, current_arc_direction[1] * bullet_velocity, current_arc_direction[2] * bullet_velocity);

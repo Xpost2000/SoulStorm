@@ -1,3 +1,6 @@
+-- TODO:
+-- Finish Wave1 30 seconds.
+
 engine_dofile("stages/common.lua")
 
 -- Enemy that spawns in a place, does a spin dodge trap
@@ -176,7 +179,8 @@ function wave1()
          v2(40, 40),
          0.5,
          0.15,
-         4,
+         8,
+
          45,
          8,
 
@@ -195,7 +199,8 @@ function wave1()
          v2(play_area_width() - 40, 40),
          0.5,
          0.15,
-         4,
+         8,
+
          45,
          8,
 
@@ -208,6 +213,11 @@ function wave1()
          PROJECTILE_SPRITE_RED
       )
    end
+
+   t_wait(10.0);
+   -- Spawn a small semi circle of 4 exploder enemies
+   -- it should be possible to dodge them once they're killed. I hope. If not, I'll just make the explosion
+   -- radius pretty small.
 end
 
 function stage_task()
