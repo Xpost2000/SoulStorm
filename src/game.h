@@ -111,6 +111,7 @@ public:
     // Submode initialization
     void mainmenu_data_initialize(Graphics_Driver* driver);
     void opening_data_initialize(Graphics_Driver* driver);
+    void ending_data_initialize(Graphics_Driver* driver);
     void title_data_initialize(Graphics_Driver* driver);
 
     void update_and_render(Graphics_Driver* driver, f32 dt);

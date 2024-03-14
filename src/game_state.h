@@ -173,11 +173,13 @@ enum Game_Screen_Modes {
     GAME_SCREEN_ENDING    = 5,
     GAME_SCREEN_COUNT     = 6,
 
-/* #ifndef RELEASE */
-/*     GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_TITLE_SCREEN, */
-/* #else */
+#ifndef RELEASE
+    // Testing purposes I want to skip the intro.
+    GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_TITLE_SCREEN,
+#else
     GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_OPENING,
-/* #endif */
+    /* GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_ENDING, */
+#endif
 };
 
 #include "stages.h"

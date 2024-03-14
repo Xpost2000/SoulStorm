@@ -996,6 +996,9 @@ void Game::init(Graphics_Driver* driver) {
     // opening_data initialize
     opening_data_initialize(driver);
 
+    // ending_data initialize
+    ending_data_initialize(driver);
+
     // title screen initialize
     title_data_initialize(driver);
 
@@ -4663,6 +4666,14 @@ void Game::switch_screen(s32 screen) {
     if (state->last_screen_mode == screen) {
         return;
     }
+
+#if 0
+    if (state->screen_mode == GAME_SCREEN_OPENING) {
+        state->opening_data.unload_all_assets(resources);
+    } else if (state->screen_mode == GAME_SCREEN_ENDING) {
+        state->ending_data.unload_all_assets(resources);
+    }
+#endif
 
     state->last_screen_mode = state->screen_mode;
     state->screen_mode      = screen;
