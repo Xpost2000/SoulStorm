@@ -1806,7 +1806,7 @@ GAME_UI_SCREEN(update_and_render_review_script_error_menu) {
             switch_ui(UI_STATE_INACTIVE);
             task_scheduler.address_error();
 
-            gameplay_recording_file_stop_recording(&state->gameplay_data.recording);
+            gameplay_recording_file_finish(&state->gameplay_data.recording);
             reset_stage_simulation_state();
         }
         y += 30;
@@ -2004,9 +2004,11 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
                         {
                             auto& main_menu_state = state->mainmenu_data;
                             if (!main_menu_state.cutscene1.triggered && can_access_stage(3)) {
+                                _debugprintf("Switched to ending");
                                 switch_screen(GAME_SCREEN_ENDING);
                                 main_menu_state.start_completed_maingame_cutscene(state);
                             } else {
+                                _debugprintf("Switched to main menu");
                                 switch_screen(GAME_SCREEN_MAIN_MENU);
                             }
                         }
@@ -2052,9 +2054,10 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
             } break;
             default: {
                 Transitions::register_on_finish(
-                    [&](void*) {
+                    [&](void*) mutable {
                         switch_ui(UI_STATE_INACTIVE);
                         switch_screen(GAME_SCREEN_MAIN_MENU);
+                        _debugprintf("Switched to main menu");
 
                         Transitions::do_shuteye_out(
                             color32f32(0, 0, 0, 1),
@@ -4672,10 +4675,6 @@ void Play_Area::set_all_edge_behaviors_to(u8 value) {
 }
 
 void Game::switch_screen(s32 screen) {
-    if (state->last_screen_mode == screen) {
-        return;
-    }
-
 #if 0
     if (state->screen_mode == GAME_SCREEN_OPENING) {
         state->opening_data.unload_all_assets(resources);
