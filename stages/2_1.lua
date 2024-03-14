@@ -78,6 +78,7 @@ function wave1()
                                                 PROJECTILE_SPRITE_GREEN);
 
             enemy_set_visual(e, ENTITY_SPRITE_SKULL_A);
+            enemy_set_visual_scale(e, 1.5, 1.5);
          end
       end
    )

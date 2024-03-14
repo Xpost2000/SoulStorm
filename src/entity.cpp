@@ -1076,11 +1076,13 @@ void Enemy_Entity::update(Game_State* state, f32 dt) {
     }
 
     Entity::update(state, dt);
-    sprite.animate(
-        &state->resources->graphics_assets,
-        dt,
-        0.045
-    );
+    if (sprite.id.index != 0) {
+        sprite.animate(
+            &state->resources->graphics_assets,
+            dt,
+            0.125
+        );
+    }
     handle_play_area_edge_behavior(play_area);
 }
 
