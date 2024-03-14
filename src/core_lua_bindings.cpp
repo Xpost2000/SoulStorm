@@ -144,6 +144,7 @@ otherwise your stage will break the replay system."
     return 1;
 }
 
+
 GAME_LUA_PROC(
 prng_normalized_float,
 "-> number",
@@ -234,6 +235,30 @@ global_elapsed_time,
 {
     auto engine = Global_Engine();
     lua_pushnumber(L, engine->global_elapsed_time);
+    return 1;
+}
+
+GAME_LUA_PROC(
+current_stage_score,
+"-> integer",
+"Get current stage score",
+"Get the current stage score."
+)
+{
+    Game_State* state = lua_binding_get_gamestate(L);
+    lua_pushinteger(L, state->gameplay_data.current_score);
+    return 1;
+}
+
+GAME_LUA_PROC(
+current_stage_time,
+"-> number",
+"Get current stage timer.",
+"Get the current stage timer (elapsed stage time). Used for absolute timing events (refer to common.lua)"
+)
+{
+    Game_State* state = lua_binding_get_gamestate(L); 
+    lua_pushnumber(L, state->gameplay_data.current_stage_timer);
     return 1;
 }
 

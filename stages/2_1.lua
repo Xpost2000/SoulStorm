@@ -1,5 +1,6 @@
 -- TODO:
 -- Finish Wave1 30 seconds.
+-- NOTE (00:00::36) is empty spot for next round!
 
 engine_dofile("stages/common.lua")
 
@@ -78,7 +79,7 @@ function wave1()
                                                 PROJECTILE_SPRITE_GREEN);
 
             enemy_set_visual(e, ENTITY_SPRITE_SKULL_A);
-            enemy_set_visual_scale(e, 1.5, 1.5);
+            enemy_set_visual_scale(e, 1.3, 1.3);
          end
       end
    )

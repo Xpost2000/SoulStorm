@@ -13,6 +13,8 @@ void bind_core_lualib(lua_State* L){
     lua_register(L, "async_task", GAME_LUA_BINDING_NAME(async_task));
     lua_register(L, "alloc_particle_emitter", GAME_LUA_BINDING_NAME(alloc_particle_emitter));
     lua_register(L, "global_elapsed_time", GAME_LUA_BINDING_NAME(global_elapsed_time));
+    lua_register(L, "current_stage_score", GAME_LUA_BINDING_NAME(current_stage_score));
+    lua_register(L, "current_stage_time", GAME_LUA_BINDING_NAME(current_stage_time));
     lua_register(L, "ticktime", GAME_LUA_BINDING_NAME(ticktime));
     lua_register(L, "engine_dofile", GAME_LUA_BINDING_NAME(engine_dofile));
 }
