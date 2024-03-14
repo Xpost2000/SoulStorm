@@ -1732,7 +1732,6 @@ GAME_UI_SCREEN(update_and_render_review_script_error_menu) {
       This is technically a debug feature that also happens to be useful for release reasons like
       modding if I want that.
     */
-    Transitions::clear_effect();
     auto& task_scheduler = state->coroutine_tasks;
 
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
@@ -1805,6 +1804,7 @@ GAME_UI_SCREEN(update_and_render_review_script_error_menu) {
         if (GameUI::button(V2(100, y), string_literal("Restart"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(UI_STATE_INACTIVE);
             task_scheduler.address_error();
+            task_scheduler.errors.zero();
 
             gameplay_recording_file_finish(&state->gameplay_data.recording);
             reset_stage_simulation_state();
@@ -3314,7 +3314,8 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     this->state->coroutine_tasks.schedule_by_type(this->state, dt, GAME_TASK_SOURCE_GAME_FIXED);
 
     // shouldn't happen during replays.
-    if (this->state->coroutine_tasks.need_to_address_error()) {
+    if (this->state->ui_state != UI_STATE_REVIEW_SCRIPT_ERROR && this->state->coroutine_tasks.need_to_address_error()) {
+		Transitions::clear_effect();
         switch_ui(UI_STATE_REVIEW_SCRIPT_ERROR);
         return;
     }

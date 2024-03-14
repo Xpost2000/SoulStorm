@@ -150,6 +150,7 @@ function Make_Enemy_Burst360_1_1_2(
    return e;
 end
 
+-- I need to take advantage of these behavior things way more.
 function Enemy_AddExplodeOnDeathBehavior(e, explosion_radius, warning_timer, explosion_timer)
    async_task_lambda(
       function(e)
@@ -170,6 +171,7 @@ function Enemy_AddExplodeOnDeathBehavior(e, explosion_radius, warning_timer, exp
       e
    );
 end
+
 function Enemy_AddSpinBehavior(e, angle_rotation_per_frame, radiusx, radiusy)
    enemy_task_lambda(
       e,

@@ -316,7 +316,8 @@ bool Game_Task_Scheduler::need_to_address_error(void) {
 }
 
 void Game_Task_Scheduler::push_error(string name_source, string error_string) {
-    errors.push(Task_Lua_Error(name_source, error_string));
+    if (!absolute_failure())
+        errors.push(Task_Lua_Error(name_source, error_string));
     new_error = true;
 }
 
