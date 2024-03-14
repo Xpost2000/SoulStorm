@@ -64,9 +64,9 @@ namespace Transitions {
         state->time                          = 0;
         state->delay_time                    = delay_timer;
         state->forwards                      = forwards;
-        register_on_delay_finish([&](void*){});
-        register_on_finish([&](void*){});
-        register_on_start([&](void*){});
+        register_on_delay_finish([](void*){});
+        register_on_finish([](void*){});
+        register_on_start([](void*){});
     }
 
     void do_horizontal_slide_in(color32f32 target_color, f32 delay_timer, f32 time) {
@@ -212,15 +212,20 @@ namespace Transitions {
         transition_state->type = TRANSITION_FADER_TYPE_NONE;
         transition_state->time = 0;
 
-        on_delay_finish(nullptr);
-        on_finish(nullptr);
+        // NOTE: can be reentrant.
+#if 1
+        if (on_delay_finish) 
+            on_delay_finish(nullptr);
+        if (on_finish)
+            on_finish(nullptr);
 
         last_global_transition_fader_state = global_transition_fader_state;
         stop();
 
-        register_on_delay_finish([&](void*){});
-        register_on_finish([&](void*){});
-        register_on_start([&](void*){});
+        register_on_delay_finish([](void*){});
+        register_on_finish([](void*){});
+        register_on_start([](void*){});
+#endif
     }
 
     // can be touched for other stuff later I guess.

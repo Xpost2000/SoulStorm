@@ -1806,7 +1806,7 @@ GAME_UI_SCREEN(update_and_render_review_script_error_menu) {
             switch_ui(UI_STATE_INACTIVE);
             task_scheduler.address_error();
 
-            gameplay_recording_file_finish(&state->gameplay_data.recording);
+            gameplay_recording_file_stop_recording(&state->gameplay_data.recording);
             reset_stage_simulation_state();
         }
         y += 30;

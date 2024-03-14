@@ -518,8 +518,8 @@ function Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed)
             render_object_set_layer(background_render_object, 0);
 
             local src_x = render_object_get_src_rect_x(background_render_object);
-
             scroll_y = scroll_y + scrollspeed;
+
             render_object_set_src_rect(
                background_render_object,
                src_x,
@@ -528,7 +528,6 @@ function Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed)
                480
             );
 
-            t_wait(2.0);
             t_yield();
          end
       end
