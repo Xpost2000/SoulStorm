@@ -2248,6 +2248,15 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
         }
         y += 30;
 
+#ifndef RELEASE
+        if (GameUI::button(V2(100, y), string_literal("[DEVEL]Reload Level"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+            gameplay_recording_file_finish(&state->gameplay_data.recording);
+            reset_stage_simulation_state();
+            switch_ui(UI_STATE_INACTIVE);
+        }
+        y += 30;
+#endif
+
         if (state->screen_mode != GAME_SCREEN_MAIN_MENU) {
             if (GameUI::button(V2(100, y), string_literal("Return To Menu"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 if (state->screen_mode != GAME_SCREEN_INGAME) {
