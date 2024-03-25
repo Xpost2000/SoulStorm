@@ -62,8 +62,8 @@ struct Fixed_Array {
     }
 
     void insert(T& x, int at) {
-        for (int i = at; i < size; ++i) {
-            data[i+1] = data[i];
+        for (int i = size; i > at; --i) {
+            data[i] = data[i-1];
         }
         size+=1;
         assertion(size >= 0 && size <= capacity && "Over allocated.");
