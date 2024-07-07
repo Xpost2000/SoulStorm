@@ -124,6 +124,8 @@ struct graphics_assets graphics_assets_create(Memory_Arena* arena, u32 font_limi
 sprite_id              graphics_assets_alloc_sprite(struct graphics_assets* assets, u32 frames);
 Sprite*                graphics_get_sprite_by_id(struct graphics_assets* assets, sprite_id id);
 Sprite_Frame*          sprite_get_frame(Sprite* sprite, s32 index);
+s32                    sprite_get_unique_image_count(Sprite* sprite);
+s32                    sprite_copy_all_images_into_image_array(Sprite* sprite, image_id* destination_array, s32 length);
 
 void                   graphics_assets_finish(struct graphics_assets* assets);
 image_id               graphics_assets_load_image(struct graphics_assets* assets, string path);

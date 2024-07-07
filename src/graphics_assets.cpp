@@ -359,14 +359,82 @@ sprite_id graphics_assets_alloc_sprite(struct graphics_assets* assets, u32 frame
 }
 
 Sprite* graphics_get_sprite_by_id(struct graphics_assets* assets, sprite_id id) {
+    // Special case added, because I kind of care when it *is* null,
+    // or rather if I changed this, I'm not sure what else would need to change.
+    if (id.index == 0) {
+        return nullptr;
+    }
+
     assertion(id.index > 0 && id.index <= assets->sprite_count);
     return &assets->sprites[id.index-1];
 }
 
+s32 sprite_get_unique_image_count(Sprite* sprite) {
+    assertion(sprite);
+    s32 count = 0;
+    s32* image_ids_encountered =
+        (s32*)Global_Engine()->scratch_arena.push_unaligned(sizeof(*image_ids_encountered) * sprite->frame_count);
+
+    for (s32 index = 0; index < sprite->frame_count; ++index) {
+        bool unique = true;
+        auto frame = sprite_get_frame(sprite, index);
+
+        for (s32 encountered_index = 0; encountered_index < count; ++encountered_index) {
+            if (image_ids_encountered[encountered_index] == frame->img.index) {
+                unique = false;
+                break;
+            }
+        }
+
+        if (unique) {
+            image_ids_encountered[count++] = frame->img.index;
+        }
+    }
+
+    return count;
+}
+
 Sprite_Frame* sprite_get_frame(Sprite* sprite, s32 index) {
     //_debugprintf("sprite get frame: (%p) %d/%d", sprite, index, sprite->frame_count);
+    assertion(sprite);
     assertion(index >= 0 && index < sprite->frame_count);
     return &sprite->frames[index];
+}
+
+s32 sprite_copy_all_images_into_image_array(Sprite* sprite, image_id* destination_array, s32 length) {
+    assertion(sprite);
+
+    s32 frame_count = sprite->frame_count;
+    s32 written     = 0;
+
+    for (s32 frame_index = 0; frame_index < frame_count; ++frame_index) {
+        auto& frame = sprite->frames[frame_index];
+        auto img_id = frame.img;
+
+        if (written >= length)
+            break;
+
+#if 1
+        // Skip including the same image multiple times.
+        bool skip_iter = false;
+
+        // No this isn't super optimal but whatever.
+        for (s32 destination_index = 0; destination_index < written; ++destination_index) {
+            if (destination_array[destination_index].index == img_id.index) {
+                skip_iter = true;
+                break;
+            }
+        }
+
+        if (skip_iter) {
+            continue;
+        }
+#endif
+
+        destination_array[written++] = img_id;
+    }
+
+    return written;
 }
 
 Sprite_Instance sprite_instance(sprite_id id) {
@@ -449,6 +517,7 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
                 auto&                subimage_object = result.subimages[index];
 
                 subimage_object.subrectangle   = rectangle_f32(write_x, write_y, img->width, img->height);
+                _debugprintf("Fitting image index %d", index);
 
                 if (request_resize) {
                     break;

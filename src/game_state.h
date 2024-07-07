@@ -60,7 +60,8 @@ enum menu_font_variation {
 
 /* NOTE:
    I am probably leaving these constants hardcoded, even if I push
-   it to be more data driven.
+   it to be more data driven. (cause it's too late to change some things, or I'd rather not
+   being doing it, since some of the game code is in C++ and some is in lua.)
 
    NOTE: these are the "assumed" default projectile sprites the game always assumes
    we have.
@@ -851,6 +852,10 @@ struct Game_Resources {
     Sprite_Instance  locked_trophy_sprite_instance;
     Sprite_Instance  unlocked_trophy_sprite_instance;
     Texture_Atlas    ui_texture_atlas;
+
+    // Contains all projectiles and entity sprites.
+    // This is anything that isn't loaded in "on-demand" from scripts
+    Texture_Atlas    gameplay_texture_atlas;
 
     // I should have more of these...
     Audio::Sound_ID        attack_sounds[2];
