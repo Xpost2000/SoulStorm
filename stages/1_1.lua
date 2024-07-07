@@ -614,8 +614,6 @@ function wave_2_sub2()
       enemy_set_task(
          e, "_wave2_enemy_dipshooter", 6, 80, 1, 0.250, 0.35,
          function (e)
-         end,
-         function (e)
             for i=1, 3 do
                local ep = v2(enemy_position_x(e), enemy_position_y(e));
                local d1 = v2_direction_from_degree(145 + 90);
