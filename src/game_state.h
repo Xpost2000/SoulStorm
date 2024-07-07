@@ -374,8 +374,11 @@ struct Gameplay_Data_Pet_Information {
 };
 
 struct Gameplay_Data {
+    bool campaign_perfect_clear;
+    bool stage_perfect_clear;
     bool stage_completed;
     bool playing_practice_mode;
+
     Stage_State stage_state;
     Particle_Pool particle_pool;
     Particle_Pool death_particle_pool;

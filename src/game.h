@@ -152,6 +152,9 @@ private:
     GAME_UI_SCREEN(update_and_render_confirm_back_to_main_menu);
     GAME_UI_SCREEN(update_and_render_confirm_exit_to_windows);
 
+    void check_and_unlock_perfect_clear_achievement(void);
+    void check_and_unlock_platinum_achievement(void);
+
     void update_dialogue_speaker(f32 dt, s32 speaker_index);
     void render_dialogue_speaker(struct render_commands* commands, f32 dt, s32 speaker_index);
 

@@ -1192,6 +1192,10 @@ void Gameplay_Data::set_pet_id(s8 id, Game_Resources* resources) {
 }
 
 void Gameplay_Data::remove_life(void) {
+    // TODO: Add notification(?)
+    stage_perfect_clear    = false;
+    campaign_perfect_clear = false;
+
     if (tries > 0) {
         tries -= 1;
     }
@@ -2561,7 +2565,9 @@ GAME_UI_SCREEN(update_and_render_stage_select_menu) {
 
             if (GameUI::button(V2(100, y), string_literal("Play Stage"), color32f32(1, 1, 1, 1), 2, !Transitions::fading() && met_all_prerequisites) == WIDGET_ACTION_ACTIVATE) {
                 enter_level = 0;
-                state->gameplay_data.playing_practice_mode = false;
+                state->gameplay_data.playing_practice_mode  = false;
+                state->gameplay_data.campaign_perfect_clear = true;
+                state->gameplay_data.stage_perfect_clear    = true;
             }
             y += 30;
             if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
@@ -3400,11 +3406,28 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                     game_register_stage_completion(stage_id, level_id);
                     completion_type = game_complete_stage_level(stage_id, level_id, state->gameplay_data.playing_practice_mode);
 
-                    if (completion_type == GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE) {
-                        if (state->gameplay_data.unlocked_pets < 3) {
-                            state->mainmenu_data.start_unlock_pet_cutscene(state);
-                        }
+                    switch (completion_type) {
+                        case GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE: {
+                            if (state->gameplay_data.unlocked_pets < 3) {
+                                state->mainmenu_data.start_unlock_pet_cutscene(state);
+
+                                if (state->gameplay_data.stage_perfect_clear) {
+                                    // ? add to score probably.
+                                    // nothing.
+                                }
+
+                                if (state->gameplay_data.campaign_perfect_clear) {
+                                    auto achievement = Achievements::get(ACHIEVEMENT_ID_STAGE1_FLAWLESS + stage_id);
+                                    achievement->report();
+                                }
+                            }
+                        } break;
+                        default: {
+                        } break;
                     }
+
+                    // assume the next stage is perfect cleared by default.
+                    state->gameplay_data.stage_perfect_clear = true;
                 }
 
                 Transitions::do_color_transition_in(
@@ -4200,6 +4223,45 @@ void Game_State::set_led_target_color_anim_force(color32u8 color, f32 anim_lengt
     led_state.finished_anim       = false;
 }
 
+void Game::check_and_unlock_perfect_clear_achievement(void) {
+    auto perfect_clear_achievement = Achievements::get(ACHIEVEMENT_ID_UNTOUCHABLE);
+
+    bool all_previous_unlocked = true;
+    for (s32 achievement_id = ACHIEVEMENT_ID_STAGE1_FLAWLESS;
+         achievement_id <= ACHIEVEMENT_ID_STAGE3_FLAWLESS;
+         ++achievement_id) {
+        auto achievement = Achievements::get(achievement_id);
+
+        if (!achievement->complete()) {
+            all_previous_unlocked = false;
+            break;
+        }
+    }
+
+    if (all_previous_unlocked) {
+        perfect_clear_achievement->report();
+    }
+}
+
+void Game::check_and_unlock_platinum_achievement(void) {
+    auto platinum_achievement = Achievements::get(ACHIEVEMENT_ID_PLATINUM);
+    {
+        // NOTE: the platinum_achievement is the last achievement id
+        bool all_previous_unlocked = true;
+        for (s32 i = 0; i < ACHIEVEMENT_ID_PLATINUM; ++i) {
+            auto achievement = Achievements::get(i);
+            if (!achievement->complete()) {
+                all_previous_unlocked = false;
+                break;
+            }
+        }
+
+        if (all_previous_unlocked) {
+            platinum_achievement->report();
+        }
+    }
+}
+
 void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     V2 resolution = driver->resolution();
     bool take_screenshot = false;
@@ -4247,25 +4309,8 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
 
     // Achievement related updates.
     {
-        // always check for the platinum achievement unlock
-        {
-            auto platinum_achievement = Achievements::get(ACHIEVEMENT_ID_PLATINUM);
-            {
-                // NOTE: the platinum_achievement is the last achievement id
-                bool all_previous_unlocked = true;
-                for (s32 i = 0; i < ACHIEVEMENT_ID_PLATINUM; ++i) {
-                    auto achievement = Achievements::get(i);
-                    if (!achievement->complete()) {
-                        all_previous_unlocked = false;
-                        break;
-                    }
-                }
-
-                if (all_previous_unlocked) {
-                    platinum_achievement->report();
-                }
-            }
-        }
+        check_and_unlock_perfect_clear_achievement();
+        check_and_unlock_platinum_achievement();
 
         // Polling based achievement updating.
         {
