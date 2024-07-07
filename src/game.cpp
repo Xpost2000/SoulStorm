@@ -2445,7 +2445,7 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
         y += 30;
 
 #ifndef RELEASE
-        if (state->screen_mode != GAME_SCREEN_MAIN_MENU) {
+        if (state->screen_mode != GAME_SCREEN_TITLE_SCREEN) {
             if (GameUI::button(V2(100, y), string_literal("Custom Levels"), color32f32(1, 1, 1, 1), 2, !Transitions::fading() && state->screen_mode != GAME_SCREEN_INGAME) == WIDGET_ACTION_ACTIVATE) {
                 _debugprintf("Not supported yet!");
                 // switch_ui(UI_STATE_REPLAY_COLLECTION);
