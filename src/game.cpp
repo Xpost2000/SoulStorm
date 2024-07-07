@@ -675,7 +675,6 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             HERO_IMAGE_FRAME_COUNT;
         _debugprintf("ATLAS IMAGES TO PACK %d", atlas_sprite_count);
 
-#if 1
         // count sprites...
         {
 #if 0
@@ -704,7 +703,6 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             }
 #endif
         }
-#endif
 
         _debugprintf("ATLAS IMAGES TO PACK %d", atlas_sprite_count);
         image_id* images =  
@@ -712,7 +710,6 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
         {
             s32 cursor = 0;
-#if 0
 #if 0
             for (s32 projectile_sprite_type = 0; projectile_sprite_type < PROJECTILE_SPRITE_TYPES; ++projectile_sprite_type) {
                 auto sprite_object = graphics_get_sprite_by_id(
@@ -740,8 +737,8 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
                 }
             }
 #endif
-#endif
 
+#if 1
             for (s32 pet_image_direction = 0; pet_image_direction < 4; ++pet_image_direction) {
                 for (s32 pet_image_type = 0; pet_image_type < GAME_PET_ID_COUNT; ++pet_image_type) {
                     images[cursor++] = resources->pet_images[pet_image_type][pet_image_direction];
@@ -751,12 +748,14 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             for (s32 hero_image_index = 0; hero_image_index < HERO_IMAGE_FRAME_COUNT; ++hero_image_index) {
                 images[cursor++] = resources->hero_images[hero_image_index];
             }
+#endif
+
+            resources->gameplay_texture_atlas =
+                graphics_assets_construct_texture_atlas_image(&resources->graphics_assets,
+                                                              images,
+                                                              cursor);
         }
 
-        resources->gameplay_texture_atlas =
-            graphics_assets_construct_texture_atlas_image(&resources->graphics_assets,
-                                                          images,
-                                                          atlas_sprite_count);
         // REMOVE when this is confirmed to actually work!
         // graphics_assets_texture_atlas_unload_original_subimages(&resources->graphics_assets, resources->ui_texture_atlas);
     }

@@ -411,6 +411,7 @@ s32 sprite_copy_all_images_into_image_array(Sprite* sprite, image_id* destinatio
         auto& frame = sprite->frames[frame_index];
         auto img_id = frame.img;
 
+        assertion(img_id.index && "Why is this image ID null?");
         if (written >= length)
             break;
 
@@ -510,6 +511,7 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
             write_x = 0;
             write_y = 0;
             bool request_resize = false;
+            s32  height_of_budger = 0;
 
             bool new_row = false;
             for (u32 index = 0; index < image_count; ++index) {
@@ -560,13 +562,14 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
                 if (subimage_object.subrectangle.y >= image_pot_size ||
                     subimage_object.subrectangle.y + subimage_object.subrectangle.h > image_pot_size) {
                     request_resize = true;
+                    height_of_budger = subimage_object.subrectangle.h;
                 }
             }
 
             if (request_resize) {
                 u32 last_image_pot_size = image_pot_size;
-                image_pot_size = nearest_pot32(write_y+1);
-                _debugprintf("Requesting resisze from %d to %d", last_image_pot_size, image_pot_size);
+                image_pot_size = nearest_pot32(write_y+height_of_budger);
+                _debugprintf("Requesting resisze from %d to %d (write_cursor=%d, height_of_budger=%d)", last_image_pot_size, image_pot_size, write_y, height_of_budger);
             } else {
                 complete = true;
                 _debugprintf("Texture atlas simplest fit determined to be %dx%d", image_pot_size, image_pot_size);
