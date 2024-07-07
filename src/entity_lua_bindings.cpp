@@ -176,18 +176,21 @@ int _lua_bind_enemy_set_task(lua_State* L) {
     char* task_name = (char*)lua_tostring(L, 2);
     auto e = state->gameplay_data.lookup_enemy(uid);
 
-    lua_remove(L, 1); lua_remove(L, 1);
-    s32 remaining = lua_gettop(L);
+	if (e) {
+		lua_remove(L, 1); lua_remove(L, 1);
+		s32 remaining = lua_gettop(L);
 
-    _debugprintf("entity async task with %d elements [%d actual stack top]", remaining, lua_gettop(L));
+		_debugprintf("entity async task with %d elements [%d actual stack top]", remaining, lua_gettop(L));
 
-    state->coroutine_tasks.add_enemy_lua_game_task(
-        state,
-        L,
-        state->coroutine_tasks.L,
-        task_name,
-        uid
-    );
+		state->coroutine_tasks.add_enemy_lua_game_task(
+			state,
+			L,
+			state->coroutine_tasks.L,
+			task_name,
+			uid
+		);
+	}
+
     return 0;
 }
 
@@ -617,15 +620,18 @@ int _lua_bind_bullet_set_task(lua_State* L) {
 
     auto e = state->gameplay_data.lookup_bullet(uid);
 
-    s32 remaining = lua_gettop(L);
-    _debugprintf("bullet async task with %d elements [%d actual stack top]", remaining, lua_gettop(L));
-    state->coroutine_tasks.add_bullet_lua_game_task(
-        state,
-        L,
-        state->coroutine_tasks.L,
-        task_name,
-        uid
-    );
+	if (e) {
+		s32 remaining = lua_gettop(L);
+		_debugprintf("bullet async task with %d elements [%d actual stack top]", remaining, lua_gettop(L));
+		state->coroutine_tasks.add_bullet_lua_game_task(
+			state,
+			L,
+			state->coroutine_tasks.L,
+			task_name,
+			uid
+		);
+	}
+
     return 0;
 }
 
