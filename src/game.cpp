@@ -2444,6 +2444,16 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
         }
         y += 30;
 
+#ifndef RELEASE
+        if (state->screen_mode != GAME_SCREEN_MAIN_MENU) {
+            if (GameUI::button(V2(100, y), string_literal("Custom Levels"), color32f32(1, 1, 1, 1), 2, !Transitions::fading() && state->screen_mode != GAME_SCREEN_INGAME) == WIDGET_ACTION_ACTIVATE) {
+                _debugprintf("Not supported yet!");
+                // switch_ui(UI_STATE_REPLAY_COLLECTION);
+            }
+            y += 30;
+        }
+#endif
+
         if (state->screen_mode != GAME_SCREEN_CREDITS) {
             if (GameUI::button(V2(100, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                 _debugprintf("Open the credits screen I guess");
@@ -4103,11 +4113,6 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
     state->update_and_render_all_background_scriptable_render_objects(this->state->resources, game_render_commands, dt);
     {
-        for (int i = 0; i < (int)state->bullets.size; ++i) {
-            auto& b = state->bullets[i];
-            b.draw(this->state, game_render_commands, resources);
-        }
-
         for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
             auto& h = state->explosion_hazards[i];
             h.draw(this->state, game_render_commands, resources);
@@ -4116,6 +4121,11 @@ GAME_SCREEN(update_and_render_game_ingame) {
         for (int i = 0; i < (int)state->laser_hazards.size; ++i) {
             auto& h = state->laser_hazards[i];
             h.draw(this->state, game_render_commands, resources);
+        }
+
+        for (int i = 0; i < (int)state->bullets.size; ++i) {
+            auto& b = state->bullets[i];
+            b.draw(this->state, game_render_commands, resources);
         }
 
         for (int i = 0; i < (s32)state->enemies.size; ++i) {
