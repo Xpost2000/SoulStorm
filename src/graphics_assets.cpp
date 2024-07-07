@@ -490,6 +490,23 @@ const rectangle_f32 Texture_Atlas::get_subrect(const image_id subimage) const {
     return RECTANGLE_F32_NULL;
 }
 
+const rectangle_f32 Texture_Atlas::get_subrect(const image_id subimage, rectangle_f32 existing_subrectangle) const {
+    auto image_subrectangle = get_subrect(subimage);
+    rectangle_f32 result = image_subrectangle;
+
+    // NOTE: cannot provide wrapping behavior because it's a texture atlas.
+    // NOTE: the naive texture atlas packing algorithm doesn't do any rescaling, but
+    // it might be a neat thing to consider in future iterations of it.
+
+    result.x += existing_subrectangle.x;
+    result.y += existing_subrectangle.y;
+
+    if (existing_subrectangle.w != 0) result.w = existing_subrectangle.w;
+    if (existing_subrectangle.h != 0) result.h = existing_subrectangle.h;
+
+    return result;
+}
+
 Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_assets* assets, image_id* images, size_t image_count) {
     _debugprintf("Constructing texture atlas from %d images", image_count);
 

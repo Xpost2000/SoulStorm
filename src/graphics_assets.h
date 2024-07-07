@@ -39,6 +39,9 @@ struct Texture_Atlas {
     Texture_Atlas_Sub_Image* subimages;
 
     const rectangle_f32 get_subrect(const image_id subimage) const;
+
+    // Overload for if the original context was an atlas (IE: a sub atlas.)
+    const rectangle_f32 get_subrect(const image_id subimage, rectangle_f32 existing_subrectangle) const;
 };
 
 // This is new code, compared to the stuff below, LOL

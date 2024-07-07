@@ -337,6 +337,8 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
     r.y = interpolated_position.y - scale.y;
 
     if (sprite.id.index != 0) {
+        Texture_Atlas& texture_atlas = resources->gameplay_texture_atlas;
+
         // NOTE: entity updates are responsible for actually
         //       animating their own sprites!
         auto  sprite_object     = graphics_get_sprite_by_id(&resources->graphics_assets, sprite.id);
@@ -344,6 +346,9 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         auto  sprite_img        = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_frame->img);
         V2    sprite_image_size = V2(sprite_img->width, sprite_img->height);
         float facing_angle      = sprite.angle_offset;
+
+        struct rectangle_f32 source_rectangle = texture_atlas.get_subrect(sprite_frame->img, sprite_frame->source_rect);
+        struct image_buffer* image = graphics_assets_get_image_by_id(&resources->graphics_assets, texture_atlas.atlas_image_id);
 
         // NOTE: specifically needed for bullet disks which must be rotated to look correct.
         // I would personally... Like to not have this here, but it's not a big deal imo.
@@ -372,9 +377,9 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
 
             render_commands_push_image_ext(
                 render_commands,
-                sprite_img,
+                image,
                 rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-                sprite_frame->source_rect,
+                source_rectangle,
                 modulation,
                 V2(0.5, 0.5),
                 facing_angle,
@@ -390,9 +395,9 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
 
         render_commands_push_image_ext(
             render_commands,
-            sprite_img,
+            image,
             rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-            sprite_frame->source_rect,
+            source_rectangle,
             sprite.modulation,
             V2(0.5, 0.5),
             facing_angle,
@@ -406,15 +411,17 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         if (flashing) {
             render_commands_push_image(
                 render_commands,
-                sprite_img,
+                image,
                 rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-                sprite_frame->source_rect,
+                source_rectangle,
                 sprite.modulation,
                 0,
                 BLEND_MODE_ADDITIVE
             );
         }
     } else {
+        // NOTE: this is lowkey debug code, which is the default thing
+        // used if you don't have a sprite. It's better than making invisible enemies.
         render_commands_push_quad_ext(
             render_commands,
             rectangle_f32(r.x, r.y, r.w, r.h),

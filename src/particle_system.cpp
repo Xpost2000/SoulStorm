@@ -223,35 +223,42 @@ void Particle_Pool::draw(struct render_commands* commands, Game_Resources* resou
             particle.position.y - particle.scale/2 + (particle.sprite.offset.y - sprite_image_size.y/2)
         );
 
-        if (particle.flags & PARTICLE_FLAGS_USE_FLAME_MODE) {
-            render_commands_push_image(
-                commands,
-                sprite_img,
-                rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-                sprite_frame->source_rect,
-                modulation,
-                0,
-                BLEND_MODE_ALPHA
-            );
-            render_commands_push_image(
-                commands,
-                sprite_img,
-                rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-                sprite_frame->source_rect,
-                modulation,
-                0,
-                BLEND_MODE_ADDITIVE
-            );
-        } else {
-            render_commands_push_image(
-                commands,
-                sprite_img,
-                rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-                sprite_frame->source_rect,
-                modulation,
-                0,
-                particle.blend_mode
-            );
+        {
+            Texture_Atlas& texture_atlas = resources->gameplay_texture_atlas;
+
+            struct rectangle_f32 source_rectangle = texture_atlas.get_subrect(sprite_frame->img, sprite_frame->source_rect);
+            struct image_buffer* image = graphics_assets_get_image_by_id(&resources->graphics_assets, texture_atlas.atlas_image_id);
+
+            if (particle.flags & PARTICLE_FLAGS_USE_FLAME_MODE) {
+                render_commands_push_image(
+                    commands,
+                    image,
+                    rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+                    source_rectangle,
+                    modulation,
+                    0,
+                    BLEND_MODE_ALPHA
+                );
+                render_commands_push_image(
+                    commands,
+                    image,
+                    rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+                    source_rectangle,
+                    modulation,
+                    0,
+                    BLEND_MODE_ADDITIVE
+                );
+            } else {
+                render_commands_push_image(
+                    commands,
+                    image,
+                    rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+                    source_rectangle,
+                    modulation,
+                    0,
+                    particle.blend_mode
+                );
+            }
         }
     }
 }
