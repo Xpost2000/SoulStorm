@@ -152,7 +152,8 @@ end
 
 -- I need to take advantage of these behavior things way more.
 function Enemy_AddExplodeOnDeathBehavior(e, explosion_radius, warning_timer, explosion_timer)
-   async_task_lambda(
+   enemy_task_lambda(
+       e,
       function(e)
          local position = enemy_final_position(e);
          local oob      = false;
@@ -167,8 +168,7 @@ function Enemy_AddExplodeOnDeathBehavior(e, explosion_radius, warning_timer, exp
          if not oob then
             explosion_hazard_new(position[1], position[2], explosion_radius, warning_timer, explosion_timer);
          end
-      end,
-      e
+      end
    );
 end
 
