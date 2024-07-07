@@ -543,6 +543,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
     #if 1
     {
+        // TODO: UI Atlas should include UI_HP_Icons and maybe even the text.
         // build UI atlas
         {
             auto& ui_chunky        = resources->ui_chunky;
@@ -672,12 +673,11 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         // NOTE: only for the packing algorithm
         s32 atlas_sprite_count =
             PET_IMAGE_SPRITE_FACING_DIRECTION_COUNT * GAME_PET_ID_COUNT +
-            HERO_IMAGE_FRAME_COUNT;
+            HERO_IMAGE_FRAME_COUNT + 1;
         _debugprintf("ATLAS IMAGES TO PACK %d", atlas_sprite_count);
 
         // count sprites...
         {
-#if 0
             for (s32 projectile_sprite_type = 0; projectile_sprite_type < PROJECTILE_SPRITE_TYPES; ++projectile_sprite_type) {
                 auto sprite_object = graphics_get_sprite_by_id(
                     &resources->graphics_assets,
@@ -688,9 +688,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
                     atlas_sprite_count += sprite_get_unique_image_count(sprite_object);
                 }
             }
-#endif
 
-#if 1
             for (s32 entity_sprite_type = 0; entity_sprite_type < ENTITY_SPRITE_TYPES; ++entity_sprite_type) {
                 auto sprite_object = graphics_get_sprite_by_id(
                     &resources->graphics_assets,
@@ -701,7 +699,28 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
                     atlas_sprite_count += sprite_get_unique_image_count(sprite_object);
                 }
             }
-#endif
+
+            {
+                auto sprite_object = graphics_get_sprite_by_id(
+                    &resources->graphics_assets,
+                    resources->circle_sprite
+                );
+
+                if (sprite_object) {
+                    atlas_sprite_count += sprite_get_unique_image_count(sprite_object);
+                }
+            }
+
+            {
+                auto sprite_object = graphics_get_sprite_by_id(
+                    &resources->graphics_assets,
+                    resources->point_pickup_sprite
+                );
+
+                if (sprite_object) {
+                    atlas_sprite_count += sprite_get_unique_image_count(sprite_object);
+                }
+            }
         }
 
         _debugprintf("ATLAS IMAGES TO PACK %d", atlas_sprite_count);
@@ -710,7 +729,20 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
         {
             s32 cursor = 0;
-#if 0
+            {
+                images[cursor++] = resources->circle; // lol
+                
+                auto sprite_object = graphics_get_sprite_by_id(
+                    &resources->graphics_assets,
+                    resources->circle_sprite
+                );
+
+                if (sprite_object) {
+                    cursor += sprite_copy_all_images_into_image_array(
+                        sprite_object, images + cursor, atlas_sprite_count - cursor);
+                }
+            }
+
             for (s32 projectile_sprite_type = 0; projectile_sprite_type < PROJECTILE_SPRITE_TYPES; ++projectile_sprite_type) {
                 auto sprite_object = graphics_get_sprite_by_id(
                     &resources->graphics_assets,
@@ -722,9 +754,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
                         sprite_object, images + cursor, atlas_sprite_count - cursor);
                 }
             }
-#endif
 
-#if 1
             for (s32 entity_sprite_type = 0; entity_sprite_type < ENTITY_SPRITE_TYPES; ++entity_sprite_type) {
                 auto sprite_object = graphics_get_sprite_by_id(
                     &resources->graphics_assets,
@@ -736,9 +766,19 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
                         sprite_object, images + cursor, atlas_sprite_count - cursor);
                 }
             }
-#endif
 
-#if 1
+            {
+                auto sprite_object = graphics_get_sprite_by_id(
+                    &resources->graphics_assets,
+                    resources->point_pickup_sprite
+                );
+
+                if (sprite_object) {
+                    cursor += sprite_copy_all_images_into_image_array(
+                        sprite_object, images + cursor, atlas_sprite_count - cursor);
+                }
+            }
+
             for (s32 pet_image_direction = 0; pet_image_direction < 4; ++pet_image_direction) {
                 for (s32 pet_image_type = 0; pet_image_type < GAME_PET_ID_COUNT; ++pet_image_type) {
                     images[cursor++] = resources->pet_images[pet_image_type][pet_image_direction];
@@ -748,7 +788,6 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             for (s32 hero_image_index = 0; hero_image_index < HERO_IMAGE_FRAME_COUNT; ++hero_image_index) {
                 images[cursor++] = resources->hero_images[hero_image_index];
             }
-#endif
 
             resources->gameplay_texture_atlas =
                 graphics_assets_construct_texture_atlas_image(&resources->graphics_assets,
