@@ -213,7 +213,9 @@ namespace Transitions {
         transition_state->time = 0;
 
         // NOTE: can be reentrant.
-#if 1
+#if 0
+        // I do not remember why I did this, but the code that uses clear_effect()
+        // has no need to do any "emergency" behavior so it's fine.
         if (on_delay_finish) 
             on_delay_finish(nullptr);
         if (on_finish)
@@ -222,6 +224,11 @@ namespace Transitions {
         last_global_transition_fader_state = global_transition_fader_state;
         stop();
 
+        register_on_delay_finish([](void*){});
+        register_on_finish([](void*){});
+        register_on_start([](void*){});
+#else
+        stop();
         register_on_delay_finish([](void*){});
         register_on_finish([](void*){});
         register_on_start([](void*){});
