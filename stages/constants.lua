@@ -55,6 +55,8 @@ PLAY_AREA_EDGE_RIGHT      = 3;
 -- ENTITY SPRITES (based on base:manifest.lua)
 ENTITY_SPRITE_SKULL_A = 0;
 ENTITY_SPRITE_SKULL_B = 1;
+ENTITY_SPRITE_BAT_A = 2;
+ENTITY_SPRITE_BAT_B = 3;
 
 -- Play Area Constants.
 PLAY_AREA_EDGE_TOP = 0;
