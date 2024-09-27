@@ -17,4 +17,6 @@ void bind_core_lualib(lua_State* L){
     lua_register(L, "current_stage_time", GAME_LUA_BINDING_NAME(current_stage_time));
     lua_register(L, "ticktime", GAME_LUA_BINDING_NAME(ticktime));
     lua_register(L, "engine_dofile", GAME_LUA_BINDING_NAME(engine_dofile));
+    lua_register(L, "play_area_set_edge_behavior_all", GAME_LUA_BINDING_NAME(play_area_set_edge_behavior_all));
+    lua_register(L, "play_area_set_edge_behavior", GAME_LUA_BINDING_NAME(play_area_set_edge_behavior));
 }

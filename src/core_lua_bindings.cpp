@@ -284,4 +284,51 @@ engine_dofile,
     return _lua_bind_engine_dofile(L); // in virtual_file_system.cpp
 }
 
+GAME_LUA_PROC(
+play_area_set_edge_behavior_all,
+"edge_behavior: integer -> void",
+"Set the behavior of all edges when the player interacts with them.",
+"Set the behavior of all edges when the player interacts with them, refer to play_area_set_edge_behavior."
+)
+{
+    Game_State* state              = lua_binding_get_gamestate(L);
+    auto&       play_area          = state->gameplay_data.play_area;
+    int         edge_behavior_type = luaL_checkinteger(L, 1);
+
+    if (edge_behavior_type < PLAY_AREA_EDGE_BLOCKING || edge_behavior_type >= PLAY_AREA_EDGE_BEHAVIOR_COUNT) {
+        _debugprintf("Invalid edge behavior given.");
+        return 0;
+    }
+
+    play_area.set_all_edge_behaviors_to(edge_behavior_type);
+    return 0;
+}
+
+GAME_LUA_PROC(
+play_area_set_edge_behavior,
+"edge_id: integer, edge_behavior: integer -> void",
+"Set the behavior of a specific edge when the player interacts with it.",
+"Set the behavior of a specific edge when the player interacts with it, refer to constants.lua for constants to be used in this function."
+)
+{
+    Game_State* state              = lua_binding_get_gamestate(L);
+    auto&       play_area          = state->gameplay_data.play_area;
+    int         edge_id            = luaL_checkinteger(L, 1);
+    int         edge_behavior_type = luaL_checkinteger(L, 2);
+
+    if (edge_id < 0 || edge_id >= 4) {
+        _debugprintf("Invalid edge id given.");
+        return 0;
+    }
+
+
+    if (edge_behavior_type < PLAY_AREA_EDGE_BLOCKING || edge_behavior_type >= PLAY_AREA_EDGE_BEHAVIOR_COUNT) {
+        _debugprintf("Invalid edge behavior given.");
+        return 0;
+    }
+
+    play_area.edge_behaviors[edge_id] = edge_behavior_type;
+    return 0;
+}
+
 #include "core_lua_bindings_generated.cpp"
