@@ -393,6 +393,8 @@ function Make_Enemy_SpinTrip_2_1_1(hp,
                bullet_set_visual(bullet, bullet_visual);
                bullet_set_lifetime(bullet, 15);
                bullet_set_scale(bullet, 3, 3);
+               bullet_start_trail(bullet, 12);
+               bullet_set_trail_modulation(bullet, 0.8, 0.8, 0.8, 0.3);
                bullet_set_visual_scale(bullet, 0.3, 0.3);
 
                local bdir = v2_direction_from_degree(angle + arc_displacement);
@@ -528,6 +530,21 @@ function MainBoss1_RainCloud_Attack2(phase_cycle, duration)
          stop_task = 1;
       end
    )
+end
+
+-- Chase the player with lasers to force them to move.
+function LaserChaser_Horizontal_1_2(laser_count, max_wait_time)
+   for i=1,laser_count do
+      laser_hazard_new(player_position_x(), 10, 1, 0.05, 1);
+      t_wait(max_wait_time - i*(max_wait_time/laser_count));
+   end
+end
+
+function LaserChaser_Vertical_1_2(laser_count, max_wait_time)
+   for i=1,laser_count do
+      laser_hazard_new(player_position_y(), 10, 0, 0.05, 1);
+      t_wait(max_wait_time - i*(max_wait_time/laser_count));
+   end
 end
 
 -- Dramatic opening
