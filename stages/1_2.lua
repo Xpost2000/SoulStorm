@@ -522,10 +522,7 @@ function preboss_wave()
          t_wait(0.4);
       end
       t_wait(4);
-      for i=1,8 do
-         laser_hazard_new(player_position_x(), 10, 1, 0.05, 1);
-         t_wait(1.5 - i*(1.5/8));
-      end
+      LaserChaser_Vertical_1_2(8, 1.5);
       t_wait(1.2);
    end
    MainBoss1_RainCloud_Attack2(1997, 3.5)
