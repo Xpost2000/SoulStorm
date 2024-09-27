@@ -32,6 +32,9 @@ PROJECTILE_SPRITE_GREEN_DISK     = 19;
 -- probably make it 1/4th the size of other projectiles (or like 2px in game terms.)
 PROJECTILE_SPRITE_SPARKLING_STAR = 20;
 
+-- NOTE(jerry): any other sprite id higher than this is usable by custom sprites.
+-- these are just the ones the game provides.
+
 BULLET_SOURCE_NEUTRAL = 0;
 BULLET_SOURCE_PLAYER  = 1;
 BULLET_SOURCE_ENEMY   = 2;
@@ -52,3 +55,14 @@ PLAY_AREA_EDGE_RIGHT      = 3;
 -- ENTITY SPRITES (based on base:manifest.lua)
 ENTITY_SPRITE_SKULL_A = 0;
 ENTITY_SPRITE_SKULL_B = 1;
+
+-- Play Area Constants.
+PLAY_AREA_EDGE_TOP = 0;
+PLAY_AREA_EDGE_BOTTOM = 1;
+PLAY_AREA_EDGE_LEFT = 2;
+PLAY_AREA_EDGE_RIGHT = 3;
+
+PLAY_AREA_EDGE_BLOCKING = 0;
+PLAY_AREA_EDGE_DEADLY = 1;
+PLAY_AREA_EDGE_WRAPPING = 2;
+PLAY_AREA_EDGE_PASSTHROUGH = 3;
