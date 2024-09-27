@@ -545,7 +545,6 @@ function stage_task()
    wave_1();
    -- print("wave 2");
    wave_2();
-   print("preboss wave");
    preboss_wave();
    print("wait finish");
    t_wait(5);
