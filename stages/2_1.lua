@@ -291,12 +291,15 @@ function wave2()
    t_wait(4);
    LaserChaser_Vertical_1_2(4, 2.5);
    t_wait(3);
-   -- Popcorn wave.
 end
 
 function wave3()
    -- figure out what time this is
    -- Add a few of the level 1 Home attackers
+   Make_Enemy_SideMoverWave1_1_1(100, -100, 0, 200, 1.5, 1, 0, 8, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
+   Make_Enemy_SideMoverWave1_1_1(play_area_width() - 100, -100, 0, 200, 1.5, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
+   Make_Enemy_SideMoverWave1_1_1(150, -100, 0, 200, 1.0, 1, 0, 8, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
+   Make_Enemy_SideMoverWave1_1_1(play_area_width() - 150, -100, 0, 200, 1.0, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
    -- some popcorns,
    -- Add new enemy type (running shooter)
 
@@ -309,9 +312,9 @@ end
 function stage_task()
    t_wait(1.5);
 
-   wave1();
-   t_wait(22);
-   wave2();
+   -- wave1();
+   -- t_wait(22);
+   -- wave2();
    t_wait(1.5);
    wave3();
    

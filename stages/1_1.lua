@@ -557,7 +557,7 @@ function _wave2_enemy_dipshooter(e, dip_divisions, dip_height, fire_on_dip, dip_
       t_yield();
    end
    -- NOTE: it turns out one of the dipshooters didn't exit the stage properly. Whoops!
-   enemy_set_velocity(e, 100);
+   enemy_set_velocity(e, 100, 0);
 end
 
 function wave_2_sub2()
@@ -669,6 +669,8 @@ function wave_2_sub2()
 
                t_wait(0.25);
             end
+         end,
+         function (e)
          end
       );
       t_wait(1.5)

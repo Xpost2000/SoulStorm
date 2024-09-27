@@ -240,6 +240,56 @@ function Make_BrainDead_Enemy_Popcorn1(
    return enemies;
 end
 
+-- move forward with a fixed delay.
+-- then start homing with a trail.
+-- stop homing after x seconds
+function Bullet_Add_HomingBehavior_1_1(
+      b,
+      travel_direction,
+      travel_velocity,
+      travel_time,
+      delay_before_homing,
+      homing_time,
+      homing_velocity,
+      homing_acceleration,
+      visual_prehoming,
+      visual_posthoming,
+      use_trail)
+   bullet_task_lambda(
+      b,
+      function(b)
+         bullet_set_visual(b, visual_prehoming)
+         bullet_set_visual_scale(b, 0.5, 0.5);
+         bullet_move_linear(b, travel_direction, 80);
+         t_wait(travel_time);
+         bullet_reset_movement(b);
+         t_wait(delay_before_homing);
+         bullet_set_visual(b, visual_posthoming);
+         if (use_trail ~= -1) then
+            bullet_start_trail(b, use_trail);
+         end
+         bullet_set_trail_modulation(b, 1, 1, 1, 0.3);
+
+         local spawn_time = bullet_time_since_spawn(b);
+         while true do
+            local dt = bullet_time_since_spawn(b) - spawn_time;
+            local aim = dir_to_player(bullet_position(b));
+
+            aim[1] = aim[1] * (homing_velocity + (dt * homing_acceleration));
+            aim[2] = aim[2] * (homing_velocity + (dt * homing_acceleration));
+
+            bullet_set_velocity(b, aim[1], aim[2]);
+
+            if dt > homing_time then
+               break;
+            end
+
+            t_yield();
+         end
+      end
+   );
+end
+
 --function spawn_bullet_arc_pattern2(center, how_many, arc_degrees, direction, speed, distance_from_center, src)
 -- basic arc shooter similar to burst360_1_1_2
 function Make_Enemy_ArcPattern2_1_1_2(
@@ -410,6 +460,110 @@ function Make_Enemy_SpinTrip_2_1_1(hp,
       end
    )
 
+   return e;
+end
+
+-- ORIGINALLY HARDCODED 4
+-- ORIGINALLY HARDCODED PROJECTILE_SPRITE_GREEN
+function _wave1_enemy_shoot_down_and_fly_to_side_1_1(e, x_down, y_down, t_mv_speed, side, max_bullets, projectile_visual, projectile_visual2)
+   enemy_linear_move_to(e, enemy_position_x(e) + x_down, enemy_position_y(e) + y_down, t_mv_speed);
+   local ex = enemy_position_x(e);
+   local ey = enemy_position_y(e);
+   for bullet=1, max_bullets do
+      local b = bullet_make(BULLET_SOURCE_ENEMY, enemy_position(e), projectile_visual, v2(0.5, 0.5), v2(5, 5))
+      Bullet_Add_HomingBehavior_1_1(
+         b, V2_DOWN, 80, 1.54, 1, 0.375, 150, 180,
+         projectile_visual, projectile_visual2,
+         12
+      );
+      play_sound(random_attack_sound());
+      t_wait(0.32);
+   end
+   t_wait(0.15);
+
+   local sign = 1;
+   if side == 0 then
+      sign = -1;
+   end
+
+   enemy_set_acceleration(e, sign * 150, 125);
+end
+
+-- ORIGINALLY HARDCODED 10
+-- ORIGINALLY HARD CODED PROJECTILE_SPRITE_HOT_PINK
+function _wave1_enemy_shoot_down_and_fly_to_side2_1_1(e, x_down, y_down, t_mv_speed, side, max_bullets, projectile_visual)
+   enemy_linear_move_to(e, enemy_position_x(e) + x_down, enemy_position_y(e) + y_down, t_mv_speed);
+   local ex = enemy_position_x(e);
+   local ey = enemy_position_y(e);
+   for bullet=1, max_bullets do
+      local b = bullet_new(BULLET_SOURCE_ENEMY);
+      bullet_set_visual(b, projectile_visual);
+      bullet_set_visual_scale(b, 0.25, 0.25);
+      bullet_set_scale(b, 2, 2);
+      bullet_set_position(b, enemy_position_x(e), enemy_position_y(e));
+      local d  = v2_direction(v2(ex, ey), v2(play_area_width()/2, play_area_height()*0.75))
+      bullet_set_velocity(b, d[1] * 75, d[2] * 75);
+      play_sound(random_attack_sound());
+      t_wait(0.30);
+   end
+   t_wait(0.15);
+
+   local sign = 1;
+   if side == 0 then
+      sign = -1;
+   end
+
+   enemy_set_acceleration(e, sign * 150, 125);
+end
+
+-- ORIGINALLY HARDCODED 15
+-- ORIGINALLY HARD CODED PROJECTILE_SPRITE_HOT_PINK
+function _wave1_enemy_shoot_down_and_fly_to_side3_1_1(e, x_down, y_down, t_mv_speed, side, max_bullets, projectile_visual)
+   enemy_linear_move_to(e, enemy_position_x(e) + x_down, enemy_position_y(e) + y_down, t_mv_speed);
+   for bullet=1, max_bullets do
+      local b = bullet_new(BULLET_SOURCE_ENEMY);
+      bullet_set_visual(b, projectile_visual);
+      bullet_set_visual_scale(b, 0.25, 0.25);
+      bullet_set_scale(b, 2, 2);
+      bullet_set_position(b, enemy_position_x(e), enemy_position_y(e));
+      local ex = enemy_position_x(e);
+      local ey = enemy_position_y(e);
+      local d  = v2_direction_from_degree(enemy_time_since_spawn(e) * 16 + 100 * e);
+      bullet_set_velocity(b, d[1] * 110, d[2] * 110);
+      play_sound(random_attack_sound());
+      t_wait(0.25);
+   end
+   t_wait(0.15);
+
+   local sign = 1;
+   if side == 0 then
+      sign = -1;
+   end
+
+   enemy_set_acceleration(e, sign * 150, 125);
+end
+
+-- NOTE(jerry):
+-- backport from Stage 1-1, which was written long before I had a better scripting API. It's been barely backported
+-- correctly!
+function Make_Enemy_SideMoverWave1_1_1(
+      px, py,
+      xdown, ydown,
+      t_mvspeed,
+      side, variation,
+      max_bullets,
+      visual1, visual2)
+   local e = enemy_new();
+   enemy_set_scale(e, 10, 10);
+   enemy_set_hp(e, 27);
+   enemy_set_position(e, px, py);
+   if variation == 0 then
+      enemy_set_task(e, "_wave1_enemy_shoot_down_and_fly_to_side_1_1", xdown, ydown, t_mvspeed, side, max_bullets, visual1, visual2);
+   elseif variation == 1 then
+      enemy_set_task(e, "_wave1_enemy_shoot_down_and_fly_to_side2_1_1", xdown, ydown, t_mvspeed, side, max_bullets, visual1, visual2);
+   elseif variation == 2 then
+      enemy_set_task(e, "_wave1_enemy_shoot_down_and_fly_to_side3_1_1", xdown, ydown, t_mvspeed, side, max_bullets, visual1, visual2);
+   end
    return e;
 end
 
