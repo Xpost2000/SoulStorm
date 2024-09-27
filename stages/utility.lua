@@ -247,6 +247,10 @@ function difficulty(a, b, c, d)
    end
 end
 
+function v2_screen_middle()
+   return v2(play_area_width()/2, play_area_height()/2);
+end
+
 --
 -- Asynchronous stage task queue
 --
