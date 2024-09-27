@@ -357,6 +357,61 @@ function Make_Enemy_Spinner_1_1_2(hp,
    return e;
 end
 
+-- Enemy that spawns in a place, does a spin dodge trap
+-- linear.
+-- Will exit after duration is over.
+-- These are very specific behaviors tbh.
+function Make_Enemy_SpinTrip_2_1_1(hp,
+                                   position,
+                                   spoke_arc,
+                                   spoke_per_frame_angular_velocity,
+                                   exit_direction,
+                                   exit_speed,
+                                   exit_acceleration,
+                                   duration,
+                                   bullet_visual
+                                  )
+   local e = enemy_new();
+   enemy_set_hp(e, hp);
+   enemy_set_position(e, position[1], position[2]);
+
+   exit_direction = v2_normalized(exit_direction);
+
+   enemy_task_lambda(
+      e,
+      function(e)
+         local start_time = enemy_time_since_spawn(e);
+         local arc_displacement = 0;
+
+         while (enemy_time_since_spawn(e) - start_time < duration) do
+            local bspeed    = 50;
+            local eposition = enemy_final_position(e);
+
+            for angle=1,360,spoke_arc do
+               local bullet = bullet_new(BULLET_SOURCE_ENEMY);
+               bullet_set_position(bullet, eposition[1], eposition[2]);
+               bullet_set_visual(bullet, bullet_visual);
+               bullet_set_lifetime(bullet, 15);
+               bullet_set_scale(bullet, 3, 3);
+               bullet_set_visual_scale(bullet, 0.3, 0.3);
+
+               local bdir = v2_direction_from_degree(angle + arc_displacement);
+               bullet_set_velocity(bullet, bdir[1] * bspeed, bdir[2] * bspeed);
+            end
+
+            arc_displacement = arc_displacement + spoke_per_frame_angular_velocity;
+            t_wait(0.25);
+         end
+
+         enemy_move_linear(e, exit_direction, exit_speed);
+         enemy_set_acceleration(e, exit_direction[1] * exit_acceleration, exit_direction[2] * exit_acceleration);
+      end
+   )
+
+   return e;
+end
+
+
 -- This is a very bullet hell style attack
 -- obviously it's pretty hard to dodge a lot of this, so I have to be pretty careful.
 -- I've concluded it *is* possible to dodge but it's really hard, and I might need to reduce some visual noise.
