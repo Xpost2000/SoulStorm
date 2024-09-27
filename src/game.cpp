@@ -1520,10 +1520,10 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
             for (s32 index = 0; index < display_modes.length; ++index) {
                 auto&  dm = display_modes[index];
                 string s = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("%d x %d", dm.width, dm.height)));
-                _debugprintf("Str: %s\n", s.data);
+                //_debugprintf("Str: %s\n", s.data);
                 options_list.push(s);
             }
-            _debugprintf("displaymode sz: %d", display_modes.length);
+            //_debugprintf("displaymode sz: %d", display_modes.length);
             GameUI::option_selector(V2(100, y), string_literal("Resolution: "), color32f32(1, 1, 1, 1), 2, options_list.data, options_list.size, &temp_preferences.resolution_option_index);
             y += 30;
         }
