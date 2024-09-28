@@ -147,11 +147,22 @@ bool Entity::touching_bottom_border(const Play_Area& play_area, bool as_point) {
         return (position.y + scale.y > play_area.height);
 }
 
+void Entity::set_position(V2 new_position) { // teleport position
+    last_position = position = new_position;
+}
+
+void Entity::set_position_x(f32 new_x) {
+    last_position.x = position.x = new_x;
+}
+
+void Entity::set_position_y(f32 new_y) {
+    last_position.y = position.y = new_y;
+}
+
 bool Entity::clamp_to_left_border(const Play_Area& play_area) {
     if (touching_left_border(play_area)) {
         velocity.x = 0;
-        last_position.x =
-            position.x = scale.x;
+        set_position_x(scale.x);
         return true;
     }
     return false;
@@ -160,8 +171,7 @@ bool Entity::clamp_to_left_border(const Play_Area& play_area) {
 bool Entity::clamp_to_right_border(const Play_Area& play_area) {
     if (touching_right_border(play_area)) {
         velocity.x = 0;
-        last_position.x =
-            position.x = play_area.width - scale.x;
+        set_position_x(play_area.width - scale.x);
         return true;
     }
     return false;
@@ -170,8 +180,7 @@ bool Entity::clamp_to_right_border(const Play_Area& play_area) {
 bool Entity::clamp_to_top_border(const Play_Area& play_area) {
     if (touching_top_border(play_area)) {
         velocity.y = 0;
-        last_position.y =
-            position.y = scale.y;
+        set_position_y(scale.y);
         return true;
     }
     return false;
@@ -180,8 +189,7 @@ bool Entity::clamp_to_top_border(const Play_Area& play_area) {
 bool Entity::clamp_to_bottom_border(const Play_Area& play_area) {
     if (touching_bottom_border(play_area)) {
         velocity.y = 0;
-        last_position.y =
-            position.y = play_area.height - scale.y;
+        set_position_y(play_area.height - scale.y);
         return true;
     }
     return false;
@@ -189,8 +197,7 @@ bool Entity::clamp_to_bottom_border(const Play_Area& play_area) {
 
 bool Entity::wrap_from_left_border(const Play_Area& play_area) {
     if (touching_left_border(play_area, true)) {
-        last_position.x =
-            position.x = play_area.width;
+        set_position_x(play_area.width);
         return true;
     }
     return false;
@@ -198,8 +205,7 @@ bool Entity::wrap_from_left_border(const Play_Area& play_area) {
 
 bool Entity::wrap_from_right_border(const Play_Area& play_area) {
     if (touching_right_border(play_area, true)) {
-        last_position.x =
-            position.x = 0;
+        set_position_x(0);
         return true;
     }
     return false;
@@ -207,8 +213,7 @@ bool Entity::wrap_from_right_border(const Play_Area& play_area) {
 
 bool Entity::wrap_from_top_border(const Play_Area& play_area) {
     if (touching_top_border(play_area, true)) {
-        last_position.y =
-            position.y = play_area.height;
+        set_position_y(play_area.height);
         return true;
     }
     return false;
@@ -216,8 +221,7 @@ bool Entity::wrap_from_top_border(const Play_Area& play_area) {
 
 bool Entity::wrap_from_bottom_border(const Play_Area& play_area) {
     if (touching_bottom_border(play_area, true)) {
-        last_position.y =
-            position.y = 0;
+        set_position_y(0);
         return true;
     }
     return false;

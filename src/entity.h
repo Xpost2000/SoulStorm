@@ -138,6 +138,9 @@ struct Entity {
     V2 scale             = V2(0, 0); 
 
     V2 get_real_position(void);
+    void set_position(V2 new_position);
+    void set_position_x(f32 new_x);
+    void set_position_y(f32 new_y);
 
     // NOTE: Going to take an... Alternate
     // approach to movement through scripting
