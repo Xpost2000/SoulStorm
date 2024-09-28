@@ -543,6 +543,82 @@ function _wave1_enemy_shoot_down_and_fly_to_side3_1_1(e, x_down, y_down, t_mv_sp
    enemy_set_acceleration(e, sign * 150, 125);
 end
 
+function Make_Enemy_Spinster_1_1(px, py,
+                                 x_down, y_down,
+                                 t_mv_speed,
+                                 escape_side,
+                                 wave_count,
+                                 bullet_visual,
+                                 angular_offset,
+                                 b_angle_step, -- 10
+                                 bspeed_base, -- 90
+                                              -- 55
+                                 bacel_base)
+   local e = enemy_new();
+   enemy_set_scale(e, 10, 10);
+   enemy_set_position(e, px, py);
+   enemy_set_hp(e, 2500); -- probably not killing this thing. That's okay.
+   enemy_task_lambda(
+      e,
+      function(e)
+         enemy_linear_move_to(e, enemy_position_x(e) + x_down, enemy_position_y(e) + y_down, t_mv_speed);
+         local fire_delay = 0.10;
+         local step       = b_angle_step;
+         local bspeed     = bspeed_base;
+         local bacel     =  bacel_base;
+
+         for p=0,wave_count do
+            if p == 1 then
+               bspeed = bspeed * 1.5;
+               bacel = bacel * 1.5;
+               fire_delay = fire_delay * 0.5;
+            end
+
+            for angle=0, 180, step do
+               local d = v2_direction_from_degree(angle+angular_offset);
+               local dx = d[1];
+               local dy = d[2];
+               local b = bullet_new(BULLET_SOURCE_ENEMY);
+
+               bullet_set_visual(b, bullet_visual);
+               bullet_set_visual_scale(b, 0.5, 0.5);
+               bullet_set_scale(b, 5, 5);
+               bullet_set_position(b, enemy_position_x(e), enemy_position_y(e));
+               bullet_set_velocity(b, dx * bspeed, dy * bspeed);
+               bullet_set_acceleration(b, dx * bacel, dy * bacel);
+
+               play_sound(random_attack_sound());
+               t_wait(fire_delay);
+            end
+            for angle=180, 0, -step do
+               local d = v2_direction_from_degree(angle+angular_offset);
+               local dx = d[1];
+               local dy = d[2];
+               local b = bullet_new(BULLET_SOURCE_ENEMY);
+               bullet_set_visual(b, bullet_visual);
+               bullet_set_visual_scale(b, 0.5, 0.5);
+               bullet_set_scale(b, 5, 5);
+               bullet_set_position(b, enemy_position_x(e), enemy_position_y(e));
+               bullet_set_velocity(b, dx * bspeed, dy * bspeed);
+               bullet_set_acceleration(b, dx * bacel, dy * bacel);
+
+               play_sound(random_attack_sound());
+               t_wait(fire_delay);
+            end
+            t_wait(0.2);
+         end
+         t_wait(0.18);
+
+         local sign = 1;
+         if escape_side == 0 then
+            sign = -1;
+         end
+
+         enemy_set_acceleration(e, sign * 150, 125);
+      end
+   )
+end
+
 -- NOTE(jerry):
 -- backport from Stage 1-1, which was written long before I had a better scripting API. It's been barely backported
 -- correctly!

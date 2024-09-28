@@ -294,29 +294,140 @@ function wave2()
 end
 
 function wave3()
-   -- figure out what time this is
-   -- Add a few of the level 1 Home attackers
-   Make_Enemy_SideMoverWave1_1_1(100, -100, 0, 200, 1.5, 1, 0, 8, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
-   Make_Enemy_SideMoverWave1_1_1(play_area_width() - 100, -100, 0, 200, 1.5, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
-   Make_Enemy_SideMoverWave1_1_1(150, -100, 0, 200, 1.0, 1, 0, 8, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
-   Make_Enemy_SideMoverWave1_1_1(play_area_width() - 150, -100, 0, 200, 1.0, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
-   -- some popcorns,
-   -- Add new enemy type (running shooter)
+   -- -- figure out what time this is
+   -- -- Add a few of the level 1 Home attackers
+   -- Make_Enemy_SideMoverWave1_1_1(100, -100, 0, 200, 1.5, 1, 0, 8, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
+   -- Make_Enemy_SideMoverWave1_1_1(play_area_width() - 100, -100, 0, 200, 1.5, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
+   -- Make_Enemy_SideMoverWave1_1_1(150, -100, 0, 200, 1.0, 1, 0, 8, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
+   -- Make_Enemy_SideMoverWave1_1_1(play_area_width() - 150, -100, 0, 200, 1.0, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
+   -- -- some popcorns,
+   -- t_wait(2);
 
-   -- Add a nearly impossible scenario (dodge by staying in the center)
+   -- -- TODO replace with dog flood
+   -- Stage1_Batflood();
+   -- t_wait(4);
+   -- -- Add a spinster (stage 1 style)
+   -- Make_Enemy_Spinster_1_1(play_area_width()/2,
+   --                         -20,
+   --                         0, 40, 1.0, 0, 4, PROJECTILE_SPRITE_BLUE_STROBING, 0,
+   --                         15, 50, 55
+   -- );
+   -- Make_Enemy_Spinster_1_1(play_area_width()/2,
+   --                         play_area_height() + 20,
+   --                         0, -40, 1.0, 0, 4, PROJECTILE_SPRITE_BLUE_STROBING, 180,
+   --                         15, 50, 55
+   -- );
+   -- t_wait(1.5);
+   -- Make_Enemy_Spinster_1_1(-20,
+   --                         play_area_height()/2,
+   --                         40, 0, 1.0, 0, 3, PROJECTILE_SPRITE_GREEN_STROBING, -90,
+   --                         15, 80, 85
+   -- );
+   -- Make_Enemy_Spinster_1_1(play_area_width()+20,
+   --                         play_area_height()/2,
+   --                         -20, 0, 1.0, 0, 3, PROJECTILE_SPRITE_GREEN_STROBING, 90,
+   --                         15, 80, 85
+   -- );
+   -- -- Add a nearly impossible scenario (dodge by staying in the center)
+   -- t_wait(4);
+   -- Make_BrainDead_Enemy_Popcorn1(
+   --    20,
+   --    v2(130, -10),
+   --    0.026,
+   --    7,
+   --    0,
+   --    100,
+   --    25,
+   --    2,
+   --    4,
+   --    -1);
+   -- Make_BrainDead_Enemy_Popcorn1(
+   --    20,
+   --    v2(play_area_width() - 130, -10),
+   --    0.026,
+   --    7,
+   --    0,
+   --    100,
+   --    25,
+   --    2,
+   --    4,
+   --    -1);
+   -- t_wait(5);
+
+   -- harder version of wave2
+   do
+      async_task_lambda( -- NOTE: async timeline
+         function()
+            DramaticExplosion_SpawnSpinnerObstacle1_2_1(
+               play_area_width()/2,
+               play_area_height()/2 - 150,
+               ENTITY_SPRITE_SKULL_B,
+               10,
+               30,
+               PROJECTILE_SPRITE_NEGATIVE_DISK,
+               v2(0, 1)
+            );
+         end
+      )
+
+      async_task_lambda( -- NOTE: async timeline
+         function()
+            t_wait(1);
+            DramaticExplosion_SpawnSpinnerObstacle1_2_1(
+               play_area_width()/2 - 150,
+               play_area_height()/2,
+               ENTITY_SPRITE_SKULL_A,
+               15,
+               25,
+               PROJECTILE_SPRITE_NEGATIVE_DISK,
+               v2(1, 1)
+            );
+         end
+      )
+
+      async_task_lambda( -- NOTE: async timeline
+         function()
+            t_wait(1);
+            DramaticExplosion_SpawnSpinnerObstacle1_2_1(
+               play_area_width()/2 + 150,
+               play_area_height()/2,
+               ENTITY_SPRITE_SKULL_A,
+               15,
+               25,
+               PROJECTILE_SPRITE_NEGATIVE_DISK,
+               v2(-1, 1)
+            );
+         end
+      )
+
+      async_task_lambda( -- NOTE: async timeline
+         function()
+            DramaticExplosion_SpawnSpinnerObstacle1_2_1(
+               play_area_width()/2,
+               play_area_height() -40,
+               ENTITY_SPRITE_SKULL_B,
+               10,
+               30,
+               PROJECTILE_SPRITE_NEGATIVE_DISK,
+               v2(0, -1)
+            );
+         end
+      )
+   end
 
    -- Add an enemy flood wave (should be dog sprites [TODO: modify dog hero sprite])
    -- and use them as the new enemies.
 end
 
 function stage_task()
-   t_wait(1.5);
+   -- t_wait(1.5);
 
    -- wave1();
    -- t_wait(22);
    -- wave2();
-   t_wait(1.5);
+   -- t_wait(3.5);
    wave3();
+   t_wait(5);
    
    wait_no_danger();
    t_complete_stage();
