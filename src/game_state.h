@@ -819,6 +819,7 @@ struct Game_Resources {
     struct graphics_assets graphics_assets;
     font_id         menu_fonts[MENU_FONT_COUNT];
     image_id        circle;
+    image_id        circle16;
 
     // These are currently not animated because I don't have the budget to
     // animate these more thoroughly myself :P
@@ -837,6 +838,7 @@ struct Game_Resources {
 
     sprite_id       player_sprite;
     sprite_id       circle_sprite;
+    sprite_id       circle_sprite16;
     sprite_id       point_pickup_sprite;
 
     // NOTE: the pet sprites only need to exist for the back facing sprite...

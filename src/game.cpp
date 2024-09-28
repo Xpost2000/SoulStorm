@@ -203,21 +203,26 @@ Particle_Emitter& spawn_game_entity_hit_particle_emitter(Fixed_Array<Particle_Em
 
 void config_game_entity_player_propel_particle_emitter(Particle_Emitter& emitter, V2 where, Game_Resources* resources) {
     emitter.reset();
-    emitter.sprite                  = sprite_instance(resources->circle_sprite);
-    emitter.sprite.scale            = V2(0.250, 0.250);
+    emitter.sprite                  = sprite_instance(resources->circle_sprite16);
+    emitter.sprite.scale            = V2(0.5, 0.5);
     emitter.shape                   = particle_emit_shape_point(where);
-    emitter.modulation              = color32f32(222.0f / 255.0f, 180.0f / 255.0f, 45.0f / 255.0f, 1.0f);
+    // emitter.modulation              = color32f32(222.0f / 255.0f, 180.0f / 255.0f, 45.0f / 255.0f, 1.0f);
+    emitter.modulation       = color32f32(0.7f, 0.78f, 0.95f, 1.0f);
     emitter.target_modulation       = color32f32(59/255.0f, 59/255.0f, 56/255.0f, 127/255.0f);
     emitter.lifetime                = 1.25f;
     emitter.scale_variance          = V2(-0.15, 0.45f);
-    emitter.angle_range             = V2(-360, 360);
-    emitter.velocity                = V2(90.0f);
-    emitter.velocity_x_variance     = V2(15, 15);
-    emitter.acceleration_x_variance = V2(0, 20);
+    emitter.scale                   = 1.0f;
+    emitter.angle_range             = V2(0, 180);
+    emitter.velocity                = V2(150.0f, 150.0f);
+    emitter.acceleration            = V2(0.0f, 120.0f);
+    emitter.velocity_x_variance     = V2(-20, 150);
+    emitter.velocity_y_variance     = V2(-20, 150);
+    emitter.acceleration_x_variance = V2(-25, 25);
+    emitter.acceleration_y_variance = V2(-10, 75);
     emitter.lifetime_variance       = V2(-0.25f, 0.2f);
     emitter.emission_max_timer      = 0.035f;
     emitter.max_emissions           = 1;
-    emitter.emit_per_emission       = 200;
+    emitter.emit_per_emission       = 225;
     emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE |
         PARTICLE_EMITTER_FLAGS_USE_ANGULAR |
         PARTICLE_EMITTER_FLAGS_USE_COLOR_FADE |
@@ -532,6 +537,13 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle64.png"));
             frame->source_rect = RECTANGLE_F32_NULL;
         }
+
+        if (resources->circle_sprite16.index == 0) {
+            resources->circle_sprite16 = graphics_assets_alloc_sprite(&resources->graphics_assets, 1);
+            auto frame = sprite_get_frame(graphics_get_sprite_by_id(&resources->graphics_assets, resources->circle_sprite16), 0);
+            frame->img = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle16.png"));
+            frame->source_rect = RECTANGLE_F32_NULL;
+        }
     }
     {
         if (resources->point_pickup_sprite.index == 0) {
@@ -761,6 +773,18 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
                 auto sprite_object = graphics_get_sprite_by_id(
                     &resources->graphics_assets,
                     resources->circle_sprite
+                );
+
+                if (sprite_object) {
+                    cursor += sprite_copy_all_images_into_image_array(
+                        sprite_object, images + cursor, atlas_sprite_count - cursor);
+                }
+            }
+
+            {
+                auto sprite_object = graphics_get_sprite_by_id(
+                    &resources->graphics_assets,
+                    resources->circle_sprite16
                 );
 
                 if (sprite_object) {
