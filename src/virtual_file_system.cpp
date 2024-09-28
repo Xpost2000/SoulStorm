@@ -164,7 +164,9 @@ void bind_vfs_lualib(lua_State* L) {
 
 s32 vfs_lua_dofile(lua_State* L, const char* lua_filename) {
     auto scripttext = VFS_read_entire_file(heap_allocator(), string_from_cstring((char*)lua_filename));
-    s32 error = (luaL_dostring(L, (const char*)scripttext.buffer));
+    // s32 error = (luaL_dostring(L, (const char*)scripttext.buffer));
+    s32 error = luaL_loadbuffer(L, (const char*)scripttext.buffer, scripttext.length, lua_filename);
+    lua_pcall(L, 0, LUA_MULTRET, 0);
     _debugprintf("Text Buffer: scripttext.buffer:\n%s", scripttext.buffer);
     file_buffer_free(&scripttext);
     return error;
