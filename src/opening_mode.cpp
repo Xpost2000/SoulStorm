@@ -328,6 +328,7 @@ GAME_SCREEN(update_and_render_game_opening) {
             auto   font       = resources->get_font(MENU_FONT_COLOR_STEEL);
             auto&  logo_data  = state.logo_presentation;
             V2     resolution = V2(ui_render_commands->screen_width, ui_render_commands->screen_height);
+            float fade_alpha  = 0;
             string fulltext   = string_literal("By Xpost2000");
 
             if (logo_data.untyping_text == false) {
@@ -357,6 +358,7 @@ GAME_SCREEN(update_and_render_game_opening) {
                         logo_data.type_timer -= dt;
                     }
                 } else {
+                    fade_alpha = clamp<f32>(1 - (logo_data.delay_timer/1.40f), 0, 1);
                     if (logo_data.delay_timer > 0) {
                         logo_data.delay_timer -= dt;
                     } else {
@@ -371,12 +373,12 @@ GAME_SCREEN(update_and_render_game_opening) {
             float  text_height       = font_cache_text_height(font) * font_scale;
 
             {
-				render_commands_push_quad(
-					ui_render_commands,
-					rectangle_f32(0, 0, resolution.x, resolution.y),
-					color32u8(0, 0, 0, 255),
-					BLEND_MODE_ALPHA
-				);
+                render_commands_push_quad(
+                    ui_render_commands,
+                    rectangle_f32(0, 0, resolution.x, resolution.y),
+                    color32u8(0, 0, 0, 255),
+                    BLEND_MODE_ALPHA
+                );
 
                 {
                     // background for text to make it easier to read.
@@ -399,6 +401,14 @@ GAME_SCREEN(update_and_render_game_opening) {
                         BLEND_MODE_ALPHA
                     );
                 }
+            }
+            {
+                render_commands_push_quad(
+                    ui_render_commands,
+                    rectangle_f32(0, 0, resolution.x, resolution.y),
+                    color32u8(0, 0, 0, 255 * fade_alpha),
+                    BLEND_MODE_ALPHA
+                );
             }
         } break;
         case OPENING_MODE_PHASE_FADE_IN: {
