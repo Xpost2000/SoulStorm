@@ -991,16 +991,9 @@ void Game::setup_stage_start() {
     reset_stage_simulation_state();
 
     auto state = &this->state->gameplay_data;
-    {
-        state->intro.stage       = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN;
-        state->intro.stage_timer = Timer(0.25f);
-    }
-
-    // setup end sequence information
-    {
-        state->triggered_stage_completion_cutscene = false;
-        state->complete_stage.stage                = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
-    }
+    state->triggered_stage_completion_cutscene = false;
+    state->intro.begin_sequence();
+    state->complete_stage.reset();
 }
 
 void Game::handle_preferences(void) {
@@ -3309,6 +3302,28 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
     timer.update(dt);
 }
 
+void Game::ingame_update_complete_stage_sequence_player_animate_exit(f32 dt) {
+    
+}
+
+void Gameplay_Stage_Introduction_Sequence::begin_sequence() {
+    stage       = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_FADE_IN;
+    stage_timer = Timer(0.25f);
+}
+
+void Gameplay_Stage_Complete_Stage_Sequence::reset(void) {
+    state->complete_stage.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
+}
+
+void Gameplay_Stage_Complete_Stage_Sequence::begin_sequence(bool replay_mode) {
+    stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_ANIMATE_PLAYER_EXIT;
+    stage_timer = Timer(0.35f);
+
+    if (replay_mode) {
+        stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
+    }
+}
+
 void Game::ingame_update_complete_stage_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt) {
     auto& complete_stage_state = state->gameplay_data.complete_stage;
     auto& timer                = complete_stage_state.stage_timer;
@@ -3336,6 +3351,9 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                                                          state->gameplay_data.current_score));
 
     switch (complete_stage_state.stage) {
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_ANIMATE_PLAYER_EXIT: {
+            ingame_update_complete_stage_sequence_player_animate_exit(dt);
+        } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN: {
             render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128 * timer_percentage), BLEND_MODE_ALPHA);
             if (timer.triggered()) {
@@ -4102,10 +4120,8 @@ GAME_SCREEN(update_and_render_game_ingame) {
                 if (!state->triggered_stage_completion_cutscene && can_finish_stage) {
                     state->triggered_stage_completion_cutscene = true;
                     state->stage_completed                     = false;
-                    {
-                        state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
-                        state->complete_stage.stage_timer = Timer(0.35f);
-                    }
+
+                    state->complete_stage.begin_sequence();
                 }
 
                 if (state->triggered_stage_completion_cutscene) {
@@ -4528,8 +4544,7 @@ void Game::on_player_death() {
         if (state->recording.in_playback) {
             _debugprintf("TODO handle continues?");
             state->triggered_stage_completion_cutscene = true;
-            state->complete_stage.stage       = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
-            state->complete_stage.stage_timer = Timer(0.35f);
+            state->complete_stage.begin_sequence(true);
         } else {
             // Start the game over fade animation.
             // switch_ui(UI_STATE_DEAD_MAYBE_RETRY);

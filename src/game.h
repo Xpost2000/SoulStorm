@@ -172,6 +172,7 @@ private:
 
     void ingame_update_introduction_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);
     void ingame_update_complete_stage_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);
+    void ingame_update_complete_stage_sequence_player_animate_exit(f32 dt);
 
     // NOTE: most of these should be easy to parallesize.
     void handle_all_bullet_collisions(f32 dt);

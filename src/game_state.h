@@ -176,7 +176,8 @@ enum Game_Screen_Modes {
 
 #ifndef RELEASE
     // Testing purposes I want to skip the intro.
-    GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_TITLE_SCREEN,
+    /* GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_TITLE_SCREEN, */
+    GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_OPENING,
 #else
     GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_OPENING,
     /* GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_ENDING, */
@@ -231,6 +232,8 @@ struct Gameplay_Stage_Introduction_Sequence {
     f32 type_timer      = 0.0f;
     s32 name_length     = 0;
     s32 subtitle_length = 0;
+
+    void begin_sequence(void);
 };
 
 // NOTE:
@@ -238,6 +241,7 @@ struct Gameplay_Stage_Introduction_Sequence {
 // end up producing funny stuff like this every once in a while.
 enum Gameplay_Stage_Complete_Stage_Sequence_Stage {
     GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE,
+    GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_ANIMATE_PLAYER_EXIT, // NOTE(jerry): skipped for replay mode. Only used in normal-play.
     GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN,
     // would like to count up the score visually but for now just to make it quick no.
     GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_SHOW_SCORE,
@@ -246,9 +250,17 @@ enum Gameplay_Stage_Complete_Stage_Sequence_Stage {
     GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT,
 };
 
+enum Gameplay_Stage_Complete_Stage_Player_Exit_Animation_stage {
+    
+};
+
 struct Gameplay_Stage_Complete_Stage_Sequence {
     s32 stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
+    s32 player_exit_animation_stage;
     Timer stage_timer;
+
+    void begin_sequence(bool replay_mode=false);
+    void reset(void);
 };
 
 // NOTE: you can achieve this through various different things
