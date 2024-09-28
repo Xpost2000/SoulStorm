@@ -150,6 +150,85 @@ function Make_Enemy_Burst360_1_1_2(
    return e;
 end
 
+-- Same as above with a spin.
+function Make_Enemy_Burst360_1_1_2_EX(
+      hp,
+      initial_position,
+      target_position,
+      target_position_lerp_t,
+
+      fire_delay,
+      burst_count,
+
+      angle_spacing,
+      displacement_shift,
+
+      bullet_present_velocity,
+      bullet_velocity,
+
+      exit_direction,
+      exit_velocity,
+      exit_acceleration,
+
+      angle_displacement_per_frame,
+
+      bullet_visual
+   )
+   local e = enemy_new();
+   enemy_set_hp(e, hp);
+   enemy_set_position(e, initial_position[1], initial_position[2]);
+
+   exit_direction = v2_normalized(exit_direction);
+
+   enemy_task_lambda(
+      e,
+      function(e)
+         -- cannot use asymptopic movement yet
+         enemy_linear_move_to(e, target_position[1], target_position[2], target_position_lerp_t);
+         t_wait(fire_delay);
+         for displacement=0,burst_count do
+            for angle=1,360,angle_spacing do
+               local current_arc_direction = v2_direction_from_degree((angle + displacement*displacement_shift) % 360);
+               local b = bullet_make(
+                  BULLET_SOURCE_ENEMY,
+                  enemy_position(e),
+                  bullet_visual,
+                  v2(0.5, 0.5),
+                  v2(5, 5)
+               )
+               bullet_task_lambda(
+                  b,
+                  function(b)
+                     local sang = (angle + displacement*displacement_shift) % 360;
+                     bullet_set_velocity(b, current_arc_direction[1] * bullet_present_velocity, current_arc_direction[2] * bullet_present_velocity);
+                     t_wait(clamp(0.10 * displacement, 0.1, 0.5));
+                     bullet_reset_movement(b);
+                     t_wait(0.5);
+                     while true do
+                        local current_arc_direction = v2_direction_from_degree(sang);
+                        bullet_set_velocity(b, current_arc_direction[1] * bullet_velocity, current_arc_direction[2] * bullet_velocity);
+                        sang = sang + angle_displacement_per_frame;
+                        t_yield();
+                     end
+                  end
+               )
+               -- bullet_set_velocity(b, current_arc_direction[1] * 30, current_arc_direction[2] * 30);
+               bullet_set_lifetime(b, 15);
+            end
+            play_sound(random_attack_sound());
+            t_wait(0.37);
+         end
+
+         t_wait(0.75);
+
+         enemy_set_velocity(e, exit_direction[1] * exit_velocity, exit_direction[2] * exit_velocity);
+         enemy_set_acceleration(e, exit_direction[1] * exit_acceleration, exit_direction[2] * exit_acceleration);
+      end
+   );
+
+   return e;
+end
+
 -- I need to take advantage of these behavior things way more.
 function Enemy_AddExplodeOnDeathBehavior(e, explosion_radius, warning_timer, explosion_timer)
    enemy_task_lambda(
