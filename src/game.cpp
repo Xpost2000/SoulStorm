@@ -3232,7 +3232,7 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
             f32 rect_y = commands->screen_height/2-32;
             render_commands_push_quad(commands, rectangle_f32(0, rect_y, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
             {
-                string title = string_concatenate(&Global_Engine()->scratch_arena, stage.name, stage.levels[level_id].name);
+                string title = string_concatenate(&Global_Engine()->scratch_arena, stage.name, string_concatenate(&Global_Engine()->scratch_arena, string_literal(" - "), stage.levels[level_id].name));
                 auto   text_width = font_cache_text_width(title_font, title, 4);
                 render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
             }
@@ -3247,14 +3247,14 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
             f32 rect_y = commands->screen_height/2-32;
             render_commands_push_quad(commands, rectangle_f32(0, rect_y, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
             {
-                string title = string_concatenate(&Global_Engine()->scratch_arena, stage.name, stage.levels[level_id].name);
+                string title = string_concatenate(&Global_Engine()->scratch_arena, stage.name, string_concatenate(&Global_Engine()->scratch_arena, string_literal(" - "), stage.levels[level_id].name));
                 auto   text_width = font_cache_text_width(title_font, title, 4);
                 render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
             {
                 string title = stage.subtitle;
                 auto   text_width = font_cache_text_width(title_font, title, 2);
-                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y + 35), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y + 40), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
             }
             // TODO: not typing in yet.
             if (timer.triggered()) {
@@ -3267,14 +3267,14 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
             f32 rect_y = commands->screen_height/2-32;
             render_commands_push_quad(commands, rectangle_f32(0, rect_y, commands->screen_width, 64), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
             {
-                string title = string_concatenate(&Global_Engine()->scratch_arena, stage.name, stage.levels[level_id].name);
+                string title = string_concatenate(&Global_Engine()->scratch_arena, stage.name, string_concatenate(&Global_Engine()->scratch_arena, string_literal(" - "), stage.levels[level_id].name));
                 auto   text_width = font_cache_text_width(title_font, title, 4);
                 render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
             {
                 string title = stage.subtitle;
                 auto   text_width = font_cache_text_width(title_font, title, 2);
-                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y + 35), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y + 40), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
 
             if (timer.triggered()) {
@@ -3288,14 +3288,14 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
             f32 effective_t = (1 - timer_percentage);
             render_commands_push_quad(commands, rectangle_f32(0, rect_y, commands->screen_width, 64), color32u8(0, 0, 0, 128 * effective_t), BLEND_MODE_ALPHA);
             {
-                string title = string_concatenate(&Global_Engine()->scratch_arena, stage.name, stage.levels[level_id].name);
+                string title = string_concatenate(&Global_Engine()->scratch_arena, stage.name, string_concatenate(&Global_Engine()->scratch_arena, string_literal(" - "), stage.levels[level_id].name));
                 auto   text_width = font_cache_text_width(title_font, title, 4);
                 render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, effective_t), BLEND_MODE_ALPHA);
             }
             {
                 string title = stage.subtitle;
                 auto   text_width = font_cache_text_width(title_font, title, 2);
-                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y + 35), title, color32f32(1, 1, 1, effective_t), BLEND_MODE_ALPHA);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y + 40), title, color32f32(1, 1, 1, effective_t), BLEND_MODE_ALPHA);
             }
 
             if (timer.triggered())  {
