@@ -201,6 +201,7 @@ struct Entity {
     void stop_attack();
 
     // I normally don't like using these... I still don't!
+    virtual void reset_movement(void);
     virtual void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
     // NOTE: I only want read only states
     // wholesale updates like collisions will be checked in the main

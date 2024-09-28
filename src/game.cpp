@@ -209,7 +209,7 @@ void config_game_entity_player_propel_particle_emitter(Particle_Emitter& emitter
     emitter.modulation              = color32f32(222.0f / 255.0f, 180.0f / 255.0f, 45.0f / 255.0f, 1.0f);
     emitter.target_modulation       = color32f32(59/255.0f, 59/255.0f, 56/255.0f, 127/255.0f);
     emitter.lifetime                = 1.25f;
-    emitter.scale_variance          = V2(-0.15, 0.15f);
+    emitter.scale_variance          = V2(-0.15, 0.45f);
     emitter.angle_range             = V2(-360, 360);
     emitter.velocity                = V2(90.0f);
     emitter.velocity_x_variance     = V2(15, 15);
@@ -3343,11 +3343,13 @@ void Game::ingame_update_complete_stage_sequence_player_animate_exit(f32 dt) {
 
             if (distance_to_center <= 5.0f) {
                 player_entity.set_position(play_area_center);
-            } else {
                 complete_stage_state.player_exit_animation_stage = GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_BACK_UP;
-                complete_stage_state.exit_animation_stage_timer = Timer(0.5f);
+                complete_stage_state.exit_animation_stage_timer = Timer(1.0);
                 complete_stage_state.exit_animation_stage_timer.start();
-                player_entity.acceleration = direction_to_center * 50;
+                player_entity.acceleration = V2(0, 0);
+                player_entity.velocity = V2(0, 0);
+            } else {
+                player_entity.acceleration = direction_to_center * 200;
             }
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_BACK_UP: {
@@ -3361,13 +3363,13 @@ void Game::ingame_update_complete_stage_sequence_player_animate_exit(f32 dt) {
                 complete_stage_state.exit_animation_stage_timer.start();
                 complete_stage_state.player_exit_animation_stage = GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_BLAST_OFF;
             } else {
-                player_entity.acceleration = V2(0, 150);
+                player_entity.acceleration = V2(0, 180);
             }
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_BLAST_OFF: {
             // poof explosion!
             if (complete_stage_state.exit_animation_stage_timer.triggered()) {
-                complete_stage_state.exit_animation_stage_timer = Timer(2.0f);
+                complete_stage_state.exit_animation_stage_timer = Timer(1.0f);
                 complete_stage_state.exit_animation_stage_timer.start();
                 complete_stage_state.player_exit_animation_stage = GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_LINGER;
             } else {
@@ -3381,6 +3383,7 @@ void Game::ingame_update_complete_stage_sequence_player_animate_exit(f32 dt) {
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_DONE: {
             complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN;
+            complete_stage_state.player_exit_animation_stage = GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_PIVOT_TO_CENTER;
         } break;
     }
 
@@ -3419,8 +3422,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
     auto title_font    = resources->get_font(MENU_FONT_COLOR_BLOODRED);
     auto subtitle_font = resources->get_font(MENU_FONT_COLOR_GOLD);
 
-    f32 timer_percentage = timer.percentage();
-    if (timer_percentage > 1.0) timer_percentage = 1.0f;
+    f32 timer_percentage = clamp<f32>(timer.percentage(), 0.0f, 1.0f);
 
     s32 stage_id = state->mainmenu_data.stage_id_level_select;
     s32 level_id = state->mainmenu_data.stage_id_level_in_stage_select;
@@ -4215,6 +4217,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
                     state->stage_completed                     = false;
 
                     state->complete_stage.begin_sequence();
+                    state->player.reset_movement();
                 }
 
                 if (state->triggered_stage_completion_cutscene) {

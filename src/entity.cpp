@@ -59,7 +59,10 @@ float Timer::percentage() {
 }
 
 // Entity Base
-
+void Entity::reset_movement(void) {
+    velocity = V2(0,0);
+    acceleration = V2(0,0);
+}
 
 void Entity::set_sprite_frame_region(s32 a, s32 b) {
     sprite_frame_begin = a;
@@ -949,6 +952,7 @@ void Player::update(Game_State* state, f32 dt) {
     } else {
         // cutscene is taking control.
         Entity::update(state, dt);
+        axes = velocity.normalized();
     }
 
     // Particle Emitter
