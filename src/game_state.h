@@ -176,8 +176,8 @@ enum Game_Screen_Modes {
 
 #ifndef RELEASE
     // Testing purposes I want to skip the intro.
-    /* GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_TITLE_SCREEN, */
-    GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_OPENING,
+    GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_TITLE_SCREEN,
+    /* GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_OPENING, */
 #else
     GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_OPENING,
     /* GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_ENDING, */
@@ -248,16 +248,24 @@ enum Gameplay_Stage_Complete_Stage_Sequence_Stage {
     // Maybe allow going to the next stage immediately? Probably not.
     GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT,
     GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT,
+    GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_COUNT,
 };
 
-enum Gameplay_Stage_Complete_Stage_Player_Exit_Animation_stage {
-    
+enum Gameplay_Stage_Complete_Stage_Player_Exit_Animation_Stage {
+    GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_PIVOT_TO_CENTER,
+    GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_BACK_UP,
+    GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_BLAST_OFF,
+    GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_LINGER,
+    GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_DONE,
+    GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_COUNT,
 };
 
 struct Gameplay_Stage_Complete_Stage_Sequence {
     s32 stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
-    s32 player_exit_animation_stage;
+    s32 player_exit_animation_stage = GAMEPLAY_STAGE_COMPLETE_STAGE_PLAYER_EXIT_ANIMATION_STAGE_PIVOT_TO_CENTER;
     Timer stage_timer;
+    Timer exit_animation_stage_timer;
+    Particle_Emitter player_propel_particles;
 
     void begin_sequence(bool replay_mode=false);
     void reset(void);
@@ -394,6 +402,7 @@ struct Gameplay_Data {
     Stage_State stage_state;
     Particle_Pool particle_pool;
     Particle_Pool death_particle_pool;
+    Particle_Pool stage_exit_particle_pool;
     // TODO: allow player name configuration
     /* char          player_name[64]; */
     void build_current_input_packet();

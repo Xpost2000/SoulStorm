@@ -941,12 +941,15 @@ void Player::update(Game_State* state, f32 dt) {
     V2 axes = gameplay_frame_input_packet_quantify_axes(input_packet);
     float UNIT_SPEED = ((under_focus) ? 225 : 325) * pet_data->speed_modifier;
 
-    velocity.x = axes[0] * UNIT_SPEED;
-    velocity.y = axes[1] * UNIT_SPEED;
-
-    Entity::update(state, dt);
-
-    handle_play_area_edge_behavior(play_area);
+    if (!state->gameplay_data.triggered_stage_completion_cutscene) {
+        velocity.x = axes[0] * UNIT_SPEED;
+        velocity.y = axes[1] * UNIT_SPEED;
+        Entity::update(state, dt);
+        handle_play_area_edge_behavior(play_area);
+    } else {
+        // cutscene is taking control.
+        Entity::update(state, dt);
+    }
 
     // Particle Emitter
     {
