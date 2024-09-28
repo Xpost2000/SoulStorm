@@ -1328,7 +1328,7 @@ function stage_task()
 --    --
 --    -- ???
 --    --
-   Generic_Infinite_Stage_ScrollV("res/img/stagebkg/test11.png", 5);
+   Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1.png", 1.5);
    wave_1();
    t_wait(5.5);
    Make_BrainDead_Enemy_Popcorn1(
