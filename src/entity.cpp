@@ -828,7 +828,14 @@ void Player::handle_bomb_usage(Game_State* state, u32 bomb_pattern_id) {
                 return;
             }
 
+#if 0
+            // NOTE(jerry):
+            /*
+             * I do not personally think this is a good idea because killing enemies would
+             * break the level flow in a detrimental way...
+             */
             state->convert_enemies_to_score_pickups();
+#endif
             state->convert_bullets_to_score_pickups();
             gameplay_data.notify_score(5000, true);
             state->set_led_target_color_anim_force(color32u8(255, 165, 0, 255), 0.08, false, true);
