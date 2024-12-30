@@ -4,7 +4,15 @@
 *.x86_64
 asm/
 runtree/
+## debug game files
 DEBUG_dump_graphics_assets/
+## game files
+controls.lua
+game_save.save
+preferences.lua
+## produced by build
+lua54.lib
+lua54.exp
 .vs/
 
 ## Ignore Visual Studio temporary files, build results, and
