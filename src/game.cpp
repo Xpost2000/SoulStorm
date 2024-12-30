@@ -1549,6 +1549,31 @@ bool Game::can_access_stage(s32 id) {
     return true;
 }
 
+GAME_UI_SCREEN(update_and_render_renderer_change_disclaimer) {
+    render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+    GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+    GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+    GameUI::set_ui_id((char*)"ui_options_menu");
+    GameUI::begin_frame(commands, &resources->graphics_assets);
+    {
+        f32 y = 100;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        GameUI::label(V2(50, y), string_literal("GRAPHICS DEVICE CHANGE"), color32f32(1, 1, 1, 1), 4);
+        y += 45;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        GameUI::label(V2(50, y), string_literal("The graphics renderer will be changed on restart."), color32f32(1, 1, 1, 1), 2);
+        y += 45;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+        if (GameUI::button(V2(100, y), string_literal("OK"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            update_preferences(&preferences, &temp_preferences);
+            confirm_preferences(&preferences, resources);
+            state->viewed_renderer_change_disclaimer = true;
+            state->ui_state = UI_STATE_OPTIONS; // skip affecting the UI "Stack."
+        }
+    }
+    GameUI::end_frame();
+}
+
 GAME_UI_SCREEN(update_and_render_options_menu) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
@@ -1588,7 +1613,7 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
 #ifdef _WIN32
             options_list.push(string_literal("DirectX11"));
 #endif
-            GameUI::option_selector(V2(100, y), string_literal("Renderer: "), color32f32(1, 1, 1, 1), 2, options_list.data, options_list.size, &temp_preferences.renderer_type);
+            GameUI::option_selector(V2(100, y), string_literal("Renderer*: "), color32f32(1, 1, 1, 1), 2, options_list.data, options_list.size, &temp_preferences.renderer_type);
             y += 30;
         }
         if (GameUI::checkbox(V2(100, y), string_literal("Fullscreen "), color32f32(1, 1, 1, 1), 2, &temp_preferences.fullscreen)) {}
@@ -1611,12 +1636,26 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
          * I'm aware this can break some of the transitions I'm doing.
          */
         if (GameUI::button(V2(100, y), string_literal("Apply"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            if (temp_preferences.renderer_type != preferences.renderer_type) {
+                if (!state->viewed_renderer_change_disclaimer) {
+                    state->ui_state = UI_STATE_SHOW_RENDERER_DISCLAIMER;
+                }
+            }
             update_preferences(&preferences, &temp_preferences);
             confirm_preferences(&preferences, resources);
         }
         y += 30;
         if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-            switch_ui(state->last_ui_state);
+            if (temp_preferences.renderer_type != preferences.renderer_type) {
+                if (!state->viewed_renderer_change_disclaimer) {
+                    state->ui_state = UI_STATE_SHOW_RENDERER_DISCLAIMER;
+                } else {
+                    switch_ui(state->last_ui_state);
+                }
+            } else {
+                switch_ui(state->last_ui_state);
+            }
+
             update_preferences(&preferences, &temp_preferences);
             confirm_preferences(&preferences, resources);
             save_preferences_to_disk(&preferences, string_literal("preferences.lua"));
@@ -1624,11 +1663,13 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
         y += 30;
         if (GameUI::button(V2(100, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             temp_preferences = preferences;
+            state->viewed_renderer_change_disclaimer = false;
             switch_ui(state->last_ui_state);
         }
         y += 30;
 
         if (Action::is_pressed(ACTION_CANCEL)) {
+            state->viewed_renderer_change_disclaimer = false;
             switch_ui(state->last_ui_state);
         }
     }
@@ -3204,6 +3245,9 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
         } break;
         case UI_STATE_CONFIRM_EXIT_TO_WINDOWS: {
             update_and_render_confirm_exit_to_windows(commands, dt);
+        } break;
+        case UI_STATE_SHOW_RENDERER_DISCLAIMER: {
+            update_and_render_renderer_change_disclaimer(commands, dt);
         } break;
         case UI_STATE_OPTIONS: {
             update_and_render_options_menu(commands, dt); 

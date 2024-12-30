@@ -523,6 +523,7 @@ enum UI_State_Mode {
     UI_STATE_REPLAY_NOT_SUPPORTED,
     UI_STATE_CONFIRM_BACK_TO_MAIN_MENU,
     UI_STATE_CONFIRM_EXIT_TO_WINDOWS,
+    UI_STATE_SHOW_RENDERER_DISCLAIMER,
     UI_STATE_COUNT,
 };
 
@@ -732,6 +733,8 @@ struct Game_State {
     s32 ui_state         = UI_STATE_INACTIVE;
     s32 last_ui_state    = UI_STATE_INACTIVE;
     s32 last_completion_state = -1;
+
+    bool viewed_renderer_change_disclaimer = false;
 
     Controller_LED_State led_state;
 
