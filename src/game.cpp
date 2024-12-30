@@ -402,6 +402,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     resources->ui_vignette_borders[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_left.png"));
     resources->ui_vignette_borders[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_bottom.png"));
     resources->ui_rays_gradient = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/uieffect0.png"));
+
     resources->ui_border_vignette = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette.png"));
 
 
@@ -1059,9 +1060,11 @@ void Game::handle_preferences(void) {
     update_preferences(&temp_preferences, &preferences);
 }
 
-void Game::on_resolution_change(int new_width, int new_height)
-{
+void Game::on_resolution_change(int new_width, int new_height) {
+    _debugprintf("on_resolution_change");
     state->mainmenu_data.reset_object_positions(this->resources);
+    state->mainmenu_data.main_camera = camera(V2(new_width / 2, new_height / 2), 1.0);
+    state->mainmenu_data.main_camera.centered = true;
 }
 
 void Game::init(Graphics_Driver* driver) {
@@ -1610,12 +1613,6 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
         if (GameUI::button(V2(100, y), string_literal("Apply"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             update_preferences(&preferences, &temp_preferences);
             confirm_preferences(&preferences, resources);
-
-            // NOTE: readjust the camera.
-            {
-                state->mainmenu_data.main_camera = camera(V2(commands->screen_width/2, commands->screen_height/2), 1.0);
-                state->mainmenu_data.main_camera.centered = true;
-            }
         }
         y += 30;
         if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
@@ -1623,12 +1620,6 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
             update_preferences(&preferences, &temp_preferences);
             confirm_preferences(&preferences, resources);
             save_preferences_to_disk(&preferences, string_literal("preferences.lua"));
-
-            // NOTE: readjust the camera.
-            {
-                state->mainmenu_data.main_camera = camera(V2(commands->screen_width/2, commands->screen_height/2), 1.0);
-                state->mainmenu_data.main_camera.centered = true;
-            }
         }
         y += 30;
         if (GameUI::button(V2(100, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {

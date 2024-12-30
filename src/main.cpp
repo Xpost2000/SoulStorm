@@ -707,10 +707,9 @@ void engine_main_loop() {
 }
 
 local void set_graphics_device(s32 id) {
-    if (last_graphics_device_id == id) {
+    if (last_graphics_device_id != GRAPHICS_DEVICE_NULL) {
         return;
     }
-
     last_graphics_device_id = id;
 
     if (global_graphics_driver) {
