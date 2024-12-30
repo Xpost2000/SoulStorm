@@ -116,7 +116,7 @@
     <LibraryPath>$(SolutionDir)..\dependencies\msvc-x86-64\lib\x64;$(SolutionDir)..\SoulStormGame\x64\Release;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\../</OutDir>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>game-reldebug</TargetName>
+    <TargetName>game_reldebug</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -238,7 +238,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL2.lib;SDL2_mixer.lib;SDL2main.lib;lua54.lib;OpenGL32.lib;d3d11.lib;d3dcompiler.lib;dxguid.lib;discord_game_sdk.dll.lib;kernel32.lib;shell32.lib;user32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Users\xpost\project-repositories\git\SoulStorm\dependencies\msvc-x86-64\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(SolutionDir)..\dependencies\msvc-x86-64\lib\x64;%(SolutionDir)..\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
