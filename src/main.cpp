@@ -612,7 +612,7 @@ bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
         if (t != LUA_TNONE && t != LUA_TNIL)
             preferences->renderer_type = lua_tonumber(L, -1);
         if (preferences->renderer_type == GRAPHICS_DEVICE_NULL) {
-            preferences->renderer_type = GRAPHICS_DEVICE_SOFTWARE;
+            preferences->renderer_type = GRAPHICS_DEVICE_D3D11;
         }
 
 #ifndef _WIN32
