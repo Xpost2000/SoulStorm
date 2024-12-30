@@ -543,6 +543,8 @@ void actually_confirm_and_update_preferences(Game_Preferences* preferences, Game
     preferences->resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences->width, preferences->height);
     _use_controller_rumble = preferences->controller_vibration;
     queued_preference_update = false;
+
+    game.on_resolution_change(preferences->width, preferences->height);
 }
 
 void confirm_preferences(Game_Preferences* preferences, Game_Resources* resources) {

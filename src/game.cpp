@@ -1059,6 +1059,11 @@ void Game::handle_preferences(void) {
     update_preferences(&temp_preferences, &preferences);
 }
 
+void Game::on_resolution_change(int new_width, int new_height)
+{
+    state->mainmenu_data.reset_object_positions(this->resources);
+}
+
 void Game::init(Graphics_Driver* driver) {
     this->arena     = &Global_Engine()->main_arena;
     this->resources = (Game_Resources*)arena->push_unaligned(sizeof(*this->resources));

@@ -116,6 +116,7 @@ public:
 
     void update_and_render(Graphics_Driver* driver, f32 dt);
     void handle_preferences(void);
+    void on_resolution_change(int new_width, int new_height);
 
     Game_Preferences preferences;
     Game_State*     state;

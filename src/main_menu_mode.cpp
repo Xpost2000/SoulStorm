@@ -869,6 +869,105 @@ local void initialize_portal_particle_emitters(MainMenu_Stage_Portal* portal,
     }
 }
 
+void MainMenu_Data::reset_object_positions(Game_Resources* resources) {
+    // initialize all portals here for the main menu
+        // portals should be spaced differently based on what's unlocked
+        // but I'll just place them manually
+    {
+        auto& portal = portals[0];
+        portal.stage_id = 0;
+        portal.scale = V2(15, 15);
+        for (int i = 0; i < array_count(portal.prerequisites); ++i) {
+            portal.prerequisites[i] = -1;
+        }
+        portal.visible = true;
+
+        initialize_portal_particle_emitters(
+            &portal,
+            resources,
+            PROJECTILE_SPRITE_RED_ELECTRIC,
+            PROJECTILE_SPRITE_RED
+        );
+    }
+
+    {
+        auto& portal = portals[1];
+        portal.stage_id = 1;
+        portal.scale = V2(15, 15);
+        for (int i = 0; i < array_count(portal.prerequisites); ++i) {
+            portal.prerequisites[i] = -1;
+        }
+        portal.prerequisites[0] = 0;
+        portal.visible = true;
+
+        initialize_portal_particle_emitters(
+            &portal,
+            resources,
+            PROJECTILE_SPRITE_GREEN_ELECTRIC,
+            PROJECTILE_SPRITE_GREEN
+        );
+    }
+
+    {
+        auto& portal = portals[2];
+        portal.stage_id = 2;
+        portal.scale = V2(15, 15);
+        for (int i = 0; i < array_count(portal.prerequisites); ++i) {
+            portal.prerequisites[i] = -1;
+        }
+        portal.prerequisites[0] = 0;
+        portal.prerequisites[1] = 1;
+        portal.visible = true;
+
+        initialize_portal_particle_emitters(
+            &portal,
+            resources,
+            PROJECTILE_SPRITE_BLUE_ELECTRIC,
+            PROJECTILE_SPRITE_BLUE
+        );
+    }
+
+    // NOTE: postgame portal.
+    // NOTE: unused, I do not have time to make more levels :(
+    {
+        auto& portal = portals[3];
+        portal.stage_id = 3;
+        portal.scale = V2(15, 15);
+        portal.position = V2(350 - 30, 400);
+        for (int i = 0; i < array_count(portal.prerequisites); ++i) {
+            portal.prerequisites[i] = -1;
+        }
+        portal.prerequisites[0] = 0;
+        portal.prerequisites[1] = 1;
+        portal.prerequisites[2] = 2;
+
+        {
+            auto& emitter = portal.emitter_main;
+            emitter.sprite = sprite_instance(resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
+            emitter.scale = 1.0f;
+            emitter.lifetime = 1.0f;
+            emitter.velocity_x_variance = V2(-100, 100);
+            emitter.velocity_y_variance = V2(-100, 100);
+            emitter.acceleration_x_variance = V2(-100, 100);
+            emitter.acceleration_y_variance = V2(-100, 100);
+            emitter.lifetime_variance = V2(-0.5f, 1.0f);
+            emitter.emission_max_timer = 0.025f;
+        }
+
+        {
+            auto& emitter = portal.emitter_vortex;
+            emitter.sprite = sprite_instance(resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
+            emitter.scale = 0.5;
+            emitter.lifetime = 2.0f;
+            emitter.lifetime_variance = V2(-0.5f, 1.0f);
+            emitter.flags |= PARTICLE_EMITTER_FLAGS_USE_ATTRACTION_POINT; // use_attraction_point = true;
+            emitter.attraction_force = 100.0f;
+            emitter.emission_max_timer = 0.025f;
+        }
+    }
+
+}
+
 void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
     {
         auto state = &this->state->mainmenu_data;
@@ -892,102 +991,7 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
         state->clutter_poops   = Fixed_Array<MainMenu_Clutter_Poop>(arena, 64);
         state->portals = Fixed_Array<MainMenu_Stage_Portal>(arena, 4);
         {
-            // initialize all portals here for the main menu
-            // portals should be spaced differently based on what's unlocked
-            // but I'll just place them manually
-            {
-                auto& portal = state->portals[0]; 
-                portal.stage_id = 0;
-                portal.scale = V2(15, 15);
-                for (int i = 0; i < array_count(portal.prerequisites); ++i) {
-                    portal.prerequisites[i] = -1;
-                }
-                portal.visible = true;
-
-                initialize_portal_particle_emitters(
-                    &portal,
-                    this->state->resources,
-                    PROJECTILE_SPRITE_RED_ELECTRIC,
-                    PROJECTILE_SPRITE_RED
-                );
-            }
-
-            {
-                auto& portal = state->portals[1]; 
-                portal.stage_id = 1;
-                portal.scale = V2(15, 15);
-                for (int i = 0; i < array_count(portal.prerequisites); ++i) {
-                    portal.prerequisites[i] = -1;
-                }
-                portal.prerequisites[0] = 0;
-                portal.visible = true;
-
-                initialize_portal_particle_emitters(
-                    &portal,
-                    this->state->resources,
-                    PROJECTILE_SPRITE_GREEN_ELECTRIC,
-                    PROJECTILE_SPRITE_GREEN
-                );
-            }
-
-            {
-                auto& portal = state->portals[2]; 
-                portal.stage_id = 2;
-                portal.scale = V2(15, 15);
-                for (int i = 0; i < array_count(portal.prerequisites); ++i) {
-                    portal.prerequisites[i] = -1;
-                }
-                portal.prerequisites[0] = 0;
-                portal.prerequisites[1] = 1;
-                portal.visible = true;
-
-                initialize_portal_particle_emitters(
-                    &portal,
-                    this->state->resources,
-                    PROJECTILE_SPRITE_BLUE_ELECTRIC,
-                    PROJECTILE_SPRITE_BLUE
-                );
-            }
-
-            // NOTE: postgame portal.
-            // NOTE: unused, I do not have time to make more levels :(
-            {
-                auto& portal = state->portals[3]; 
-                portal.stage_id = 3;
-                portal.scale = V2(15, 15);
-                portal.position = V2(350-30, 400);
-                for (int i = 0; i < array_count(portal.prerequisites); ++i) {
-                    portal.prerequisites[i] = -1;
-                }
-                portal.prerequisites[0] = 0;
-                portal.prerequisites[1] = 1;
-                portal.prerequisites[2] = 2;
-
-                {
-                    auto& emitter = portal.emitter_main;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
-                    emitter.scale  = 1.0f;
-                    emitter.lifetime = 1.0f;
-                    emitter.velocity_x_variance = V2(-100, 100);
-                    emitter.velocity_y_variance = V2(-100, 100);
-                    emitter.acceleration_x_variance = V2(-100, 100);
-                    emitter.acceleration_y_variance = V2(-100, 100);
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.emission_max_timer = 0.025f;
-                }
-
-                {
-                    auto& emitter = portal.emitter_vortex;
-                    emitter.sprite = sprite_instance(this->state->resources->projectile_sprites[PROJECTILE_SPRITE_BLUE]);
-                    emitter.scale  = 0.5;
-                    emitter.lifetime = 2.0f;
-                    emitter.lifetime_variance   = V2(-0.5f, 1.0f);
-                    emitter.flags |= PARTICLE_EMITTER_FLAGS_USE_ATTRACTION_POINT; // use_attraction_point = true;
-                    emitter.attraction_force     = 100.0f;
-                    emitter.emission_max_timer = 0.025f;
-                }
-            }
-
+            state->reset_object_positions(this->state->resources);
             state->portals.size = 4;
         }
 
