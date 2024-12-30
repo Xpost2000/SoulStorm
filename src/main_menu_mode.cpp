@@ -13,6 +13,7 @@ void cutscene_unlocked_pet_task(jdr_duffcoroutine_t* co) {
 
     auto& camera = main_menu_state->main_camera;
     float* trauma_timer = (float*)_jdr_alloc_var(sizeof(*trauma_timer));
+    camera.rng = &main_menu_state->prng;
 
     JDR_Coroutine_Start(co, Start);
     TASK_WAIT(0.7f);
@@ -82,6 +83,7 @@ void cutscene_completed_maingame_task(jdr_duffcoroutine_t* co) {
 
     auto& camera = main_menu_state->main_camera;
     float* trauma_timer = (float*)_jdr_alloc_var(sizeof(*trauma_timer));
+    camera.rng = &main_menu_state->prng;
 
     JDR_Coroutine_Start(co, Start);
 
@@ -154,6 +156,7 @@ void cutscene_introduction_fasttrack_task(jdr_duffcoroutine_t* co) {
 
     auto& camera = main_menu_state->main_camera;
     float* trauma_timer = (float*)_jdr_alloc_var(sizeof(*trauma_timer));
+    camera.rng = &main_menu_state->prng;
 
     JDR_Coroutine_Start(co, Start);
     *trauma_timer = 0.0f;
@@ -193,6 +196,7 @@ void cutscene_introduction_firsttime_task(jdr_duffcoroutine_t* co) {
 
     auto& camera = main_menu_state->main_camera;
     float* trauma_timer = (float*)_jdr_alloc_var(sizeof(*trauma_timer));
+    camera.rng = &main_menu_state->prng;
 
     JDR_Coroutine_Start(co, Start);
     *trauma_timer = 0.0f;
@@ -881,8 +885,8 @@ void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
         // for polish reasons.
         state->main_camera          = camera(V2(resolution.x/2, resolution.y/2), 1.0);
         state->main_camera.centered = true;
-        state->main_camera.rng      = &state->prng;
         state->prng                 = random_state();
+        state->main_camera.rng = &state->prng;
 
         state->screen_messages = Fixed_Array<MainMenu_ScreenMessage>(arena, 32);
         state->clutter_poops   = Fixed_Array<MainMenu_Clutter_Poop>(arena, 64);
