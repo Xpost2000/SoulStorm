@@ -609,22 +609,13 @@ bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
     }
     {
         int t = lua_getglobal(L, "renderer");
-        if (t != LUA_TNONE && t != LUA_TNIL)
+        if (t != LUA_TNONE && t != LUA_TNIL) {
             preferences->renderer_type = lua_tonumber(L, -1);
+        }
+
         if (preferences->renderer_type == GRAPHICS_DEVICE_NULL) {
             preferences->renderer_type = GRAPHICS_DEVICE_D3D11;
         }
-
-#ifndef _WIN32
-        // Use the other hardware renderer if we're not on windows.
-        // Also side-note, ironically the DirectX11 renderer on windows is
-        // the next best renderer behind the software renderer, even though I've
-        // written more OpenGL. There are some minor graphical issues regarding
-        // asset loadings as of this.
-        if (preferences->renderer_type == GRAPHICS_DEVICE_D3D11) {
-            preferences->renderer_type = GRAPHICS_DEVICE_OPENGL;
-        }
-#endif
     }
     {
         int t = lua_getglobal(L, "controller_vibration");
@@ -721,16 +712,24 @@ local void set_graphics_device(s32 id) {
             _debugprintf("Using software graphics device");
             global_graphics_driver = &global_software_renderer_driver;
         } break;
+            /*
+             * NOTE(jerry):
+             *
+             * If not on Windows, D3D11 will fallthrough to the OpenGL renderer
+             * but will still allow choosing D3D11 on windows otherwise.
+             */
+        case GRAPHICS_DEVICE_D3D11:
+#ifdef _WIN32
+        {
+            _debugprintf("Using DirectX11 graphics device");
+            global_graphics_driver = &global_direct3d11_renderer_driver;
+        }
+        break;
+#endif
         case GRAPHICS_DEVICE_OPENGL: {
             _debugprintf("Using opengl graphics device");
             global_graphics_driver = &global_opengl_renderer_driver;
         } break;
-#ifdef _WIN32
-        case GRAPHICS_DEVICE_D3D11: {
-            _debugprintf("Using DirectX11 graphics device");
-            global_graphics_driver = &global_direct3d11_renderer_driver;
-        } break;
-#endif
     }
 
     // reinitialize game assets (reuploading stuff basically)
