@@ -81,6 +81,8 @@ local const char* vertex_shader_source = R"shader(
 
 D3D11_Image d3d11_image_from_image_buffer(ID3D11Device* device, ID3D11DeviceContext* context, struct image_buffer* image_buffer) {
     D3D11_Image result;
+    u32 image_stride = image_buffer->width * sizeof(u32);
+    
     result.texture2d            = nullptr;
     result.shader_resource_view = nullptr;
 
@@ -94,21 +96,17 @@ D3D11_Image d3d11_image_from_image_buffer(ID3D11Device* device, ID3D11DeviceCont
         texture_description.Width     = image_width;
         texture_description.Height    = image_height;
         texture_description.ArraySize = 1;
-        texture_description.MipLevels = 1;
-        texture_description.Usage     = D3D11_USAGE_IMMUTABLE;
-        texture_description.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        texture_description.MipLevels = 0;
+        texture_description.Usage     = D3D11_USAGE_DEFAULT;
+        texture_description.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
         texture_description.SampleDesc.Count = 1;
-
-        D3D11_SUBRESOURCE_DATA texture_data;
-        zero_memory(&texture_data, sizeof(texture_data));
-        texture_data.pSysMem = image_buffer->pixels;
-        texture_data.SysMemPitch = sizeof(uint32_t) * image_width;
+        texture_description.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
         assertion(
             SUCCEEDED(
                 device->CreateTexture2D(
                     &texture_description,
-                    &texture_data,
+                    nullptr,
                     &result.texture2d
                 )
             ) &&
@@ -116,11 +114,23 @@ D3D11_Image d3d11_image_from_image_buffer(ID3D11Device* device, ID3D11DeviceCont
         );
     }
 
+    // Upload orphaned texture for auto-generated mipmaps.
+    {
+      D3D11_BOX destbox;
+      destbox.left = destbox.top = 0;
+      destbox.back = 1;
+      destbox.right = image_buffer->width;
+      destbox.bottom = image_buffer->height;
+
+      context->UpdateSubresource(result.texture2d, 0, &destbox, 
+        image_buffer->pixels, image_stride, 0);
+    }
+
     {
         D3D11_SHADER_RESOURCE_VIEW_DESC texture_shader_resource_view_description;
         zero_memory(&texture_shader_resource_view_description, sizeof(texture_shader_resource_view_description));
         texture_shader_resource_view_description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        texture_shader_resource_view_description.Texture2D.MipLevels = 1;
+        texture_shader_resource_view_description.Texture2D.MipLevels = -1;
         texture_shader_resource_view_description.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 
         assertion(
@@ -133,6 +143,7 @@ D3D11_Image d3d11_image_from_image_buffer(ID3D11Device* device, ID3D11DeviceCont
             ) &&
             "Texture2D SRV creation failure?"
         );
+
         context->GenerateMips(result.shader_resource_view);
     }
 

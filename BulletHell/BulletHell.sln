@@ -8,6 +8,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Bigfilepacker", "..\Bigfilepacker\Bigfilepacker.vcxproj", "{C145F4EF-ECA1-4D25-B508-F3CF7453BEB9}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Game", "BulletHellGame.vcxproj", "{012CD720-F1D0-467F-9EFC-B79C310D06C9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0F511A58-F8E1-457B-85E9-9D0497A50475} = {0F511A58-F8E1-457B-85E9-9D0497A50475}
+		{C145F4EF-ECA1-4D25-B508-F3CF7453BEB9} = {C145F4EF-ECA1-4D25-B508-F3CF7453BEB9}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
