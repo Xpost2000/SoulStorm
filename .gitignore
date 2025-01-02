@@ -4,15 +4,20 @@
 *.x86_64
 asm/
 runtree/
+build_intermediaries/
 ## debug game files
 DEBUG_dump_graphics_assets/
 ## game files
 controls.lua
 game_save.save
 preferences.lua
+## metagen
+lua_engine_api.html
+lua_engine_api.md
 ## produced by build
 lua54.lib
 lua54.exp
+data.bigfile
 .vs/
 
 ## Ignore Visual Studio temporary files, build results, and
