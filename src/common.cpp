@@ -1,6 +1,6 @@
 #include "common.h"
 #include "file_buffer.h"
-#include "V2.h"
+#include "v2.h"
 #include "memory_arena.h"
 
 // TODO:
@@ -305,6 +305,12 @@ Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, strin
     if (directory_information) {
         struct dirent* directory_entry;
         while((directory_entry = readdir(directory_information))){
+	    string entry_name = string_from_cstring(directory_entry->d_name);
+
+	    if (string_equal(entry_name, string_literal(".")) ||
+		string_equal(entry_name, string_literal(".."))) 
+                continue;
+
             Directory_File* current_file = &result.files[result.count++];
             {
                 cstring_copy(directory_entry->d_name, current_file->name, array_count(current_file->name));
