@@ -464,7 +464,7 @@ void initialize() {
         preferences.resolution_option_index = Graphics_Driver::find_index_of_resolution(preferences.width, preferences.height);
         preferences.music_volume = 0.5f;
         preferences.sound_volume = 0.5f;
-        preferences.renderer_type = GRAPHICS_DEVICE_SOFTWARE;
+        preferences.renderer_type = GRAPHICS_DEVICE_D3D11;
         preferences.fullscreen   = SCREEN_IS_FULLSCREEN;
         preferences.controller_vibration = true;
     }
