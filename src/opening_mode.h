@@ -106,6 +106,7 @@ struct OpeningMode_Data {
     f32 skipper_visibility_t = 0.0f;
     f32 skipper_progress_t   = 0.0f;
 
+    void reset_all_slides(void);
     void unload_all_assets(Game_Resources* resources);
     void update_slide(OpeningMode_SlideData* slide, f32 dt);
     void update_and_render_skipper_box(f32 dt, Game_Resources* resources, struct render_commands* ui_render_commands);

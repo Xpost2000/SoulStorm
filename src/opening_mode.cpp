@@ -77,6 +77,15 @@ void Game::opening_data_initialize(Graphics_Driver* driver) {
     // Extra non-text slides are okay.
 }
 
+void OpeningMode_Data::reset_all_slides(void) {
+  for (unsigned index = 0; index < slide_count; ++index) {
+    auto& slide              = slides[index];
+    slide.display_phase = 0;
+    slide.shown_characters = 0;
+    slide.timer = 0;
+  }
+}
+
 void OpeningMode_Data::update_slide(OpeningMode_SlideData* slide, f32 dt) {
     switch (slide->display_phase) {
         case OPENING_MODE_SLIDE_DATA_PHASE_DISPLAY_DELAY: {
@@ -442,6 +451,8 @@ GAME_SCREEN(update_and_render_game_opening) {
             if (state.fade_timer >= (OPENING_MODE_FADE_TIMER_ENDING_MAX+0.35)) {
                 state.phase = OPENING_MODE_PHASE_SLIDESHOW;
                 state.fade_timer = 0.0;
+
+                state.reset_all_slides();
                 switch_screen(GAME_SCREEN_TITLE_SCREEN);
 
                 Transitions::do_color_transition_out(

@@ -5040,9 +5040,15 @@ void Play_Area::set_all_edge_behaviors_to(u8 value) {
 
 void Game::switch_screen(s32 screen) {
 #if 0
+    // TODO(jerry):
+    // honestly, these probably don't use too much memory so I'm not
+    // super concerned about trying to free the memory used by the intro/ending,
+    // but might be worth shaving about 4 MB ish. 
     if (state->screen_mode == GAME_SCREEN_OPENING) {
         state->opening_data.unload_all_assets(resources);
-    } else if (state->screen_mode == GAME_SCREEN_ENDING) {
+    }
+
+    if (state->screen_mode == GAME_SCREEN_ENDING) {
         state->ending_data.unload_all_assets(resources);
     }
 #endif
