@@ -294,6 +294,9 @@ void graphics_assets_unload_image(struct graphics_assets* assets, image_id img) 
     }
 }
 
+void graphics_assets_commit_unloaded_assets(struct graphics_assets* assets) {
+}
+
 font_id graphics_assets_load_bitmap_font(struct graphics_assets* assets, string path, s32 tile_width, s32 tile_height, s32 atlas_rows, s32 atlas_columns) {
     font_id new_id = font_id { .index = (s32)assets->font_count + 1 };
 

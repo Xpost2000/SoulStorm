@@ -86,6 +86,7 @@ Sprite_Instance sprite_instance(sprite_id id);
 // the engine loads from a level.
 enum asset_status {
     ASSET_STATUS_UNLOADED,
+    ASSET_STATUS_TO_BE_UNLOADED,
     ASSET_STATUS_LOADED,
     ASSET_STATUS_PERMENANTLY_LOADED,
 };
@@ -110,6 +111,7 @@ struct graphics_assets {
     Graphics_Driver* graphics_driver;
 };
 
+// NOTE(jerry): fonts are never unloaded except at the very end. They're basically permenant assets for all intents and purposes.
 struct font_cache   font_cache_load_bitmap_font(string filepath, s32 tile_width, s32 tile_height, s32 atlas_rows, s32 atlas_columns);
 void                font_cache_free(struct font_cache* font_cache);
 f32                 font_cache_text_height(struct font_cache* font_cache);
@@ -133,6 +135,7 @@ s32                    sprite_copy_all_images_into_image_array(Sprite* sprite, i
 void                   graphics_assets_finish(struct graphics_assets* assets);
 image_id               graphics_assets_load_image(struct graphics_assets* assets, string path);
 void                   graphics_assets_unload_image(struct graphics_assets* assets, image_id img);
+void                   graphics_assets_commit_unloaded_assets(struct graphics_assets* assets);
 
 void                   graphics_assets_update_graphics_driver(struct graphics_assets* assets, Graphics_Driver* driver);
 
