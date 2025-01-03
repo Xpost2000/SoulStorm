@@ -4565,6 +4565,8 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
     if (take_screenshot) {
         driver->screenshot((char*)"screenshot.png");
     }
+
+    graphics_assets_commit_unloaded_assets(&resources->graphics_assets);
 }
 
 // NOTE: should deduplicate later?
@@ -5044,10 +5046,6 @@ void Game::switch_screen(s32 screen) {
     // honestly, these probably don't use too much memory so I'm not
     // super concerned about trying to free the memory used by the intro/ending,
     // but might be worth shaving about 4 MB ish. 
-    if (state->screen_mode == GAME_SCREEN_OPENING) {
-        state->opening_data.unload_all_assets(resources);
-    }
-
     if (state->screen_mode == GAME_SCREEN_ENDING) {
         state->ending_data.unload_all_assets(resources);
     }

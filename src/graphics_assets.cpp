@@ -219,8 +219,9 @@ struct graphics_assets graphics_assets_create(Memory_Arena* arena, u32 font_limi
 void graphics_assets_finish(struct graphics_assets* assets) {
     _debugprintf("freeing all assets");
     DEBUG_graphics_assets_dump_all_images(assets, string_literal("DEBUG_dump_graphics_assets/"));
+    graphics_assets_commit_unloaded_assets(assets);
 
-    for (unsigned image_index = 0; image_index < assets->image_count; ++image_index) {
+    for (unsigned image_index = 0; image_index < assets->image_capacity; ++image_index) {
         if (assets->image_asset_status[image_index] == ASSET_STATUS_UNLOADED)
             continue;
         struct image_buffer* image = assets->images + image_index;
@@ -279,22 +280,34 @@ void graphics_assets_unload_image(struct graphics_assets* assets, image_id img) 
     s32 index = img.index-1;
     auto img_buffer = graphics_assets_get_image_by_id(assets, img);
 
+    if (assets->image_asset_status[index] == ASSET_STATUS_UNLOADED) {
+      return;
+    }
+
     if (assets->image_asset_status[index] == ASSET_STATUS_PERMENANTLY_LOADED) {
         _debugprintf("Cannot unload image id %d, because it is a PERMENANT asset", img.index);
         return;
     }
 
-    if (assets->image_asset_status[index] != ASSET_STATUS_UNLOADED) {
-        assets->graphics_driver->unload_texture(assets, img);
-        _debugprintf("Unloading image id %d\n", img.index);
-        image_buffer_free(img_buffer);
-        assets->image_asset_status[index] = ASSET_STATUS_UNLOADED;
-
-        assert(assets->graphics_driver && "Hmm, how do you have no graphics driver?");
+    if (assets->image_asset_status[index] != ASSET_STATUS_TO_BE_UNLOADED) {
+      _debugprintf("Queuing unload of image id %d\n", img.index);
+      assets->image_asset_status[index] = ASSET_STATUS_TO_BE_UNLOADED;
     }
 }
 
 void graphics_assets_commit_unloaded_assets(struct graphics_assets* assets) {
+  assert(assets->graphics_driver && "Hmm, how do you have no graphics driver?");
+
+  for (s32 image_index = 0; image_index < assets->image_capacity; ++image_index) {
+    if (assets->image_asset_status[image_index] == ASSET_STATUS_TO_BE_UNLOADED) {
+      image_id img = {image_index+1};
+      auto img_buffer = graphics_assets_get_image_by_id(assets, img);
+      assets->graphics_driver->unload_texture(assets, img);
+      _debugprintf("Unloading image id %d\n", img.index);
+      image_buffer_free(img_buffer);
+      assets->image_asset_status[image_index] = ASSET_STATUS_UNLOADED;
+    }
+  }
 }
 
 font_id graphics_assets_load_bitmap_font(struct graphics_assets* assets, string path, s32 tile_width, s32 tile_height, s32 atlas_rows, s32 atlas_columns) {
