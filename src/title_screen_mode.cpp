@@ -372,8 +372,10 @@ GAME_SCREEN(update_and_render_game_title_screen) {
             }
         }
     }
+
     {
-      if (!Audio::music_playing()) {
+      if (!Audio::music_playing() || !Audio::sound_id_match(Audio::current_music_sound(), resources->title_music)) {
+        Audio::stop_music();
         Audio::play(resources->title_music);
       }
     }

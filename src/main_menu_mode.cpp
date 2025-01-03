@@ -1140,6 +1140,13 @@ GAME_SCREEN(update_and_render_game_main_menu) {
         .Large_Image(DISCORD_GAMEICON_ASSET_KEY)
     );
 
+    {
+      if (!Audio::music_playing() || !Audio::sound_id_match(Audio::current_music_sound(), resources->title_music)) {
+        Audio::stop_music();
+        Audio::play(resources->title_music);
+      }
+    }
+
     main_menu_state.adjust_entities_for_screen_resolution(game_render_commands->screen_width, game_render_commands->screen_height);
     // TODO: Fix Draw_Main_Menu_Stars
     //       this looks bad sometimes when the resolution is adjusted or something similar

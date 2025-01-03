@@ -417,7 +417,8 @@ GAME_SCREEN(update_and_render_game_opening) {
             }
 
             // just shove in audio playing code here..
-            if (!Audio::music_playing()) {
+            if (!Audio::music_playing() || !Audio::sound_id_match(Audio::current_music_sound(), resources->intro_music)) {
+              Audio::stop_music();
               Audio::play(resources->intro_music);
             }
         } break;
@@ -435,6 +436,16 @@ GAME_SCREEN(update_and_render_game_opening) {
                 state.fade_timer = 0.0;
             } else {
                 state.fade_timer += dt;
+            }
+
+            // just shove in audio playing code here.. (copied from above)
+            // NOTE(jerry):
+            // not... intended, the music track isn't synced for playback from here, the music will cut off
+            // or otherwise transition before it finishes. This only happens from attract mode since I skip
+            // the opening logo which happens to add a good amount of padding time.
+            if (!Audio::music_playing() || !Audio::sound_id_match(Audio::current_music_sound(), resources->intro_music)) {
+              Audio::stop_music();
+              Audio::play(resources->intro_music);
             }
         } break;
         case OPENING_MODE_PHASE_SLIDESHOW: {
