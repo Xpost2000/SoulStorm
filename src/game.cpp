@@ -1064,9 +1064,6 @@ void Game::handle_preferences(void) {
 
 void Game::on_resolution_change(int new_width, int new_height) {
     _debugprintf("on_resolution_change");
-    state->mainmenu_data.reset_object_positions(this->resources);
-    state->mainmenu_data.main_camera = camera(V2(new_width / 2, new_height / 2), 1.0);
-    state->mainmenu_data.main_camera.centered = true;
 }
 
 void Game::init(Graphics_Driver* driver) {
