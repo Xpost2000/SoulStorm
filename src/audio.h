@@ -6,7 +6,10 @@
 #define MAX_LOADED_STREAMS (512)
 #define ANY_CHANNEL (-1)
 
-// TODO: does not have a way to change volume!
+// NOTE(jerry):
+// too heavily tied to SDL_Mixer, which isn't the best audio API
+// but I admittedly don't know enough about audio programming to
+// know what a good design is, but this is surely a simple design.
 struct lua_State;
 namespace Audio {
     struct Sound_ID {

@@ -372,6 +372,11 @@ GAME_SCREEN(update_and_render_game_title_screen) {
             }
         }
     }
+    {
+      if (!Audio::music_playing()) {
+        Audio::play(resources->title_music);
+      }
+    }
 
     auto commands = ui_render_commands;
     auto resolution = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);

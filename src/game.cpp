@@ -865,6 +865,8 @@ void Game::init_audio_resources() {
 
     resources->hit_sounds[0]    = Audio::load(("res/snds/hit1.wav"));
     resources->hit_sounds[1]    = Audio::load(("res/snds/hit2.wav"));
+
+    resources->title_music = Audio::load("./res/snds/titlemenu1draft.ogg", true);
 }
 
 

@@ -45,6 +45,8 @@ void OpeningMode_Data::load_all_slide_assets(Game_Resources* resources) {
 
   slide_count = 0;
 
+  resources->intro_music = Audio::load("./res/snds/musicintro0.ogg", true);
+
   for (; slide_count < array_count(introslide_names); ++slide_count) {
     auto& slide = slides[slide_count];
     slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, introslide_names[slide_count]);
@@ -413,6 +415,11 @@ GAME_SCREEN(update_and_render_game_opening) {
                     BLEND_MODE_ALPHA
                 );
             }
+
+            // just shove in audio playing code here..
+            if (!Audio::music_playing()) {
+              Audio::play(resources->intro_music);
+            }
         } break;
         case OPENING_MODE_PHASE_FADE_IN: {
             f32 alpha = clamp<f32>(state.fade_timer / OPENING_MODE_FADE_TIMER_MAX, 0.0f, 1.0f);
@@ -448,6 +455,11 @@ GAME_SCREEN(update_and_render_game_opening) {
                 state.fade_timer = 0.0;
                 state.slide_index = 0;
 
+                // TODO(jerry): would like fading, but I also don't know what that
+                // sounds like. The track I have decays on it's own anyway, so
+                // maybe not necessary since I'm not sure if I'll ever use a crossfade.
+                Audio::stop_music();
+
                 state.reset_all_slides();
                 state.unload_all_assets(resources);
                 switch_screen(GAME_SCREEN_TITLE_SCREEN);
@@ -475,5 +487,7 @@ void OpeningMode_Data::unload_all_assets(Game_Resources* resources) {
         graphics_assets_unload_image(&resources->graphics_assets, slide.slide_image);
         slide.slide_image = {0};
     }
+
+    Audio::unload(resources->intro_music);
     assets_loaded = false;
 }

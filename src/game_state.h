@@ -817,6 +817,10 @@ enum UI_HP_Icon_Type {
 
 /*
  * NOTE: all of the "permenant" or otherwise code referenced assets are here
+ *
+ * This remains here since it was a shortsighted decision. It's not the *worst* thing
+ * since the asset count is relatively small, and some things that are genuinely not hard-coded
+ * are flexible.
  */
 struct Game_Resources {
     struct graphics_assets graphics_assets;
@@ -890,6 +894,11 @@ struct Game_Resources {
     Audio::Sound_ID        attack_sounds[2];
     Audio::Sound_ID        hit_sounds[2];
     Audio::Sound_ID        opening_beep_type;
+
+    // NOTE(jerry):
+    // these tracks are looped.
+    Audio::Sound_ID        intro_music;
+    Audio::Sound_ID        title_music;
 
     // weird special case for bullets since those actually
     // require rotation.
