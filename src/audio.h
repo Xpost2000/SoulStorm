@@ -16,6 +16,7 @@ namespace Audio {
         u8  streaming;
         s32 index;
     };
+    bool sound_id_match(Sound_ID a, Sound_ID b);
 
     void initialize();
     void deinitialize();
@@ -38,7 +39,8 @@ namespace Audio {
     void set_volume_sound(f32 v);
     void set_volume_music(f32 v);
 
-    bool music_playing();
+    bool music_playing(void);
+    Sound_ID current_music_sound(void);
 
     void bind_audio_lualib(lua_State* L);
 }

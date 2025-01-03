@@ -24,6 +24,23 @@ namespace Audio {
     local f32        current_sound_volume                          = 0.5;
     local f32        current_music_volume                          = 0.5;
     local bool       subsystem_enabled                             = true;
+    local Sound_ID   current_music_sound_id = {};
+
+    Sound_ID current_music_sound(void) {
+      return current_music_sound_id;
+    }
+
+    bool sound_id_match(Sound_ID a, Sound_ID b) {
+      if (a.index == 0 && b.index == 0) {
+        return true;
+      }
+
+      if (a.streaming != b.streaming) {
+        return false;
+      }
+
+      return a.index == b.index;
+    }
 
     void disable(void) {
         subsystem_enabled = false;
@@ -166,6 +183,7 @@ namespace Audio {
 
     void stop_music(void) {
         Mix_HaltMusic();
+        current_music_sound_id = {0,0};
     }
 
     void play(Sound_ID sound) {
@@ -182,6 +200,7 @@ namespace Audio {
                 loaded_streams[sound.index-1] = Mix_LoadMUS(loaded_stream_filestrings[sound.index-1].data);
 
             s32 status = Mix_PlayMusic(loaded_streams[sound.index-1], -1);
+            current_music_sound_id = sound;
         } else {
             if (loaded_samples[sound.index-1] == NULL)
                 loaded_samples[sound.index-1] = Mix_LoadWAV(loaded_sample_filestrings[sound.index-1].data);
@@ -200,13 +219,16 @@ namespace Audio {
 
         if (sound.streaming) {
             Mix_FadeInMusic(loaded_streams[sound.index-1], -1, fadein_ms);
+            current_music_sound_id = sound;
         } else {
             Mix_FadeInChannel(ANY_CHANNEL, loaded_samples[sound.index-1], 0, fadein_ms);
         }
     }
 
+    // TODO(jerry): need to add callback
     void stop_music_fadeout(s32 fadeout_ms) {
         Mix_FadeOutMusic(fadeout_ms);
+        current_music_sound_id = {0,0};
     }
 
     void set_volume_sound(f32 v) {
