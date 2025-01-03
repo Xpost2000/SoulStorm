@@ -12,69 +12,59 @@
 #define SLIDE_RESOLUTION_W (854)
 #define SLIDE_RESOLUTION_H (480)
 
+const local string introslide_names[] = {
+  string_literal("./res/img/opening_slides/1.png"),
+  string_literal("./res/img/opening_slides/2.png"),
+  string_literal("./res/img/opening_slides/3.png"),
+  string_literal("./res/img/opening_slides/4.png"),
+  string_literal("./res/img/opening_slides/5.png"),
+  string_literal("./res/img/opening_slides/6.png"),
+  string_literal("./res/img/opening_slides/7.png"),
+  string_literal("./res/img/opening_slides/8.png"),
+  string_literal("./res/img/opening_slides/9.png"),
+  string_literal("./res/img/opening_slides/10.png"),
+};
+
+const local string introslide_text[] = {
+  string_literal("Once upon a time, in the emptiness of space."),
+  string_literal("Was a small, little boy."),
+  string_literal("Alone with nothing but his thoughts."),
+  string_literal("He loved staring at the far-off stars."),
+  string_literal("Eventually he would find friends in the void."),
+  string_literal("He loved playing with his extra-stellar friends."),
+  string_literal("However, one day mysterious portals appeared"),
+  string_literal("His animal friends, curious and naive"),
+  string_literal("Got absorbed into the portals!"),
+  string_literal("And so the boy set on an adventure to rescue them."),
+};
+
+void OpeningMode_Data::load_all_slide_assets(Game_Resources* resources) {
+  if (assets_loaded) {
+    return;
+  }
+
+  slide_count = 0;
+
+  for (; slide_count < array_count(introslide_names); ++slide_count) {
+    auto& slide = slides[slide_count];
+    slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, introslide_names[slide_count]);
+    slide.slide_caption = introslide_text[slide_count];
+  } 
+
+  assets_loaded = true;
+}
+
 void Game::opening_data_initialize(Graphics_Driver* driver) {
     auto& state = this->state->opening_data;
-    state.slide_count = 0;
-    state.slide_index = 0;
-    state.fade_timer  = 0.0f;
-    state.skipper_visibility_t = 0.0f;
-    state.skipper_progress_t = 0.0f;
     state.phase = OPENING_MODE_PHASE_LOGO;
+    state.assets_loaded = false;
     /*
      * I'm not an excellent writer, but I also don't need a very complicated story.
      */
     _debugprintf("Initialize opening scene");
-    {
-        auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/1.png"));
-        slide.slide_caption = string_literal("Once upon a time, in the emptiness of space");
-    }
-    {
-        auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/2.png"));
-        slide.slide_caption = string_literal("Was a small, little boy.");
-    }
-    {
-        auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/3.png"));
-        slide.slide_caption = string_literal("Alone with nothing but his thoughts.");
-    }
-    {
-        auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/4.png"));
-        slide.slide_caption = string_literal("He loved staring at the far-off stars");
-    }
-    {
-        auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/5.png"));
-        slide.slide_caption = string_literal("Eventually he would find friends in the void");
-    }
-    {
-        auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/6.png"));
-        slide.slide_caption = string_literal("He loved playing with his extrastellar friends");
-    }
-    {
-        auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/7.png"));
-        slide.slide_caption = string_literal("However, one day mysterious portals appeared");
-    }
-    {
-        auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/8.png"));
-        slide.slide_caption = string_literal("His animal friends, curious and naive");
-    }
-    {
-        auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/9.png"));
-        slide.slide_caption = string_literal("Got absorbed into the portals");
-    }
-    {
-        auto& slide = state.slides[state.slide_count++];
-        slide.slide_image = graphics_assets_load_image(&resources->graphics_assets, string_literal("./res/img/opening_slides/10.png"));
-        slide.slide_caption = string_literal("And so the boy set on an adventure to rescue them.");
-    }
-    // Extra non-text slides are okay.
+    state.load_all_slide_assets(resources);
+    state.reset_all_slides();
+    _debugprintf("# of slides = %d", state.slide_count);
 }
 
 void OpeningMode_Data::reset_all_slides(void) {
@@ -84,6 +74,10 @@ void OpeningMode_Data::reset_all_slides(void) {
     slide.shown_characters = 0;
     slide.timer = 0;
   }
+  slide_index = 0;
+  skipper_visibility_t = 0.0f;
+  skipper_progress_t = 0.0f;
+  fade_timer = 0;
 }
 
 void OpeningMode_Data::update_slide(OpeningMode_SlideData* slide, f32 dt) {
@@ -437,6 +431,7 @@ GAME_SCREEN(update_and_render_game_opening) {
             }
         } break;
         case OPENING_MODE_PHASE_SLIDESHOW: {
+            state.load_all_slide_assets(resources);
             state.update_slide(first_slide, dt);
         } break;
         case OPENING_MODE_PHASE_FADE_OUT: {
@@ -451,8 +446,10 @@ GAME_SCREEN(update_and_render_game_opening) {
             if (state.fade_timer >= (OPENING_MODE_FADE_TIMER_ENDING_MAX+0.35)) {
                 state.phase = OPENING_MODE_PHASE_SLIDESHOW;
                 state.fade_timer = 0.0;
+                state.slide_index = 0;
 
                 state.reset_all_slides();
+                state.unload_all_assets(resources);
                 switch_screen(GAME_SCREEN_TITLE_SCREEN);
 
                 Transitions::do_color_transition_out(
@@ -476,5 +473,7 @@ void OpeningMode_Data::unload_all_assets(Game_Resources* resources) {
     for (int index = 0; index < slide_count; ++index) {
         auto& slide = slides[index];
         graphics_assets_unload_image(&resources->graphics_assets, slide.slide_image);
+        slide.slide_image = {0};
     }
+    assets_loaded = false;
 }

@@ -97,6 +97,7 @@ struct OpeningMode_Data {
     uint8_t               slide_count = 0; 
     uint8_t               slide_index = 0;
     f32                   fade_timer  = 0.0f;
+    bool                  assets_loaded = false;
 
     OpeningMode_Logo_Data logo_presentation;
 
@@ -107,6 +108,7 @@ struct OpeningMode_Data {
     f32 skipper_progress_t   = 0.0f;
 
     void reset_all_slides(void);
+    void load_all_slide_assets(Game_Resources* resources);
     void unload_all_assets(Game_Resources* resources);
     void update_slide(OpeningMode_SlideData* slide, f32 dt);
     void update_and_render_skipper_box(f32 dt, Game_Resources* resources, struct render_commands* ui_render_commands);
