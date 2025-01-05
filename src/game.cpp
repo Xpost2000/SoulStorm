@@ -2170,30 +2170,33 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
                 if (state->gameplay_data.recording.memory_arena) {
                     _debugprintf("Writing recording... (%d recorded score)", state->gameplay_data.current_score);
 
-                    auto calendar_date   = current_calendar_time();
-                    string recordingpath = string_from_cstring(
-                        format_temp(
-                            "bh-%d-%d_%d-%d-%d-%d-%d-%d.recording",
-                            state->gameplay_data.recording.stage_id+1,
-                            state->gameplay_data.recording.level_id+1,
-                            calendar_date.day,
-                            calendar_date.month,
-                            calendar_date.year,
-                            calendar_date.hours,
-                            calendar_date.minutes,
-                            calendar_date.seconds
-                        )
-                    );
+                    if (OS_create_directory(DEFAULT_REPLAY_LOCATION)) {
+                        auto calendar_date   = current_calendar_time();
+                        string recordingpath = string_from_cstring(
+                            format_temp(
+                                "bh-%d-%d_%d-%d-%d-%d-%d-%d.recording",
+                                state->gameplay_data.recording.stage_id+1,
+                                state->gameplay_data.recording.level_id+1,
+                                calendar_date.day,
+                                calendar_date.month,
+                                calendar_date.year,
+                                calendar_date.hours,
+                                calendar_date.minutes,
+                                calendar_date.seconds
+                            )
+                        );
 
-                    auto serializer = open_write_file_serializer(string_concatenate(&Global_Engine()->scratch_arena, DEFAULT_REPLAY_LOCATION, recordingpath));
+                        auto serializer = open_write_file_serializer(string_concatenate(&Global_Engine()->scratch_arena, DEFAULT_REPLAY_LOCATION, recordingpath));
 
-                    serializer.expected_endianess = ENDIANESS_LITTLE;
-                    gameplay_recording_file_serialize(
-                        &state->gameplay_data.recording,
-                        nullptr,
-                        &serializer
-                    );
-                    serializer_finish(&serializer);
+                        serializer.expected_endianess = ENDIANESS_LITTLE;
+                        gameplay_recording_file_serialize(
+                            &state->gameplay_data.recording,
+                            nullptr,
+                            &serializer
+                        );
+                        serializer_finish(&serializer);
+                    }
+
                     gameplay_recording_file_finish(&state->gameplay_data.recording);
                 }
             }
