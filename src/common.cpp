@@ -3,11 +3,6 @@
 #include "v2.h"
 #include "memory_arena.h"
 
-// TODO:
-// fix linux implementation of directory related
-// functions because they're all broken right now.
-// everything else works though.
-
 #undef UNICODE
 #ifndef __EMSCRIPTEN__
 #ifdef _WIN32
@@ -16,6 +11,7 @@
 #include <shlobj.h>
 #else
 #include <dirent.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/sysmacros.h>
