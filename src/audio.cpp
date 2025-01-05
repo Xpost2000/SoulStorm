@@ -178,10 +178,6 @@ namespace Audio {
         return result;
     }
 
-    static struct {
-        
-    };
-
     void play_music_transition_into(const Sound_ID sound, const s32 fadeout_ms, const s32 fadein_ms) {
         if (sound.streaming == false) {
             // not supported for non-streaming / non-music tracks
