@@ -373,12 +373,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
         }
     }
 
-    {
-      if (!Audio::music_playing() || !Audio::sound_id_match(Audio::current_music_sound(), resources->title_music)) {
-        Audio::stop_music();
-        Audio::play(resources->title_music);
-      }
-    }
+    Audio::play_music_transition_into(resources->title_music, 1500, 2000);
 
     auto commands = ui_render_commands;
     auto resolution = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);

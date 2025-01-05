@@ -12,6 +12,9 @@
 #define SLIDE_RESOLUTION_W (854)
 #define SLIDE_RESOLUTION_H (480)
 
+#define OPENING_MODE_FADEIN_MS (1500)
+#define OPENING_MODE_FADEOUT_MS (1500)
+
 const local string introslide_names[] = {
   string_literal("./res/img/opening_slides/1.png"),
   string_literal("./res/img/opening_slides/2.png"),
@@ -417,10 +420,7 @@ GAME_SCREEN(update_and_render_game_opening) {
             }
 
             // just shove in audio playing code here..
-            if (!Audio::music_playing() || !Audio::sound_id_match(Audio::current_music_sound(), resources->intro_music)) {
-              Audio::stop_music();
-              Audio::play(resources->intro_music);
-            }
+            Audio::play_music_transition_into(resources->intro_music, OPENING_MODE_FADEOUT_MS, OPENING_MODE_FADEIN_MS);
         } break;
         case OPENING_MODE_PHASE_FADE_IN: {
             f32 alpha = clamp<f32>(state.fade_timer / OPENING_MODE_FADE_TIMER_MAX, 0.0f, 1.0f);
@@ -443,10 +443,7 @@ GAME_SCREEN(update_and_render_game_opening) {
             // not... intended, the music track isn't synced for playback from here, the music will cut off
             // or otherwise transition before it finishes. This only happens from attract mode since I skip
             // the opening logo which happens to add a good amount of padding time.
-            if (!Audio::music_playing() || !Audio::sound_id_match(Audio::current_music_sound(), resources->intro_music)) {
-              Audio::stop_music();
-              Audio::play(resources->intro_music);
-            }
+            Audio::play_music_transition_into(resources->intro_music, OPENING_MODE_FADEOUT_MS, OPENING_MODE_FADEIN_MS);
         } break;
         case OPENING_MODE_PHASE_SLIDESHOW: {
             state.load_all_slide_assets(resources);
@@ -466,10 +463,12 @@ GAME_SCREEN(update_and_render_game_opening) {
                 state.fade_timer = 0.0;
                 state.slide_index = 0;
 
-                // TODO(jerry): would like fading, but I also don't know what that
-                // sounds like. The track I have decays on it's own anyway, so
-                // maybe not necessary since I'm not sure if I'll ever use a crossfade.
-                Audio::stop_music();
+                // NOTE(jerry): hackme, engine lacks proper audio system control so it's not
+                // super easy to sequence / crossfade tracks in a convenient way.
+                //
+                // I'm unaware of what good APIs for this *should* look like, but this is simple
+                // and explicit which I can live with.
+                Audio::play_music_transition_into(resources->title_music, 1500, 2000);
 
                 state.reset_all_slides();
                 state.unload_all_assets(resources);

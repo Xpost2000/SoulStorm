@@ -2799,7 +2799,7 @@ void Game::update_and_render_stage_pet_select_menu(struct render_commands* comma
     GameUI::update(dt);
 
     if (load_game) {
-        Audio::stop_music(); // stages are responsible for their own music.
+        Audio::stop_music_fadeout(1000); // stages are responsible for their own music.
 
         Transitions::do_shuteye_in(
             color32f32(0, 0, 0, 1),
