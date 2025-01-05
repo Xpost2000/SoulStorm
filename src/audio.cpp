@@ -13,6 +13,11 @@ extern "C" {
 }
 
 namespace Audio {
+    struct Music_Transition_Callback_Data {
+        Sound_ID new_track_to_play;
+        s32 fadein_ms;
+    };
+
     local Mix_Chunk* loaded_samples[MAX_LOADED_SAMPLES]       = {};
     local u32        loaded_sample_hashes[MAX_LOADED_SAMPLES] = {};
     local Mix_Music* loaded_streams[MAX_LOADED_STREAMS]       = {};
@@ -25,6 +30,14 @@ namespace Audio {
     local f32        current_music_volume                          = 0.5;
     local bool       subsystem_enabled                             = true;
     local Sound_ID   current_music_sound_id = {};
+
+    // NOTE(jerry): once-only.
+    local Music_Transition_Callback_Data transition_callback_data = {};
+    local void _transition_music_finish_callback(void) {
+        play_fadein(transition_callback_data.new_track_to_play, transition_callback_data.fadein_ms);
+        zero_struct(transition_callback_data);
+        Mix_HookMusicFinished(nullptr);
+    }
 
     Sound_ID current_music_sound(void) {
       return current_music_sound_id;
@@ -163,6 +176,37 @@ namespace Audio {
         }
 
         return result;
+    }
+
+    static struct {
+        
+    };
+
+    void play_music_transition_into(const Sound_ID sound, const s32 fadeout_ms, const s32 fadein_ms) {
+        if (sound.streaming == false) {
+            // not supported for non-streaming / non-music tracks
+            // since that requires tracking channels and stuff which
+            // is far more than I ever need out of this audio system.
+            return;
+        }
+
+        auto currently_playing = current_music_sound();
+
+        if (sound_id_match(currently_playing, sound)) {
+            if (!music_playing()) {
+                play(sound);
+            }
+        } else {
+            transition_callback_data.new_track_to_play = sound;
+            transition_callback_data.fadein_ms = fadein_ms;
+
+            if (!music_playing()) {
+                play_fadein(transition_callback_data.new_track_to_play, transition_callback_data.fadein_ms);
+            } else {
+                stop_music_fadeout(fadeout_ms);
+                Mix_HookMusicFinished(_transition_music_finish_callback);
+            }
+        }
     }
 
     void unload(Sound_ID sound) {
