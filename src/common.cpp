@@ -143,15 +143,29 @@ u64 system_get_current_time(void) {
     return time(0);
 }
 
-void OS_create_directory(string location) {
+bool OS_create_directory(string location) {
     _debugprintf("Making directory %.*s", location.length, location.data);
     string s = string_from_cstring(format_temp("%.*s", location.length, location.data));
 #ifdef _WIN32 
-    CreateDirectory(s.data, NULL);
+    DWORD error_code;
+    if (!CreateDirectory(s.data, NULL)) {
+      error_code = GetLastError();
+
+      if (error_code == ERROR_ALREADY_EXISTS) {
+        return true;
+      }
+
+      return false;
+    }
+
+    return true;
 #else
-    assertion(
-      mkdir(s.data, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)
-    );
+    int error_code = mkdir(s.data, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    if (error_code == EEXIST) {
+      return true;
+    }
+
+    return (error_code == 0);
 #endif
 }
 

@@ -577,7 +577,7 @@ u64           system_get_current_time(void);
 Calendar_Time calendar_time_from(s64 timestamp);
 Calendar_Time current_calendar_time(void);
 
-void OS_create_directory(string location);
+bool OS_create_directory(string location);
 
 inline local float safe_ratio(int x, int y) {
     if (y == 0) return 0.0f;
