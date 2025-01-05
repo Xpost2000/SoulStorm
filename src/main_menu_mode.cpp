@@ -1550,6 +1550,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
                         BLEND_MODE_ALPHA
                     );
 
+#if 0
                     {
                         auto& texture_atlas = resources->ui_texture_atlas;
                         auto box_width = 600;
@@ -1566,6 +1567,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
                             BLEND_MODE_ALPHA
                         );
                     }
+#endif
 
                     {
                         render_commands_push_quad_ext(
@@ -1638,6 +1640,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
                             BLEND_MODE_ALPHA
                         );
 
+#if 0
                         {
                             auto& texture_atlas = resources->ui_texture_atlas;
                             auto box_width = 600;
@@ -1654,6 +1657,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
                                 BLEND_MODE_ALPHA
                             );
                         }
+#endif
 
                         {
                             render_commands_push_quad_ext(
