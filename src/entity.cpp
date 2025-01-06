@@ -297,7 +297,7 @@ bool Entity::touching_border(s32 edge, const Play_Area& play_area, bool as_point
     return false;
 }
 
-void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
+s32 Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
     s32 edge_behavior_top    = edge_top_behavior_override;
     s32 edge_behavior_bottom = edge_bottom_behavior_override;
     s32 edge_behavior_left   = edge_left_behavior_override;
@@ -316,17 +316,22 @@ void Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
         switch (edge) {
             case PLAY_AREA_EDGE_DEADLY:
             case PLAY_AREA_EDGE_BLOCKING: {
-                if (clamp_border(edge_index, play_area))
+                if (clamp_border(edge_index, play_area)) {
                     if (edge == PLAY_AREA_EDGE_DEADLY) {
                         kill();
                     }
+                }
+                return edge;
             } break;
             case PLAY_AREA_EDGE_WRAPPING: {
                 wrap_border(edge_index, play_area);
+                return edge;
             } break;
             case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
         }
     }
+
+    return -1;
 }
 
 void Entity::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
@@ -948,7 +953,15 @@ void Player::update(Game_State* state, f32 dt) {
         velocity.x = axes[0] * UNIT_SPEED;
         velocity.y = axes[1] * UNIT_SPEED;
         Entity::update(state, dt);
-        handle_play_area_edge_behavior(play_area);
+        switch (handle_play_area_edge_behavior(play_area)) {
+            case PLAY_AREA_EDGE_DEADLY: {
+                // move the player back to their default position
+                // this is more "fair" to do in my opinion.
+                position = last_position =
+                    V2(state->gameplay_data.play_area.width / 2, 300);
+            } break;
+            default: {} break;
+        }
     } else {
         // cutscene is taking control.
         Entity::update(state, dt);

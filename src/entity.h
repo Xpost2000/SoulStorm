@@ -257,7 +257,7 @@ protected:
     bool clamp_border(s32 edge, const Play_Area& play_area);
     bool touching_border(s32 edge, const Play_Area& play_area, bool as_point=false);
 
-    void handle_play_area_edge_behavior(const Play_Area& play_area);
+    s32 handle_play_area_edge_behavior(const Play_Area& play_area);
 
     // returns the leaned direction.
     s32  update_sprite_leaning_influence(f32 dt, V2 axes, Entity_Rotation_Lean_Params params);
