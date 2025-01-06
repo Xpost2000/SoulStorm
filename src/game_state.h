@@ -932,6 +932,8 @@ struct Game_Resources {
     image_id title_screen_puppet_head;
     image_id title_screen_puppet_arm;
     image_id title_screen_puppet_torso;
+    image_id title_screen_logo_fills[3];
+    image_id title_screen_logo_masks[3];
 
     // end title screen
 

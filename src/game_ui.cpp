@@ -201,6 +201,10 @@ namespace GameUI {
         global_ui_state->default_font = font;
     }
 
+    f32 get_visual_alpha(void) {
+        return global_ui_state->alpha;
+    }
+
     void set_all_visual_alpha(f32 alpha) {
         global_ui_state->alpha = alpha;
     }

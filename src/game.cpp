@@ -580,6 +580,17 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         resources->title_screen_puppet_torso    = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_torso0.png"));
     }
 
+    {
+        resources->title_screen_logo_fills[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_part_0_fill.png"));
+        resources->title_screen_logo_masks[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_part_0_mask.png"));
+
+        resources->title_screen_logo_fills[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_part_1_fill.png"));
+        resources->title_screen_logo_masks[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_part_1_mask.png"));
+
+        resources->title_screen_logo_fills[2] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_part_2_fill.png"));
+        resources->title_screen_logo_masks[2] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_part_2_mask.png"));
+    }
+
     #if 1
     {
         {
@@ -1643,7 +1654,8 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
 
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
-        GameUI::label(V2(50, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
+        // GameUI::label(V2(50, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
+        game_ui_draw_title_logo(commands, V2(50, y-50), 1.25, GameUI::get_visual_alpha());
         y += 45;
         GameUI::label(V2(100, y), string_literal("OPTIONS"), color32f32(1, 1, 1, 1), 4);
         y += 45;
@@ -2522,7 +2534,8 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
-        GameUI::label(V2(50, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
+        // GameUI::label(V2(50, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
+        game_ui_draw_title_logo(commands, V2(50, y-50), 1.25, GameUI::get_visual_alpha());
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         y += 45;
         if (GameUI::button(V2(100, y), string_literal("Resume"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
@@ -3057,6 +3070,73 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
 
         notification.timer += dt;
     }
+}
+
+void Game::game_ui_draw_title_part(struct render_commands* commands, V2 where, s8 partid, color32f32 fill_color, f32 scale, f32 alpha) {
+    if (partid < 0) partid = 0;
+    if (partid > 2) partid = 2;
+
+    image_id mask_image = resources->title_screen_logo_masks[partid];
+    image_id fill_image = resources->title_screen_logo_fills[partid];
+
+    image_buffer* mask_image_buffer = graphics_assets_get_image_by_id(&resources->graphics_assets, mask_image);
+    image_buffer* fill_image_buffer = graphics_assets_get_image_by_id(&resources->graphics_assets, fill_image);
+
+    assertion((mask_image_buffer->width == fill_image_buffer->width) &&
+              (mask_image_buffer->height == fill_image_buffer->height));
+
+    rectangle_f32 dest;
+
+    {
+        dest.x = where.x;
+        dest.y = where.y;
+        dest.w = mask_image_buffer->width * scale;
+        dest.h = mask_image_buffer->height * scale;
+    }
+
+    fill_color.a = alpha;
+
+    render_commands_push_image(
+        commands,
+        mask_image_buffer,
+        dest,
+        RECTANGLE_F32_NULL,
+        color32f32(1, 1, 1, alpha),
+        NO_FLAGS,
+        BLEND_MODE_ALPHA
+    );
+    render_commands_push_image(
+        commands,
+        fill_image_buffer,
+        dest,
+        RECTANGLE_F32_NULL,
+        fill_color,
+        NO_FLAGS,
+        BLEND_MODE_ALPHA
+    );
+}
+
+void Game::game_ui_draw_title_logo(struct render_commands* commands, V2 where, f32 scale, f32 alpha) {
+    enum {
+        HERO_LOGO_PART = 0, WORD1_LOGO_PART, WORD2_LOGO_PART,
+    };
+
+    V2 logo_cursor = where;
+#if 1
+    // BLUE LOGO
+    color32f32 logo_color = RGBA32f32(3, 138, 255, alpha*255.0f);
+    color32f32 logo_color2 = RGBA32f32(0, 181, 204, alpha*255.0f);
+#else
+    // GOLD LOGO
+    color32f32 logo_color = RGBA32f32(255, 223, 5, alpha*255.0f);
+    color32f32 logo_color2 = RGBA32f32(247, 202, 24, alpha*255.0f);
+#endif
+
+    game_ui_draw_title_part(commands, logo_cursor, WORD1_LOGO_PART, logo_color, scale, alpha);
+    logo_cursor.x += 55 * scale;
+    game_ui_draw_title_part(commands, logo_cursor, HERO_LOGO_PART, logo_color2, scale, alpha);
+    logo_cursor.x += 65 * scale;
+    game_ui_draw_title_part(commands, logo_cursor, WORD2_LOGO_PART, logo_color, scale, alpha);
 }
 
 void Game::game_ui_draw_bordered_box(V2 where, s32 width, s32 height, color32f32 main_color, color32f32 border_color) {

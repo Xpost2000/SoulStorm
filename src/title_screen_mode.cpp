@@ -520,7 +520,8 @@ GAME_SCREEN(update_and_render_game_title_screen) {
         {
             f32 y = 100;
             GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
-            GameUI::label(V2(ui_x_title, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
+            // GameUI::label(V2(ui_x_title, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
+            game_ui_draw_title_logo(commands, V2(ui_x_title, y-50), 1.25, GameUI::get_visual_alpha());
             GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
 
             y += 45;

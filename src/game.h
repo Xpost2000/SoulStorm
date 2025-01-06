@@ -214,6 +214,11 @@ private:
     void game_ui_draw_bordered_box(V2 where, s32 width, s32 height, color32f32 main_color = color32f32_DEFAULT_UI_COLOR, color32f32 border_color = color32f32_WHITE);
     void game_ui_draw_achievement_icon(const Achievement& achievement, struct render_commands* commands, V2 where, f32 scale, f32 alpha=1.0f);
 
+    // TODO(jerry):
+    // The theming is compiled in/hard-coded
+    void game_ui_draw_title_logo(struct render_commands* commands, V2 where, f32 scale, f32 alpha);
+    void game_ui_draw_title_part(struct render_commands* commands, V2 where, s8 partid, color32f32 fill_color, f32 scale, f32 alpha);
+
     // The game will only utilize one save file
     // and auto save so this makes so much way easier.
     // the save file format is not very complicated honestly, since it just
