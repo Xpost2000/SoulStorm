@@ -302,27 +302,6 @@ void OpenGL_Graphics_Driver::initialize_backbuffer(V2 resolution) {
 
     _debugprintf("Real resolution %d, %d", (s32)real_resolution.x, (s32)real_resolution.y);
     _debugprintf("virtual resolution %d, %d", (s32)virtual_resolution.x, (s32)virtual_resolution.y);
-
-    // setup projection matrix
-    {
-        GLfloat right = resolution.x;
-        GLfloat left = 0;
-        GLfloat top = 0;
-        GLfloat bottom = resolution.y;
-
-        GLfloat far = 100.0f;
-        GLfloat near = 0.1f;
-        GLfloat orthographic_matrix[] = {
-            2 / (right - left), 0, 0, 0,
-            0, 2 / (top - bottom), 0, 0,
-            0, 0, 2 / (far - near), 0,
-            -(right+left)/(right-left), -(top+bottom)/(top-bottom), -(far+near)/(far-near), 1
-        };
-
-        glUseProgram(default_shader_program);
-        glUniformMatrix4fv(projection_matrix_uniform_location, 1, 0, orthographic_matrix);
-        glUseProgram(0);
-    }
 }
 
 void OpenGL_Graphics_Driver::swap_and_present() {
@@ -636,6 +615,20 @@ void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* com
     if (!initialized_default_shader) {
         return;
     }
+
+    /*
+    * NOTE(jerry):
+    * 
+    * Ugh, this was a technical mistake since it relies on the fact the backbuffer isn't
+    * supposed to be resized frequently (like in the D3D11 backend where you control the framebuffer).
+    * 
+    * OpenGL's default framebuffer is managed by the driver(?) which desynchronizes the viewport from
+    * what the graphics code is expecting as the resizing code tries to prevent recreating the framebuffer
+    * as much as possible (I.E. internally draws at some perfect multiple of a resolution so that it can
+    * operate in a virtual pixel space, since afaik that's the *right* way to do 2D games.)
+    */
+    real_resolution = V2(Global_Engine()->real_screen_width, Global_Engine()->real_screen_height);
+
     // NOTE:
     // unlike the software renderer this doesn't try to clip anything
     // because it kind of doesn't have to? It would be too fast anyway...
@@ -662,6 +655,24 @@ void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* com
         };
 
         glUniformMatrix4fv(view_matrix_uniform_location, 1, false, view_matrix);
+    }
+    // setup projection matrix
+    {
+      GLfloat right = virtual_resolution.x;
+      GLfloat left = 0;
+      GLfloat top = 0;
+      GLfloat bottom = virtual_resolution.y;
+
+      GLfloat far = 100.0f;
+      GLfloat near = 0.1f;
+      GLfloat orthographic_matrix[] = {
+          2 / (right - left), 0, 0, 0,
+          0, 2 / (top - bottom), 0, 0,
+          0, 0, 2 / (far - near), 0,
+          -(right + left) / (right - left), -(top + bottom) / (top - bottom), -(far + near) / (far - near), 1
+      };
+
+      glUniformMatrix4fv(projection_matrix_uniform_location, 1, 0, orthographic_matrix);
     }
 
     if (commands->should_clear_buffer) {
