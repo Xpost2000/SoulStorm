@@ -61,6 +61,11 @@ namespace GameUI {
     void reset_alpha(void);
     f32  get_visual_alpha(void);
 
+    void set_wobbly_contribution(f32 amount);
+    void reset_wobbly_contribution(void);
+    f32 get_wobbly_contribution(void);
+    f32 get_wobbly_factor(s32 index, s32 seed=0);       // NOTE: calculated based off of global_elapsed_time.
+
     void label(V2 where, string text, color32f32 modulation, f32 scale, bool active=true);
     void option_selector(V2 where, string text, color32f32 modulation, f32 scale, string* options, s32 options_count, s32* out_selected, bool active=true);
 

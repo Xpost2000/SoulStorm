@@ -87,6 +87,17 @@ void render_commands_push_text(struct render_commands* commands, struct font_cac
     command->blend_mode    = blend_mode;
 }
 
+void render_commands_push_text_wobbly(struct render_commands* commands, struct font_cache* font, f32 scale, V2 xy, string text, union color32f32 rgba, u8 blend_mode) {
+    struct render_command* command = render_commands_new_command(commands, RENDER_COMMAND_DRAW_TEXT);
+    command->font          = font;
+    command->xy            = xy;
+    command->scale         = scale;
+    command->text          = text;
+    command->modulation_u8 = color32f32_to_color32u8(rgba);
+    command->flags         = BIT(0);
+    command->blend_mode    = blend_mode;
+}
+
 void render_commands_push_shader_application(struct render_commands* commands, s32 shader_id, void* context) {
     struct render_command* command = render_commands_new_command(commands, RENDER_COMMAND_POSTPROCESS_APPLY_SHADER);
     command->shader_id_type = shader_id;

@@ -2,6 +2,8 @@
 #include "thread_pool.h"
 #include "engine.h"
 
+#include "game_ui.h"
+
 inline local void _rotate_f32_xy_as_pseudo_zyx(f32* x, f32* y, f32 c=0, f32 s=0, f32 c1=0, f32 s1=0, f32 c2=0, f32 s2=1) {
     // z rot
     float _x = *x;
@@ -897,7 +899,7 @@ local void software_framebuffer_draw_glyph_clipped(struct software_framebuffer* 
     );
 }
 
-local void software_framebuffer_draw_text_clipped(struct software_framebuffer* framebuffer, struct font_cache* font, float scale, V2 xy, string text, union color32f32 modulation, u8 blend_mode, struct rectangle_f32 clip_rect) {
+local void software_framebuffer_draw_text_clipped(struct software_framebuffer* framebuffer, struct font_cache* font, float scale, V2 xy, string text, union color32f32 modulation, u8 blend_mode, u32 flags, struct rectangle_f32 clip_rect) {
     f32 x_cursor = xy.x;
     f32 y_cursor = xy.y;
 
@@ -908,14 +910,22 @@ local void software_framebuffer_draw_text_clipped(struct software_framebuffer* f
         } else {
             s32 character_index = text.data[index] - 32;
 
-            software_framebuffer_draw_glyph_clipped(framebuffer, font, scale, V2(x_cursor, y_cursor), character_index, modulation, blend_mode, clip_rect);
+            software_framebuffer_draw_glyph_clipped(
+                framebuffer,
+                font,
+                scale, V2(x_cursor, y_cursor + (flags & BIT(0)) * GameUI::get_wobbly_factor(index, (s32)text.data)),
+                character_index,
+                modulation,
+                blend_mode,
+                clip_rect
+            );
             x_cursor += font->tile_width * scale;
         }
     }
 }
 
 void software_framebuffer_draw_text(struct software_framebuffer* framebuffer, struct font_cache* font, float scale, V2 xy, string text, union color32f32 modulation, u8 blend_mode)  {
-    software_framebuffer_draw_text_clipped(framebuffer, font, scale, xy, text, modulation, blend_mode, rectangle_f32(0, 0, framebuffer->width, framebuffer->height));
+    software_framebuffer_draw_text_clipped(framebuffer, font, scale, xy, text, modulation, blend_mode, 0, rectangle_f32(0, 0, framebuffer->width, framebuffer->height));
 }
 
 void software_framebuffer_draw_glyph(struct software_framebuffer* framebuffer, struct font_cache* font, f32 scale, V2 xy, char glyph, union color32f32 modulation, u8 blend_mode) {

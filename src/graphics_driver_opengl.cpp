@@ -4,6 +4,8 @@
 
 #include <stb_image_write.h>
 
+#include "game_ui.h"
+
 local const char* gl_error_string(GLenum error) {
     switch (error) {
         case GL_NO_ERROR: {
@@ -587,7 +589,7 @@ void OpenGL_Graphics_Driver::render_command_draw_text(const render_command& rc) 
             } else {
                 s32 character = text.data[index] - 32;
                 auto destination_rect = rectangle_f32(
-                    x_cursor, y_cursor,
+                    x_cursor, y_cursor + (rc.flags & BIT(0)) * GameUI::get_wobbly_factor(index, (s32)text.data),
                     font->tile_width  * scale,
                     font->tile_height * scale
                 );

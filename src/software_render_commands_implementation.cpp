@@ -115,6 +115,7 @@ void software_framebuffer_render_commands_tiled(struct software_framebuffer* fra
                     command->text,
                     color32u8_to_color32f32(command->modulation_u8),
                     command->blend_mode,
+                    command->flags,
                     clip_rect
                 );
             } break;

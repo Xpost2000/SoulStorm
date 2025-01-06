@@ -58,6 +58,7 @@ struct UI_State {
     char* ui_id      = nullptr;
 
     f32 alpha = 1.0f;
+    f32 wobble_contribution = 0.0f;
 };
 
 UI_State* global_ui_state = nullptr;
@@ -213,6 +214,24 @@ namespace GameUI {
         global_ui_state->alpha = 1.0f;
     }
 
+    void set_wobbly_contribution(f32 amount) {
+        global_ui_state->wobble_contribution = amount;
+    }
+
+    void reset_wobbly_contribution(void) {
+        set_wobbly_contribution(0.0f);
+    }
+
+    f32 get_wobbly_contribution(void) {
+        return global_ui_state->wobble_contribution;
+    }
+
+    f32 get_wobbly_factor(s32 index, s32 seed) {
+        seed %= 256;
+        f32 factor = sinf((Global_Engine()->global_elapsed_time * 2.1f + (seed/512.0f)) + (index+1) + seed);
+        return factor * 1.256f * global_ui_state->wobble_contribution;
+    }
+
     void label(V2 where, string text, color32f32 modulation, f32 scale, bool active) {
         assertion(global_ui_state->in_frame && "Need to call begin_frame first.");
         modulation.a *= global_ui_state->alpha;
@@ -223,7 +242,7 @@ namespace GameUI {
 
         if (!active) widget->modulation.a = 0.5 * modulation.a;
         else         widget->modulation.a = 1.0 * modulation.a;
-        render_commands_push_text(global_ui_state->commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
+        render_commands_push_text_wobbly(global_ui_state->commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
     }
 
     s32 button(V2 where, string text, color32f32 modulation, f32 scale, bool active) {
@@ -260,7 +279,7 @@ namespace GameUI {
 
         if (!active) widget->modulation.a = 0.5 * modulation.a;
         else         widget->modulation.a = 1.0 * modulation.a;
-        render_commands_push_text(global_ui_state->commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
+        render_commands_push_text_wobbly(global_ui_state->commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
 
         return status;
     }
@@ -295,7 +314,7 @@ namespace GameUI {
 
         if (!active) widget->modulation.a = 0.5 * modulation.a;
         else         widget->modulation.a = 1.0 * modulation.a;
-        render_commands_push_text(global_ui_state->commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
+        render_commands_push_text_wobbly(global_ui_state->commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
 
         render_commands_push_quad(global_ui_state->commands, button_rect, color32u8(255, 255, 255, widget->modulation.a * 255), BLEND_MODE_ALPHA);
         {
@@ -401,7 +420,7 @@ namespace GameUI {
 
         if (!active) widget->modulation.a = 0.5 * modulation.a;
         else         widget->modulation.a = 1.0 * modulation.a;
-        render_commands_push_text(global_ui_state->commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
+        render_commands_push_text_wobbly(global_ui_state->commands, font, widget->scale, widget->where, widget->text, widget->modulation, BLEND_MODE_ALPHA);
 
         render_commands_push_quad(global_ui_state->commands, bar_rect, color32u8(255, 255, 255, widget->modulation.a * 255), BLEND_MODE_ALPHA);
         {
@@ -650,6 +669,7 @@ namespace GameUI {
         global_ui_state->commands = commands;
         global_ui_state->ate_any_mouse_lefts = false;
         global_ui_state->assets = assets;
+        global_ui_state->wobble_contribution = 0.0f;
     }
 
     void end_frame() {

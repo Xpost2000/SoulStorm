@@ -112,6 +112,9 @@ void render_commands_push_line(struct render_commands* commands, V2 start, V2 en
 void render_commands_push_text(struct render_commands* commands, struct font_cache* font, f32 scale, V2 xy, string cstring, union color32f32 rgba, u8 blend_mode);
 void render_commands_push_shader_application(struct render_commands* commands, s32 shader_id, void* context);
 
+// NOTE(jerry): SOULSTORM only
+void render_commands_push_text_wobbly(struct render_commands* commands, struct font_cache* font, f32 scale, V2 xy, string cstring, union color32f32 rgba, u8 blend_mode);
+
 void render_commands_push_set_scissor(struct render_commands* commands, struct rectangle_f32 scissor);
 void render_commands_push_clear_scissor(struct render_commands* commands);
 // TODO: rotated text. This is more of a novelty that I don't think I need yet so I won't do it quite yet

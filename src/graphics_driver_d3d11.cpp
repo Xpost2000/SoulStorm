@@ -11,6 +11,8 @@
 
 #include <stb_image_write.h>
 
+#include "game_ui.h"
+
 void D3D11_Image::Release() {
     _debugprintf("Unloading D3D11 Image Object");
     if (texture2d) {
@@ -754,7 +756,7 @@ void Direct3D11_Graphics_Driver::render_command_draw_text(const render_command& 
             } else {
                 s32 character = text.data[index] - 32;
                 auto destination_rect = rectangle_f32(
-                    x_cursor, y_cursor,
+                    x_cursor, y_cursor + (rc.flags & BIT(0)) * GameUI::get_wobbly_factor(index, (s32)text.data),
                     font->tile_width  * scale,
                     font->tile_height * scale
                 );
