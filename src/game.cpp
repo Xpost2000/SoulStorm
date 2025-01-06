@@ -4425,11 +4425,11 @@ GAME_SCREEN(update_and_render_game_ingame) {
                     bad_case;
             }
 
-            V2 border_rectangle_center = V2((border_rectangle.x + border_rectangle.w)/2,
-                                            (border_rectangle.y + border_rectangle.h)/2);
-
             if (!border_flash.delay_between_flash) {
                 auto flash_color = border_flash_colors[border_flash.flash_id_type];
+                V2 border_rectangle_center = V2((border_rectangle.x*2 + border_rectangle.w)/2,
+                                                (border_rectangle.y*2 + border_rectangle.h)/2);
+
                 render_commands_push_quad(
                     game_render_commands, border_rectangle,
                     color32f32_to_color32u8(flash_color),
