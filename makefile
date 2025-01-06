@@ -21,7 +21,7 @@ endif
 
 
 # CC=clang++
-CFLAGS:=-Wno-unused -Wno-unused-but-set-variable -std=c++17 -w
+CFLAGS:=-fpermissive -Wno-unused -Wno-unused-but-set-variable -std=c++17 -w
 
 ifeq ($(TARGET), win64)
 	CLIBS:=-lmingw32 -L./dependencies/x86-64/lib/ -L./dependencies/x86-64/bin/ -L./. -I./glad/include/\
