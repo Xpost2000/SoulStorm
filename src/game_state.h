@@ -126,12 +126,28 @@ enum Play_Area_Edge_Behavior {
     PLAY_AREA_EDGE_BEHAVIOR_COUNT,
 };
 
+local string play_area_edge_behavior_strings[] = {
+    string_literal("play-area-edge-blocking"),
+    string_literal("play-area-edge-deadly"),
+    string_literal("play-area-edge-wrapping"),
+    string_literal("play-area-edge-passthrough"),
+    string_literal("(count)"),
+};
+
 enum Play_Area_Edge_Id {
     PLAY_AREA_EDGE_ID_TOP = 0,
     PLAY_AREA_EDGE_ID_BOTTOM,
     PLAY_AREA_EDGE_ID_LEFT,
     PLAY_AREA_EDGE_ID_RIGHT,
     PLAY_AREA_EDGE_ID_COUNT,
+};
+
+local string play_area_edge_id_strings[] = {
+    string_literal("play-area-edge-top"),
+    string_literal("play-area-edge-bottom"),
+    string_literal("play-area-edge-left"),
+    string_literal("play-area-edge-right"),
+    string_literal("(count)"),
 };
 
 struct Play_Area {
@@ -202,6 +218,14 @@ enum Game_State_Pet_Type {
     GAME_PET_ID_DOG   = 1,
     GAME_PET_ID_FISH  = 2,
     GAME_PET_ID_COUNT = 3,
+};
+
+local string pet_type_strings[] = {
+    string_literal("pet-id-none"),
+    string_literal("pet-id-cat"),
+    string_literal("pet-id-dog"),
+    string_literal("pet-id-fish"),
+    string_literal("(count)"),
 };
 
 // Used for title screen and main menu
@@ -409,6 +433,15 @@ enum Border_Flash_Id_Type {
     BORDER_FLASH_ID_TYPE_WRAPPING    = 3,
     BORDER_FLASH_ID_TYPE_PASSTHROUGH = 4,
     BORDER_FLASH_ID_TYPE_COUNT,
+};
+
+local string border_flash_id_strings[] = {
+    string_literal("border-flash-none"),
+    string_literal("border-flash-blocking"),
+    string_literal("border-flash-deadly"),
+    string_literal("border-flash-wrapping"),
+    string_literal("border-flash-passthrough"),
+    string_literal("(count)"),
 };
 
 struct Border_Flash_Data {
