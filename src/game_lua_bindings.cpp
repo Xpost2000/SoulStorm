@@ -319,22 +319,44 @@ int _lua_bind_play_area_edge_behavior(lua_State* L) {
 }
 
 int _lua_bind_play_area_border_notify(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    int edge_id = luaL_checkinteger(L, 1);
+    int edge_flag = luaL_checkinteger(L, 2);
+
+    if (edge_id < 0) edge_id = 0;
+    if (edge_id >= 3) edge_id = 3;
+
+    state->gameplay_data.border_notify(edge_id, edge_flag);
     return 0;
 }
 
 int _lua_bind_play_area_stop_all_border_notifications(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    state->gameplay_data.border_stop_all_notifications();
     return 0;
 }
 
 int _lua_bind_play_area_stop_border_notify(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    int edge_id = luaL_checkinteger(L, 1);
+
+    if (edge_id < 0) edge_id = 0;
+    if (edge_id >= 3) edge_id = 3;
+
+    state->gameplay_data.border_stop_notify(edge_id);
     return 0;
 }
 
 int _lua_bind_play_area_set_allow_border_switch_flashing(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    bool v = luaL_checkinteger(L, 1);
+    state->gameplay_data.allow_border_switch_flashing = v;
     return 0;
 }
 
 int _lua_bind_play_area_notify_current_border_status(lua_State* L) {
+    Game_State* state = lua_binding_get_gamestate(L);
+    state->gameplay_data.border_notify_current_status();
     return 0;
 }
 
