@@ -960,6 +960,7 @@ void Game::reset_stage_simulation_state() {
     state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_BLOCKING);
     state->play_area.edge_behavior_top    = PLAY_AREA_EDGE_WRAPPING;
     state->play_area.edge_behavior_bottom = PLAY_AREA_EDGE_WRAPPING;
+    state->allow_border_switch_flashing = true;
     state->border_stop_all_notifications();
     
     state->boss_health_displays.displays.zero();
@@ -1268,6 +1269,14 @@ void Gameplay_Data::border_stop_notify(s32 id) {
 void Gameplay_Data::border_stop_all_notifications(void) {
     for (s32 border_index = 0; border_index < PLAY_AREA_EDGE_ID_COUNT; ++border_index) {
         border_stop_notify(border_index);
+    }
+}
+
+// NOTE(jerry):
+// never called automatically.
+void Gameplay_Data::border_notify_current_status(void) {
+    for (s32 border_index = 0; border_index < PLAY_AREA_EDGE_ID_COUNT; ++border_index) {
+        border_notify(border_index, play_area.edge_behaviors[border_index], true);
     }
 }
 

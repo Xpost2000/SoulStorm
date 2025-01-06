@@ -429,6 +429,7 @@ struct Gameplay_Data {
     void border_notify(s32 id, s32 type, bool override=false);
     void border_stop_notify(s32 id);
     void border_stop_all_notifications(void);
+    void border_notify_current_status(void);
 
     Stage_State stage_state;
     Particle_Pool particle_pool;
