@@ -29,6 +29,8 @@ union color32s32 {
 #define color32u8(R,G,B,A)  color32u8{(u8)(R),(u8)(G),(u8)(B),(u8)(A)}
 #define color32f32(R,G,B,A) color32f32{(f32)(R),(f32)(G),(f32)(B),(f32)(A)}
 #define color32s32(R,G,B,A) color32s32{(s32)(R),(s32)(G),(s32)(B),(s32)(A)}
+#define RGBA32f32(R,G,B,A)  color32f32(R/255.0f, G/255.0f, B/255.0f, A/255.0f)
+#define RGBA32u8(R,G,B,A)  color32u8(R/255.0f, G/255.0f, B/255.0f, A/255.0f)
 color32f32 color32s32_to_color32f32(color32u8 source);
 color32f32 color32u8_to_color32f32(color32u8 source);
 color32s32 color32u8_to_color32s32(color32u8 source);
