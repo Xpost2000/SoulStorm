@@ -1624,6 +1624,7 @@ GAME_UI_SCREEN(update_and_render_renderer_change_disclaimer) {
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
     GameUI::set_ui_id((char*)"ui_options_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -1650,6 +1651,7 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
 
     GameUI::set_ui_id((char*)"ui_options_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
     {
 
         f32 y = 100;
@@ -1814,6 +1816,7 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
 
     GameUI::set_ui_id((char*)"ui_controls_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
     {
         f32 y = 30;
 
@@ -2028,6 +2031,7 @@ GAME_UI_SCREEN(update_and_render_review_script_error_menu) {
 
     GameUI::set_ui_id((char*)"ui_review_script_error");
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -2115,6 +2119,7 @@ GAME_UI_SCREEN(update_and_render_confirm_back_to_main_menu) {
 
     GameUI::set_ui_id((char*)"ui_confirm_back_to_main_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -2147,6 +2152,7 @@ GAME_UI_SCREEN(update_and_render_confirm_exit_to_windows) {
 
     GameUI::set_ui_id((char*)"ui_confirm_exit_to_windows");
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -2196,6 +2202,7 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
 
     GameUI::set_ui_id((char*)"ui_replay_save_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
 
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
     GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -2375,6 +2382,7 @@ GAME_UI_SCREEN(update_and_render_replay_not_supported_menu) {
     GameUI::set_ui_id((char*)"ui_replay_not_supported_menu");
 
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -2412,6 +2420,7 @@ GAME_UI_SCREEN(update_and_render_replay_collection_menu) {
     int current_page_display_amount = replay_files.count % MAX_REPLAYS_PER_PAGE;
 
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -2531,6 +2540,7 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
 
     GameUI::set_ui_id((char*)"ui_pause_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
     {
         f32 y = 100;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
@@ -2668,6 +2678,7 @@ GAME_UI_SCREEN(update_and_render_stage_select_menu) {
 
     GameUI::set_ui_id((char*)"ui_stage_select_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
     {
         s32   stage_id = state->mainmenu_data.stage_id_level_select;
         auto& stage    = stage_list[stage_id];
@@ -2803,6 +2814,7 @@ void Game::update_and_render_stage_pet_select_menu(struct render_commands* comma
 
     GameUI::set_ui_id((char*)"ui_stage_pet_select_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
 
     f32 y = 50;
     if (gameplay_data.unlocked_pets > 0) {
@@ -3132,11 +3144,11 @@ void Game::game_ui_draw_title_logo(struct render_commands* commands, V2 where, f
     color32f32 logo_color2 = RGBA32f32(247, 202, 24, alpha*255.0f);
 #endif
 
-    game_ui_draw_title_part(commands, logo_cursor, WORD1_LOGO_PART, logo_color, scale, alpha);
+    game_ui_draw_title_part(commands, logo_cursor + V2(0, GameUI::get_wobbly_factor(0, 1251) * 5.0f*scale), WORD1_LOGO_PART, logo_color, scale, alpha);
     logo_cursor.x += 55 * scale;
-    game_ui_draw_title_part(commands, logo_cursor, HERO_LOGO_PART, logo_color2, scale, alpha);
+    game_ui_draw_title_part(commands, logo_cursor + V2(0, GameUI::get_wobbly_factor(1, 121) * 5.0f*scale), HERO_LOGO_PART, logo_color2, scale, alpha);
     logo_cursor.x += 65 * scale;
-    game_ui_draw_title_part(commands, logo_cursor, WORD2_LOGO_PART, logo_color, scale, alpha);
+    game_ui_draw_title_part(commands, logo_cursor + V2(0, GameUI::get_wobbly_factor(2, 11) * 5.0f*scale), WORD2_LOGO_PART, logo_color, scale, alpha);
 }
 
 void Game::game_ui_draw_bordered_box(V2 where, s32 width, s32 height, color32f32 main_color, color32f32 border_color) {
@@ -3210,6 +3222,7 @@ GAME_UI_SCREEN(update_and_render_achievements_menu) {
     // render achievement boxes.
     // Will need to make some nice UI for all of this but at least that's art stuff.
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
     {
 
         auto locked_title_font       = resources->get_font(MENU_FONT_COLOR_STEEL);
@@ -4242,6 +4255,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
             GameUI::set_ui_id(0);
             GameUI::begin_frame(ui_render_commands, &resources->graphics_assets);
+            GameUI::set_wobbly_contribution(1.0f);
             if (GameUI::button(V2(play_area_x+play_area_width + 20, y), string_literal("[RESTART]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
                 // partial clean up of resources...
                 state->unload_all_script_loaded_resources(this->state, this->state->resources);

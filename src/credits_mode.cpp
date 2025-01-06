@@ -24,6 +24,7 @@ local void open_web_browser(const char* url) {
 GAME_SCREEN(update_and_render_game_credits) {
     GameUI::set_ui_id((char*)"ui_game_credits");
     GameUI::begin_frame(ui_render_commands, &resources->graphics_assets);
+    GameUI::set_wobbly_contribution(1.0f);
     {
         f32 y = 30;
         {
