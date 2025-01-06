@@ -432,6 +432,7 @@ enum Border_Flash_Id_Type {
     BORDER_FLASH_ID_TYPE_DEADLY      = 2,
     BORDER_FLASH_ID_TYPE_WRAPPING    = 3,
     BORDER_FLASH_ID_TYPE_PASSTHROUGH = 4,
+    BORDER_FLASH_ID_TYPE_ALERT       = 5,
     BORDER_FLASH_ID_TYPE_COUNT,
 };
 
@@ -441,11 +442,12 @@ local string border_flash_id_strings[] = {
     string_literal("border-flash-deadly"),
     string_literal("border-flash-wrapping"),
     string_literal("border-flash-passthrough"),
+    string_literal("border-flash-alert"),
     string_literal("(count)"),
 };
 
-#define BORDER_NOTIFY_FLASH_COUNT (8)
-#define BORDER_NOTIFY_PER_FLASH_LENGTH (0.055f)
+#define BORDER_NOTIFY_FLASH_COUNT (12)
+#define BORDER_NOTIFY_PER_FLASH_LENGTH (0.125f)
 struct Border_Flash_Data {
     s32  flash_id_type;
     bool delay_between_flash;

@@ -1276,7 +1276,7 @@ void Gameplay_Data::border_stop_all_notifications(void) {
 // never called automatically.
 void Gameplay_Data::border_notify_current_status(void) {
     for (s32 border_index = 0; border_index < PLAY_AREA_EDGE_ID_COUNT; ++border_index) {
-        border_notify(border_index, play_area.edge_behaviors[border_index], true);
+        border_notify(border_index, play_area.edge_behaviors[border_index]+1, true);
     }
 }
 
@@ -4369,10 +4369,11 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
             local const color32f32 border_flash_colors[BORDER_FLASH_ID_TYPE_COUNT] = {
                 color32f32(0,0,0,0),
-                color32f32(0.5, 0.5, 0.5, 0.5),
+                color32f32(0.5, 0.5, 1, 0.5),
                 color32f32(0.75, 0.15, 0.12, 0.5),
                 RGBA32f32(239, 239, 44, 128),
                 RGBA32f32(195, 255, 104, 128),
+                RGBA32f32(239, 239, 44, 128),
             };
 
             image_buffer* border_flash_image = nullptr;
@@ -4406,7 +4407,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
             }
 
             V2 border_rectangle_center = V2((border_rectangle.x + border_rectangle.w)/2,
-                                            (border_rectangle.y - border_rectangle.h)/2);
+                                            (border_rectangle.y + border_rectangle.h)/2);
 
             if (!border_flash.delay_between_flash) {
                 render_commands_push_quad(game_render_commands, border_rectangle,
@@ -4419,7 +4420,9 @@ GAME_SCREEN(update_and_render_game_ingame) {
                     auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
                     render_commands_push_text(
                         game_render_commands, font, 2,
-                        border_rectangle_center, border_flash_id_strings[border_flash.flash_id_type], color32f32_WHITE,
+                        border_rectangle_center,
+                        border_flash_id_strings[border_flash.flash_id_type],
+                        color32f32_WHITE,
                         BLEND_MODE_ALPHA);
                 }
             }
@@ -4428,6 +4431,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
                 border_flash.per_flash_length -= dt;
             } else {
                 border_flash.per_flash_length = BORDER_NOTIFY_PER_FLASH_LENGTH;
+                border_flash.flash_count -= 1;
                 border_flash.delay_between_flash ^= true;
             }
 
