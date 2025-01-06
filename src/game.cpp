@@ -960,7 +960,8 @@ void Game::reset_stage_simulation_state() {
     state->play_area.set_all_edge_behaviors_to(PLAY_AREA_EDGE_BLOCKING);
     state->play_area.edge_behavior_top    = PLAY_AREA_EDGE_WRAPPING;
     state->play_area.edge_behavior_bottom = PLAY_AREA_EDGE_WRAPPING;
-
+    state->border_stop_all_notifications();
+    
     state->boss_health_displays.displays.zero();
 
     state->pickups.clear();
@@ -1238,6 +1239,38 @@ void Scriptable_Render_Object::render(Game_Resources* resources, struct render_c
 }
 
 // Gameplay_Data
+void Gameplay_Data::border_notify(s32 id, s32 type, bool override) {
+    if (id < 0 || id >= PLAY_AREA_EDGE_ID_COUNT) {
+        return;
+    }
+
+    auto& border_flash = border_flashes[id];
+
+    if (!override && (border_flash.flash_id_type != BORDER_FLASH_ID_TYPE_NONE)) {
+        return;
+    }
+
+    border_flash.flash_id_type       = type;
+    border_flash.delay_between_flash = false;
+    border_flash.flash_count         = 8;
+    border_flash.per_flash_length    = 0.055f; // seconds
+}
+
+void Gameplay_Data::border_stop_notify(s32 id) {
+    if (id < 0 || id >= PLAY_AREA_EDGE_ID_COUNT) {
+        return;
+    }
+
+    auto& border_flash = border_flashes[id];
+    border_flash.flash_id_type = BORDER_FLASH_ID_TYPE_NONE;
+}
+
+void Gameplay_Data::border_stop_all_notifications(void) {
+    for (s32 border_index = 0; border_index < PLAY_AREA_EDGE_ID_COUNT; ++border_index) {
+        border_stop_notify(border_index);
+    }
+}
+
 void Gameplay_Data::set_pet_id(s8 id, Game_Resources* resources) {
     selected_pet = id;
     pet.set_id(id, resources);

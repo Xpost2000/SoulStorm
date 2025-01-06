@@ -125,6 +125,15 @@ enum Play_Area_Edge_Behavior {
     PLAY_AREA_EDGE_PASSTHROUGH = 3,
     PLAY_AREA_EDGE_BEHAVIOR_COUNT,
 };
+
+enum Play_Area_Edge_Id {
+    PLAY_AREA_EDGE_ID_TOP = 0,
+    PLAY_AREA_EDGE_ID_BOTTOM,
+    PLAY_AREA_EDGE_ID_LEFT,
+    PLAY_AREA_EDGE_ID_RIGHT,
+    PLAY_AREA_EDGE_ID_COUNT,
+};
+
 struct Play_Area {
     int x      = 0;
     int width  = PLAY_AREA_WIDTH_PX;
@@ -393,11 +402,33 @@ struct Gameplay_Data_Pet_Information {
     f32    speed_modifier;
 };
 
+enum Border_Flash_Id_Type {
+    BORDER_FLASH_ID_TYPE_NONE        = 0,
+    BORDER_FLASH_ID_TYPE_BLOCKING    = 1,
+    BORDER_FLASH_ID_TYPE_DEADLY      = 2,
+    BORDER_FLASH_ID_TYPE_WRAPPING    = 3,
+    BORDER_FLASH_ID_TYPE_PASSTHROUGH = 4,
+    BORDER_FLASH_ID_TYPE_COUNT,
+};
+
+struct Border_Flash_Data {
+    s32  flash_id_type;
+    bool delay_between_flash;
+    s32  flash_count;
+    f32  per_flash_length; // NOTE(jerry): maybe not tuning anything?
+};
+
 struct Gameplay_Data {
     bool campaign_perfect_clear;
     bool stage_perfect_clear;
     bool stage_completed;
     bool playing_practice_mode;
+
+    bool allow_border_switch_flashing = true; // automatic border flashing behavior
+    Border_Flash_Data border_flashes[4];
+    void border_notify(s32 id, s32 type, bool override=false);
+    void border_stop_notify(s32 id);
+    void border_stop_all_notifications(void);
 
     Stage_State stage_state;
     Particle_Pool particle_pool;
