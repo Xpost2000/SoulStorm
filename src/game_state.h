@@ -447,7 +447,7 @@ local string border_flash_id_strings[] = {
 };
 
 #define BORDER_NOTIFY_FLASH_COUNT (12)
-#define BORDER_NOTIFY_PER_FLASH_LENGTH (0.125f)
+#define BORDER_NOTIFY_PER_FLASH_LENGTH (0.155f)
 struct Border_Flash_Data {
     s32  flash_id_type;
     bool delay_between_flash;
@@ -938,6 +938,7 @@ struct Game_Resources {
     image_id        ui_marquee_bkrnd;
     image_id        ui_vignette_borders[2];
     image_id        ui_rays_gradient;
+    image_id        ui_border_effect[BORDER_FLASH_ID_TYPE_COUNT-1];
 
     // Technically I'm using this for a cheap "glow" effect
     image_id        ui_border_vignette;

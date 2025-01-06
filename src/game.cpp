@@ -582,6 +582,23 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
     #if 1
     {
+        {
+            local string border_effect_paths[] = {
+                string_literal("res/img/border/border_effect_solid.png"),
+                string_literal("res/img/border/border_effect_deadly.png"),
+                string_literal("res/img/border/border_effect_wraparound.png"),
+                string_literal("res/img/border/border_effect_passthrough.png"),
+                string_literal("res/img/border/border_alert.png"),
+            };
+            
+            for (unsigned border_flash_id_effect = BORDER_FLASH_ID_TYPE_BLOCKING;
+                 border_flash_id_effect < BORDER_FLASH_ID_TYPE_COUNT;
+                 ++border_flash_id_effect) {
+                resources->ui_border_effect[border_flash_id_effect-1] =
+                    graphics_assets_load_image(&resources->graphics_assets, border_effect_paths[border_flash_id_effect-1]);
+            }
+        }
+
         // TODO: UI Atlas should include UI_HP_Icons and maybe even the text.
         // build UI atlas
         {
@@ -4376,7 +4393,8 @@ GAME_SCREEN(update_and_render_game_ingame) {
                 RGBA32f32(239, 239, 44, 128),
             };
 
-            image_buffer* border_flash_image = nullptr;
+            auto image = resources->ui_border_effect[border_flash.flash_id_type-1];
+            image_buffer* border_flash_image = graphics_assets_get_image_by_id(&resources->graphics_assets, image);
             rectangle_f32 border_rectangle;
 
             switch (border_index) {
@@ -4404,18 +4422,35 @@ GAME_SCREEN(update_and_render_game_ingame) {
                     border_rectangle.w = BORDER_DISPLAY_RADIUS;
                     border_rectangle.h = 480;
                 } break;
+                    bad_case;
             }
 
             V2 border_rectangle_center = V2((border_rectangle.x + border_rectangle.w)/2,
                                             (border_rectangle.y + border_rectangle.h)/2);
 
             if (!border_flash.delay_between_flash) {
-                render_commands_push_quad(game_render_commands, border_rectangle,
-                                          color32f32_to_color32u8(border_flash_colors[border_flash.flash_id_type]), BLEND_MODE_ALPHA);
+                auto flash_color = border_flash_colors[border_flash.flash_id_type];
+                render_commands_push_quad(
+                    game_render_commands, border_rectangle,
+                    color32f32_to_color32u8(flash_color),
+                    BLEND_MODE_ALPHA);
 
                 if (border_flash_image) {
                     // TODO(jerry):
                     // I don't have images for these yet.
+                    rectangle_f32 dest;
+                    dest.x = border_rectangle_center.x - border_flash_image->width/2;
+                    dest.y = border_rectangle_center.y - border_flash_image->height/2;
+                    dest.w = border_flash_image->width;
+                    dest.h = border_flash_image->height;
+                    render_commands_push_image(
+                        game_render_commands,
+                        border_flash_image,
+                        dest,
+                        RECTANGLE_F32_NULL,
+                        color32f32(flash_color.r, flash_color.g, flash_color.b, 1.0f),
+                        0, BLEND_MODE_ALPHA
+                    );
                 } else {
                     auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
                     render_commands_push_text(
