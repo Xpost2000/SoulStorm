@@ -2653,7 +2653,13 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
             y += 30;
         }
 
-        if (GameUI::button(V2(100, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+        if (GameUI::button(V2(100, y),
+#ifdef _WIN32
+                           string_literal("Exit To Windows")
+#else
+                           string_literal("Exit To Desktop")
+#endif
+                           ,color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(UI_STATE_CONFIRM_EXIT_TO_WINDOWS);
         }
 

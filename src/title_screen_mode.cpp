@@ -602,7 +602,13 @@ GAME_SCREEN(update_and_render_game_title_screen) {
                 title_screen_replay_opening();
             }
             y += 30;
-            if (GameUI::button(V2(ui_x, y), string_literal("Exit To Windows"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(ui_x, y),
+#ifdef _WIN32
+                               string_literal("Exit To Windows")
+#else
+                               string_literal("Exit To Desktop")
+#endif
+                               ,color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(UI_STATE_CONFIRM_EXIT_TO_WINDOWS);
             }
             // GameUI::ninepatch(&resources->ui_texture_atlas, resources->ui_chunky, V2(100, 100), 3, 3, color32f32(0,0,1,1), 3);
