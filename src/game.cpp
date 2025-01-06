@@ -894,7 +894,9 @@ void Game::init_audio_resources() {
     resources->hit_sounds[0]    = Audio::load(("res/snds/hit1.wav"));
     resources->hit_sounds[1]    = Audio::load(("res/snds/hit2.wav"));
 
-    resources->title_music = Audio::load("./res/snds/titlemenu1draft.ogg", true);
+    resources->death_sound      = Audio::load("res/snds/die1.wav");
+
+    resources->title_music = Audio::load("res/snds/titlemenu1draft.ogg", true);
 }
 
 
@@ -4989,6 +4991,8 @@ void Game::on_player_death() {
                 deathanimation_data.player_explosion_emitter.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE;
                 deathanimation_data.player_explosion_emitter.shape  = particle_emit_shape_point(state->player.position);
                 deathanimation_data.player_explosion_emitter.reset();
+
+                Audio::play(resources->death_sound);
             }
         }
     }

@@ -48,7 +48,7 @@ void OpeningMode_Data::load_all_slide_assets(Game_Resources* resources) {
 
   slide_count = 0;
 
-  resources->intro_music = Audio::load("./res/snds/musicintro0.ogg", true);
+  resources->intro_music = Audio::load("res/snds/musicintro0.ogg", true);
 
   for (; slide_count < array_count(introslide_names); ++slide_count) {
     auto& slide = slides[slide_count];
