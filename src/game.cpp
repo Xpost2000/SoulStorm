@@ -1253,8 +1253,8 @@ void Gameplay_Data::border_notify(s32 id, s32 type, bool override) {
 
     border_flash.flash_id_type       = type;
     border_flash.delay_between_flash = false;
-    border_flash.flash_count         = 8;
-    border_flash.per_flash_length    = 0.055f; // seconds
+    border_flash.flash_count         = BORDER_NOTIFY_FLASH_COUNT;
+    border_flash.per_flash_length    = BORDER_NOTIFY_PER_FLASH_LENGTH; // seconds
 }
 
 void Gameplay_Data::border_stop_notify(s32 id) {
@@ -4358,6 +4358,84 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
     state->update_and_render_all_background_scriptable_render_objects(this->state->resources, game_render_commands, dt);
     {
+        for (unsigned border_index = 0; border_index < PLAY_AREA_EDGE_ID_COUNT; ++border_index) {
+            auto& border_flash = state->border_flashes[border_index];
+
+            if (border_flash.flash_id_type == BORDER_FLASH_ID_TYPE_NONE) {
+                continue;
+            }
+
+            const f32 BORDER_DISPLAY_RADIUS = 32.0f;
+
+            local const color32f32 border_flash_colors[BORDER_FLASH_ID_TYPE_COUNT] = {
+                color32f32(0,0,0,0),
+                color32f32(0.5, 0.5, 0.5, 0.5),
+                color32f32(0.75, 0.15, 0.12, 0.5),
+                RGBA32f32(239, 239, 44, 128),
+                RGBA32f32(195, 255, 104, 128),
+            };
+
+            image_buffer* border_flash_image = nullptr;
+            rectangle_f32 border_rectangle;
+
+            switch (border_index) {
+                case PLAY_AREA_EDGE_ID_TOP: {
+                    border_rectangle.x = 0;
+                    border_rectangle.y = 0;
+                    border_rectangle.w = PLAY_AREA_WIDTH_PX;
+                    border_rectangle.h = BORDER_DISPLAY_RADIUS;
+                } break;
+                case PLAY_AREA_EDGE_ID_BOTTOM: {
+                    border_rectangle.x = 0;
+                    border_rectangle.y = 480 - BORDER_DISPLAY_RADIUS;
+                    border_rectangle.w = PLAY_AREA_WIDTH_PX;
+                    border_rectangle.h = BORDER_DISPLAY_RADIUS;
+                } break;
+                case PLAY_AREA_EDGE_ID_LEFT: {
+                    border_rectangle.x = 0;
+                    border_rectangle.y = 0;
+                    border_rectangle.w = BORDER_DISPLAY_RADIUS;
+                    border_rectangle.h = 480;
+                } break;
+                case PLAY_AREA_EDGE_ID_RIGHT: {
+                    border_rectangle.x = PLAY_AREA_WIDTH_PX - BORDER_DISPLAY_RADIUS;
+                    border_rectangle.y = 0;
+                    border_rectangle.w = BORDER_DISPLAY_RADIUS;
+                    border_rectangle.h = 480;
+                } break;
+            }
+
+            V2 border_rectangle_center = V2((border_rectangle.x + border_rectangle.w)/2,
+                                            (border_rectangle.y - border_rectangle.h)/2);
+
+            if (!border_flash.delay_between_flash) {
+                render_commands_push_quad(game_render_commands, border_rectangle,
+                                          color32f32_to_color32u8(border_flash_colors[border_flash.flash_id_type]), BLEND_MODE_ALPHA);
+
+                if (border_flash_image) {
+                    // TODO(jerry):
+                    // I don't have images for these yet.
+                } else {
+                    auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
+                    render_commands_push_text(
+                        game_render_commands, font, 2,
+                        border_rectangle_center, border_flash_id_strings[border_flash.flash_id_type], color32f32_WHITE,
+                        BLEND_MODE_ALPHA);
+                }
+            }
+
+            if (border_flash.per_flash_length >= 0.0f) {
+                border_flash.per_flash_length -= dt;
+            } else {
+                border_flash.per_flash_length = BORDER_NOTIFY_PER_FLASH_LENGTH;
+                border_flash.delay_between_flash ^= true;
+            }
+
+            if (border_flash.flash_count <= 0) {
+                border_flash.flash_id_type = BORDER_FLASH_ID_TYPE_NONE;
+            }
+        }
+
         for (int i = 0; i < (int)state->explosion_hazards.size; ++i) {
             auto& h = state->explosion_hazards[i];
             h.draw(this->state, game_render_commands, resources);

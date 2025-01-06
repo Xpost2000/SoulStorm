@@ -444,6 +444,8 @@ local string border_flash_id_strings[] = {
     string_literal("(count)"),
 };
 
+#define BORDER_NOTIFY_FLASH_COUNT (8)
+#define BORDER_NOTIFY_PER_FLASH_LENGTH (0.055f)
 struct Border_Flash_Data {
     s32  flash_id_type;
     bool delay_between_flash;
