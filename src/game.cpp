@@ -3248,7 +3248,7 @@ GAME_UI_SCREEN(update_and_render_achievements_menu) {
                 ui_color.b /= darkness_factor;
             }
 
-            rectangle_f32 rectangle = rectangle_f32(30, i * 75 + 80, 500, 60);
+            rectangle_f32 rectangle = rectangle_f32(30, i * 80 + 80, 500, 60);
             {
                 auto units_width  = (570 - 32) / resources->ui_chunky.tile_width;
                 auto units_height = 2;
