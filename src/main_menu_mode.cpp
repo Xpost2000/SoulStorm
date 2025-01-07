@@ -63,6 +63,22 @@ void cutscene_unlocked_pet_task(jdr_duffcoroutine_t* co) {
         JDR_Coroutine_YieldNR();
     }
 
+    main_menu_state->cutscene3.portal_visible = true;
+    main_menu_state->cutscene3.portal_close_timer = 0.05f;
+    main_menu_state->cutscene3.portal_id = state->gameplay_data.unlocked_pets;
+    Audio::play(state->resources->hit_sounds[0]);
+    main_menu_state->cutscene3.portal_frame = 0;
+    TASK_WAIT(0.15f);
+    Audio::play(state->resources->hit_sounds[1]);
+    main_menu_state->cutscene3.portal_frame = 1;
+    TASK_WAIT(0.15f);
+    Audio::play(state->resources->hit_sounds[0]);
+    main_menu_state->cutscene3.portal_frame = 2;
+    TASK_WAIT(0.15f);
+    Audio::play(state->resources->hit_sounds[1]);
+    main_menu_state->cutscene3.portal_frame = 3;
+    TASK_WAIT(0.15f);
+
     {
         auto& current_pet = main_menu_state->pets[state->gameplay_data.unlocked_pets++];
         current_pet.position = V2(resolution.x/2, resolution.y/2);
@@ -278,6 +294,67 @@ local color32f32 portal_color_from_stage_id(s32 stage_id) {
     return color32f32(1, 1, 1, 1);
 }
 
+local void draw_portal(
+    Game_Resources* resources,
+    struct render_commands* commands,
+    s32 frame_index,
+    V2 position,
+    s32 stage_id,
+    s32 rendermethod = 0
+) {
+    image_id sprite_image = resources->main_menu_portal_images[frame_index];
+    auto image_object = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_image);
+    f32  image_scale  = 1.50f + normalized_sinf(Global_Engine()->global_elapsed_time * 5.0f) * 0.15f;
+    V2   image_size   = V2(image_object->width, image_object->height);
+
+    auto portal_color = portal_color_from_stage_id(stage_id);
+    auto portal_position = V2(
+        position.x - (image_size.x * image_scale)/2,
+        position.y - (image_size.y * image_scale)/2
+    );
+
+    // TODO(jerry):
+    // I don't totally remember why this was the calculation I used
+    // to align the world portals, but this is here.
+    if (rendermethod == 1) {
+        portal_position.x = position.x - (image_size.x * (image_scale - 1.0f))/2;
+        portal_position.y = position.y - (image_size.y*image_scale * 0.35f);
+    }
+
+    render_commands_push_image(
+        commands,
+        image_object,
+        // magic numbers are just to align the sprite.
+        rectangle_f32(
+            portal_position.x,
+            portal_position.y,
+            image_size.x*image_scale,
+            image_size.y*image_scale
+        ),
+        RECTANGLE_F32_NULL,
+        color32f32(portal_color.r, portal_color.g, portal_color.b, 0.35f),
+        0,
+        BLEND_MODE_ADDITIVE
+    );
+
+    // Hmm. This is the one time I use additive blending. LOL
+    render_commands_push_image(
+        commands,
+        image_object,
+        // magic numbers are just to align the sprite.
+        rectangle_f32(
+            portal_position.x,
+            portal_position.y,
+            image_size.x*image_scale,
+            image_size.y*image_scale
+        ),
+        RECTANGLE_F32_NULL,
+        color32f32(portal_color.r, portal_color.g, portal_color.b, normalized_sinf(Global_Engine()->global_elapsed_time * 1.5f) * 0.45f + 0.35f),
+        0,
+        BLEND_MODE_ADDITIVE
+    );
+}
+
 void MainMenu_Stage_Portal::draw(MainMenu_Data* const state, struct render_commands* commands, Game_Resources* resources) {
     if (!visible) return;
 
@@ -297,47 +374,14 @@ void MainMenu_Stage_Portal::draw(MainMenu_Data* const state, struct render_comma
         BLEND_MODE_ALPHA);
 #endif
 #endif
-    {
-        image_id sprite_image = resources->main_menu_portal_images[frame_index];
-        auto image_object = graphics_assets_get_image_by_id(&resources->graphics_assets, sprite_image);
-        f32  image_scale  = 1.50f + normalized_sinf(Global_Engine()->global_elapsed_time * 5.0f) * 0.15f;
-        V2   image_size   = V2(image_object->width, image_object->height);
-
-        auto portal_color = portal_color_from_stage_id(stage_id);
-
-        render_commands_push_image(
-            commands,
-            image_object,
-            // magic numbers are just to align the sprite.
-            rectangle_f32(
-                r.x - (image_size.x * (image_scale - 1.0f))/2,
-                r.y - (image_size.y*image_scale * 0.35f),
-                image_size.x*image_scale,
-                image_size.y*image_scale
-            ),
-            RECTANGLE_F32_NULL,
-            color32f32(portal_color.r, portal_color.g, portal_color.b, 0.35f),
-            0,
-            BLEND_MODE_ADDITIVE
-        );
-
-        // Hmm. This is the one time I use additive blending. LOL
-        render_commands_push_image(
-            commands,
-            image_object,
-            // magic numbers are just to align the sprite.
-            rectangle_f32(
-                r.x - (image_size.x * (image_scale - 1.0f))/2,
-                r.y - (image_size.y*image_scale * 0.35f),
-                image_size.x*image_scale,
-                image_size.y*image_scale
-            ),
-            RECTANGLE_F32_NULL,
-            color32f32(portal_color.r, portal_color.g, portal_color.b, normalized_sinf(Global_Engine()->global_elapsed_time * 1.5f) * 0.45f + 0.35f),
-            0,
-            BLEND_MODE_ADDITIVE
-        );
-    }
+    draw_portal(
+        resources,
+        commands,
+        frame_index,
+        V2(r.x, r.y),
+        stage_id,
+        1
+    );
 
 #ifndef RELEASE
     if (DebugUI::enabled()) {
@@ -789,6 +833,26 @@ local s32 _remap_pet_facing_direction_to_sprite_index(s32 index) {
     }
 
     return -1;
+}
+
+void MainMenu_Data::update_cutscene3_portal(f32 dt) {
+    auto& cutscene_data = cutscene3;
+
+#if 1
+    if (cutscene_data.portal_visible && cutscene_data.phase == MAIN_MENU_UNLOCK_PET_CUTSCENE_PHASE_OFF) {
+        if (cutscene_data.portal_close_timer <= 0.0f) {
+            cutscene_data.portal_frame -= 1;
+            cutscene_data.portal_close_timer = 0.05f;
+        } else {
+            cutscene_data.portal_close_timer -= dt;
+        }
+
+        if (cutscene_data.portal_frame < 0) {
+            cutscene_data.portal_frame = 0;
+            cutscene_data.portal_visible = false;
+        }
+    }
+#endif
 }
 
 void MainMenu_Data::start_unlock_pet_cutscene(Game_State* game_state) {
@@ -1267,6 +1331,8 @@ GAME_SCREEN(update_and_render_game_main_menu) {
         for (int i = 0; i < main_menu_state.clutter_poops.size; ++i) {
             main_menu_state.clutter_poops[i].update(dt);
         }
+
+        main_menu_state.update_cutscene3_portal(dt);
     }
 
     main_menu_state.cleanup_all_dead_poops();
@@ -1291,6 +1357,22 @@ GAME_SCREEN(update_and_render_game_main_menu) {
 
         p.update(&main_menu_state, dt);
         p.draw(&main_menu_state, game_render_commands, resources);
+    }
+
+    // Draw cutscene3 portal
+    // which is generally copied from else where.
+
+    if (main_menu_state.cutscene3.portal_visible) {
+        V2 resolution = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);
+        V2 portal_position = V2(resolution.x/2, resolution.y/2);
+
+        draw_portal(
+            resources,
+            game_render_commands,
+            main_menu_state.cutscene3.portal_frame,
+            portal_position,
+            main_menu_state.cutscene3.portal_id
+        );
     }
 
     main_menu_state.particle_pool.draw(game_render_commands, resources);

@@ -132,6 +132,15 @@ struct MainMenu_Unlock_Pet_Cutscene_Data {
     // NOTE: I have to remap this because
     // the images do not intuitively cycle lol.
     s32  pet_facing_direction = 0;
+    
+    // NOTE(jerry):
+    // the portal will close on it's own time,
+    // under normal play it's not possible to get more
+    // than one of these up.
+    bool portal_visible;
+    s32  portal_frame;
+    f32  portal_close_timer;
+    s32  portal_id;
 };
 
 #define MAX_MAINMENU_OUTERSPACE_STARS (2000)
@@ -223,6 +232,7 @@ struct MainMenu_Data {
     // for the camera focus
     MainMenu_Stage_Portal* last_focus_portal = nullptr;
 
+    void update_cutscene3_portal(f32 dt);
     void spawn_poop(V2 where);
     void cleanup_all_dead_poops(void);
 
