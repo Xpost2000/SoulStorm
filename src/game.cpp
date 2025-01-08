@@ -4988,7 +4988,8 @@ void Game::on_player_death() {
                 state->player.visible = false;
             }
             {
-                auto& deathanimation_data                           = this->state->deathanimation_data;
+              Audio::stop_music();
+              auto& deathanimation_data                           = this->state->deathanimation_data;
                 deathanimation_data.phase                           = DEATH_ANIMATION_PHASE_FLASH;
                 deathanimation_data.t                               = 0.0f;
                 deathanimation_data.flash_t                         = 0.0f;
