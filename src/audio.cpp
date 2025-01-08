@@ -226,6 +226,14 @@ namespace Audio {
         current_music_sound_id = {0,0};
     }
 
+    void pause_music(void) {
+      Mix_PauseMusic();
+    }
+
+    void resume_music(void) {
+      Mix_ResumeMusic();
+    }
+
     void play(Sound_ID sound) {
         if (!subsystem_enabled)
             return;

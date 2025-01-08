@@ -4070,8 +4070,14 @@ GAME_SCREEN(update_and_render_game_ingame) {
         if (this->state->ui_state != UI_STATE_DEAD_MAYBE_RETRY) {
             if (this->state->ui_state != UI_STATE_PAUSED) {
                 switch_ui(UI_STATE_PAUSED);
+                if (this->state->screen_mode == GAME_SCREEN_INGAME) {
+                  Audio::pause_music();
+                }
             } else {
                 switch_ui(UI_STATE_INACTIVE);
+                if (this->state->screen_mode == GAME_SCREEN_INGAME) {
+                  Audio::resume_music();
+                }
             }
         }
     }

@@ -25,6 +25,8 @@ namespace Audio {
     void     unload(Sound_ID sound);
 
     void play(const Sound_ID sound);
+    void pause_music(void);
+    void resume_music(void);
 
     void stop_sounds();
     void stop_music();
