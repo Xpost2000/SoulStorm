@@ -20,7 +20,7 @@ engine_dofile("stages/common.lua")
 -- I'm probably not going to add metatables, but I'll hope that future levels are
 -- a bit less unwieldy.
 
-local testmusic = load_music("res/snds/8bitinternetoverdose_placeholder.ogg");
+local track = load_music("res/snds/music_1_1.ogg");
 
 --[[
    Stage 1 - 1
@@ -34,7 +34,7 @@ local testmusic = load_music("res/snds/8bitinternetoverdose_placeholder.ogg");
 function loop_bkg_music()
    while true do
       if not music_playing() then
-         play_music(testmusic);
+         play_music(track);
       end
       t_yield();
    end
@@ -1320,7 +1320,8 @@ end
 function stage_task()
    -- ideally this should not be a string, but I should allow closures...
    print("1_1LUA Play music");
---    -- async_task("loop_bkg_music");
+--   async_task("loop_bkg_music");
+   play_music(track);
 
 -- -- stage main
 
@@ -1329,6 +1330,7 @@ function stage_task()
 --    -- ???
 --    --
    Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1.png", 1.5);
+   play_area_notify_current_border_status();
    wave_1();
    t_wait(5.5);
    Make_BrainDead_Enemy_Popcorn1(
