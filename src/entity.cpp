@@ -324,8 +324,9 @@ s32 Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
                 return edge;
             } break;
             case PLAY_AREA_EDGE_WRAPPING: {
-                wrap_border(edge_index, play_area);
-                return edge;
+                if (wrap_border(edge_index, play_area))  {
+                    return edge;
+                }
             } break;
             case PLAY_AREA_EDGE_PASSTHROUGH: {} break;
         }
