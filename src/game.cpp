@@ -3718,6 +3718,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                 timer = Timer(0.35f);
                 timer.reset();
                 complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT;
+                Audio::stop_music();
             }
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT: {
