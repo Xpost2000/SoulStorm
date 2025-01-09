@@ -403,6 +403,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     resources->ui_vignette_borders[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_bottom.png"));
     resources->ui_rays_gradient = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/uieffect0.png"));
 
+
     resources->ui_border_vignette = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette.png"));
 
 
@@ -897,6 +898,7 @@ void Game::init_audio_resources() {
     resources->death_sound      = Audio::load("res/snds/die1.wav");
 
     resources->title_music = Audio::load("res/snds/titlemenu1draft.ogg", true);
+    resources->title_reprisal_music = Audio::load("res/snds/titlemenu1reprise.ogg", true);
 }
 
 
@@ -3668,121 +3670,121 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                                                                      "Score: %d",
                                                                      state->gameplay_data.current_score));
 
-                switch (complete_stage_state.stage) {
-                    case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_ANIMATE_PLAYER_EXIT: {
-                        ingame_update_complete_stage_sequence_player_animate_exit(dt);
-                    } break;
-                    case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN: {
-                        render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128 * timer_percentage), BLEND_MODE_ALPHA);
-                        if (timer.triggered()) {
-                            timer = Timer(0.35f);
-                            timer.reset();
-                            complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_SHOW_SCORE;
-                        }
-                    } break;
-                    case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_SHOW_SCORE: {
-                        f32 rect_y = commands->screen_height/2-32;
-                        render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
-                        {
-                            auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
-                            render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
-                        }
-                        {
-                            rect_y += 64;
-                            auto   text_width = font_cache_text_width(subtitle_font, score_string_result, 2);
-                            render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), score_string_result, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
-                        }
+    switch (complete_stage_state.stage) {
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_ANIMATE_PLAYER_EXIT: {
+            ingame_update_complete_stage_sequence_player_animate_exit(dt);
+        } break;
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_IN: {
+            render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128 * timer_percentage), BLEND_MODE_ALPHA);
+            if (timer.triggered()) {
+                timer = Timer(0.35f);
+                timer.reset();
+                complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_SHOW_SCORE;
+            }
+        } break;
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_SHOW_SCORE: {
+            f32 rect_y = commands->screen_height/2-32;
+            render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+            {
+                auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
+            }
+            {
+                rect_y += 64;
+                auto   text_width = font_cache_text_width(subtitle_font, score_string_result, 2);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), score_string_result, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
+            }
 
-                        if (timer.triggered()) {
-                            timer = Timer(0.45f);
-                            timer.reset();
-                            complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT;
-                        }
-                    } break;
-                    case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT: {
-                        f32 rect_y = commands->screen_height/2-32;
-                        render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
-                        {
-                            auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
-                            render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
-                        }
-                        {
-                            rect_y += 64;
-                            auto   text_width = font_cache_text_width(subtitle_font, score_string_result, 2);
-                            render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), score_string_result, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
-                        }
+            if (timer.triggered()) {
+                timer = Timer(0.45f);
+                timer.reset();
+                complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT;
+            }
+        } break;
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT: {
+            f32 rect_y = commands->screen_height/2-32;
+            render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+            {
+                auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+            }
+            {
+                rect_y += 64;
+                auto   text_width = font_cache_text_width(subtitle_font, score_string_result, 2);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), score_string_result, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+            }
 
-                        if (timer.triggered()) {
-                            timer = Timer(0.35f);
-                            timer.reset();
-                            complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT;
-                        }
-                    } break;
-                    case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT: {
-                        f32 rect_y = commands->screen_height/2-32;
-                        render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128 * (1 - timer_percentage)), BLEND_MODE_ALPHA);
-                        {
-                            auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
-                            render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
-                        }
-                        {
-                            rect_y += 64;
-                            auto   text_width = font_cache_text_width(subtitle_font, score_string_result, 2);
-                            render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), score_string_result, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
-                        }
+            if (timer.triggered()) {
+                timer = Timer(0.35f);
+                timer.reset();
+                complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT;
+            }
+        } break;
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT: {
+            f32 rect_y = commands->screen_height/2-32;
+            render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128 * (1 - timer_percentage)), BLEND_MODE_ALPHA);
+            {
+                auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
+            }
+            {
+                rect_y += 64;
+                auto   text_width = font_cache_text_width(subtitle_font, score_string_result, 2);
+                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), score_string_result, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
+            }
 
-                        if (timer.triggered())  {
-                            _debugprintf("Okay. Transition bye?");
-                            complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
+            if (timer.triggered())  {
+                _debugprintf("Okay. Transition bye?");
+                complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE;
 
-                            s32 completion_type =  GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY;
+                s32 completion_type =  GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY;
 
-                            if (!state->gameplay_data.recording.in_playback) {
-                                game_update_stage_score(stage_id, level_id, state->gameplay_data.current_score);
-                                game_register_stage_completion(stage_id, level_id);
-                                completion_type = game_complete_stage_level(stage_id, level_id, state->gameplay_data.playing_practice_mode);
+                if (!state->gameplay_data.recording.in_playback) {
+                    game_update_stage_score(stage_id, level_id, state->gameplay_data.current_score);
+                    game_register_stage_completion(stage_id, level_id);
+                    completion_type = game_complete_stage_level(stage_id, level_id, state->gameplay_data.playing_practice_mode);
 
-                                switch (completion_type) {
-                                    case GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE: {
-                                        if (state->gameplay_data.unlocked_pets < 3) {
-                                            state->mainmenu_data.start_unlock_pet_cutscene(state);
+                    switch (completion_type) {
+                        case GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE: {
+                            if (state->gameplay_data.unlocked_pets < 3) {
+                                state->mainmenu_data.start_unlock_pet_cutscene(state);
 
-                                            if (state->gameplay_data.stage_perfect_clear) {
-                                                // ? add to score probably.
-                                                // nothing.
-                                            }
-
-                                            if (state->gameplay_data.campaign_perfect_clear) {
-                                                auto achievement = Achievements::get(ACHIEVEMENT_ID_STAGE1_FLAWLESS + stage_id);
-                                                achievement->report();
-                                            }
-                                        }
-                                    } break;
-                                    default: {
-                                    } break;
+                                if (state->gameplay_data.stage_perfect_clear) {
+                                    // ? add to score probably.
+                                    // nothing.
                                 }
 
-                                // assume the next stage is perfect cleared by default.
-                                state->gameplay_data.stage_perfect_clear = true;
+                                if (state->gameplay_data.campaign_perfect_clear) {
+                                    auto achievement = Achievements::get(ACHIEVEMENT_ID_STAGE1_FLAWLESS + stage_id);
+                                    achievement->report();
+                                }
                             }
+                        } break;
+                        default: {
+                        } break;
+                    }
 
-                            Transitions::do_color_transition_in(
-                                color32f32(0, 0, 0, 0.5),
-                                0.25f,
-                                0.5f
-                            );
-
-                            state->last_completion_state = completion_type;
-                            Transitions::register_on_finish(
-                                [&](void*) mutable {
-                                    switch_ui(UI_STATE_REPLAY_ASK_TO_SAVE);
-                                    Transitions::clear_effect();
-                                }
-                            );
-                        }
-                    } break;
-                    case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE: {} break;
+                    // assume the next stage is perfect cleared by default.
+                    state->gameplay_data.stage_perfect_clear = true;
                 }
+
+                Transitions::do_color_transition_in(
+                    color32f32(0, 0, 0, 0.5),
+                    0.25f,
+                    0.5f
+                );
+
+                state->last_completion_state = completion_type;
+                Transitions::register_on_finish(
+                    [&](void*) mutable {
+                        switch_ui(UI_STATE_REPLAY_ASK_TO_SAVE);
+                        Transitions::clear_effect();
+                    }
+                );
+            }
+        } break;
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE: {} break;
+    }
 
                 timer.update(dt);
 }
@@ -4451,6 +4453,8 @@ GAME_SCREEN(update_and_render_game_ingame) {
                     state->triggered_stage_completion_cutscene = true;
                     state->stage_completed                     = false;
 
+                    Audio::stop_music();
+                    Audio::play(resources->title_reprisal_music);
                     state->complete_stage.begin_sequence();
                     state->player.reset_movement();
                 }

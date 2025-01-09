@@ -972,6 +972,7 @@ struct Game_Resources {
     // these tracks are looped.
     Audio::Sound_ID        intro_music;
     Audio::Sound_ID        title_music;
+    Audio::Sound_ID        title_reprisal_music;
 
     // weird special case for bullets since those actually
     // require rotation.
