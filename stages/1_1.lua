@@ -1414,7 +1414,7 @@ function stage_task()
 
    print("1_1LUA cooldown to finish stage.");
    t_fwait(10);
+   stop_music(100); -- music is supposed to automatically stop anyway...
    wait_no_danger();
-   stop_music(); -- music is supposed to automatically stop anyway...
    t_complete_stage();
 end
