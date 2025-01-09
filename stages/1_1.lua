@@ -270,11 +270,14 @@ end
    ENEMY HELPER TEMPLATES
 ]]--
 
-function _wave1_side_moving_enemy(px, py, xdown, ydown, t_mvspeed, side, variation)
+function _wave1_side_moving_enemy(px, py, xdown, ydown, t_mvspeed, side, variation, idx)
+   local idx = idx or 0;
+   local variation = variation or 0;
    local e = enemy_new();
    enemy_set_scale(e, 10, 10);
    enemy_set_hp(e, 27);
    enemy_set_position(e, px, py);
+   enemy_set_visual(e, ENTITY_SPRITE_BAT_A + (variation+idx)%2);
    if variation == 0 then
       print("Variation 0 ");
       enemy_set_task(e, "_wave1_enemy_shoot_down_and_fly_to_side", xdown, ydown, t_mvspeed, side);
@@ -293,6 +296,7 @@ function _wave1_enemy_shotgun_spreader(px, py, xdown, ydown, t_mvspeed, side, fi
    enemy_set_scale(e, 10, 10);
    enemy_set_hp(e, 27);
    enemy_set_position(e, px, py);
+   enemy_set_visual(e, ENTITY_SPRITE_SKULL_A);
    enemy_set_task(e, "_wave1_enemy_shotgun_spread", xdown, ydown, t_mvspeed, side, firetimes, dx, dy, bullet_variation, cooldown1, cooldown2);
    return e;
 end
@@ -305,14 +309,14 @@ function wave_1_sub1()
    --[[two side enemies]]
    -- shoot bullets that will curve into the player direction
    -- _wave1_side_moving_enemy(100, -100, 0, 200, 1.5, 0, 0);
-   _wave1_side_moving_enemy(100, -100, 0, 200, 1.5, 1, 0);
-   _wave1_side_moving_enemy(play_area_width() - 100, -100, 0, 200, 1.5, 1, 0);
+   _wave1_side_moving_enemy(100, -100, 0, 200, 1.5, 1, 0, 1);
+   _wave1_side_moving_enemy(play_area_width() - 100, -100, 0, 200, 1.5, 1, 0, 2);
    t_wait(2.25);
    _wave1_side_moving_enemy(20, -100, 0, 250, 1.5, 0, 0);
-   _wave1_side_moving_enemy(play_area_width() - 20, -100, 0, 250, 1.0, 1, 0);
+   _wave1_side_moving_enemy(play_area_width() - 20, -100, 0, 250, 1.0, 1, 0, 3);
    t_wait(0.5);
    _wave1_side_moving_enemy(50, -100, 0, 250, 1.5, 0, 0);
-   _wave1_side_moving_enemy(play_area_width() - 50, -100, 0, 250, 1.0, 1, 0);
+   _wave1_side_moving_enemy(play_area_width() - 50, -100, 0, 250, 1.0, 1, 0, 4);
    t_wait(1.25);
 end
 
@@ -329,6 +333,7 @@ function _wave1_enemy_spinster(px, py, xdown, ydown, mvspeed, side)
    enemy_set_scale(e, 10, 10);
    enemy_set_position(e, px, py);
    enemy_set_hp(e, 2500);
+   enemy_set_visual(e, ENTITY_SPRITE_SKULL_B);
    enemy_set_task(e, "_wave1_enemy_sweep_spinster", xdown, ydown, mvspeed, side);
 end
 
@@ -432,6 +437,7 @@ end
 ]]-- 
 function _wave2_enemy_rainer_sprinkler1(e, i, max_i, base_wait, wait_phase_before_turn, fire_proc)
    enemy_set_velocity(e, 0, -235);
+   enemy_set_visual(e, ENTITY_SPRITE_SKULL_B);
    t_wait(base_wait + i * wait_phase_before_turn);
    local v_mod = (max_i - i) * 10;
    for k = 0,90,10 do
@@ -455,6 +461,7 @@ function wave_2_sub1()
    for i=1,5 do
       local e = enemy_new();
       enemy_set_scale(e, 10, 10);
+      enemy_set_visual(e, ENTITY_SPRITE_SKULL_A);
       enemy_set_hp(e, 20);
       enemy_set_position(e, play_area_width() - 30, play_area_height() + 35 + (35 * i));
       enemy_set_task(
@@ -497,6 +504,7 @@ function wave_2_sub1()
       local e = enemy_new();
       enemy_set_scale(e, 10, 10);
       enemy_set_hp(e, 25);
+      enemy_set_visual(e, ENTITY_SPRITE_SKULL_A);
       enemy_set_position(e, play_area_width() - 30, play_area_height() + 35 + (35 * i));
       enemy_set_task(
          e, "_wave2_enemy_rainer_sprinkler1", i, 5, 1.1, 0.27,
@@ -567,6 +575,7 @@ function wave_2_sub2()
       enemy_set_scale(e, 10, 10);
       enemy_set_hp(e, 20);
       enemy_set_position(e, 0, 100);
+      enemy_set_visual(e, ENTITY_SPRITE_SKULL_B);
       enemy_set_task(
          e, "_wave2_enemy_dipshooter", 7, 50, 1, 0.402, 0.35,
          function (e)
@@ -611,6 +620,7 @@ function wave_2_sub2()
       enemy_set_scale(e, 10, 10);
       enemy_set_hp(e, 20);
       enemy_set_position(e, 0 + -i1 * 5, 30);
+      enemy_set_visual(e, ENTITY_SPRITE_SKULL_B);
       enemy_set_task(
          e, "_wave2_enemy_dipshooter", 6, 80, 1, 0.250, 0.35,
          function (e)
@@ -762,6 +772,7 @@ function wave_2_sub3()
       local dist_r = 100;
       do
          local e = enemy_new();
+         enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
          enemy_set_scale(e, 10, 10);
          enemy_set_hp(e, 45);
          enemy_set_position(e, play_area_width()/2 - dist_r, -50);
@@ -772,6 +783,7 @@ function wave_2_sub3()
       end
       do
          local e = enemy_new();
+         enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
          enemy_set_scale(e, 10, 10);
          enemy_set_hp(e, 45);
          enemy_set_position(e, play_area_width()/2 + dist_r, -50);
@@ -784,6 +796,7 @@ function wave_2_sub3()
    t_wait(1.25)
    do
       local e = enemy_new();
+      enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
       enemy_set_scale(e, 10, 10);
       enemy_set_hp(e, 75);
       enemy_set_position(e, play_area_width()/2, -50);
@@ -797,6 +810,7 @@ function wave_2_sub3()
       local dist_r = 40;
       do
          local e = enemy_new();
+         enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
          enemy_set_scale(e, 10, 10);
          enemy_set_hp(e, 45);
          enemy_set_position(e, play_area_width()/2 - dist_r, -20);
@@ -807,6 +821,7 @@ function wave_2_sub3()
       end
       do
          local e = enemy_new();
+         enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
          enemy_set_scale(e, 10, 10);
          enemy_set_hp(e, 45);
          enemy_set_position(e, play_area_width()/2 + dist_r, -20);
@@ -822,6 +837,7 @@ function wave_2_sub3()
    -- okay some of them sprinkle a little something
    for enemy=1, 35 do
       local e = enemy_new();
+      enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
       enemy_set_scale(e, 10, 10);
       enemy_set_hp(e, 25);
       local sign = enemy%3;
@@ -849,14 +865,10 @@ end
 -- modified spinster pattern
 function _wave2_sub4_xcross_fire(e, xsgn, ascension_speed)
    local direction = v2_direction_from_degree(45);
-   print(e, direction, xsgn, ascension_speed)
-   print(e, "move");
    enemy_set_velocity(e, xsgn * 20, 0);
    t_wait(4.0);
-   print(e, "wait");
    enemy_reset_movement(e);
    t_wait(1.0);
-   print(e, "climbcrossdeath");
    enemy_set_velocity(e, 0, -1 * ascension_speed);
 
    while enemy_valid(e) do
@@ -870,7 +882,6 @@ function _wave2_sub4_xcross_fire(e, xsgn, ascension_speed)
       bullet_set_visual_scale(b, 0.25, 0.25);
       bullet_set_velocity(b, xsgn * 100 * direction[1], direction[2] * 100);
 
-      print(e, "boom boom!");
       play_sound(random_attack_sound());
       t_wait(0.15);
    end
@@ -885,6 +896,7 @@ function wave_2_sub4()
       local y = 45 * i;
       do
         local e = enemy_new();
+        enemy_set_visual(e, ENTITY_SPRITE_SKULL_B);
         enemy_set_scale(e, 10, 10);
         enemy_set_hp(e, 35);
         enemy_set_position(e, -r, y);
@@ -892,6 +904,7 @@ function wave_2_sub4()
       end
       do
         local e = enemy_new();
+        enemy_set_visual(e, ENTITY_SPRITE_SKULL_B);
         enemy_set_scale(e, 10, 10);
         enemy_set_hp(e, 35);
         enemy_set_position(e, play_area_width() + r, y);
@@ -907,6 +920,7 @@ function wave_2_sub4()
       local y = 35 * i + 20;
       do
         local e = enemy_new();
+        enemy_set_visual(e, ENTITY_SPRITE_SKULL_B);
         enemy_set_scale(e, 10, 10);
         enemy_set_hp(e, 35);
         enemy_set_position(e, -r, y);
@@ -914,6 +928,7 @@ function wave_2_sub4()
       end
       do
         local e = enemy_new();
+        enemy_set_visual(e, ENTITY_SPRITE_SKULL_B);
         enemy_set_scale(e, 10, 10);
         enemy_set_hp(e, 35);
         enemy_set_position(e, play_area_width() + r, y);
@@ -1058,20 +1073,24 @@ end
 function wave_2_sub5()
    t_wait(1.0)
    do
+      -- play_area_notify_current_border_status();
       -- TODO: Fade these guys in.
       local goon = {};
       goon[1] = enemy_new();
+      enemy_set_visual(goon[1], ENTITY_SPRITE_SKULL_A);
       enemy_set_scale(goon[1], 10, 10);
       enemy_set_hp(goon[1], 125);
       enemy_set_position(goon[1], 50, 80);
       t_wait(1.0);
       goon[2] = enemy_new();
+      enemy_set_visual(goon[2], ENTITY_SPRITE_SKULL_B);
       enemy_set_scale(goon[2], 10, 10);
       enemy_set_hp(goon[2], 5000); -- He's making the main puzzle pattern.
       enemy_set_position(goon[2], play_area_width()/2, 30);
       t_wait(1.0);
       goon[3] = enemy_new();
       enemy_set_scale(goon[3], 10, 10);
+      enemy_set_visual(goon[3], ENTITY_SPRITE_SKULL_A);
       enemy_set_hp(goon[3], 125);
       enemy_set_position(goon[3], play_area_width() - 50, 80);
       t_wait(1.0);
@@ -1163,6 +1182,7 @@ function wave_2_sub_6()
 
       for i=1, 12 do
          local e = enemy_new();
+         enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
          enemy_set_scale(e, 10, 10);
          enemy_set_hp(e, 10);
          enemy_set_position(e, play_area_width()-50, -20);
@@ -1175,6 +1195,7 @@ function wave_2_sub_6()
       -- spawn some actual aggressors.
       for i=1, 7 do
          local e = enemy_new();
+         enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
          enemy_set_scale(e, 10, 10);
          enemy_set_hp(e, 15);
          enemy_set_position(e, play_area_width()/2, -10);
@@ -1191,6 +1212,7 @@ function wave_2_sub_6()
 
       for i=1, 12 do
          local e = enemy_new();
+         enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
          enemy_set_scale(e, 10, 10);
          enemy_set_hp(e, 20);
          enemy_set_position(e, 90, -30);
@@ -1203,6 +1225,7 @@ function wave_2_sub_6()
 
       for i=1,5 do
          local e = enemy_new();
+         enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
          enemy_set_scale(e, 10, 10);
          enemy_set_hp(e, 20);
          enemy_set_position(e, play_area_width() - 30, play_area_height() + 35 + (30 * i));
@@ -1244,6 +1267,7 @@ function wave_2_sub_6()
          local dist_r = 100;
          do
             local e = enemy_new();
+            enemy_set_visual(e, ENTITY_SPRITE_SKULL_A);
             enemy_set_scale(e, 10, 10);
             enemy_set_hp(e, 45);
             enemy_set_position(e, play_area_width()/2 - dist_r, -50);
@@ -1254,6 +1278,7 @@ function wave_2_sub_6()
          end
       do
          local e = enemy_new();
+         enemy_set_visual(e, ENTITY_SPRITE_SKULL_A);
          enemy_set_scale(e, 10, 10);
          enemy_set_hp(e, 45);
          enemy_set_position(e, play_area_width()/2 + dist_r, -50);
@@ -1275,6 +1300,7 @@ function wave_2()
    wave_2_sub3();
    -- safe buffer for five seconds.
    t_wait(5);
+   play_area_notify_current_border_status();
    wave_2_sub4();
    t_wait_for_no_danger();
    t_wait(9.5);
@@ -1318,17 +1344,11 @@ end
 -- I will introduce them in 1-3 as a new gameplay "mechanic"
 --
 function stage_task()
-   -- ideally this should not be a string, but I should allow closures...
    print("1_1LUA Play music");
---   async_task("loop_bkg_music");
    play_music(track);
 
--- -- stage main
-
---    -- Player Dialogue Here
---    --
---    -- ???
---    --
+-- stage main
+-- setup stage background
    Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_0.png", 1.00, 0, 0);
    Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_1.png", 0.55, 0, 30);
    Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_2.png", 0.287, 0, 120);
@@ -1338,6 +1358,8 @@ function stage_task()
    Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_star0.png", 0.387, 30, 125);
    Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_star1.png", 0.687, 100, 35);
    play_area_notify_current_border_status();
+-- end stage setup background
+
    wave_1();
    t_wait(5.5);
    Make_BrainDead_Enemy_Popcorn1(
@@ -1365,52 +1387,34 @@ function stage_task()
       -1);
    t_wait(0.325);
 
-   Make_Enemy_Burst360_1_1_2(
-      15,
-      v2(play_area_width()/2, -10),
-      v2(play_area_width()/2, play_area_height()/2),
-      0.75,
+   do
+      local e = Make_Enemy_Burst360_1_1_2(
+         15,
+         v2(play_area_width()/2, -10),
+         v2(play_area_width()/2, play_area_height()/2),
+         0.75,
 
-      0.15, 4,
-      40, 45,
+         0.15, 4,
+         40, 45,
 
-      35,
-      120,
+         35,
+         120,
 
-      v2(0, 1),
-      125,
-      45,
-      
-      PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
-   );
+         v2(0, 1),
+         125,
+         45,
+         
+         PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
+      );
+      enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
+   end
 
    t_wait(6.67);
---    -- Player Dialogue Here...
---    --
---    --
---    --
    wave_2();
-
---    -- NOTE:
---    -- I am using this level as a "testing" ground
---    -- and I need it to get feedback on the way I design the levels
---    -- and designing patterns for each 'wave' is really time consuming
---    -- so these blanket waves are waves where I don't have to think much at all...
---    -- and I can still pad out the play time a little longer.
-   
---    -- blanket_wave1()
---    -- blanket_wave2()
-
---    -- Player Dialogue Here...
---    --
---    -- 
---    -- mid_boss();
---    -- async_task("mid_boss_minions");
-
---    -- Final Dialogue. Finish stage!
 
    print("1_1LUA cooldown to finish stage.");
    t_fwait(10);
    wait_no_danger();
+   stop_music(); -- music is supposed to automatically stop anyway...
    t_complete_stage();
 end

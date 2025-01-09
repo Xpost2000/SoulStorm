@@ -288,10 +288,13 @@ function Make_BrainDead_Enemy_Popcorn1(
       x_vary,
       h_vary,
       sign_modv,
-      sign_modh)
+      sign_modh,
+      sprite)
    local enemies = {};
+   local sprite = sprite or ENTITY_SPRITE_BAT_A;
    for i=1, amount do
       local e = enemy_new();
+      enemy_set_visual(e, sprite);
       local vsgn = 1;
       local hsgn = 1;
       if sign_modv ~= -1 then
