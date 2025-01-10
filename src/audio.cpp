@@ -247,7 +247,6 @@ namespace Audio {
             if (loaded_streams[sound.index-1] == NULL)
                 loaded_streams[sound.index-1] = Mix_LoadMUS(loaded_stream_filestrings[sound.index-1].data);
 
-            if (loops == 0) loops = -1;
             s32 status = Mix_PlayMusic(loaded_streams[sound.index-1], loops);
             Mix_VolumeMusic((s32)((current_music_volume + audio_diff) * MIX_MAX_VOLUME));
             current_music_sound_id = sound;

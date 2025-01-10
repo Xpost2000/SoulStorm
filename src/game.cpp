@@ -889,6 +889,8 @@ void Game::init_audio_resources() {
     auto resources = state->resources;
     resources->attack_sounds[0] = Audio::load(("res/snds/fire1.wav"));
     resources->attack_sounds[1] = Audio::load(("res/snds/fire2.wav"));
+    resources->attack_sounds[2] = Audio::load(("res/snds/fire3.wav"));
+    resources->attack_sounds[3] = Audio::load(("res/snds/fire4.wav"));
 
     resources->opening_beep_type = Audio::load("res/snds/beep_type.wav");
 

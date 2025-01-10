@@ -373,7 +373,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
         }
     }
 
-    Audio::play_music_transition_into(resources->title_music, 1500, 2000);
+    Audio::play_music_transition_into(resources->title_music, 1500, 2000, 0, -1);
 
     auto commands = ui_render_commands;
     auto resolution = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);

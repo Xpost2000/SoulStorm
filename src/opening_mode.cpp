@@ -468,7 +468,7 @@ GAME_SCREEN(update_and_render_game_opening) {
                 //
                 // I'm unaware of what good APIs for this *should* look like, but this is simple
                 // and explicit which I can live with.
-                Audio::play_music_transition_into(resources->title_music, 1500, 2000);
+                Audio::play_music_transition_into(resources->title_music, 1500, 2000, 0, -1);
 
                 state.reset_all_slides();
                 state.unload_all_assets(resources);

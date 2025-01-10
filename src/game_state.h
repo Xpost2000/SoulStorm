@@ -963,7 +963,7 @@ struct Game_Resources {
     Texture_Atlas    gameplay_texture_atlas;
 
     // I should have more of these...
-    Audio::Sound_ID        attack_sounds[2];
+    Audio::Sound_ID        attack_sounds[4];
     Audio::Sound_ID        hit_sounds[2];
     Audio::Sound_ID        opening_beep_type;
     Audio::Sound_ID        death_sound;

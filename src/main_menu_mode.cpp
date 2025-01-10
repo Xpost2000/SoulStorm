@@ -1206,7 +1206,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
 
     {
       if (!Transitions::fading()) {
-          Audio::play_music_transition_into(resources->title_music, 1500, 1500);
+          Audio::play_music_transition_into(resources->title_music, 1500, 1500, 0, -1);
       }
     }
 
