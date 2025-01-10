@@ -5245,6 +5245,8 @@ void Gameplay_Data::spawn_death_explosion(V2 position) {
   explosion->position = position;
   explosion->frame_index = 0;
   explosion->timer = 0;
+  explosion->frame_count = 3;
+  explosion->scale = random_ranged_float(&prng_unessential, 0.5f, 1.5f);
 }
 
 // TODO: Spatial partition all the bullets some how. Probably going to use another spatial hash.
@@ -5283,8 +5285,10 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                         }
 
                         state->spawn_death_explosion(e.position);
+#if 0
                         spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 0);
                         spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 1);
+#endif
                     } else {
                         state->notify_score_with_hitmarker(e.score_value, e.position);
                     }

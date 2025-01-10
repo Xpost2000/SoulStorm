@@ -411,8 +411,10 @@ struct DeathExplosion {
   bool dead(void);
 
   V2 position;
+  s32 frame_count;
   s32 frame_index;
   f32 timer;
+  f32 scale = 1.0f;
 };
 
 enum Bullet_Source {

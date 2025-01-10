@@ -1680,7 +1680,7 @@ void DeathExplosion::draw(Game_State* const state, struct render_commands* rende
   image_id frame = resources->explosion_image[frame_index];
   image_buffer* sprite_img = graphics_assets_get_image_by_id(&resources->graphics_assets, frame);
 
-  V2 sprite_image_size = V2(64, 64);
+  V2 sprite_image_size = V2(64, 64) * scale;
   V2 sprite_position = position - sprite_image_size/2;
 
   render_commands_push_image_ext(
@@ -1702,5 +1702,5 @@ void DeathExplosion::draw(Game_State* const state, struct render_commands* rende
 }
 
 bool DeathExplosion::dead(void) {
-  return frame_index >= 3; // hardcoded;
+  return frame_index >= frame_count; // hardcoded;
 }
