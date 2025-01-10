@@ -1341,14 +1341,22 @@ function stage_task()
 
 -- stage main
 -- setup stage background
-   Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_0.png", 1.00, 0, 0);
-   Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_1.png", 0.55, 0, 30);
-   Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_2.png", 0.287, 0, 120);
-   Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_2.png", 0.187, 250, 350);
-   Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_star0.png", 0.487, 225, 85);
-   Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_star1.png", 0.287, -120, 175);
-   Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_star0.png", 0.387, 30, 125);
-   Generic_Infinite_Stage_ScrollV("res/img/stagebkg/stage1bkg1_star1.png", 0.687, 100, 35);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_0.png", 1.00, 0, 0);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_1.png", 0.55, 0, 30);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_2.png", 0.287, 0, 120);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_2.png", 0.187, 250, 350);
+   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_2.png", 0.187, 250, 350);
+
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star0.png", 0.487, 225, 85);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star1.png", 0.287, -120, 175);
+   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star0.png", 0.187, 355, 15);
+   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star1.png", 0.117, -150, 255);
+
+   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star0.png", 0.127, 100, 15);
+   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star1.png", 0.257, -350, 255);
+
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star0.png", 0.387, 30, 125);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star1.png", 0.687, 100, 35);
    play_area_notify_current_border_status();
 -- end stage setup background
 

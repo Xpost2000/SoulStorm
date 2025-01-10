@@ -890,13 +890,14 @@ end
 -- If you're lazy and don't want to do much for a level background
 -- NOTE: expects the image to be 375, 480 or some ratio of it because that's the size of the playable region!.
 -- Just for "playtesting" or "development"
-function Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed, offx, offy)
+function Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed, offx, offy, layer)
    async_task_lambda(
       function ()
          local background_image         = load_image(image_resource_location);
          local background_render_object = render_object_create();
          local scroll_y = offy;
          local src_x = render_object_get_src_rect_x(background_render_object);
+         render_object_set_layer(background_render_object, layer);
 
          while true do
             render_object_set_img_id(background_render_object, background_image);
@@ -919,4 +920,12 @@ function Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed, of
          end
       end
    )
+end
+
+function Generic_Infinite_Stage_ScrollV_BG(image_resource_location, scrollspeed, offx, offy)
+   Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed, offx, offy, SCRIPTABLE_RENDER_OBJECT_LAYER_BACKGROUND);
+end
+
+function Generic_Infinite_Stage_ScrollV_FG(image_resource_location, scrollspeed, offx, offy)
+   Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed, offx, offy, SCRIPTABLE_RENDER_OBJECT_LAYER_FOREGROUND);
 end
