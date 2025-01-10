@@ -204,7 +204,7 @@ Particle_Emitter& spawn_game_entity_hit_particle_emitter(Fixed_Array<Particle_Em
 void config_game_entity_player_propel_particle_emitter(Particle_Emitter& emitter, V2 where, Game_Resources* resources) {
     emitter.reset();
     emitter.sprite                  = sprite_instance(resources->circle_sprite16);
-    emitter.sprite.scale            = V2(0.5, 0.5);
+    emitter.sprite.scale            = V2(0.25, 0.25);
     emitter.shape                   = particle_emit_shape_point(where);
     // emitter.modulation              = color32f32(222.0f / 255.0f, 180.0f / 255.0f, 45.0f / 255.0f, 1.0f);
     emitter.modulation       = color32f32(0.7f, 0.78f, 0.95f, 1.0f);
@@ -231,25 +231,29 @@ void config_game_entity_player_propel_particle_emitter(Particle_Emitter& emitter
     emitter.blend_mode              = BLEND_MODE_ALPHA;
 }
 
-Particle_Emitter& spawn_game_entity_death_particle_emitter(Fixed_Array<Particle_Emitter>& particle_emitters, V2 where, Game_Resources* resources) {
+Particle_Emitter& spawn_game_entity_death_particle_emitter(Fixed_Array<Particle_Emitter>& particle_emitters, V2 where, Game_Resources* resources, int type) {
     auto& emitter = *(particle_emitters.alloc());
     emitter.reset();
-    emitter.sprite                  = sprite_instance(resources->circle_sprite);
-    emitter.sprite.scale            = V2(0.125/3, 0.125/3);
-    emitter.shape                   = particle_emit_shape_circle(where, 5.0f);
-    emitter.modulation              = color32f32(1, 0.15, 0.1, 1);
-    emitter.lifetime                = 0.40f;
-    emitter.scale_variance          = V2(-0.055, 0.055);
-    emitter.velocity_x_variance     = V2(-140, 140);
-    emitter.velocity_y_variance     = V2(-140, 140);
-    emitter.acceleration_x_variance = V2(-100, 100);
+    emitter.sprite = sprite_instance(resources->circle_sprite16);
+    emitter.sprite.scale = V2(0.125, 0.125);
+    emitter.shape = particle_emit_shape_circle(where, 2.8f);
+    if (type == 1) {
+      emitter.modulation = RGBA32f32(255, 252, 127, 255);
+    } else {
+      emitter.modulation = RGBA32f32(167, 196, 255, 255);
+    }
+    emitter.lifetime = 0.45f;
+    emitter.scale_variance = V2(-0.005, 0.005);
+    emitter.velocity_x_variance = V2(-205, 205);
+    emitter.acceleration_x_variance = V2(-150, 150);
+    emitter.angle_range = V2(-360, 360);
     emitter.acceleration_y_variance = V2(-100, 100);
-    emitter.lifetime_variance       = V2(-0.25f, 0.2f);
-    emitter.emission_max_timer      = 0.035f;
-    emitter.max_emissions           = 1;
-    emitter.emit_per_emission       = 8;
-    emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE;
-    emitter.scale                   = 1;
+    emitter.lifetime_variance = V2(-0.25f, 1.0f);
+    emitter.emission_max_timer = 0.035f;
+    emitter.max_emissions = 1;
+    emitter.emit_per_emission = 256;
+    emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE | PARTICLE_EMITTER_FLAGS_USE_ANGULAR | PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
+    emitter.scale = 1;
 
     return emitter;
 }
@@ -4883,7 +4887,7 @@ void Game_State::kill_all_bullets() {
             continue;
 
         b.kill();
-        spawn_game_entity_death_particle_emitter(state->particle_emitters, b.position, resources);
+        spawn_game_entity_death_particle_emitter(state->particle_emitters, b.position, resources, 1);
     }
 }
 
@@ -4897,7 +4901,8 @@ void Game_State::kill_all_enemies() {
             continue;
 
         e.kill();
-        spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources);
+        spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 0);
+        spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 1);
     }
 }
 
@@ -4948,7 +4953,7 @@ void Game_State::convert_enemies_to_score_pickups(float radius) {
             continue;
 
         e.kill();
-        spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources);
+        spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 1);
 
         if (state->disable_enemy_to_points) {
             continue;
@@ -5254,8 +5259,8 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                             Achievements::get(ACHIEVEMENT_ID_MURDERER)->report((s32)1);
                             Achievements::get(ACHIEVEMENT_ID_SLAYER)->report((s32)1);
                         }
-
-                        spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources);
+                        spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 0);
+                        spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 1);
                     } else {
                         state->notify_score_with_hitmarker(e.score_value, e.position);
                     }
@@ -5274,7 +5279,7 @@ void Game::handle_all_bullet_collisions(f32 dt) {
 
                 if (rectangle_f32_intersect(player_rect, bullet_rect)) {
                     if (p.kill()) {
-                        spawn_game_entity_death_particle_emitter(state->particle_emitters, p.position, resources);
+                        spawn_game_entity_death_particle_emitter(state->particle_emitters, p.position, resources, 1);
                         b.die = true;
                         hit_death = true;
                     }

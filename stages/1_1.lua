@@ -1311,7 +1311,7 @@ function wave_2()
 
    -- here are some standard shmup waves.
    wave_2_sub2();
-   t_wait(8.0);
+   t_wait(7.0);
    wave_2_sub_6();
 end
 
@@ -1420,7 +1420,6 @@ function stage_task()
    t_wait(6.67);
    wave_2();
 
-   print("1_1LUA cooldown to finish stage.");
    t_wait_for_no_danger();
    t_complete_stage();
 end
