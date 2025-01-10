@@ -382,7 +382,7 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
                     }
                 } break;
                 case TASK_YIELD_REASON_WAIT_FOR_NO_DANGER_ON_STAGE: {
-                    if (!state->gameplay_data.any_hazards())
+                    if (!state->gameplay_data.any_living_danger())
                         task.userdata.yielded.reason = TASK_YIELD_REASON_NONE;
                     continue;
                 } break;
