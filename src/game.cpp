@@ -4073,14 +4073,18 @@ GAME_SCREEN(update_and_render_game_ingame) {
         if (this->state->ui_state != UI_STATE_DEAD_MAYBE_RETRY) {
             if (this->state->ui_state != UI_STATE_PAUSED) {
                 switch_ui(UI_STATE_PAUSED);
+#if 0
                 if (this->state->screen_mode == GAME_SCREEN_INGAME) {
                   Audio::pause_music();
                 }
+#endif
             } else {
                 switch_ui(UI_STATE_INACTIVE);
+#if 0
                 if (this->state->screen_mode == GAME_SCREEN_INGAME) {
                   Audio::resume_music();
                 }
+#endif 
             }
         }
     }
@@ -4485,6 +4489,17 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
     
     Transitions::update_and_render(ui_render_commands, dt);
+
+    // HACKME(jerry)
+    if (this->state->screen_mode == GAME_SCREEN_INGAME) {
+      if (this->state->ui_state == UI_STATE_PAUSED) {
+        Audio::pause_music();
+      }
+      else if (this->state->ui_state == UI_STATE_INACTIVE) {
+        Audio::resume_music();
+      }
+    }
+
 
     state->update_and_render_all_background_scriptable_render_objects(this->state->resources, game_render_commands, dt);
     {

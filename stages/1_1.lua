@@ -31,15 +31,6 @@ local track = load_music("res/snds/music_1_1.ogg");
    Author: xpost2000/Jerry Zhu
 ]]--
 
-function loop_bkg_music()
-   while true do
-      if not music_playing() then
-         play_music(track);
-      end
-      t_yield();
-   end
-end
-
 --[[UNIQUE BULLET PATTERNS]]--
 --[[
    MID BOSS?
@@ -857,7 +848,7 @@ function wave_2_sub3()
       t_wait(0.15)
    end
 
-   t_wait_for_no_danger()
+   --t_wait_for_no_danger()
 end
 
 
@@ -912,7 +903,7 @@ function wave_2_sub4()
       end
    end
 
-   t_wait_for_no_danger();
+   --t_wait_for_no_danger();
    t_wait(15);
 
    for i=1, 15, 5 do
@@ -1302,7 +1293,8 @@ function wave_2()
    t_wait(5);
    play_area_notify_current_border_status();
    wave_2_sub4();
-   t_wait_for_no_danger();
+   -- t_wait_for_no_danger();
+   -- the change in behavior makes this wrong!
    t_wait(9.5);
 
    -- spawn 3 enemies that will start blanketing

@@ -65,7 +65,7 @@ namespace Audio {
     void initialize(void) {
         _debugprintf("Audio hi");
         Mix_Init(MIX_INIT_OGG | MIX_INIT_MOD);
-        Mix_OpenAudio(44100, AUDIO_S16, 2, 2048);
+        Mix_OpenAudio(44100, AUDIO_S16, 2, 1024);
         Mix_AllocateChannels(32);
     }
 
@@ -178,7 +178,7 @@ namespace Audio {
         return result;
     }
 
-    void play_music_transition_into(const Sound_ID sound, const s32 fadeout_ms, const s32 fadein_ms) {
+    void play_music_transition_into(const Sound_ID sound, const s32 fadeout_ms, const s32 fadein_ms, int audio_diff, int loops) {
         if (sound.streaming == false) {
             // not supported for non-streaming / non-music tracks
             // since that requires tracking channels and stuff which
@@ -190,14 +190,14 @@ namespace Audio {
 
         if (sound_id_match(currently_playing, sound)) {
             if (!music_playing()) {
-                play(sound);
+                play(sound, audio_diff, loops);
             }
         } else {
             transition_callback_data.new_track_to_play = sound;
             transition_callback_data.fadein_ms = fadein_ms;
 
             if (!music_playing()) {
-                play_fadein(transition_callback_data.new_track_to_play, transition_callback_data.fadein_ms);
+                play_fadein(transition_callback_data.new_track_to_play, transition_callback_data.fadein_ms, audio_diff, loops);
             } else {
                 stop_music_fadeout(fadeout_ms);
                 Mix_HookMusicFinished(_transition_music_finish_callback);
@@ -234,7 +234,7 @@ namespace Audio {
       Mix_ResumeMusic();
     }
 
-    void play(Sound_ID sound) {
+    void play(Sound_ID sound, int audio_diff, int loops) {
         if (!subsystem_enabled)
             return;
 
@@ -247,13 +247,15 @@ namespace Audio {
             if (loaded_streams[sound.index-1] == NULL)
                 loaded_streams[sound.index-1] = Mix_LoadMUS(loaded_stream_filestrings[sound.index-1].data);
 
-            s32 status = Mix_PlayMusic(loaded_streams[sound.index-1], -1);
+            if (loops == 0) loops = -1;
+            s32 status = Mix_PlayMusic(loaded_streams[sound.index-1], loops);
+            Mix_VolumeMusic((s32)((current_music_volume + audio_diff) * MIX_MAX_VOLUME));
             current_music_sound_id = sound;
         } else {
             if (loaded_samples[sound.index-1] == NULL)
                 loaded_samples[sound.index-1] = Mix_LoadWAV(loaded_sample_filestrings[sound.index-1].data);
-
-            Mix_PlayChannel(ANY_CHANNEL, loaded_samples[sound.index-1], 0);
+            int chan = Mix_PlayChannel(ANY_CHANNEL, loaded_samples[sound.index-1], loops);
+            Mix_Volume(chan, (s32)((current_sound_volume + audio_diff) * MIX_MAX_VOLUME));
         }
     }
 
@@ -261,15 +263,17 @@ namespace Audio {
         return Mix_PlayingMusic();
     }
 
-    void play_fadein(Sound_ID sound, s32 fadein_ms) {
+    void play_fadein(Sound_ID sound, s32 fadein_ms, int audio_diff, int loops) {
         if (!subsystem_enabled)
             return;
 
         if (sound.streaming) {
             Mix_FadeInMusic(loaded_streams[sound.index-1], -1, fadein_ms);
+            Mix_VolumeMusic((s32)((current_music_volume + audio_diff) * MIX_MAX_VOLUME));
             current_music_sound_id = sound;
         } else {
-            Mix_FadeInChannel(ANY_CHANNEL, loaded_samples[sound.index-1], 0, fadein_ms);
+            int chan = Mix_FadeInChannel(ANY_CHANNEL, loaded_samples[sound.index-1], 0, fadein_ms);
+            Mix_Volume(chan, (s32)((current_sound_volume + audio_diff) * MIX_MAX_VOLUME));
         }
     }
 
@@ -299,7 +303,7 @@ namespace Audio {
     local int _lua_bind_play_music(lua_State* L) {
         s32 sound_index = luaL_checkinteger(L, 1);
         auto sound_id   = Sound_ID { true, sound_index };
-        play(sound_id);
+        play(sound_id, 0, 0);
         return 0;
     }
 
