@@ -407,6 +407,9 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     resources->ui_vignette_borders[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_bottom.png"));
     resources->ui_rays_gradient = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/uieffect0.png"));
 
+    resources->explosion_image[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/explosion_00.png"));
+    resources->explosion_image[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/explosion_01.png"));
+    resources->explosion_image[2] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/explosion_02.png"));
 
     resources->ui_border_vignette = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette.png"));
 
@@ -1180,6 +1183,7 @@ void Game::init(Graphics_Driver* driver) {
         state->explosion_hazards       = Fixed_Array<Explosion_Hazard>(arena, MAX_EXPLOSION_HAZARDS);
         state->laser_hazards           = Fixed_Array<Laser_Hazard>(arena, MAX_LASER_HAZARDS);
         state->enemies                 = Fixed_Array<Enemy_Entity>(arena, MAX_ENEMIES);
+        state->death_explosions        = Fixed_Array<DeathExplosion>(arena, MAX_ENEMIES);
         state->pickups                 = Fixed_Array<Pickup_Entity>(arena, MAX_PICKUP_ENTITIES);
         state->score_notifications     = Fixed_Array<Gameplay_UI_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
         state->hit_score_notifications = Fixed_Array<Gameplay_UI_Hitmark_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
@@ -4636,6 +4640,17 @@ GAME_SCREEN(update_and_render_game_ingame) {
             e.draw(this->state, game_render_commands, resources);
         }
 
+        for (int i = state->death_explosions.size-1; i >= 0; --i) {
+          auto& e = state->death_explosions[i];
+          if (e.dead()) {
+            state->death_explosions.pop_and_swap(i);
+          }
+          else {
+            e.draw(this->state, game_render_commands, resources);
+            e.update(this->state, dt);
+          }
+        }
+
         for (int i = 0; i < (s32)state->pickups.size; ++i) {
             auto& pe = state->pickups[i];
             pe.draw(this->state, game_render_commands, resources);
@@ -5225,6 +5240,13 @@ void Game::handle_all_explosions(f32 dt) {
     }
 }
 
+void Gameplay_Data::spawn_death_explosion(V2 position) {
+  auto explosion = death_explosions.alloc();
+  explosion->position = position;
+  explosion->frame_index = 0;
+  explosion->timer = 0;
+}
+
 // TODO: Spatial partition all the bullets some how. Probably going to use another spatial hash.
 void Game::handle_all_bullet_collisions(f32 dt) {
     auto state = &this->state->gameplay_data;
@@ -5259,6 +5281,8 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                             Achievements::get(ACHIEVEMENT_ID_MURDERER)->report((s32)1);
                             Achievements::get(ACHIEVEMENT_ID_SLAYER)->report((s32)1);
                         }
+
+                        state->spawn_death_explosion(e.position);
                         spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 0);
                         spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 1);
                     } else {

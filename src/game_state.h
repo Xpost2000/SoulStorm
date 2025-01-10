@@ -495,6 +495,7 @@ struct Gameplay_Data {
     Fixed_Array<Enemy_Entity>     enemies;
     Fixed_Array<Laser_Hazard>     laser_hazards;
     Fixed_Array<Explosion_Hazard> explosion_hazards;
+    Fixed_Array<DeathExplosion>   death_explosions; // TODO(jerry):
 
     // NOTE: these are per frame.
     Fixed_Array<Scriptable_Render_Object> scriptable_render_objects;
@@ -564,6 +565,8 @@ struct Gameplay_Data {
 
     Enemy_Entity*  lookup_enemy(u64 uid);
     Bullet* lookup_bullet(u64 uid);
+
+    void spawn_death_explosion(V2 position);
 
     bool entity_spawned(u64 uid);
     bool bullet_spawned(u64 uid);
@@ -944,6 +947,7 @@ struct Game_Resources {
     image_id        ui_vignette_borders[2];
     image_id        ui_rays_gradient;
     image_id        ui_border_effect[BORDER_FLASH_ID_TYPE_COUNT-1];
+    image_id        explosion_image[3];
 
     // Technically I'm using this for a cheap "glow" effect
     image_id        ui_border_vignette;

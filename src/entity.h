@@ -405,6 +405,16 @@ private:
     s32 id;
 };
 
+struct DeathExplosion {
+  void update(Game_State* state, f32 dt);
+  void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
+  bool dead(void);
+
+  V2 position;
+  s32 frame_index;
+  f32 timer;
+};
+
 enum Bullet_Source {
     // Maybe I just want to shoot random bullets in the environment to kill stuff.
     // who knows?

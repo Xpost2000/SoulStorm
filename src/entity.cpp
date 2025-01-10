@@ -1658,3 +1658,49 @@ void Pickup_Entity::on_picked_up(Game_State* state) {
         } break;
     }
 }
+
+#define DEATH_EXPLOSION_SPRITE_ANIMATION_TIME (0.045f)
+
+void DeathExplosion::update(Game_State* state, f32 dt) {
+  if (timer >= DEATH_EXPLOSION_SPRITE_ANIMATION_TIME) {
+    frame_index++;
+    timer = 0;
+  }
+  else {
+    timer += dt;
+  }
+}
+
+// NOTE(jerry): hard-coded
+void DeathExplosion::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
+  if (dead()) {
+    return;
+  }
+
+  image_id frame = resources->explosion_image[frame_index];
+  image_buffer* sprite_img = graphics_assets_get_image_by_id(&resources->graphics_assets, frame);
+
+  V2 sprite_image_size = V2(64, 64);
+  V2 sprite_position = position - sprite_image_size/2;
+
+  render_commands_push_image_ext(
+    render_commands,
+    sprite_img,
+    rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+    RECTANGLE_F32_NULL,
+    color32f32(
+      1,
+      1,
+      1,
+      1
+    ),
+    V2(0, 0),
+    0,
+    0,
+    BLEND_MODE_ADDITIVE
+  );
+}
+
+bool DeathExplosion::dead(void) {
+  return frame_index >= 3; // hardcoded;
+}
