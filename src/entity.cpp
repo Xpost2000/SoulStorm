@@ -1497,7 +1497,7 @@ Pickup_Entity pickup_entity_generic(Game_State* state, s32 type, V2 start, V2 en
 Pickup_Entity pickup_score_entity(Game_State* state, V2 start, V2 end, s32 value) {
     Pickup_Entity score_entity = pickup_entity_generic(state, PICKUP_SCORE, start, end, value);
     score_entity.sprite = sprite_instance(state->resources->point_pickup_sprite);
-    score_entity.sprite.scale = V2(0.60f, 0.60f);
+    score_entity.sprite.scale = V2(1, 1);
     score_entity.sprite.modulation = color32f32(255.0f / 255.0f, 215.0f / 255.0f, 0.0f, 1.0f);
     // unimplemented("pick_score_entity not needed yet?");
     return score_entity;
@@ -1575,7 +1575,7 @@ void Pickup_Entity::update(Game_State* state, f32 dt) {
     sprite.animate(
         &state->resources->graphics_assets,
         dt,
-        0.085
+        0.125
     );
     Entity::update(state, dt);
 }
@@ -1584,8 +1584,9 @@ void Pickup_Entity::draw(Game_State* const state, struct render_commands* render
     if (!visible)
         return;
 
+#if 1
     auto  sprite_img = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_border_vignette);
-    V2    sprite_image_size = V2(32, 32) * (1 + normalized_sinf(Global_Engine()->global_elapsed_time*1.25 + 1234) * 0.55);
+    V2    sprite_image_size = V2(32, 32) * (1 + normalized_sinf(Global_Engine()->global_elapsed_time*1.25 + 1234) * 0.75);
 
     V2 interpolated_position = V2(
         lerp_f32(last_position.x, position.x, state->gameplay_data.fixed_tickrate_remainder),
@@ -1606,13 +1607,14 @@ void Pickup_Entity::draw(Game_State* const state, struct render_commands* render
             sprite.modulation.r,
             sprite.modulation.g,
             sprite.modulation.b,
-            sprite.modulation.a * 0.45
+            sprite.modulation.a * 0.25
         ),
         V2(0, 0),
         0,
         0,
         BLEND_MODE_ADDITIVE
     );
+#endif
     Entity::draw(
         state,
         render_commands,
