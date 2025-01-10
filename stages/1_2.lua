@@ -544,7 +544,8 @@ function stage_task()
    wave_2();
    preboss_wave();
    print("wait finish");
-   t_wait(5);
+   t_wait(1);
+   Stage1_Batflood();
    wait_no_danger();
    t_complete_stage();
 end
