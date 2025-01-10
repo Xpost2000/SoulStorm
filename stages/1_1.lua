@@ -1168,6 +1168,9 @@ end
 function wave_2_sub6_generic_attacker1(e, dir)
    while enemy_valid(e) do
       local bullets = spawn_bullet_line(enemy_position(e), 3, 10, v2(10,10), v2(0, 1), 100, BULLET_SOURCE_ENEMY);
+      for i,b in ipairs(bullets) do
+         bullet_start_trail(b, 12);
+      end
       t_wait(0.55);
       play_sound(random_attack_sound());
    end
@@ -1442,7 +1445,7 @@ function stage_task()
 
    t_wait(6.67);
    wave_2();
-
-   t_wait_for_no_danger();
+   t_wait(12);
+   --t_wait_for_no_danger();
    t_complete_stage();
 end
