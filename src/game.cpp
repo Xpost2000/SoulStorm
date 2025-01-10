@@ -222,7 +222,7 @@ void config_game_entity_player_propel_particle_emitter(Particle_Emitter& emitter
     emitter.lifetime_variance       = V2(-0.25f, 0.2f);
     emitter.emission_max_timer      = 0.035f;
     emitter.max_emissions           = 1;
-    emitter.emit_per_emission       = 225;
+    emitter.emit_per_emission       = 32;
     emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE |
         PARTICLE_EMITTER_FLAGS_USE_ANGULAR |
         PARTICLE_EMITTER_FLAGS_USE_COLOR_FADE |
@@ -251,7 +251,7 @@ Particle_Emitter& spawn_game_entity_death_particle_emitter(Fixed_Array<Particle_
     emitter.lifetime_variance = V2(-0.25f, 1.0f);
     emitter.emission_max_timer = 0.035f;
     emitter.max_emissions = 1;
-    emitter.emit_per_emission = 64;
+    emitter.emit_per_emission = 50;
     emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE | PARTICLE_EMITTER_FLAGS_USE_ANGULAR | PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
     emitter.scale = 1;
 
