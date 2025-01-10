@@ -2,7 +2,7 @@
 #define ENDING_MODE_H
 
 #define ENDING_MODE_FADE_TIME   (1.5f)
-#define ENDING_MODE_LINGER_TIME (3.5f)
+#define ENDING_MODE_LINGER_TIME (7.0f)
 
 enum EndingMode_Phase {
     ENDING_MODE_PHASE_FADE_IN_FROM_BLACK = 0,

@@ -46,7 +46,7 @@ GAME_SCREEN(update_and_render_game_ending) {
 
     // FIN text
     {
-        auto font = resources->get_font(MENU_FONT_COLOR_GOLD);
+        auto font = resources->get_font(MENU_FONT_COLOR_BLUE);
         f32  font_scale = 4;
 
         float text_height = font_cache_text_height(font) * font_scale;
@@ -76,6 +76,7 @@ GAME_SCREEN(update_and_render_game_ending) {
             if (state.timer < ENDING_MODE_FADE_TIME) {
                 state.timer += dt;
             } else {
+                Audio::play_music_transition_into(resources->title_reprisal_music, 1000, 1000, 0, 0);
                 state.phase = ENDING_MODE_PHASE_LINGER;
                 state.timer = 0;
             }
@@ -95,6 +96,7 @@ GAME_SCREEN(update_and_render_game_ending) {
             } else {
                 state.phase = ENDING_MODE_PHASE_FADE_OUT_TO_BLACK;
                 state.timer = 0;
+                Audio::stop_music();
             }
         } break;
         case ENDING_MODE_PHASE_FADE_OUT_TO_BLACK: {

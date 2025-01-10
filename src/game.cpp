@@ -235,7 +235,7 @@ Particle_Emitter& spawn_game_entity_death_particle_emitter(Fixed_Array<Particle_
     auto& emitter = *(particle_emitters.alloc());
     emitter.reset();
     emitter.sprite = sprite_instance(resources->circle_sprite16);
-    emitter.sprite.scale = V2(0.125, 0.125);
+    emitter.sprite.scale = V2(0.175, 0.175);
     emitter.shape = particle_emit_shape_circle(where, 2.8f);
     if (type == 1) {
       emitter.modulation = RGBA32f32(255, 252, 127, 255);
@@ -251,7 +251,7 @@ Particle_Emitter& spawn_game_entity_death_particle_emitter(Fixed_Array<Particle_
     emitter.lifetime_variance = V2(-0.25f, 1.0f);
     emitter.emission_max_timer = 0.035f;
     emitter.max_emissions = 1;
-    emitter.emit_per_emission = 256;
+    emitter.emit_per_emission = 64;
     emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE | PARTICLE_EMITTER_FLAGS_USE_ANGULAR | PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
     emitter.scale = 1;
 
