@@ -4475,8 +4475,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
                     state->triggered_stage_completion_cutscene = true;
                     state->stage_completed                     = false;
 
-                    Audio::stop_music();
-                    Audio::play(resources->title_reprisal_music);
+                    Audio::play_music_transition_into(resources->title_reprisal_music, 500, 500);
                     state->complete_stage.begin_sequence();
                     state->player.reset_movement();
                 }

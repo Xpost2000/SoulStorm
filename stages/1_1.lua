@@ -1311,6 +1311,29 @@ function wave_2()
 
    -- here are some standard shmup waves.
    wave_2_sub2();
+   Make_BrainDead_Enemy_Popcorn1(
+      10,
+      v2(play_area_width() + 10, play_area_height()/2 - 30),
+      0.086,
+      7,
+      -180,
+      30,
+      2,
+      25,
+      4,
+      -1);
+   t_wait(0.125);
+   Make_BrainDead_Enemy_Popcorn1(
+      10,
+      v2(-10, play_area_height()/2 - 50),
+      0.086,
+      7,
+      180,
+      30,
+      2,
+      25,
+      4,
+      -1);
    t_wait(7.0);
    wave_2_sub_6();
 end
