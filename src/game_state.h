@@ -455,11 +455,13 @@ struct Border_Flash_Data {
     f32  per_flash_length; // NOTE(jerry): maybe not tuning anything?
 };
 
+#define POINTS_TO_AWARD_EXTRA_LIFE (100000)
 struct Gameplay_Data {
     bool campaign_perfect_clear;
     bool stage_perfect_clear;
     bool stage_completed;
     bool playing_practice_mode;
+    int  score_awarded_points = 0;
 
     bool allow_border_switch_flashing = true; // automatic border flashing behavior
     Border_Flash_Data border_flashes[4];

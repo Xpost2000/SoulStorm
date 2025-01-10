@@ -460,29 +460,31 @@ function wave_2_sub1()
 
          function (e, idx)
             for i=1, 10 do
-               local ep = v2(enemy_position_x(e), enemy_position_y(e));
-               local bullets = spawn_bullet_arc_pattern2(
-                  ep,
-                  3,
-                  90,
-                  v2(0, 1),
-                  75,
-                  0,
-                  BULLET_SOURCE_ENEMY
-               );
-               play_sound(random_attack_sound());
+               if enemy_valid(e) then
+                local ep = v2(enemy_position_x(e), enemy_position_y(e));
+                local bullets = spawn_bullet_arc_pattern2(
+                    ep,
+                    3,
+                    90,
+                    v2(0, 1),
+                    75,
+                    0,
+                    BULLET_SOURCE_ENEMY
+                );
+                play_sound(random_attack_sound());
 
-               bullet_list_set_visuals(
-                  bullets,
-                  PROJECTILE_SPRITE_HOT_PINK_ELECTRIC
-               );
+                bullet_list_set_visuals(
+                    bullets,
+                    PROJECTILE_SPRITE_HOT_PINK_ELECTRIC
+                );
 
-               for i,b in ipairs(bullets) do
-                  bullet_set_visual_scale(b, 0.25, 0.25);
-                  bullet_set_scale(b, 2.5, 2.5);
+                for i,b in ipairs(bullets) do
+                    bullet_set_visual_scale(b, 0.25, 0.25);
+                    bullet_set_scale(b, 2.5, 2.5);
+                end
+
+                t_wait(0.10);
                end
-
-               t_wait(0.10);
             end
          end
       );
@@ -1100,6 +1102,7 @@ function wave_2_sub5()
          bullet_set_position(new_bullet, -10, (i-1) * slice_y);
          bullet_set_velocity(new_bullet, 50, 0);
          bullet_set_visual(new_bullet, PROJECTILE_SPRITE_BLUE);
+         bullet_start_trail(new_bullet, 12);
          bullet_set_visual_scale(new_bullet, 0.5, 0.5);
          bullet_set_scale(new_bullet, 5, 5);
       end
@@ -1109,6 +1112,7 @@ function wave_2_sub5()
          bullet_set_position(new_bullet, play_area_width()+10, (i-3) * slice_y);
          bullet_set_velocity(new_bullet, -50, 0);
          bullet_set_visual(new_bullet, PROJECTILE_SPRITE_BLUE);
+         bullet_start_trail(new_bullet, 12);
          bullet_set_visual_scale(new_bullet, 0.5, 0.5);
          bullet_set_scale(new_bullet, 5, 5);
       end
@@ -1121,6 +1125,7 @@ function wave_2_sub5()
          bullet_set_position(new_bullet, -10, (i-3) * slice_y);
          bullet_set_velocity(new_bullet, 50, 0);
          bullet_set_visual(new_bullet, PROJECTILE_SPRITE_BLUE);
+         bullet_start_trail(new_bullet, 12);
          bullet_set_visual_scale(new_bullet, 0.5, 0.5);
          bullet_set_scale(new_bullet, 5, 5);
       end
@@ -1130,6 +1135,7 @@ function wave_2_sub5()
          bullet_set_position(new_bullet, play_area_width()+10, (i-1) * slice_y);
          bullet_set_velocity(new_bullet, -50, 0);
          bullet_set_visual(new_bullet, PROJECTILE_SPRITE_BLUE);
+         bullet_start_trail(new_bullet, 12);
          bullet_set_visual_scale(new_bullet, 0.5, 0.5);
          bullet_set_scale(new_bullet, 5, 5);
       end
@@ -1142,6 +1148,7 @@ function wave_2_sub5()
          bullet_set_position(new_bullet, -10, (i-1) * slice_y);
          bullet_set_velocity(new_bullet, 50, 0);
          bullet_set_visual(new_bullet, PROJECTILE_SPRITE_BLUE);
+         bullet_start_trail(new_bullet, 12);
          bullet_set_visual_scale(new_bullet, 0.5, 0.5);
          bullet_set_scale(new_bullet, 5, 5);
       end
@@ -1151,6 +1158,7 @@ function wave_2_sub5()
          bullet_set_position(new_bullet, play_area_width()+10, (i-3) * slice_y);
          bullet_set_velocity(new_bullet, -50, 0);
          bullet_set_visual(new_bullet, PROJECTILE_SPRITE_BLUE);
+         bullet_start_trail(new_bullet, 12);
          bullet_set_visual_scale(new_bullet, 0.5, 0.5);
          bullet_set_scale(new_bullet, 5, 5);
       end
@@ -1414,6 +1422,5 @@ function stage_task()
 
    print("1_1LUA cooldown to finish stage.");
    t_wait_for_no_danger();
-   t_wait(1);
    t_complete_stage();
 end

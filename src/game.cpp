@@ -1562,6 +1562,13 @@ void Gameplay_Data::notify_score(s32 amount, bool interesting) {
     auto pet_data = game_get_pet_data(selected_pet);
     current_score += amount * pet_data->score_modifier;
 
+    s32 score_delta = current_score - score_awarded_points;
+
+    if (score_delta >= POINTS_TO_AWARD_EXTRA_LIFE) {
+        add_life();
+        score_awarded_points = current_score;
+    }
+
     if (!interesting)
         return;
 

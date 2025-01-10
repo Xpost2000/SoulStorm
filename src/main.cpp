@@ -307,8 +307,8 @@ local void update_all_controller_inputs(void) {
                 f32 axis_x = (f32)SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTX) / (32767.0f);
                 f32 axis_y = (f32)SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTY) / (32767.0f);
 
-                const f32 DEADZONE_X = 0.05;
-                const f32 DEADZONE_Y = 0.05;
+                const f32 DEADZONE_X = 0.25;
+                const f32 DEADZONE_Y = 0.25;
                 if (fabs(axis_x) < DEADZONE_X) axis_x = 0;
                 if (fabs(axis_y) < DEADZONE_Y) axis_y = 0;
                 
