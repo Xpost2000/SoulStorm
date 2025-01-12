@@ -897,14 +897,13 @@ function Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed, of
          local background_render_object = render_object_create();
          local scroll_y = offy;
          local src_x = render_object_get_src_rect_x(background_render_object);
-         render_object_set_layer(background_render_object, layer);
-
          while true do
+            render_object_set_layer(background_render_object, layer);
             render_object_set_img_id(background_render_object, background_image);
             -- render_object_set_img_id(background_render_object, 0);
             render_object_set_scale(background_render_object, 375, 480);
             render_object_set_position(background_render_object, 0, 0);
-            render_object_set_layer(background_render_object, 0);
+            -- render_object_set_layer(background_render_object, 0);
 
             scroll_y = scroll_y + scrollspeed;
 
@@ -928,4 +927,66 @@ end
 
 function Generic_Infinite_Stage_ScrollV_FG(image_resource_location, scrollspeed, offx, offy)
    Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed, offx, offy, SCRIPTABLE_RENDER_OBJECT_LAYER_FOREGROUND);
+end
+
+-- NOTE(jerry):
+-- could cause overflow of scriptable_render_objects?
+-- kinda doubt it tbh.
+--
+-- FADER utility, also an example of how to use
+-- the scriptable render object to make some neat
+-- effects.
+g_black_fader_id = -1;
+g_black_fade_out_per_tick = 0.15;
+g_black_fade_t = 0.0;
+g_fade_direction = 0;
+g_black_fade_started = false;
+
+function _fade_black_task()
+   while g_black_fade_started do
+      local lastalpha = g_black_fade_t;
+      if g_fade_direction == 0 then
+         -- fade in
+         if (lastalpha < 1.0) then
+            g_black_fade_t = g_black_fade_t + g_black_fade_out_per_tick;
+         else
+            -- nothing. Wait until we end.
+         end
+      else
+         -- fade out
+         if (lastalpha > 0.0) then
+            g_black_fade_t = g_black_fade_t - g_black_fade_out_per_tick;
+         else
+            g_black_fade_started = false;
+         end
+      end
+      render_object_set_modulation(g_black_fader_id, 0, 0, 0, g_black_fade_t * 0.75);
+      t_yield();
+   end
+end
+
+-- NOTE(jerry):
+-- using black fades requires them to be the last item
+-- you try to render, but this is a generic one that can be used.
+-- Although this technically requires burning render_object_ids per level.
+--
+-- This one avoids doing it to exhause the scriptable_render_object list.
+function start_black_fade(fade_speed)
+   if g_black_fader_id == -1 then
+      g_black_fader_id = render_object_create();
+      render_object_set_layer(g_black_fader_id, SCRIPTABLE_RENDER_OBJECT_LAYER_BACKGROUND);
+      render_object_set_img_id(g_black_fader_id, 0);
+      render_object_set_scale(g_black_fader_id, 375, 480);
+      render_object_set_position(g_black_fader_id, 0, 0);
+      render_object_set_modulation(g_black_fader_id, 0, 0, 0, 0.0);
+   end
+
+   g_black_fade_out_per_tick = fade_speed;
+   g_black_fade_started = true;
+   g_fade_direction = 0;
+   async_task_lambda(_fade_black_task);
+end
+
+function end_black_fade()
+   g_fade_direction = 1;
 end
