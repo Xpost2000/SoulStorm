@@ -316,12 +316,17 @@ s32 Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
         switch (edge) {
             case PLAY_AREA_EDGE_DEADLY:
             case PLAY_AREA_EDGE_BLOCKING: {
+                bool interacted = false;
                 if (clamp_border(edge_index, play_area)) {
                     if (edge == PLAY_AREA_EDGE_DEADLY) {
                         kill();
                     }
+                    interacted = true;
                 }
-                return edge;
+
+                if (interacted) {
+                  return edge;
+                }
             } break;
             case PLAY_AREA_EDGE_WRAPPING: {
                 if (wrap_border(edge_index, play_area))  {
