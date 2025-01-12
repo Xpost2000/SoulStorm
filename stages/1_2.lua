@@ -24,7 +24,8 @@ function wave1_sub1()
    -- then a few more sprayers.
    -- popcorn
    do
-      Make_Enemy_Burst360_1_1_2(
+      enemy_set_visual(
+         Make_Enemy_Burst360_1_1_2(
          10, v2(-10, -10), v2(120, 125), 1.5,
 
          0.12, 4,
@@ -38,23 +39,26 @@ function wave1_sub1()
          45,
          
          PROJECTILE_SPRITE_HOT_PINK_ELECTRIC
-      );
+         ),
+      ENTITY_SPRITE_SKULL_A);
 
-      Make_Enemy_Burst360_1_1_2(
-         10, v2(play_area_width(), -10), v2(play_area_width()-120, 125), 1.5,
+      enemy_set_visual(
+            Make_Enemy_Burst360_1_1_2(
+            10, v2(play_area_width(), -10), v2(play_area_width()-120, 125), 1.5,
 
-         0.12, 4,
-         40, 45,
+            0.12, 4,
+            40, 45,
 
-         75,
-         100,
+            75,
+            100,
 
-         v2(1, 1),
-         45,
-         45,
+            v2(1, 1),
+            45,
+            45,
 
-         PROJECTILE_SPRITE_HOT_PINK_ELECTRIC
-      );
+            PROJECTILE_SPRITE_HOT_PINK_ELECTRIC
+         ), 
+      ENTITY_SPRITE_SKULL_A);
 
       t_wait(1.25);
       -- Popcorn middle lane
@@ -86,7 +90,7 @@ function wave1_sub1()
       -- and then some less threatening popcorn monsters that shoot dumb patterns
       do
          local corner_r = 30;
-         Make_Enemy_Burst360_1_1_2(
+         local e0 = Make_Enemy_Burst360_1_1_2(
             10, v2(-10, -10), v2(corner_r, corner_r), 2.0,
 
             0.20, 4,
@@ -102,7 +106,7 @@ function wave1_sub1()
             PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
          );
          
-         Make_Enemy_Burst360_1_1_2(
+         local e1 = Make_Enemy_Burst360_1_1_2(
             10, v2(play_area_width()+15, -10), v2(play_area_width()-corner_r, corner_r), 2.0,
 
             0.20, 4,
@@ -118,7 +122,7 @@ function wave1_sub1()
             PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
          );
 
-         Make_Enemy_Burst360_1_1_2(
+         local e2 = Make_Enemy_Burst360_1_1_2(
             10, v2(10, play_area_height()+10), v2(corner_r, play_area_height()-corner_r), 2.0,
 
             0.20, 4,
@@ -134,7 +138,7 @@ function wave1_sub1()
             PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
          );
          
-         Make_Enemy_Burst360_1_1_2(
+         local e3 = Make_Enemy_Burst360_1_1_2(
             10, v2(play_area_width()+15, play_area_height()+10), v2(play_area_width()-corner_r, play_area_height()-corner_r), 2.0,
 
             0.20, 4,
@@ -149,6 +153,11 @@ function wave1_sub1()
             
             PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
          );
+
+         enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
+         enemy_set_visual(e1, ENTITY_SPRITE_SKULL_B);
+         enemy_set_visual(e2, ENTITY_SPRITE_SKULL_B);
+         enemy_set_visual(e3, ENTITY_SPRITE_SKULL_B);
       end
 
       Make_BrainDead_Enemy_Popcorn1(
@@ -193,7 +202,7 @@ function wave1_sub2()
    end
    t_wait(1.5);
 
-   Make_Enemy_ArcPattern2_1_1_2(
+   local e0 = Make_Enemy_ArcPattern2_1_1_2(
       15,
       v2(-15, 50),
       v2(30, 50),
@@ -215,7 +224,7 @@ function wave1_sub2()
    )
 
    t_wait(1.5);
-   Make_Enemy_ArcPattern2_1_1_2(
+   local e1 = Make_Enemy_ArcPattern2_1_1_2(
       15,
       v2(play_area_width()+15, 100),
       v2(play_area_width()-15, 400),
@@ -236,7 +245,7 @@ function wave1_sub2()
       PROJECTILE_SPRITE_GREEN_ELECTRIC
    )
    t_wait(1.5);
-   Make_Enemy_ArcPattern2_1_1_2(
+   local e2 = Make_Enemy_ArcPattern2_1_1_2(
       15,
       v2(play_area_width()+15, 100),
       v2(play_area_width()-15, 100),
@@ -256,6 +265,9 @@ function wave1_sub2()
 
       PROJECTILE_SPRITE_GREEN_ELECTRIC
    )
+   enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
+   enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A);
+   enemy_set_visual(e2, ENTITY_SPRITE_SKULL_A);
    t_wait(2.0);
 
    -- two tunneling bigger enemies
@@ -263,17 +275,21 @@ function wave1_sub2()
       for i=1,6  do
          do
             local e = enemy_new();
-            enemy_set_hp(e, 50); -- requires focus to break
+            enemy_set_hp(e, 60); -- requires focus to break
             enemy_set_position(e, play_area_width()/2 - 25, -30);
             enemy_set_scale(e, 20, 20);
             enemy_move_linear(e, v2(0, 1), 120);
+            enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+            enemy_set_visual_scale(e, 2, 2);
          end
          do
             local e = enemy_new();
-            enemy_set_hp(e, 50); -- requires focus to break
+            enemy_set_hp(e, 60); -- requires focus to break
             enemy_set_position(e, play_area_width()/2 + 25, -30);
             enemy_set_scale(e, 20, 20);
             enemy_move_linear(e, v2(0, 1), 120);
+            enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+            enemy_set_visual_scale(e, 2, 2);
          end
          t_wait(1.25);
       end
@@ -295,8 +311,10 @@ function wave1_sub3()
             for i=1, 2 do
                local rx = 50 - i*10;
                local ry = 25 + i*10;
-               Make_Enemy_Spinner_1_1_2(25, v2(-45, radius), v2(1, 0), 120, 1.0, 1.00, 30, rx, ry, PROJECTILE_SPRITE_SPARKLING_STAR);
-               Make_Enemy_Spinner_1_1_2(25, v2(-45, play_area_height() - radius), v2(1, 0), 120, 1.0, 1.00, 30, rx, ry, PROJECTILE_SPRITE_SPARKLING_STAR);
+               local e0 = Make_Enemy_Spinner_1_1_2(25, v2(-45, radius), v2(1, 0), 120, 1.0, 1.00, 30, rx, ry, PROJECTILE_SPRITE_SPARKLING_STAR);
+               local e1 = Make_Enemy_Spinner_1_1_2(25, v2(-45, play_area_height() - radius), v2(1, 0), 120, 1.0, 1.00, 30, rx, ry, PROJECTILE_SPRITE_SPARKLING_STAR);
+               enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
+               enemy_set_visual(e1, ENTITY_SPRITE_SKULL_B);
                t_wait(4.0);
             end
             -- TODO: add trail. I want these to be shooting stars. literally.
@@ -307,7 +325,7 @@ function wave1_sub3()
    -- TODO:
    t_wait(5.0);
    do
-      Make_Enemy_Burst360_1_1_2(
+      local e0 =Make_Enemy_Burst360_1_1_2(
          35, v2(-10, -10), v2(play_area_width()/2, 30), 0.5,
 
          0.7,
@@ -326,7 +344,7 @@ function wave1_sub3()
       );
 
       t_wait(0.5);
-      Make_Enemy_Burst360_1_1_2(
+      local e1 = Make_Enemy_Burst360_1_1_2(
          35, v2(-10, play_area_height() + 40), v2(play_area_width()/2 - 40, 80), 0.5,
 
          0.7,
@@ -344,7 +362,7 @@ function wave1_sub3()
          PROJECTILE_SPRITE_GREEN_DISK
       );
 
-      Make_Enemy_Burst360_1_1_2(
+      local e2 = Make_Enemy_Burst360_1_1_2(
          35, v2(play_area_width()-10, play_area_height() + 40), v2(play_area_width()/2 + 40, 80), 0.5,
 
          0.7,
@@ -362,6 +380,10 @@ function wave1_sub3()
          PROJECTILE_SPRITE_BLUE_DISK
       );
 
+      enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
+      enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A);
+      enemy_set_visual(e2, ENTITY_SPRITE_SKULL_A);
+
       t_wait(1);
       do -- NOTE: need these to happen at the same time
          local popcorn_radius = 250;
@@ -378,7 +400,7 @@ function wave1_sub3()
          );
       end
    end
-   t_wait(5);
+   t_wait(9);
    convert_all_bullets_to_score();
    t_wait(3);
 
@@ -441,8 +463,10 @@ function wave_2()
             do
                local rx = 50 - 10;
                local ry = 50 + 10;
-               Make_Enemy_Spinner_1_1_2(25, v2(45, -30), v2(0, 1), 200, 0.5, 0.5, 25, rx, ry, PROJECTILE_SPRITE_GREEN_DISK);
-               Make_Enemy_Spinner_1_1_2(25, v2(play_area_width()-45, -30), v2(0, 1), 200, 0.5, 0.5, 25, rx, ry, PROJECTILE_SPRITE_RED_DISK);
+               local e0 = Make_Enemy_Spinner_1_1_2(25, v2(45, -30), v2(0, 1), 200, 0.5, 0.5, 25, rx, ry, PROJECTILE_SPRITE_GREEN_DISK);
+               local e1 = Make_Enemy_Spinner_1_1_2(25, v2(play_area_width()-45, -30), v2(0, 1), 200, 0.5, 0.5, 25, rx, ry, PROJECTILE_SPRITE_RED_DISK);
+               enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
+               enemy_set_visual(e1, ENTITY_SPRITE_SKULL_B);
                t_wait(1.0);
             end
             t_wait(1.5);
@@ -450,37 +474,42 @@ function wave_2()
             -- introduce first laser.
 
             laser_hazard_new(player_position_y(), 15, 0, 0.05, 0.5);
-            Make_Enemy_Burst360_1_1_2(
-               10, v2(-10, -10), v2(120, 125), 1.5,
+            do
+               local e0 = Make_Enemy_Burst360_1_1_2(
+                  10, v2(-10, -10), v2(120, 125), 1.5,
 
-               0.12, 4,
-               40, 45,
+                  0.12, 4,
+                  40, 45,
 
-               75,
-               100,
+                  75,
+                  100,
 
-               v2(1, 1),
-               45,
-               45,
-               
-               PROJECTILE_SPRITE_NEGATIVE_DISK
-            );
+                  v2(1, 1),
+                  45,
+                  45,
+                  
+                  PROJECTILE_SPRITE_NEGATIVE_DISK
+               );
 
-            Make_Enemy_Burst360_1_1_2(
-               10, v2(play_area_width(), -10), v2(play_area_width()-120, 125), 1.5,
+               local e1 = Make_Enemy_Burst360_1_1_2(
+                  10, v2(play_area_width(), -10), v2(play_area_width()-120, 125), 1.5,
 
-               0.12, 4,
-               40, 45,
+                  0.12, 4,
+                  40, 45,
 
-               75,
-               100,
+                  75,
+                  100,
 
-               v2(1, 1),
-               45,
-               45,
+                  v2(1, 1),
+                  45,
+                  45,
 
-               PROJECTILE_SPRITE_NEGATIVE_DISK
-            );
+                  PROJECTILE_SPRITE_NEGATIVE_DISK
+               );
+
+               enemy_set_visual(e0, ENTITY_SPRITE_BAT_B);
+               enemy_set_visual(e1, ENTITY_SPRITE_BAT_B);
+            end
 
             -- bottom left
             Make_BrainDead_Enemy_Popcorn1(
@@ -498,7 +527,7 @@ function wave_2()
          end
       end
    )
-   t_wait(13.5);
+   t_wait(12.5);
    convert_all_enemies_to_score();
    convert_all_bullets_to_score();
    t_wait(2);
@@ -540,7 +569,7 @@ function stage_task()
    -- setup stage background
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_0.png", 0.45, 0, 0);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_nebule.png", 0.287, 0, 120);
-   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg2_nebule.png", 0.187, 450, 350);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_nebule.png", 0.187, 450, 350);
 
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star0.png", 0.357, 225, 125);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star1.png", 0.147, -150, 245);
@@ -562,7 +591,94 @@ function stage_task()
    preboss_wave();
    print("wait finish");
    t_wait(1);
+
+   -- last
    Stage1_Batflood();
+   do
+      local e0 =Make_Enemy_Burst360_1_1_2(
+         35, v2(-10, play_area_height() + 40), v2(play_area_width()/2 - 40, 80), 0.5,
+
+         0.7,
+         5,
+
+         40, 85,
+
+         50,
+         70,
+
+         v2(-1, 1),
+         70,
+         45,
+         
+         PROJECTILE_SPRITE_GREEN_DISK
+      );
+
+      local e1 = Make_Enemy_Burst360_1_1_2(
+         35, v2(play_area_width()-10, play_area_height() + 40), v2(play_area_width()/2 + 40, 80), 0.5,
+
+         0.7,
+         5,
+
+         40, 95,
+
+         60,
+         70,
+
+         v2(1, 1),
+         70,
+         45,
+         
+         PROJECTILE_SPRITE_BLUE_DISK
+      );
+      enemy_set_visual(e0, ENTITY_SPRITE_BAT_B);
+      enemy_set_visual(e1, ENTITY_SPRITE_BAT_B);
+
+      t_wait(1);
+      local e2 = Make_Enemy_Burst360_1_1_2(
+         35, v2(-10, play_area_height() + 40), v2(play_area_width()/2 - 40, 200), 0.5,
+
+         0.7,
+         5,
+
+         40, 105,
+
+         50,
+         70,
+
+         v2(-1, 1),
+         70,
+         45,
+         
+         PROJECTILE_SPRITE_GREEN_DISK
+      );
+
+      local e3 = Make_Enemy_Burst360_1_1_2(
+         35, v2(play_area_width()-10, play_area_height() + 40), v2(play_area_width()/2 + 40, 200), 0.5,
+
+         0.7,
+         5,
+
+         40, 105,
+
+         35,
+         70,
+
+         v2(1, 1),
+         70,
+         45,
+         
+         PROJECTILE_SPRITE_BLUE_DISK
+      );
+
+      enemy_set_visual(e2, ENTITY_SPRITE_BAT_B);
+      enemy_set_visual(e3, ENTITY_SPRITE_BAT_B);
+   end
+   t_wait(4.5);
+   LaserChaser_Horizontal_1_2(8, 1.5);
+   LaserChaser_Horizontal_1_2(4, 0.75);
+   LaserChaser_Vertical_1_2(8, 2.5);
+   LaserChaser_Vertical_1_2(4, 0.75);
+
    wait_no_danger();
    t_complete_stage();
 end
