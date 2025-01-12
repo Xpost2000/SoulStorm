@@ -537,6 +537,23 @@ function preboss_wave()
 end
 
 function stage_task()
+   -- setup stage background
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_0.png", 0.45, 0, 0);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_nebule.png", 0.287, 0, 120);
+   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg2_nebule.png", 0.187, 450, 350);
+
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star0.png", 0.357, 225, 125);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star1.png", 0.147, -150, 245);
+   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star0.png", 0.287, 305, 300);
+   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star1.png", 0.207, -100, 225);
+
+   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star0.png", 0.127, 100, 15);
+   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star1.png", 0.257, -350, 255);
+
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_1_2.png", 0.150, 0, 125);
+   play_area_notify_current_border_status();
+   -- end stage setup background
+
    t_wait(2);
    -- print("wave 1");
    wave_1();
