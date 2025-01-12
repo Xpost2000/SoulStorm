@@ -97,8 +97,9 @@ namespace Audio {
                     load_required = false;
 
                     if (loaded_streams[index] == NULL) {
-#ifndef EXPERIMENTAL_VFS
-                        struct file_buffer filebuffer = VFS_read_entire_file(memory_arena_allocator(&game_arena), string_from_cstring((char*)filepath));
+#ifdef EXPERIMENTAL_VFS
+                        struct file_buffer filebuffer = VFS_read_entire_file(heap_allocator(), string_from_cstring((char*)filepath));
+                        _debugprintf("filepath: = %s", filepath);
                         SDL_RWops*         rw         = SDL_RWFromConstMem(filebuffer.buffer, filebuffer.length);
                         Mix_Music* new_stream = Mix_LoadMUS_RW(rw, 1);
 #else
@@ -112,8 +113,9 @@ namespace Audio {
             }
 
             if (load_required) {
-#ifndef EXPERIMENTAL_VFS
-                struct file_buffer filebuffer = VFS_read_entire_file(memory_arena_allocator(&game_arena), string_from_cstring((char*)filepath));
+#ifdef EXPERIMENTAL_VFS
+                struct file_buffer filebuffer = VFS_read_entire_file(heap_allocator(), string_from_cstring((char*)filepath));
+                _debugprintf("filepath: = %s", filepath);
                 SDL_RWops*         rw         = SDL_RWFromConstMem(filebuffer.buffer, filebuffer.length);
                 Mix_Music* new_stream = Mix_LoadMUS_RW(rw, 1);
 #else
