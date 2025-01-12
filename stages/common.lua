@@ -741,6 +741,7 @@ function MainBoss1_RainCloud_Attack1(phase_cycle, duration)
       function()
          disable_grazing();
          disable_bullet_to_points();
+         start_black_fade(0.065);
 
          async_task_lambda(
             function()
@@ -784,6 +785,8 @@ function MainBoss1_RainCloud_Attack1(phase_cycle, duration)
          stop_task = 1;
          enable_grazing();
          enable_bullet_to_points();
+         t_wait(2.5);
+         end_black_fade();
       end
    )
 end
@@ -793,6 +796,7 @@ function MainBoss1_RainCloud_Attack2(phase_cycle, duration)
 
    local spread = 35;
    local x_adv = play_area_width() / (spread);
+   start_black_fade(0.065);
 
    async_task_lambda(
       function()
@@ -840,6 +844,8 @@ function MainBoss1_RainCloud_Attack2(phase_cycle, duration)
          enable_grazing();
          enable_bullet_to_points();
          stop_task = 1;
+         t_wait(2.5);
+         end_black_fade();
       end
    )
 end
@@ -860,25 +866,27 @@ function LaserChaser_Vertical_1_2(laser_count, max_wait_time)
 end
 
 -- Dramatic opening
+-- TODO(jerry): adjust pattern?
 function Stage1_Batflood()
    -- Bat flood
    -- free popcorn points
    local wave_count = 15;
-   local per_wave   = 15;
+   local per_wave   = 16;
    for i=1,wave_count do
       for j=1,per_wave do
          local e = enemy_new();
          enemy_set_hp(e, 5);
-         enemy_set_position(e, j * (play_area_width() / (per_wave)) - 18, -30);
+         enemy_set_position(e, j * (play_area_width() / (per_wave)) - 20, -30);
+         enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
          enemy_task_lambda(
             e,
             function (e)
                enemy_set_velocity(e, 0, 125);
                t_wait(1.0);
                if j > per_wave/2 then
-                  enemy_set_acceleration(e, 40, 0);
+                  enemy_set_acceleration(e, 50, 0);
                else
-                  enemy_set_acceleration(e, -40, 0);
+                  enemy_set_acceleration(e, -50, 0);
                end
             end
          )
