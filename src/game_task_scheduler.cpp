@@ -338,6 +338,8 @@ void Game_Task_Scheduler::schedule_by_type(struct Game_State* state, f32 dt, u8 
             current_ui_state != UI_STATE_INACTIVE
         );
 
+    deregister_all_dead_lua_threads();
+    deregister_all_dead_standard_tasks();
     for (s32 index = 0; index < active_task_ids.size; ++index) {
         auto& task = tasks[active_task_ids[index]];
        // _debugprintf("Active ID IDX: [%d] = %d", index, active_task_ids[index]);
