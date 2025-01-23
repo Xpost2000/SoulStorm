@@ -250,13 +250,13 @@ namespace Audio {
                 loaded_streams[sound.index-1] = Mix_LoadMUS(loaded_stream_filestrings[sound.index-1].data);
 
             s32 status = Mix_PlayMusic(loaded_streams[sound.index-1], loops);
-            Mix_VolumeMusic((s32)((current_music_volume + audio_diff) * MIX_MAX_VOLUME));
+            Mix_VolumeMusic((s32)((current_music_volume) * MIX_MAX_VOLUME + audio_diff));
             current_music_sound_id = sound;
         } else {
             if (loaded_samples[sound.index-1] == NULL)
                 loaded_samples[sound.index-1] = Mix_LoadWAV(loaded_sample_filestrings[sound.index-1].data);
             int chan = Mix_PlayChannel(ANY_CHANNEL, loaded_samples[sound.index-1], loops);
-            Mix_Volume(chan, (s32)((current_sound_volume + audio_diff) * MIX_MAX_VOLUME));
+            Mix_Volume(chan, (s32)((current_sound_volume) * MIX_MAX_VOLUME + audio_diff));
         }
     }
 
@@ -270,11 +270,11 @@ namespace Audio {
 
         if (sound.streaming) {
             Mix_FadeInMusic(loaded_streams[sound.index-1], -1, fadein_ms);
-            Mix_VolumeMusic((s32)((current_music_volume + audio_diff) * MIX_MAX_VOLUME));
+            Mix_VolumeMusic((s32)((current_music_volume) * MIX_MAX_VOLUME + audio_diff));
             current_music_sound_id = sound;
         } else {
             int chan = Mix_FadeInChannel(ANY_CHANNEL, loaded_samples[sound.index-1], 0, fadein_ms);
-            Mix_Volume(chan, (s32)((current_sound_volume + audio_diff) * MIX_MAX_VOLUME));
+            Mix_Volume(chan, (s32)((current_sound_volume) * MIX_MAX_VOLUME + audio_diff));
         }
     }
 

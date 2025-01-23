@@ -971,6 +971,7 @@ struct Game_Resources {
 
     // I should have more of these...
     Audio::Sound_ID        attack_sounds[4];
+    Audio::Sound_ID        explosion_sounds[4];
     Audio::Sound_ID        hit_sounds[2];
     Audio::Sound_ID        opening_beep_type;
     Audio::Sound_ID        death_sound;
@@ -987,6 +988,12 @@ struct Game_Resources {
     //
     // It's being used by entity rendering as a hint basically.
     bool sprite_id_should_be_rotated(sprite_id id);
+
+    inline Audio::Sound_ID random_explosion_sound(struct random_state* prng) {
+      return explosion_sounds[
+        random_ranged_integer(prng, 0, array_count(explosion_sounds) - 1)
+      ];
+    }
 
     inline Audio::Sound_ID random_attack_sound(struct random_state* prng) {
         return attack_sounds[

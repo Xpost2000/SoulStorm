@@ -899,6 +899,11 @@ void Game::init_audio_resources() {
     resources->attack_sounds[2] = Audio::load(("res/snds/fire3.wav"));
     resources->attack_sounds[3] = Audio::load(("res/snds/fire4.wav"));
 
+    resources->explosion_sounds[0] = Audio::load("res/snds/lightning1.wav");
+    resources->explosion_sounds[1] = Audio::load("res/snds/lightning2.wav");
+    resources->explosion_sounds[2] = Audio::load("res/snds/lightning3.wav");
+    resources->explosion_sounds[3] = Audio::load("res/snds/lightning4.wav");
+
     resources->opening_beep_type = Audio::load("res/snds/beep_type.wav");
 
     resources->hit_sounds[0]    = Audio::load(("res/snds/hit1.wav"));
@@ -5114,25 +5119,36 @@ void Game::cleanup_dead_entities(void) {
     Gameplay_Data* state = &this->state->gameplay_data;
     for (int i = 0; i < state->laser_hazards.size; ++i) {
         auto& h = state->laser_hazards[i];
-        if (h.die) {state->laser_hazards.pop_and_swap(i);}
+        if (h.die) {
+          state->laser_hazards.pop_and_swap(i);
+        }
     }
     for (int i = 0; i < state->pickups.size; ++i) {
         auto& pe = state->pickups[i];
-        if (pe.die) {state->pickups.pop_and_swap(i);}
+        if (pe.die) {
+          state->pickups.pop_and_swap(i);
+        }
     }
     for (int i = 0; i < state->bullets.size; ++i) {
         auto& b = state->bullets[i];
         b.disable_all_particle_emitters();
-        if (b.die) {state->bullets.pop_and_swap(i);}
+        if (b.die) {
+          state->bullets.pop_and_swap(i);
+        }
     }
     for (int i = 0; i < state->enemies.size; ++i) {
         auto& e = state->enemies[i];
         e.disable_all_particle_emitters();
-        if (e.die) {state->enemies.pop_and_swap(i);}
+        if (e.die) {
+          state->enemies.pop_and_swap(i);
+        }
     }
     for (int i = 0; i < state->explosion_hazards.size; ++i) {
         auto& h = state->explosion_hazards[i];
-        if (h.exploded) {state->explosion_hazards.pop_and_swap(i);}
+        if (h.exploded) {
+          Audio::play(resources->random_explosion_sound(&state->prng_unessential), Audio::get_volume_sound() * 0.7 * -128);
+          state->explosion_hazards.pop_and_swap(i);
+        }
     }
 #endif
 }
@@ -5200,6 +5216,7 @@ void Game::handle_all_lasers(f32 dt) {
             // played sound + camera hit
             if (!h.already_emitted) {
                 h.already_emitted = true;
+                Audio::play(resources->random_explosion_sound(&state->prng_unessential), Audio::get_volume_sound() * 0.7 * -128);
                 controller_rumble(Input::get_gamepad(0), 0.5f, 0.5f, 150);
                 camera_traumatize(&state->main_camera, 0.15f);
             }
@@ -5286,6 +5303,8 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                         }
 
                         state->spawn_death_explosion(e.position);
+                        // adjust sound todo
+                        Audio::play(resources->random_explosion_sound(&state->prng_unessential), -128*Audio::get_volume_sound()*0.95);
 #if 0
                         spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 0);
                         spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 1);
