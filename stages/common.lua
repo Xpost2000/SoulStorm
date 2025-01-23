@@ -501,9 +501,11 @@ function Make_Enemy_SpinTrip_2_1_1(hp,
                                    exit_speed,
                                    exit_acceleration,
                                    duration,
-                                   bullet_visual
+                                   bullet_visual,
+                                   trailcount
                                   )
    local e = enemy_new();
+   local tcount = trailcount or 0;
    enemy_set_hp(e, hp);
    enemy_set_position(e, position[1], position[2]);
 
@@ -516,7 +518,7 @@ function Make_Enemy_SpinTrip_2_1_1(hp,
          local arc_displacement = 0;
 
          while (enemy_time_since_spawn(e) - start_time < duration) do
-            local bspeed    = 50;
+            local bspeed    = 35;
             local eposition = enemy_final_position(e);
 
             for angle=1,360,spoke_arc do
@@ -525,7 +527,7 @@ function Make_Enemy_SpinTrip_2_1_1(hp,
                bullet_set_visual(bullet, bullet_visual);
                bullet_set_lifetime(bullet, 15);
                bullet_set_scale(bullet, 3, 3);
-               bullet_start_trail(bullet, 12);
+               bullet_start_trail(bullet, tcount);
                bullet_set_trail_modulation(bullet, 0.8, 0.8, 0.8, 0.3);
                bullet_set_visual_scale(bullet, 0.3, 0.3);
 
@@ -542,6 +544,91 @@ function Make_Enemy_SpinTrip_2_1_1(hp,
       end
    )
 
+   return e;
+end
+
+
+-- Not really meant to be killable, but you can farm points off of them!
+function DramaticExplosion_SpawnSpinnerObstacle1_2_1(x,
+   y,
+   enemy_visual,
+   spoke_per_frame_angular_velocity,
+   duration,
+   bullet_visual,
+   exit_direction,
+   trailcount)
+   local enemy_position = v2(x, y);
+   explosion_hazard_new(enemy_position[1], enemy_position[2], 15, 0.05, 0.15);
+   t_wait(1.25);
+   local e = Make_Enemy_SpinTrip_2_1_1(9999,
+   enemy_position,
+   60,
+   spoke_per_frame_angular_velocity,
+   exit_direction,
+   50,
+   30,
+   duration,
+   bullet_visual,
+   trailcount);
+
+   enemy_set_visual(e, enemy_visual);
+   enemy_set_visual_scale(e, 1.3, 1.3);
+end
+
+function Make_Enemy_ShotgunSpreader_2_1_1(
+   hp, x, y,
+   shot_times, per_burst_volley_count, 
+   bullet_visual, cooldown, flee_cooldown, dir, speed,
+   bullet_trail_count
+)
+   local e = enemy_new();
+   enemy_set_scale(e, 10, 10);
+   enemy_set_hp(e, hp);
+   enemy_set_position(e, x, y);
+
+   enemy_task_lambda(e,
+      function (e)
+         local trail_count = bullet_trail_count or 0;
+         for burst=1, shot_times do
+            local bullets = spawn_bullet_arc_pattern2(v2(x,y), per_burst_volley_count, 45, dir, speed, 8, BULLET_SOURCE_ENEMY);
+            for i,b in ipairs(bullets) do
+               bullet_set_visual(b, bullet_visual)
+               bullet_set_visual_scale(b, 0.5, 0.5);
+               bullet_set_scale(b, 5, 5)
+               bullet_start_trail(b, trail_count);
+            end
+            t_wait(cooldown);
+         end
+         t_wait(flee_cooldown);
+         enemy_set_acceleration(e, 0, 150);
+      end
+   );
+   return e
+end
+
+function DramaticExplosion_SpawnShotgunSpread(
+   x, y, 
+   enemy_visual, hp, shot_times, per_burst_volley_count,
+   bullet_visual, cooldown, flee_cooldown, dir, speed,
+   bullet_trail_count)
+   local enemy_position = v2(x, y);
+   explosion_hazard_new(enemy_position[1], enemy_position[2], 15, 0.05, 0.15);
+   t_wait(1.25);
+
+   local e = Make_Enemy_ShotgunSpreader_2_1_1(
+      hp,
+      enemy_position[1], enemy_position[2],
+      shot_times, per_burst_volley_count,
+      bullet_visual,
+      cooldown,
+      flee_cooldown,
+      dir,
+      speed,
+      bullet_trail_count
+   );
+
+   enemy_set_visual(e, enemy_visual);
+   enemy_set_visual_scale(e, 1, 1);
    return e;
 end
 
