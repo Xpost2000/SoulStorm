@@ -799,7 +799,7 @@ void Player::handle_grazing_behavior(Game_State* state, f32 dt) {
                     state,
                     position,
                     pickup_position_target,
-                    (GRAZING_DEFAULT_SCORE_AWARD + 20) * score_modifier
+                    (GRAZING_DEFAULT_SCORE_AWARD + 100) * score_modifier
                 );
 
                 state->gameplay_data.add_pickup_entity(pickup);

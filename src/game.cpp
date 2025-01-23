@@ -908,6 +908,7 @@ void Game::init_audio_resources() {
 
     resources->title_music = Audio::load("res/snds/titlemenu1draft.ogg", true);
     resources->title_reprisal_music = Audio::load("res/snds/titlemenu1reprise.ogg", true);
+    resources->score_pickup_sound = Audio::load("res/snds/scorepickup.wav", false);
 }
 
 
@@ -4947,7 +4948,7 @@ void Game_State::convert_bullets_to_score_pickups(float radius) {
             this,
             b.position,
             b.position,
-            50
+            100
         );
         pe.seek_towards_player = true;
         pe.sprite.modulation = color32f32(242.0f / 255.0f, 121.0f / 255.0f, 53.0f / 255.0f, 1.0f);
@@ -5345,7 +5346,16 @@ void Game::handle_player_enemy_collisions(f32 dt) {
 
 void Game::handle_player_pickup_collisions(f32 dt) {
     auto& p = state->gameplay_data.player;
-    auto player_rect = p.get_rect();
+    auto player_position = p.get_real_position();
+    auto p_pickup_rect_w = 20;
+    auto p_pickup_rect_h = 40;
+
+    auto player_rect = rectangle_f32(
+      (player_position.x) - p_pickup_rect_w/2,
+      (player_position.y) - p_pickup_rect_h/2,
+      p_pickup_rect_w,
+      p_pickup_rect_h
+    );
 
     for (s32 pickup_index = 0; pickup_index < state->gameplay_data.pickups.size; ++pickup_index) {
         auto& pe          = state->gameplay_data.pickups[pickup_index];
@@ -5357,6 +5367,7 @@ void Game::handle_player_pickup_collisions(f32 dt) {
 
         if (rectangle_f32_intersect(player_rect, pickup_rect)) {
             pe.on_picked_up(state);
+            Audio::play(resources->score_pickup_sound);
         }
     }
 }
