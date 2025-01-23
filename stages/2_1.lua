@@ -1,36 +1,4 @@
--- TODO:
--- When I am ready to return, so I shall!
-
--- TODO:
--- Finish Wave1 30 seconds.
--- NOTE (00:00::36) is empty spot for next round!
-
 engine_dofile("stages/common.lua")
-
--- Not really meant to be killable, but you can farm points off of them!
-function DramaticExplosion_SpawnSpinnerObstacle1_2_1(x,
-                                                 y,
-                                                 enemy_visual,
-                                                 spoke_per_frame_angular_velocity,
-                                                 duration,
-                                                 bullet_visual,
-                                                 exit_direction)
-   local enemy_position = v2(x, y);
-   explosion_hazard_new(enemy_position[1], enemy_position[2], 15, 0.05, 0.15);
-   t_wait(1.25);
-   local e = Make_Enemy_SpinTrip_2_1_1(9999,
-                                       enemy_position,
-                                       60,
-                                       spoke_per_frame_angular_velocity,
-                                       exit_direction,
-                                       50,
-                                       30,
-                                       duration,
-                                       bullet_visual);
-
-   enemy_set_visual(e, enemy_visual);
-   enemy_set_visual_scale(e, 1.3, 1.3);
-end
 
 function wave1()
    -- Main encounter is a spinster wheel blade with various popcorn enemies and some shooters
@@ -45,7 +13,8 @@ function wave1()
             5,
             30,
             PROJECTILE_SPRITE_GREEN,
-            v2(0, 1)
+            v2(0, 1),
+            15
          );
       end
    )
@@ -247,7 +216,7 @@ function wave2()
       Make_Enemy_Burst360_1_1_2(
          15,
          v2(-10, play_area_height()/2),
-         v2(100, play_area_height()/2 - 50),
+         v2(50, play_area_height()/2 - 50),
          0.85,
 
          0.5,
@@ -267,7 +236,7 @@ function wave2()
       Make_Enemy_Burst360_1_1_2(
          15,
          v2(play_area_width() + 10, play_area_height()/2),
-         v2(play_area_width()/2 + 100, play_area_height()/2 - 50),
+         v2(play_area_width()/2 + 50, play_area_height()/2 - 50),
          0.85,
 
          0.5,
@@ -287,9 +256,9 @@ function wave2()
 
    -- Laser torment
    t_wait(7);
-   LaserChaser_Horizontal_1_2(4, 2.5);
+   LaserChaser_Horizontal_1_2(2, 2.5);
    t_wait(4);
-   LaserChaser_Vertical_1_2(4, 2.5);
+   LaserChaser_Vertical_1_2(2, 2.5);
    t_wait(3);
 end
 
@@ -297,9 +266,9 @@ function wave3()
    -- figure out what time this is
    -- Add a few of the level 1 Home attackers
    Make_Enemy_SideMoverWave1_1_1(100, -100, 0, 200, 1.5, 1, 0, 8, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
-   Make_Enemy_SideMoverWave1_1_1(play_area_width() - 100, -100, 0, 200, 1.5, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
+   -- Make_Enemy_SideMoverWave1_1_1(play_area_width() - 100, -100, 0, 200, 1.5, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
    Make_Enemy_SideMoverWave1_1_1(150, -100, 0, 200, 1.0, 1, 0, 8, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
-   Make_Enemy_SideMoverWave1_1_1(play_area_width() - 150, -100, 0, 200, 1.0, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
+   -- Make_Enemy_SideMoverWave1_1_1(play_area_width() - 150, -100, 0, 200, 1.0, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
    -- some popcorns,
    t_wait(2);
 
@@ -461,54 +430,39 @@ function wave3()
    end
    t_wait(3.5);
    do
-      Make_Enemy_Burst360_1_1_2(
-         15,
-         v2(-10, play_area_height()/2),
-         v2(100, play_area_height()/2 - 80),
-         0.85,
-
-         0.5,
-         3,
-         25,
-         45,
-
-         15, 25,
-
-         v2(1, 0),
-         100,
+      Make_BrainDead_Enemy_Popcorn1(
+         10,
+         v2(play_area_width() + 10, play_area_height()/2 - 30),
+         0.086,
+         7,
+         -180,
          30,
-
-         PROJECTILE_SPRITE_GREEN_STROBING
-      );
-
-      Make_Enemy_Burst360_1_1_2(
-         15,
-         v2(20, play_area_height()/2),
-         v2(play_area_width() - 20, play_area_height()/2 - 80),
-         0.85,
-
-         0.5,
-         3,
+         2,
          25,
-         45,
-
-         15, 25,
-
-         v2(1, 0),
-         100,
+         4,
+         -1);
+      t_wait(0.125);
+      Make_BrainDead_Enemy_Popcorn1(
+         10,
+         v2(-10, play_area_height()/2 - 50),
+         0.086,
+         7,
+         180,
          30,
-
-         PROJECTILE_SPRITE_GREEN_STROBING
-      );
+         2,
+         25,
+         4,
+         -1);
+      t_wait(0.325);
    end
 
    -- This might be pretty hard.
-   t_wait(3.5);
-   explosion_hazard_new(player_position_x(), player_position_y(), 50, 1, 1);
-   t_wait(6.5);
-   explosion_hazard_new(player_position_x(), player_position_y(), 80, 0.8, 0.8);
-   t_wait(9.5);
-   explosion_hazard_new(player_position_x(), player_position_y(), 120, 0.5, 0.5);
+   -- t_wait(3.5);
+   -- explosion_hazard_new(player_position_x(), player_position_y(), 50, 1, 1);
+   -- t_wait(6.5);
+   -- explosion_hazard_new(player_position_x(), player_position_y(), 80, 0.8, 0.8);
+   -- t_wait(9.5);
+   -- explosion_hazard_new(player_position_x(), player_position_y(), 120, 0.5, 0.5);
    enable_grazing();
    enable_bullet_to_points();
 
@@ -516,7 +470,74 @@ function wave3()
    -- and use them as the new enemies.
 end
 
+function wave4()
+   do
+      DramaticExplosion_SpawnShotgunSpread(
+         play_area_width() * 0.25, 20, ENTITY_SPRITE_SKULL_B,
+         50, 6, 10, PROJECTILE_SPRITE_GREEN_STROBING, 1.5, 0.55, v2(0, 1), 90,
+         10
+      );
+      DramaticExplosion_SpawnShotgunSpread(
+         play_area_width() * 0.65, 20, ENTITY_SPRITE_SKULL_B,
+         50, 8, 10, PROJECTILE_SPRITE_GREEN_STROBING, 1.5, 0.55, v2(0, 1), 90,
+         10
+      );
+
+      DramaticExplosion_SpawnShotgunSpread(
+         play_area_width() * 0.35, 10, ENTITY_SPRITE_SKULL_B,
+         50, 8, 10, PROJECTILE_SPRITE_RED_STROBING, 1.5, 0.55, v2(0.2, 1), 55,
+         15
+      );
+      DramaticExplosion_SpawnShotgunSpread(
+         play_area_width() * 0.45, 10, ENTITY_SPRITE_SKULL_B,
+         50, 6, 10, PROJECTILE_SPRITE_RED_STROBING, 1.5, 0.55, v2(-0.2, 1), 55,
+         15
+      );
+
+      Make_BrainDead_Enemy_Popcorn1(
+         25,
+         v2(play_area_width()*0.7, -30),
+         0.086,
+         12,
+         10,
+         220,
+         35,
+         6,
+         -1,
+         4);
+      t_wait(0.125);
+      Make_BrainDead_Enemy_Popcorn1(
+         25,
+         v2(play_area_width()*0.4, -30),
+         0.086,
+         12,
+         10,
+         220,
+         35,
+         6,
+         -1,
+         4);
+      t_wait(0.125);
+      Make_BrainDead_Enemy_Popcorn1(
+         25,
+         v2(play_area_width()*0.2, -30),
+         0.086,
+         12,
+         10,
+         220,
+         35,
+         6,
+         -1,
+         4);
+      t_wait(0.325);
+   end
+end
+
 function stage_task()
+   play_area_set_edge_behavior(PLAY_AREA_EDGE_TOP, PLAY_AREA_EDGE_BLOCKING);
+   play_area_set_edge_behavior(PLAY_AREA_EDGE_BOTTOM, PLAY_AREA_EDGE_BLOCKING);
+   play_area_set_edge_behavior(PLAY_AREA_EDGE_LEFT, PLAY_AREA_EDGE_BLOCKING);
+   play_area_set_edge_behavior(PLAY_AREA_EDGE_RIGHT, PLAY_AREA_EDGE_BLOCKING);
    -- setup stage background
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_0.png", 0.50, 0, 0); -- TODO come up with new design
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_nebule.png", 0.287, 0, 120);
@@ -535,13 +556,16 @@ function stage_task()
    -- end stage setup background
 
    t_wait(1.5);
-
    wave1();
    t_wait(22);
    wave2();
    t_wait(3.5);
    wave3();
+   t_wait(17);
+   convert_all_enemies_to_score();
+   convert_all_bullets_to_score();
    t_wait(5);
+   wave4();
    
    wait_no_danger();
    t_complete_stage();
