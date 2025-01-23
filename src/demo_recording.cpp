@@ -110,10 +110,28 @@ Gameplay_Frame_Input_Packet gameplay_recording_file_next_frame(Gameplay_Recordin
     return recording->frames[recording->playback_frame_index++];
 }
 
+static void apply_vector_quantization_deadzone_adjustment(V2& vector) {
+  // NOTE(jerry):
+  //
+  // There's a lot of precision loss when quantizing to a 8 bit number from a floating
+  // point.
+  //
+  const float DEADZONE_QUANTIZATION_THRESHOLD = 0.075f;
+  if (fabs(vector.x) <= DEADZONE_QUANTIZATION_THRESHOLD) {
+    vector.x = 0;
+  }
+  
+  if (fabs(vector.y) <= DEADZONE_QUANTIZATION_THRESHOLD) {
+    vector.y = 0;
+  }
+}
+
 V2 gameplay_frame_input_packet_quantify_axes(const Gameplay_Frame_Input_Packet& input_packet) {
     f32 x = (f32)input_packet.axes[0] / 127.0f;
     f32 y = (f32)input_packet.axes[1] / 127.0f;
-    return V2(x, y);
+    auto result = V2(x, y);
+    apply_vector_quantization_deadzone_adjustment(result);
+    return result;
 }
 
 void Gameplay_Data::build_current_input_packet() {
@@ -132,6 +150,8 @@ void Gameplay_Data::build_current_input_packet() {
             (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT))   *Action::is_down(ACTION_FOCUS)  |
             (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))*Action::is_pressed(ACTION_USE_BOMB) * (!previous_bomb_press)
             ;
+
+        apply_vector_quantization_deadzone_adjustment(axes);
         current_input_packet.axes[0] = (s8)(axes[0] * 127.0f);
         current_input_packet.axes[1] = (s8)(axes[1] * 127.0f);
     }
