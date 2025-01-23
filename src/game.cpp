@@ -1031,6 +1031,7 @@ void Game::reset_stage_simulation_state() {
     }
 
     state->current_score = 0;
+    state->score_awarded_points = 0;
     state->paused_from_death = false;
     state->current_stage_timer = 0.0f;
     state->started_system_time = system_get_current_time();
