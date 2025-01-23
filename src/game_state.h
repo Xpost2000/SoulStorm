@@ -974,6 +974,7 @@ struct Game_Resources {
     Audio::Sound_ID        hit_sounds[2];
     Audio::Sound_ID        opening_beep_type;
     Audio::Sound_ID        death_sound;
+    Audio::Sound_ID        score_pickup_sound;
 
     // NOTE(jerry):
     // these tracks are looped.
