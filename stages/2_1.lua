@@ -114,7 +114,7 @@ function wave1()
    t_wait(14.0);
    -- Spawn a few bursters to force dodging harder
    do
-      Make_Enemy_Burst360_1_1_2(
+      local e0 = Make_Enemy_Burst360_1_1_2(
          30,
          v2(40, -20),
          v2(40, 40),
@@ -133,8 +133,9 @@ function wave1()
          
          PROJECTILE_SPRITE_RED
       )
+      enemy_set_visual(e0, ENTITY_SPRITE_SKULL_A);
 
-      Make_Enemy_Burst360_1_1_2(
+      local e1 = Make_Enemy_Burst360_1_1_2(
          30,
          v2(play_area_width() - 40, -20),
          v2(play_area_width() - 40, 40),
@@ -153,6 +154,7 @@ function wave1()
 
          PROJECTILE_SPRITE_RED
       )
+      enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A);
    end
 
    -- Spawn a small semi circle of 4 exploder enemies
@@ -213,7 +215,7 @@ function wave2()
 
    -- some extra enemies...
    do
-      Make_Enemy_Burst360_1_1_2(
+      local e0 = Make_Enemy_Burst360_1_1_2(
          15,
          v2(-10, play_area_height()/2),
          v2(50, play_area_height()/2 - 50),
@@ -232,8 +234,9 @@ function wave2()
 
          PROJECTILE_SPRITE_RED_STROBING
       );
+      enemy_set_visual(e0, ENTITY_SPRITE_SKULL_A);
 
-      Make_Enemy_Burst360_1_1_2(
+      local e1 = Make_Enemy_Burst360_1_1_2(
          15,
          v2(play_area_width() + 10, play_area_height()/2),
          v2(play_area_width()/2 + 50, play_area_height()/2 - 50),
@@ -252,6 +255,7 @@ function wave2()
 
          PROJECTILE_SPRITE_RED_STROBING
       );
+      enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A);
    end
 
    -- Laser torment
@@ -265,10 +269,14 @@ end
 function wave3()
    -- figure out what time this is
    -- Add a few of the level 1 Home attackers
-   Make_Enemy_SideMoverWave1_1_1(100, -100, 0, 200, 1.5, 1, 0, 8, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
-   Make_Enemy_SideMoverWave1_1_1(play_area_width() - 100, -100, 0, 200, 1.5, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
-   Make_Enemy_SideMoverWave1_1_1(150, -100, 0, 200, 1.0, 1, 0, 8, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
-   Make_Enemy_SideMoverWave1_1_1(play_area_width() - 150, -100, 0, 200, 1.0, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
+   local e0 = Make_Enemy_SideMoverWave1_1_1(100, -100, 0, 200, 1.5, 1, 0, 8, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
+   enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
+   local e1 = Make_Enemy_SideMoverWave1_1_1(play_area_width() - 100, -100, 0, 200, 1.5, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
+   enemy_set_visual(e1, ENTITY_SPRITE_SKULL_B);
+   local e2 = Make_Enemy_SideMoverWave1_1_1(150, -100, 0, 200, 1.0, 1, 0, 8, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
+   enemy_set_visual(e2, ENTITY_SPRITE_SKULL_B);
+   local e3 = Make_Enemy_SideMoverWave1_1_1(play_area_width() - 150, -100, 0, 200, 1.0, 1, 0, 4, PROJECTILE_SPRITE_GREEN_ELECTRIC, PROJECTILE_SPRITE_GREEN_DISK);
+   enemy_set_visual(e3, ENTITY_SPRITE_SKULL_B);
    -- some popcorns,
    t_wait(2);
 
@@ -276,27 +284,30 @@ function wave3()
    Stage1_Batflood();
    t_wait(4);
    -- Add a spinster (stage 1 style)
-   Make_Enemy_Spinster_1_1(play_area_width()/2,
+   local e4 = Make_Enemy_Spinster_1_1(play_area_width()/2,
                            -20,
                            0, 40, 1.0, 0, 4, PROJECTILE_SPRITE_BLUE_STROBING, 0,
                            15, 20, 15
    );
+   enemy_set_visual(e4, ENTITY_SPRITE_BAT_B);
    -- Make_Enemy_Spinster_1_1(play_area_width()/2,
    --                         play_area_height() + 20,
    --                         0, -40, 1.0, 0, 4, PROJECTILE_SPRITE_BLUE_STROBING, 180,
    --                         15, 50, 15
    -- );
    t_wait(1.5);
-   Make_Enemy_Spinster_1_1(-20,
+   local e5 = Make_Enemy_Spinster_1_1(-20,
                            play_area_height()/2,
                            40, 0, 1.0, 0, 3, PROJECTILE_SPRITE_GREEN_STROBING, -90,
                            15, 40, 35
    );
-   Make_Enemy_Spinster_1_1(play_area_width()+20,
+   enemy_set_visual(e5, ENTITY_SPRITE_BAT_B);
+   local e6 = Make_Enemy_Spinster_1_1(play_area_width()+20,
                            play_area_height()/2,
                            -20, 0, 1.0, 0, 3, PROJECTILE_SPRITE_GREEN_STROBING, 90,
                            15, 40, 35
    );
+   enemy_set_visual(e6, ENTITY_SPRITE_BAT_B);
    -- Add a nearly impossible scenario (dodge by staying in the center)
    t_wait(4);
    Make_BrainDead_Enemy_Popcorn1(
@@ -370,25 +381,11 @@ function wave3()
             );
          end
       )
-
-      -- async_task_lambda( -- NOTE: async timeline
-      --    function()
-      --       DramaticExplosion_SpawnSpinnerObstacle1_2_1(
-      --          play_area_width()/2,
-      --          play_area_height() -40,
-      --          ENTITY_SPRITE_SKULL_B,
-      --          10,
-      --          30,
-      --          PROJECTILE_SPRITE_NEGATIVE_DISK,
-      --          v2(0, -1)
-      --       );
-      --    end
-      -- )
    end
 
    t_wait(3.5);
    do
-      Make_Enemy_Burst360_1_1_2(
+      local e0 = Make_Enemy_Burst360_1_1_2(
          15,
          v2(-10, play_area_height()/2),
          v2(100, play_area_height()/2 - 50),
@@ -407,8 +404,9 @@ function wave3()
 
          PROJECTILE_SPRITE_RED_STROBING
       );
+      enemy_set_visual(e0, ENTITY_SPRITE_BAT_B);
 
-      Make_Enemy_Burst360_1_1_2(
+      local e1 = Make_Enemy_Burst360_1_1_2(
          15,
          v2(play_area_width() + 10, play_area_height()/2),
          v2(play_area_width()/2 + 100, play_area_height()/2 - 50),
@@ -427,6 +425,7 @@ function wave3()
 
          PROJECTILE_SPRITE_RED_STROBING
       );
+      enemy_set_visual(e1, ENTITY_SPRITE_BAT_B);
    end
    t_wait(3.5);
    do

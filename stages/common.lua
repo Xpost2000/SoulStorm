@@ -573,6 +573,7 @@ function DramaticExplosion_SpawnSpinnerObstacle1_2_1(x,
 
    enemy_set_visual(e, enemy_visual);
    enemy_set_visual_scale(e, 1.3, 1.3);
+   return e;
 end
 
 function Make_Enemy_ShotgunSpreader_2_1_1(
@@ -786,6 +787,7 @@ function Make_Enemy_Spinster_1_1(px, py,
          enemy_set_acceleration(e, sign * 150, 125);
       end
    )
+   return e;
 end
 
 -- NOTE(jerry):
