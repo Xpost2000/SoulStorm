@@ -5304,7 +5304,7 @@ void Game::handle_all_bullet_collisions(f32 dt) {
 
                         state->spawn_death_explosion(e.position);
                         // adjust sound todo
-                        Audio::play(resources->random_explosion_sound(&state->prng_unessential), -128*Audio::get_volume_sound()*0.95);
+                        Audio::play(resources->random_explosion_sound(&state->prng_unessential), Audio::get_volume_sound() * 0.80 * -128);
 #if 0
                         spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 0);
                         spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 1);

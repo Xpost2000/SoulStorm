@@ -1,13 +1,4 @@
 engine_dofile("stages/common.lua")
--- TODO:
--- Prettification pass.
--- revise spinster pattern 1
---     Too much dead time!
---     add popcorn enemies for this wave
--- compose music track
--- skin all enemies.
--- miniboss
-
 -- Maybe? Redesign everything before the miniboss.
 
 -- Because this is the first level of the bunch

@@ -16,6 +16,8 @@ engine_dofile("stages/common.lua")
 --    end
 --    print('bye');
 -- end
+local track = load_music("res/snds/music_1_2.ogg");
+
 
 function wave1_sub1()
    -- smoothly open with a few sprayers (with some slow bullets)
@@ -24,8 +26,7 @@ function wave1_sub1()
    -- then a few more sprayers.
    -- popcorn
    do
-      enemy_set_visual(
-         Make_Enemy_Burst360_1_1_2(
+      local e0 = Make_Enemy_Burst360_1_1_2(
          10, v2(-10, -10), v2(120, 125), 1.5,
 
          0.12, 4,
@@ -39,25 +40,26 @@ function wave1_sub1()
          45,
          
          PROJECTILE_SPRITE_HOT_PINK_ELECTRIC
-         ),
+         );
+      enemy_set_visual(e0,
       ENTITY_SPRITE_SKULL_A);
 
-      enemy_set_visual(
-            Make_Enemy_Burst360_1_1_2(
-            10, v2(play_area_width(), -10), v2(play_area_width()-120, 125), 1.5,
+      local e1 = Make_Enemy_Burst360_1_1_2(
+         10, v2(play_area_width(), -10), v2(play_area_width()-120, 125), 1.5,
 
-            0.12, 4,
-            40, 45,
+         0.12, 4,
+         40, 45,
 
-            75,
-            100,
+         75,
+         100,
 
-            v2(1, 1),
-            45,
-            45,
+         v2(1, 1),
+         45,
+         45,
 
-            PROJECTILE_SPRITE_HOT_PINK_ELECTRIC
-         ), 
+         PROJECTILE_SPRITE_HOT_PINK_ELECTRIC
+      );
+      enemy_set_visual(e1,
       ENTITY_SPRITE_SKULL_A);
 
       t_wait(1.25);
@@ -566,6 +568,12 @@ function preboss_wave()
 end
 
 function stage_task()
+   play_area_set_edge_behavior(PLAY_AREA_EDGE_TOP, PLAY_AREA_EDGE_BLOCKING);
+   play_area_set_edge_behavior(PLAY_AREA_EDGE_BOTTOM, PLAY_AREA_EDGE_BLOCKING);
+   play_area_set_edge_behavior(PLAY_AREA_EDGE_LEFT, PLAY_AREA_EDGE_BLOCKING);
+   play_area_set_edge_behavior(PLAY_AREA_EDGE_RIGHT, PLAY_AREA_EDGE_BLOCKING);
+   play_music(track);
+
    -- setup stage background
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_0.png", 0.45, 0, 0);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_nebule.png", 0.287, 0, 120);
