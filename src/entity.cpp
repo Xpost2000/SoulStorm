@@ -319,7 +319,8 @@ s32 Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
                 bool interacted = false;
                 if (clamp_border(edge_index, play_area)) {
                     if (edge == PLAY_AREA_EDGE_DEADLY) {
-                        kill();
+                      end_invincibility();
+                      kill();
                     }
                     interacted = true;
                 }
