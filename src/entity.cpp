@@ -1590,7 +1590,8 @@ void Pickup_Entity::draw(Game_State* const state, struct render_commands* render
     if (!visible)
         return;
 
-#if 1
+#if 0 // NOTE(jerry): To keep performance higher, this vignette should be replaced with something placed within the atlas
+      // for now, I cannot in good conscience keep this here, since it increases draw-call count.
     auto  sprite_img = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_border_vignette);
     V2    sprite_image_size = V2(32, 32) * (1 + normalized_sinf(Global_Engine()->global_elapsed_time*1.25 + 1234) * 0.75);
 
