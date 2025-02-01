@@ -29,6 +29,23 @@ local int projectile_sprites_requiring_rotation_count = 0;
 local int projectile_sprites_requiring_rotation[PROJECTILE_SPRITE_TYPES] = {
 };
 
+static void apply_vector_quantization_deadzone_adjustment(V2& vector) {
+  // NOTE(jerry):
+  //
+  // There's a lot of precision loss when quantizing to a 8 bit number from a floating
+  // point.
+  //
+  const float DEADZONE_QUANTIZATION_THRESHOLD = 0.075f;
+  if (fabs(vector.x) <= DEADZONE_QUANTIZATION_THRESHOLD) {
+    vector.x = 0;
+  }
+
+  if (fabs(vector.y) <= DEADZONE_QUANTIZATION_THRESHOLD) {
+    vector.y = 0;
+  }
+}
+
+
 local float replay_timescale_choices[] = {
     0.25f,
     0.5f,

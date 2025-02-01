@@ -484,6 +484,8 @@ void MainMenu_Player::draw(MainMenu_Data* const state, struct render_commands* c
 void MainMenu_Player::update(MainMenu_Data* state, f32 dt) {
     V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
     if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
+    apply_vector_quantization_deadzone_adjustment(axes);
+
     f32 axes_magnitude = axes.magnitude_sq();
 
     const float UNIT_SPEED = 350;

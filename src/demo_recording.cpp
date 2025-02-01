@@ -110,22 +110,6 @@ Gameplay_Frame_Input_Packet gameplay_recording_file_next_frame(Gameplay_Recordin
     return recording->frames[recording->playback_frame_index++];
 }
 
-static void apply_vector_quantization_deadzone_adjustment(V2& vector) {
-  // NOTE(jerry):
-  //
-  // There's a lot of precision loss when quantizing to a 8 bit number from a floating
-  // point.
-  //
-  const float DEADZONE_QUANTIZATION_THRESHOLD = 0.075f;
-  if (fabs(vector.x) <= DEADZONE_QUANTIZATION_THRESHOLD) {
-    vector.x = 0;
-  }
-  
-  if (fabs(vector.y) <= DEADZONE_QUANTIZATION_THRESHOLD) {
-    vector.y = 0;
-  }
-}
-
 V2 gameplay_frame_input_packet_quantify_axes(const Gameplay_Frame_Input_Packet& input_packet) {
     f32 x = (f32)input_packet.axes[0] / 127.0f;
     f32 y = (f32)input_packet.axes[1] / 127.0f;
