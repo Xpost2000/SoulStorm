@@ -496,6 +496,17 @@ void Sprite_Instance::animate(struct graphics_assets* graphics_assets, f32 dt, f
     }
 }
 
+const bool Texture_Atlas::is_texture_in_set(image_id original_id) const {
+  for (s32 index = 0; index < subimage_count; ++index) {
+    auto& subimage_id = subimages[index].original_asset;
+    if (subimage_id.index == original_id.index) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 const rectangle_f32 Texture_Atlas::get_subrect(const image_id subimage) const {
     for (s32 index = 0; index < subimage_count; ++index) {
         if (subimages[index].original_asset.index == subimage.index) {
