@@ -1,5 +1,6 @@
 #include "game_state.h"
 #include "particle_system.h"
+#include "engine.h"
 
 Particle_Emit_Shape::Particle_Emit_Shape() {type = 0;}
 
@@ -196,7 +197,45 @@ void Particle_Pool::update(Game_State* state, f32 dt) {
     }
 }
 
+/*
+  The render_command system was designed for Legends which was 100% software rendered, and
+  thus did not suffer from it's lack of batching. The sprite-atlas system was bolted on for
+  manual sprite-batching, but it only works on per-image level.
+
+  This is really the only time the game tries to render masses of different blend-modes in
+  congregation so manual batching is done here.
+
+  This makes the visual artifacts change a "little", but shouldn't be that bad. Alpha first, additive
+  after.
+*/
+struct Particle_Pool_Draw_Batch {
+  rectangle_f32 destination_rectangle;
+  rectangle_f32 source_rectangle;
+  color32f32    modulation;
+};
+
+static void draw_particle_render_batch(struct render_commands* commands, Game_Resources* resources, Fixed_Array<Particle_Pool_Draw_Batch>& batch, int blend_mode) {
+  for (s32 index = 0; index < batch.size; ++index) {
+    Particle_Pool_Draw_Batch& batchitem = batch[index];
+    Texture_Atlas& texture_atlas = resources->gameplay_texture_atlas;
+    struct image_buffer* image = graphics_assets_get_image_by_id(&resources->graphics_assets, texture_atlas.atlas_image_id);
+
+    render_commands_push_image(
+      commands,
+      image,
+      batchitem.destination_rectangle,
+      batchitem.source_rectangle,
+      batchitem.modulation,
+      0,
+      blend_mode
+    );
+  }
+}
+
 void Particle_Pool::draw(struct render_commands* commands, Game_Resources* resources) {
+    Fixed_Array<Particle_Pool_Draw_Batch> alpha_batch    = Fixed_Array<Particle_Pool_Draw_Batch>(&Global_Engine()->scratch_arena, particles.size);
+    Fixed_Array<Particle_Pool_Draw_Batch> additive_batch = Fixed_Array<Particle_Pool_Draw_Batch>(&Global_Engine()->scratch_arena, particles.size);
+
     for (s32 particle_index = 0; particle_index < particles.size; ++particle_index) {
         auto& particle = particles[particle_index];
 
@@ -230,37 +269,35 @@ void Particle_Pool::draw(struct render_commands* commands, Game_Resources* resou
             struct image_buffer* image = graphics_assets_get_image_by_id(&resources->graphics_assets, texture_atlas.atlas_image_id);
 
             if (particle.flags & PARTICLE_FLAGS_USE_FLAME_MODE) {
-                render_commands_push_image(
-                    commands,
-                    image,
-                    rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-                    source_rectangle,
-                    modulation,
-                    0,
-                    BLEND_MODE_ALPHA
-                );
-                render_commands_push_image(
-                    commands,
-                    image,
-                    rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-                    source_rectangle,
-                    modulation,
-                    0,
-                    BLEND_MODE_ADDITIVE
-                );
+                Particle_Pool_Draw_Batch batchitem0;
+                Particle_Pool_Draw_Batch batchitem1;
+
+                batchitem0.destination_rectangle = batchitem1.destination_rectangle =
+                  rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y);
+                batchitem0.source_rectangle = batchitem1.source_rectangle =
+                  source_rectangle;
+                batchitem0.modulation = batchitem1.modulation = modulation;
+
+                alpha_batch.push(batchitem0);
+                additive_batch.push(batchitem1);
             } else {
-                render_commands_push_image(
-                    commands,
-                    image,
-                    rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-                    source_rectangle,
-                    modulation,
-                    0,
-                    particle.blend_mode
-                );
+                Particle_Pool_Draw_Batch batchitem;
+                batchitem.destination_rectangle =
+                  rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y);
+                batchitem.source_rectangle = source_rectangle;
+                batchitem.modulation = modulation;
+
+                if (particle.blend_mode != BLEND_MODE_ADDITIVE) {
+                  alpha_batch.push(batchitem);
+                } else {
+                  additive_batch.push(batchitem);
+                }
             }
         }
     }
+    
+    draw_particle_render_batch(commands, resources, alpha_batch, BLEND_MODE_ALPHA);
+    draw_particle_render_batch(commands, resources, additive_batch, BLEND_MODE_ADDITIVE);
 }
 
 void Particle_Pool::clear() {
