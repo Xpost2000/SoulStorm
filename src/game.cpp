@@ -4225,8 +4225,8 @@ GAME_SCREEN(update_and_render_game_ingame) {
                     render_commands_push_text(ui_render_commands,
                                               font1,
                                               2,
-                                              V2(play_area_x+play_area_width + 40 + font_cache_text_width(font, text, 2),
-                                                 50 + normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
+                                              V2(play_area_x+play_area_width + 45 + font_cache_text_width(font, string_literal("Score: "), 2),
+                                                 45 + normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
                                               score_text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
                 }
             }
