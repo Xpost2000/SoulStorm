@@ -463,21 +463,36 @@ function wave_1()
             end
          end
       );
-      for i=1,5 do
+      for i=1,4 do
          local e = Make_Enemy_Spinner_1_1_2(
             15, 
             v2(-15 - i*15, 20 + i * 45),
             v2(1, 0),
-            80,
+            120,
             2.0,
             0.0,
-            45,
+            75,
             5,
             5,
-            PROJECTILE_SPRITE_BLUE_DISK,
+            PROJECTILE_SPRITE_RED_DISK,
             4
             );
-         -- NOTE(jerry): make new bat sprites for these things
+         enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+      end
+      for i=1,4 do
+         local e = Make_Enemy_Spinner_1_1_2(
+            15, 
+            v2(play_area_width() + i*15, 20 + i * 45),
+            v2(-1, 0),
+            120,
+            2.0,
+            0.0,
+            75,
+            5,
+            5,
+            PROJECTILE_SPRITE_RED_DISK,
+            4
+            );
          enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
       end
       async_task_lambda(
