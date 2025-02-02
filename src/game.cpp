@@ -3705,11 +3705,19 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
         level_complete_text = string_literal("RECORDING COMPLETE");
     }
 
-    string score_string_result = string_from_cstring(format_temp(
-                                                         (game_will_be_new_high_score(stage_id, level_id, state->gameplay_data.current_score)) ?
-                                                         "New High Score: %d" :
-                                                                     "Score: %d",
-                                                                     state->gameplay_data.current_score));
+    bool new_highscore_obtained = game_will_be_new_high_score(stage_id, level_id, state->gameplay_data.current_score);
+
+    char* text = format_temp(
+      (new_highscore_obtained) ? "NEW HIGH SCORE: %d\n" :
+      "HIGH SCORE: %d",
+      (new_highscore_obtained) ? state->gameplay_data.current_score : stage_list[stage_id].levels[level_id].best_score
+    );
+    text = format_temp(
+      "%s\nSCORE: %d\nLIVES BONUS: TBA\nPERFECT CLEAR BONUS: TBA\nGRAZE BONUS: TBA\nTIME: TBA", 
+      text, state->gameplay_data.current_score
+    );
+    string score_string_result = string_from_cstring(text);
+    f32 rect_y = commands->screen_height / 2 - 100;
 
     switch (complete_stage_state.stage) {
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_ANIMATE_PLAYER_EXIT: {
@@ -3724,7 +3732,6 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             }
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_SHOW_SCORE: {
-            f32 rect_y = commands->screen_height/2-32;
             render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
             {
                 auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
@@ -3743,7 +3750,6 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             }
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT: {
-            f32 rect_y = commands->screen_height/2-32;
             render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
             {
                 auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
@@ -3763,7 +3769,6 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             }
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT: {
-            f32 rect_y = commands->screen_height/2-32;
             render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128 * (1 - timer_percentage)), BLEND_MODE_ALPHA);
             {
                 auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);

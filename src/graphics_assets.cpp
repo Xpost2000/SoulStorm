@@ -194,7 +194,20 @@ f32 font_cache_calculate_height_of(struct font_cache* font_cache, string str, f3
 
 f32 font_cache_text_width(struct font_cache* font_cache, string text, f32 scale) {
     /* NOTE font_caches are monospaced */
-    return font_cache->tile_width * text.length * scale;
+  s32 current_line_length = 0;
+  s32 greatest_line_length = 0;
+
+  for (int i = 0; i < text.length; ++i) {
+    if (text.data[i] == '\n') {
+      current_line_length = 0;
+      greatest_line_length = max(greatest_line_length, current_line_length);
+    } else {
+      current_line_length++;
+    }
+  }
+
+  greatest_line_length = max(greatest_line_length, current_line_length);
+  return font_cache->tile_width * greatest_line_length * scale;
 }
 
 // Graphics Assets
