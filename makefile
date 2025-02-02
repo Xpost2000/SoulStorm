@@ -39,11 +39,12 @@ endif
 
 ITCHPROJECT=xpost2000/soulstorm
 
-all: game$(EXEC_EXT) game-debug$(EXEC_EXT)
+all: game$(EXEC_EXT) game-debug$(EXEC_EXT) game-debug-release$(EXEC_EXT)
 clean:
 	-rm ./build_intermediaries/*.o
 	-rm game-debug$(EXEC_EXT)
 	-rm game$(EXEC_EXT)
+	-rm game-debug-release$(EXEC_EXT)
 	-rm run_tree -r
 	-rm data.bigfile
 
@@ -184,16 +185,60 @@ DOBJECT_FILES=./build_intermediaries/achievements_debug.o \
 	      ./build_intermediaries/thread_pool_debug.o \
 	      ./build_intermediaries/v2_debug.o
 
+DROBJECT_FILES=./build_intermediaries/achievements.o \
+	      ./build_intermediaries/action_mapper.o \
+	      ./build_intermediaries/allocators.o \
+	      ./build_intermediaries/audio.o \
+	      ./build_intermediaries/camera.o \
+	      ./build_intermediaries/color.o \
+	      ./build_intermediaries/common.o \
+	      ./build_intermediaries/debug_ui.o \
+	      ./build_intermediaries/engine.o \
+	      ./build_intermediaries/entity_debug.o \
+	      ./build_intermediaries/entity_prototypes.o \
+	      ./build_intermediaries/fade_transition.o \
+	      ./build_intermediaries/game_debug.o \
+	      ./build_intermediaries/bigfile.o \
+	      ./build_intermediaries/glad.o \
+	      ./build_intermediaries/game_task_scheduler.o \
+	      ./build_intermediaries/game_ui.o \
+	      ./build_intermediaries/graphics_assets.o \
+	      ./build_intermediaries/graphics_driver.o \
+	      ./build_intermediaries/graphics_driver_null.o \
+	      ./build_intermediaries/graphics_driver_opengl.o \
+	      ./build_intermediaries/graphics_driver_software.o \
+	      ./build_intermediaries/v2_lua_bindings_debug.o \
+	      ./build_intermediaries/entity_lua_bindings_debug.o \
+	      ./build_intermediaries/game_lua_bindings_debug.o \
+	      ./build_intermediaries/virtual_file_system.o \
+	      ./build_intermediaries/particle_system.o \
+	      ./build_intermediaries/particle_system_lua_bindings_debug.o \
+	      ./build_intermediaries/input.o \
+	      ./build_intermediaries/lightmask_buffer.o \
+	      ./build_intermediaries/main.o \
+	      ./build_intermediaries/memory_arena.o \
+	      ./build_intermediaries/prng.o \
+	      ./build_intermediaries/render_commands.o \
+	      ./build_intermediaries/serializer.o \
+	      ./build_intermediaries/software_renderer.o \
+	      ./build_intermediaries/discord_rich_presence_integration.o \
+	      ./build_intermediaries/stage.o \
+	      ./build_intermediaries/string.o \
+	      ./build_intermediaries/thread_pool.o \
+	      ./build_intermediaries/v2.o
+
 ifeq ($(TARGET), win64)
 	HEADER_FILES  += src/graphics_driver_d3d11.h
 	OBJECT_FILES  += ./build_intermediaries/graphics_driver_d3d11.o
 	DOBJECT_FILES += ./build_intermediaries/graphics_driver_d3d11_debug.o
+	DROBJECT_FILES += ./build_intermediaries/graphics_driver_d3d11.o
 endif
 
 ./build_intermediaries/:
 	-mkdir ./build_intermediaries/
 
 ./game-debug$(EXEC_EXT): CFLAGS += -ggdb3
+./game-debug-release$(EXEC_EXT): CFLAGS += -g -O1
 ./game$(EXEC_EXT):       CFLAGS += -O2 -DRELEASE
 
 ## modules 
@@ -389,6 +434,10 @@ docgen: src/lua_metagen.cpp
 ./game-debug$(EXEC_EXT): ./build_intermediaries/ docgen $(DOBJECT_FILES) $(HEADER_FILES)
 	@echo Building debug build.
 	$(CC) -o $@  $(DOBJECT_FILES) $(CFLAGS) $(CLIBS) 
+
+./game-debug-release$(EXEC_EXT): ./build_intermediaries/ docgen $(DROBJECT_FILES) $(HEADER_FILES)
+	@echo Building debug build.
+	$(CC) -o $@  $(DROBJECT_FILES) $(CFLAGS) $(CLIBS) 
 
 run: ./game$(EXEC_EXT)
 	$(EXEC_PATH_PREPEND)game
