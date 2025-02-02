@@ -646,8 +646,6 @@ function stage_task()
    -- print("wave 2");
    wave_2();
    preboss_wave();
-   print("wait finish");
-   t_wait(1);
    for i=1,5 do
       local e = Make_Enemy_Spinner_1_1_2(
          15, 

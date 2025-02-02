@@ -121,7 +121,39 @@ end
 function wave2()
    t_wait(2);
    -- new enemy type, I need a new sprite
-   
+   for i=1,4 do
+      local e = Make_Enemy_Spinner_1_1_2(
+         15, 
+         v2(-15 - i*15, 20 + i * 45),
+         v2(1, 0),
+         120,
+         2.0,
+         0.0,
+         100,
+         5,
+         5,
+         PROJECTILE_SPRITE_GREEN_DISK,
+         4
+         );
+      enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+   end
+   for i=1,4 do
+      local e = Make_Enemy_Spinner_1_1_2(
+         15, 
+         v2(play_area_width() + i*15, 20 + i * 45),
+         v2(-1, 0),
+         120,
+         2.0,
+         0.0,
+         100,
+         5,
+         5,
+         PROJECTILE_SPRITE_GREEN_DISK,
+         4
+         );
+      enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+   end
+   t_wait(3)
 end
 
 function stage_task()
