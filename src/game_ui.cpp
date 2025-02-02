@@ -227,7 +227,7 @@ namespace GameUI {
     }
 
     f32 get_wobbly_factor(s32 index, s32 seed) {
-        seed %= 256;
+        seed %= 512;
         f32 factor = sinf((Global_Engine()->global_elapsed_time * 2.1f + (seed/512.0f)) + (index+1) + seed);
         return factor * 1.256f * global_ui_state->wobble_contribution;
     }

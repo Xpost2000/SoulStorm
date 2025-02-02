@@ -913,7 +913,7 @@ local void software_framebuffer_draw_text_clipped(struct software_framebuffer* f
             software_framebuffer_draw_glyph_clipped(
                 framebuffer,
                 font,
-                scale, V2(x_cursor, y_cursor + (flags & BIT(0)) * GameUI::get_wobbly_factor(index, (s32)text.data)),
+                scale, V2(x_cursor, y_cursor + (flags & BIT(0)) * GameUI::get_wobbly_factor(index, hash_bytes_fnv1a((u8*) text.data, text.length))),
                 character_index,
                 modulation,
                 blend_mode,

@@ -568,7 +568,7 @@ void OpenGL_Graphics_Driver::render_command_draw_text(const render_command& rc) 
             } else {
                 s32 character = text.data[index] - 32;
                 auto destination_rect = rectangle_f32(
-                    x_cursor, y_cursor + (rc.flags & BIT(0)) * GameUI::get_wobbly_factor(index, (s32)text.data),
+                    x_cursor, y_cursor + (rc.flags & BIT(0)) * GameUI::get_wobbly_factor(index, hash_bytes_fnv1a((u8*) text.data, text.length)),
                     font->tile_width  * scale,
                     font->tile_height * scale
                 );
