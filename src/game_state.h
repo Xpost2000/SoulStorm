@@ -944,6 +944,8 @@ struct Game_Resources {
     // end title screen
 
     image_id        ui_marquee_bkrnd;
+    image_id        ui_marquee_bkrnd_neo[2];
+
     image_id        ui_vignette_borders[2];
     image_id        ui_rays_gradient;
     image_id        ui_border_effect[BORDER_FLASH_ID_TYPE_COUNT-1];

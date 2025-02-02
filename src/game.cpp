@@ -419,6 +419,8 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
     resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
     resources->ui_marquee_bkrnd = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee1.png"));
+    resources->ui_marquee_bkrnd_neo[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee-left.png"));
+    resources->ui_marquee_bkrnd_neo[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee-right.png"));
 
     resources->ui_vignette_borders[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_left.png"));
     resources->ui_vignette_borders[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_bottom.png"));
@@ -4147,8 +4149,63 @@ GAME_SCREEN(update_and_render_game_ingame) {
         int play_area_x     = state->play_area.x;
 
         // These should also be nice images in the future.
-
         {
+#if 1 // NEO BKG
+          auto modulation_shadow = color32u8_to_color32f32(color32u8(10/2, 10/2, 32/2, 255));
+          {
+            auto modulation = color32u8_to_color32f32(color32u8(200,200,200, 255));
+            f32 shadow_width = 64 + normalized_sinf(Global_Engine()->global_elapsed_time) * 48;
+            // NOTE(jerry):
+            // background is hard-coded to assume the two supplied marquee images in the resources folder.
+            // This should be good for a decent amount of widescreen resolutions without having borders.
+            int bkg_image_width = 854;
+            int bkg_image_height = 480;
+            // left border
+            {
+              auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[0]);
+              render_commands_push_image(
+                ui_render_commands,
+                marquee_bkg,
+                rectangle_f32(play_area_x - bkg_image_width, 0, bkg_image_width, bkg_image_height),
+                RECTANGLE_F32_NULL,
+                modulation,
+                0,
+                BLEND_MODE_ALPHA
+              );
+              render_commands_push_image(
+                ui_render_commands,
+                graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
+                rectangle_f32((play_area_x + 1) - shadow_width, 0, shadow_width, resolution.y),
+                RECTANGLE_F32_NULL,
+                modulation_shadow,
+                0,
+                BLEND_MODE_ALPHA
+              );
+            }
+            // right border
+            {
+              auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[1]);
+              render_commands_push_image(
+                ui_render_commands,
+                marquee_bkg,
+                rectangle_f32(play_area_x + play_area_width, 0, bkg_image_width, bkg_image_height),
+                RECTANGLE_F32_NULL,
+                modulation,
+                0,
+                BLEND_MODE_ALPHA
+              );
+              render_commands_push_image(
+                ui_render_commands,
+                graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
+                rectangle_f32(play_area_x + play_area_width - 0.05f, 0, shadow_width, resolution.y),
+                RECTANGLE_F32_NULL,
+                modulation_shadow,
+                DRAW_IMAGE_FLIP_HORIZONTALLY,
+                BLEND_MODE_ALPHA
+              );
+            }
+          }
+#else
             auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd);
             // NOTE: playing with colors
             //auto modulation = color32f32(0.1, 0.35, 0.8, 1);
@@ -4195,6 +4252,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
                 DRAW_IMAGE_FLIP_HORIZONTALLY,
                 BLEND_MODE_ALPHA
             );
+#endif
 
             this->state->set_led_primary_color(
                 color32u8(255 * modulation_shadow.r,
@@ -4205,6 +4263,15 @@ GAME_SCREEN(update_and_render_game_ingame) {
         }
 
         // NOTE: really need to adjust the layout
+        // Render_OverlayBoxShadow
+        {
+          render_commands_push_quad(
+            ui_render_commands,
+            rectangle_f32(play_area_x + play_area_width + 20, 30, 200, 350),
+            color32u8(45/2, 50/2, 100/2, 230),
+            BLEND_MODE_ALPHA
+          );
+        }
         // Render_Score
         // Draw score and other stats like attack power or speed or something
         {
