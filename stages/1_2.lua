@@ -93,7 +93,7 @@ function wave1_sub1()
       do
          local corner_r = 30;
          local e0 = Make_Enemy_Burst360_1_1_2(
-            10, v2(-10, -10), v2(corner_r, corner_r), 2.0,
+            20, v2(-10, -10), v2(corner_r, corner_r), 2.0,
 
             0.20, 4,
             20, 25,
@@ -109,7 +109,7 @@ function wave1_sub1()
          );
          
          local e1 = Make_Enemy_Burst360_1_1_2(
-            10, v2(play_area_width()+15, -10), v2(play_area_width()-corner_r, corner_r), 2.0,
+            20, v2(play_area_width()+15, -10), v2(play_area_width()-corner_r, corner_r), 2.0,
 
             0.20, 4,
             20, 25,
@@ -141,7 +141,7 @@ function wave1_sub1()
          );
          
          local e3 = Make_Enemy_Burst360_1_1_2(
-            10, v2(play_area_width()+15, play_area_height()+10), v2(play_area_width()-corner_r, play_area_height()-corner_r), 2.0,
+            20, v2(play_area_width()+15, play_area_height()+10), v2(play_area_width()-corner_r, play_area_height()-corner_r), 2.0,
 
             0.20, 4,
             20, 25,
@@ -527,7 +527,7 @@ function wave_2()
             laser_hazard_new(player_position_y(), 15, 0, 0.05, 0.5);
             do
                local e0 = Make_Enemy_Burst360_1_1_2(
-                  10, v2(-10, -10), v2(120, 125), 1.5,
+                  20, v2(-10, -10), v2(120, 125), 1.5,
 
                   0.12, 4,
                   40, 45,
@@ -543,7 +543,7 @@ function wave_2()
                );
 
                local e1 = Make_Enemy_Burst360_1_1_2(
-                  10, v2(play_area_width(), -10), v2(play_area_width()-120, 125), 1.5,
+                  20, v2(play_area_width(), -10), v2(play_area_width()-120, 125), 1.5,
 
                   0.12, 4,
                   40, 45,
@@ -648,7 +648,23 @@ function stage_task()
    preboss_wave();
    print("wait finish");
    t_wait(1);
-
+   for i=1,5 do
+      local e = Make_Enemy_Spinner_1_1_2(
+         15, 
+         v2(-15 - i*15, 20 + i * 45),
+         v2(1, 0),
+         80,
+         2.0,
+         0.0,
+         45,
+         5,
+         5,
+         PROJECTILE_SPRITE_BLUE_DISK,
+         4
+         );
+      -- NOTE(jerry): make new bat sprites for these things
+      enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+   end
    -- last
    Stage1_Batflood();
    do
