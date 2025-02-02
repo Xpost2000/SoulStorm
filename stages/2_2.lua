@@ -12,6 +12,7 @@ function wave1()
       v2(0, 1),
       0
    );
+   t_wait(1);
    
    DramaticExplosion_SpawnSpinnerObstacle1_2_1(
       20,
@@ -23,6 +24,7 @@ function wave1()
       v2(-1, -1),
       5
    );
+   t_wait(2);
    
    DramaticExplosion_SpawnSpinnerObstacle1_2_1(
       play_area_width()-20,
@@ -34,6 +36,92 @@ function wave1()
       v2(-1, -1),
       5
    );
+
+   t_wait(6);
+   do
+      for i=1,5 do
+         local e = Make_Enemy_Spinner_1_1_2(
+            15, 
+            v2(-15 - i*15, 20 + i * 45),
+            v2(1, 0),
+            80,
+            2.0,
+            0.0,
+            45,
+            5,
+            5,
+            PROJECTILE_SPRITE_BLUE_DISK,
+            4
+            );
+         -- NOTE(jerry): make new bat sprites for these things
+         enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+      end
+
+      t_wait(4);
+      do
+         Make_BrainDead_Enemy_Popcorn1(
+            45,
+            v2(play_area_width() + 40, play_area_height()/2),
+            0.065,
+            5,
+            -150,
+            -5,
+            5,
+            5,
+            2,
+            -1,
+            ENTITY_SPRITE_SKULL_A
+         );
+      end
+      t_wait(8);
+      do
+         Make_BrainDead_Enemy_Popcorn1(
+            45,
+            v2(play_area_width() + 40, play_area_height()/2),
+            0.065,
+            5,
+            -150,
+            -5,
+            5,
+            5,
+            2,
+            -1,
+            ENTITY_SPRITE_BAT_B
+         );
+      end
+      t_wait(5)
+      convert_all_bullets_to_score();
+   end
+end
+
+-- will fire an attack aimed at the player in the form of a Helix
+-- the helix is just meant to look pretty.
+function Make_Enemy_Helix_Turret_2_2(
+   hp,
+   start_position,
+   target_position,
+   target_position_lerp_t,
+
+   fire_delay,
+   burst_count,
+
+   bullet_velocity,
+   exit_direction,
+   exit_velocity,
+   exit_acceleration,
+
+   helix_height,
+
+   sprite,
+   bullet_visual, bullet_visual1
+)
+local e = enemy_new();
+end
+
+function wave2()
+   t_wait(2);
+   -- new enemy type, I need a new sprite
+   
 end
 
 function stage_task()
@@ -58,6 +146,7 @@ function stage_task()
    play_area_notify_current_border_status();
    t_wait(2);
    wave1();
+   wave2();
 
    wait_no_danger();
    t_complete_stage();

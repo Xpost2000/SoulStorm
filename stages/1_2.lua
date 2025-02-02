@@ -402,6 +402,23 @@ function wave1_sub3()
          );
       end
    end
+   for i=1,5 do
+      local e = Make_Enemy_Spinner_1_1_2(
+         15, 
+         v2(-15 - i*15, 20 + i * 45),
+         v2(1, 0),
+         80,
+         2.0,
+         0.0,
+         45,
+         5,
+         5,
+         PROJECTILE_SPRITE_BLUE_DISK,
+         4
+         );
+      -- NOTE(jerry): make new bat sprites for these things
+      enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+   end
    t_wait(9);
    convert_all_bullets_to_score();
    t_wait(3);
@@ -446,6 +463,23 @@ function wave_1()
             end
          end
       );
+      for i=1,5 do
+         local e = Make_Enemy_Spinner_1_1_2(
+            15, 
+            v2(-15 - i*15, 20 + i * 45),
+            v2(1, 0),
+            80,
+            2.0,
+            0.0,
+            45,
+            5,
+            5,
+            PROJECTILE_SPRITE_BLUE_DISK,
+            4
+            );
+         -- NOTE(jerry): make new bat sprites for these things
+         enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+      end
       async_task_lambda(
          function()
             local enemies = Make_BrainDead_Enemy_Popcorn1(16, v2(play_area_width()/2 + popcorn_radius, -20), 0.20, 5, -30, 120, popcorn_flood_width, 45, -1, -1);
@@ -684,7 +718,7 @@ function stage_task()
    t_wait(4.5);
    LaserChaser_Horizontal_1_2(8, 1.5);
    LaserChaser_Horizontal_1_2(4, 0.75);
-   LaserChaser_Vertical_1_2(8, 2.5);
+   LaserChaser_Vertical_1_2(4, 2.5);
    LaserChaser_Vertical_1_2(4, 0.75);
 
    wait_no_danger();

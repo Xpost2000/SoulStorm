@@ -437,9 +437,11 @@ function Make_Enemy_Spinner_1_1_2(hp,
                                   bspeed,
                                   radiusx,
                                   radiusy,
-                                  bullet_visual
+                                  bullet_visual,
+                                  trail
                                  )
    local e = enemy_new();
+   local trailcount = trail or 0;
    enemy_set_hp(e, hp);
    enemy_set_position(e, initial_position[1], initial_position[2]);
 
@@ -477,7 +479,7 @@ function Make_Enemy_Spinner_1_1_2(hp,
 
                local bdir = v2_direction_from_degree(angle + displacement);
                bullet_set_velocity(bullet, bdir[1] * bspeed, bdir[2] * bspeed);
-
+               bullet_start_trail(bullet, trailcount);
                displacement = displacement + 25;
             end
             play_sound(random_attack_sound());
