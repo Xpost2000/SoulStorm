@@ -1004,6 +1004,7 @@ void Game::reset_stage_simulation_state() {
         state->disable_grazing          = false;
         state->disable_enemy_to_points  = false;
         
+        // Reset the player
         state->player.position                         = state->player.last_position = V2(state->play_area.width / 2, 300);
         state->pet.position                            = state->pet.last_position = state->player.position;
         state->player.visible                          = true;
@@ -1016,6 +1017,7 @@ void Game::reset_stage_simulation_state() {
         state->player.end_invincibility();
         state->player.grazing_award_timer              = 0.0f;
         state->player.grazing_award_score_pickup_timer = 0.0f;
+        state->player.burst_charge = 0.0f;
         state->player.time_spent_grazing               = 0.0f;
         state->player.under_focus                      = false;
         {
@@ -4142,321 +4144,396 @@ GAME_SCREEN(update_and_render_game_ingame) {
     // draw play area borders / Game UI
     // I'd like to have the UI fade in / animate all fancy like when I can
     {
-        auto border_color = color32u8(0, 15, 18, 255);
- 
-        int play_area_width = state->play_area.width;
-        int play_area_height = state->play_area.height;
-        int play_area_x     = state->play_area.x;
+      auto border_color = color32u8(0, 15, 18, 255);
 
-        // These should also be nice images in the future.
-        {
+      int play_area_width = state->play_area.width;
+      int play_area_height = state->play_area.height;
+      int play_area_x = state->play_area.x;
+
+      // These should also be nice images in the future.
+      {
 #if 1 // NEO BKG
-          auto modulation_shadow = color32u8_to_color32f32(color32u8(10/2, 10/2, 32/2, 255));
+        auto modulation_shadow = color32u8_to_color32f32(color32u8(10 / 2, 10 / 2, 32 / 2, 255));
+        {
+          auto modulation = color32u8_to_color32f32(color32u8(200, 200, 200, 255));
+          f32 shadow_width = 64 + normalized_sinf(Global_Engine()->global_elapsed_time) * 48;
+          // NOTE(jerry):
+          // background is hard-coded to assume the two supplied marquee images in the resources folder.
+          // This should be good for a decent amount of widescreen resolutions without having borders.
+          int bkg_image_width = 854;
+          int bkg_image_height = 480;
+          // left border
           {
-            auto modulation = color32u8_to_color32f32(color32u8(200,200,200, 255));
-            f32 shadow_width = 64 + normalized_sinf(Global_Engine()->global_elapsed_time) * 48;
-            // NOTE(jerry):
-            // background is hard-coded to assume the two supplied marquee images in the resources folder.
-            // This should be good for a decent amount of widescreen resolutions without having borders.
-            int bkg_image_width = 854;
-            int bkg_image_height = 480;
-            // left border
-            {
-              auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[0]);
-              render_commands_push_image(
-                ui_render_commands,
-                marquee_bkg,
-                rectangle_f32(play_area_x - bkg_image_width, 0, bkg_image_width, bkg_image_height),
-                RECTANGLE_F32_NULL,
-                modulation,
-                0,
-                BLEND_MODE_ALPHA
-              );
-              render_commands_push_image(
-                ui_render_commands,
-                graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
-                rectangle_f32((play_area_x + 1) - shadow_width, 0, shadow_width, resolution.y),
-                RECTANGLE_F32_NULL,
-                modulation_shadow,
-                0,
-                BLEND_MODE_ALPHA
-              );
-            }
-            // right border
-            {
-              auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[1]);
-              render_commands_push_image(
-                ui_render_commands,
-                marquee_bkg,
-                rectangle_f32(play_area_x + play_area_width, 0, bkg_image_width, bkg_image_height),
-                RECTANGLE_F32_NULL,
-                modulation,
-                0,
-                BLEND_MODE_ALPHA
-              );
-              render_commands_push_image(
-                ui_render_commands,
-                graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
-                rectangle_f32(play_area_x + play_area_width - 0.05f, 0, shadow_width, resolution.y),
-                RECTANGLE_F32_NULL,
-                modulation_shadow,
-                DRAW_IMAGE_FLIP_HORIZONTALLY,
-                BLEND_MODE_ALPHA
-              );
-            }
+            auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[0]);
+            render_commands_push_image(
+              ui_render_commands,
+              marquee_bkg,
+              rectangle_f32(play_area_x - bkg_image_width, 0, bkg_image_width, bkg_image_height),
+              RECTANGLE_F32_NULL,
+              modulation,
+              0,
+              BLEND_MODE_ALPHA
+            );
+            render_commands_push_image(
+              ui_render_commands,
+              graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
+              rectangle_f32((play_area_x + 1) - shadow_width, 0, shadow_width, resolution.y),
+              RECTANGLE_F32_NULL,
+              modulation_shadow,
+              0,
+              BLEND_MODE_ALPHA
+            );
           }
+          // right border
+          {
+            auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[1]);
+            render_commands_push_image(
+              ui_render_commands,
+              marquee_bkg,
+              rectangle_f32(play_area_x + play_area_width, 0, bkg_image_width, bkg_image_height),
+              RECTANGLE_F32_NULL,
+              modulation,
+              0,
+              BLEND_MODE_ALPHA
+            );
+            render_commands_push_image(
+              ui_render_commands,
+              graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
+              rectangle_f32(play_area_x + play_area_width - 0.05f, 0, shadow_width, resolution.y),
+              RECTANGLE_F32_NULL,
+              modulation_shadow,
+              DRAW_IMAGE_FLIP_HORIZONTALLY,
+              BLEND_MODE_ALPHA
+            );
+          }
+        }
 #else
-            auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd);
-            // NOTE: playing with colors
-            //auto modulation = color32f32(0.1, 0.35, 0.8, 1);
-            auto modulation        = color32u8_to_color32f32(color32u8(155, 188, 255, 255));
-            auto modulation_shadow = color32u8_to_color32f32(color32u8(10, 10, 32, 255));
-            // auto modulation_shadow = color32u8_to_color32f32(color32u8(255, 10, 32, 255));
+        auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd);
+        // NOTE: playing with colors
+        //auto modulation = color32f32(0.1, 0.35, 0.8, 1);
+        auto modulation = color32u8_to_color32f32(color32u8(155, 188, 255, 255));
+        auto modulation_shadow = color32u8_to_color32f32(color32u8(10, 10, 32, 255));
+        // auto modulation_shadow = color32u8_to_color32f32(color32u8(255, 10, 32, 255));
 
-            f32 shadow_width = 64 + normalized_sinf(Global_Engine()->global_elapsed_time) * 48;
-            // left border
-            render_commands_push_image(
-                ui_render_commands,
-                marquee_bkg,
-                rectangle_f32(0, 0, play_area_x, resolution.y),
-                rectangle_f32(0, 0, play_area_x, marquee_bkg->height),
-                modulation,
-                0,
-                BLEND_MODE_ALPHA
-            );
-            render_commands_push_image(
-                ui_render_commands,
-                graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
-                rectangle_f32(play_area_x-shadow_width, 0, shadow_width, resolution.y),
-                RECTANGLE_F32_NULL,
-                modulation_shadow,
-                0,
-                BLEND_MODE_ALPHA
-            );
-            // right border
-            render_commands_push_image(
-                ui_render_commands,
-                marquee_bkg,
-                rectangle_f32(play_area_x+play_area_width, 0, resolution.x - play_area_width, resolution.y),
-                rectangle_f32(play_area_width+play_area_x, 0, marquee_bkg->width, marquee_bkg->height),
-                modulation,
-                0,
-                BLEND_MODE_ALPHA
-            );
-            render_commands_push_image(
-                ui_render_commands,
-                graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
-                rectangle_f32(play_area_x+play_area_width, 0, shadow_width, resolution.y),
-                RECTANGLE_F32_NULL,
-                modulation_shadow,
-                DRAW_IMAGE_FLIP_HORIZONTALLY,
-                BLEND_MODE_ALPHA
-            );
+        f32 shadow_width = 64 + normalized_sinf(Global_Engine()->global_elapsed_time) * 48;
+        // left border
+        render_commands_push_image(
+          ui_render_commands,
+          marquee_bkg,
+          rectangle_f32(0, 0, play_area_x, resolution.y),
+          rectangle_f32(0, 0, play_area_x, marquee_bkg->height),
+          modulation,
+          0,
+          BLEND_MODE_ALPHA
+        );
+        render_commands_push_image(
+          ui_render_commands,
+          graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
+          rectangle_f32(play_area_x - shadow_width, 0, shadow_width, resolution.y),
+          RECTANGLE_F32_NULL,
+          modulation_shadow,
+          0,
+          BLEND_MODE_ALPHA
+        );
+        // right border
+        render_commands_push_image(
+          ui_render_commands,
+          marquee_bkg,
+          rectangle_f32(play_area_x + play_area_width, 0, resolution.x - play_area_width, resolution.y),
+          rectangle_f32(play_area_width + play_area_x, 0, marquee_bkg->width, marquee_bkg->height),
+          modulation,
+          0,
+          BLEND_MODE_ALPHA
+        );
+        render_commands_push_image(
+          ui_render_commands,
+          graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
+          rectangle_f32(play_area_x + play_area_width, 0, shadow_width, resolution.y),
+          RECTANGLE_F32_NULL,
+          modulation_shadow,
+          DRAW_IMAGE_FLIP_HORIZONTALLY,
+          BLEND_MODE_ALPHA
+        );
 #endif
 
-            this->state->set_led_primary_color(
-                color32u8(255 * modulation_shadow.r,
-                          255 * modulation_shadow.g,
-                          255 * modulation_shadow.b,
-                          255)
-            );
-        }
+        this->state->set_led_primary_color(
+          color32u8(255 * modulation_shadow.r,
+            255 * modulation_shadow.g,
+            255 * modulation_shadow.b,
+            255)
+        );
+      }
 
+      // DrawSideUI()
+      {
+        f32 ui_cursor_y = 50;
+        f32 ui_cursor_x_left = 0;
         // NOTE: really need to adjust the layout
         // Render_OverlayBoxShadow
         {
+          // center with remaining space...
+          f32 border_left = play_area_x + play_area_width;
+          f32 border_right = min<f32>(resolution.x, 1000); // place an artifical limit on centering (for super widescreen)
+          f32 width_of_right_side = border_right - border_left;
+          f32 box_w = 200;
+          f32 box_x = (width_of_right_side / 2.0f) - box_w/2;
+
           render_commands_push_quad(
             ui_render_commands,
-            rectangle_f32(play_area_x + play_area_width + 20, 30, 200, 350),
-            color32u8(45/2, 50/2, 100/2, 230),
+            rectangle_f32(border_left + box_x, 30, box_w, 480-25),
+            color32u8(45 / 2, 50 / 2, 100 / 2, 230),
             BLEND_MODE_ALPHA
           );
+
+          ui_cursor_x_left = box_x + border_left;
         }
         // Render_Score
         // Draw score and other stats like attack power or speed or something
         {
-            auto font = resources->get_font(MENU_FONT_COLOR_WHITE);
-            auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
-            auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("Score: %d", state->current_score)));
+          auto font = resources->get_font(MENU_FONT_COLOR_WHITE);
+          auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
+          auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("SCORE: %d", state->current_score)));
 
-            // show scoring notifications (for interesting scoring reasons like picking up points or killing an enemy)
-            // you'll gradually accumulate score just from surviving on a map...
-            // NOTE: hitmarker scores are rendered on the game layer.
-            {
-                for (s32 index = 0; index < state->score_notifications.size; ++index) {
-                    auto& s = state->score_notifications[index];
-                    auto score_text =
-                        string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("%d", s.additional_score)));
-                    s.lifetime.update(dt);
+          // show scoring notifications (for interesting scoring reasons like picking up points or killing an enemy)
+          // you'll gradually accumulate score just from surviving on a map...
+          // NOTE: hitmarker scores are rendered on the game layer.
+          {
+            for (s32 index = 0; index < state->score_notifications.size; ++index) {
+              auto& s = state->score_notifications[index];
+              auto score_text =
+                string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("%d", s.additional_score)));
+              s.lifetime.update(dt);
 
-                    if (s.lifetime.triggered()) {
-                        state->score_notifications.pop_and_swap(index);
-                        continue;
-                    }
+              if (s.lifetime.triggered()) {
+                state->score_notifications.pop_and_swap(index);
+                continue;
+              }
 
-                    render_commands_push_text(ui_render_commands,
-                                              font1,
-                                              2,
-                                              V2(play_area_x+play_area_width + 45 + font_cache_text_width(font, string_literal("Score: "), 2),
-                                                 45 + normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
-                                              score_text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
-                }
+              render_commands_push_text(ui_render_commands,
+                font1,
+                2,
+                V2(ui_cursor_x_left + 25 + font_cache_text_width(font, string_literal("SCORE: "), 2),
+                  45 + normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
+                score_text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
+          }
 
-            render_commands_push_text(ui_render_commands, font, 2, V2(play_area_x+play_area_width + 40, 50), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+          render_commands_push_text(
+            ui_render_commands, 
+            font, 
+            2, 
+            V2(ui_cursor_x_left + 20, ui_cursor_y),
+            text, 
+            color32f32(1, 1, 1, 1), 
+            BLEND_MODE_ALPHA
+          );
+          ui_cursor_y += 30;
         }
         // Render_Time
         {
-            auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
-            auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
-            s32 hours = 0;
-            s32 minutes = 0;
-            s32 seconds = 0;
-            {
-                seconds = (s32)state->current_stage_timer % 60;
-                minutes = (s32)state->current_stage_timer / 60;
-                hours   = minutes / 60;
-            }
-            auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("Time %02d:%02d:%02d", hours, minutes, seconds)));
-            render_commands_push_text(ui_render_commands, font, 2, V2(play_area_x+play_area_width + 40, 80), text, color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
+          auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
+          auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
+          s32 hours = 0;
+          s32 minutes = 0;
+          s32 seconds = 0;
+          {
+            seconds = (s32)state->current_stage_timer % 60;
+            minutes = (s32)state->current_stage_timer / 60;
+            hours = minutes / 60;
+          }
+          auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("TIME: %02d:%02d:%02d", hours, minutes, seconds)));
+          render_commands_push_text(
+            ui_render_commands, 
+            font, 
+            2, 
+            V2(ui_cursor_x_left + 20, ui_cursor_y),
+            text, 
+            color32f32(1, 1, 1, 1), 
+            BLEND_MODE_ALPHA
+          );
+          ui_cursor_y += 30;
         }
 
         // Render_Lives
         {
-            auto font                    = resources->get_font(MENU_FONT_COLOR_LIME);
-            f32  lives_widget_position_x = (play_area_x + play_area_width + 40);
-            V2   lives_widget_position   = V2(lives_widget_position_x, 150);
-            render_commands_push_text(ui_render_commands, font, 2, V2(lives_widget_position_x, 120), string_literal("LIVES"), color32f32(1,1,1,1), BLEND_MODE_ALPHA); 
-            for (unsigned index = 0; index < MAX_TRIES_ALLOWED; ++index) {
-                if (index && (index % 5) == 0) {
-                    lives_widget_position.y += 36;
-                    lives_widget_position.x = lives_widget_position_x;
-                }
-
-                auto destination_rect =
-                    rectangle_f32(
-                        lives_widget_position.x,
-                        lives_widget_position.y + sinf(Global_Engine()->global_elapsed_time) * 3,
-                        32,
-                        32
-                    );
-
-                auto modulation = color32f32(1, 1, 1, 1);
-                auto image      = resources->ui_hp_icons[UI_HP_ICON_TYPE_LIVING];
-
-                if ((index+1) > state->tries) {
-                    image = resources->ui_hp_icons[UI_HP_ICON_TYPE_DEAD];
-                }
-
-                if ((index+1) > state->max_tries) {
-                    modulation = color32f32(0.15f, 0.15f, 0.15f, 1);
-                }
-
-                auto image_buffer = graphics_assets_get_image_by_id(&resources->graphics_assets, image);
-
-                render_commands_push_image_ext2(
-                    ui_render_commands,
-                    image_buffer,
-                    destination_rect,
-                    RECTANGLE_F32_NULL,
-                    modulation,
-                    V2(0, 0),
-                    0,
-                    0,
-                    NO_FLAGS,
-                    BLEND_MODE_ALPHA
-                );
-                lives_widget_position.x += 35;
+          auto font = resources->get_font(MENU_FONT_COLOR_LIME);
+          f32  lives_widget_position_x = (ui_cursor_x_left + 20);
+          render_commands_push_text(
+            ui_render_commands, 
+            font, 
+            2, 
+            V2(lives_widget_position_x, ui_cursor_y), 
+            string_literal("LIVES"), 
+            color32f32(1, 1, 1, 1), 
+            BLEND_MODE_ALPHA
+          );
+          ui_cursor_y += 30;
+          V2   lives_widget_position = V2(lives_widget_position_x, ui_cursor_y);
+          for (unsigned index = 0; index < MAX_TRIES_ALLOWED; ++index) {
+            if (index && (index % 5) == 0) {
+              lives_widget_position.y += 36;
+              lives_widget_position.x = lives_widget_position_x;
             }
+
+            auto destination_rect =
+              rectangle_f32(
+                lives_widget_position.x,
+                lives_widget_position.y + sinf(Global_Engine()->global_elapsed_time) * 3,
+                32,
+                32
+              );
+
+            auto modulation = color32f32(1, 1, 1, 1);
+            auto image = resources->ui_hp_icons[UI_HP_ICON_TYPE_LIVING];
+
+            if ((index + 1) > state->tries) {
+              image = resources->ui_hp_icons[UI_HP_ICON_TYPE_DEAD];
+            }
+
+            if ((index + 1) > state->max_tries) {
+              modulation = color32f32(0.15f, 0.15f, 0.15f, 1);
+            }
+
+            auto image_buffer = graphics_assets_get_image_by_id(&resources->graphics_assets, image);
+
+            render_commands_push_image_ext2(
+              ui_render_commands,
+              image_buffer,
+              destination_rect,
+              RECTANGLE_F32_NULL,
+              modulation,
+              V2(0, 0),
+              0,
+              0,
+              NO_FLAGS,
+              BLEND_MODE_ALPHA
+            );
+            lives_widget_position.x += 35;
+          }
+          ui_cursor_y = lives_widget_position.y + 36 + 15;
+        }
+
+        // Render Burst Meter
+        {
+          auto font = resources->get_font(MENU_FONT_COLOR_SKYBLUE);
+          f32 widget_x = ui_cursor_x_left + 20;
+          f32 bar_max_width = 165;
+          f32 player_charge_percentage = (state->player.burst_charge / PLAYER_BURST_CHARGE_CAPACITY);
+
+          render_commands_push_text(
+            ui_render_commands,
+            font,
+            2,
+            V2(widget_x, ui_cursor_y),
+            string_literal("BURST CHARGE"),
+            color32f32(1, 1, 1, 1),
+            BLEND_MODE_ALPHA
+          );
+          ui_cursor_y += 25;
+          render_commands_push_quad(
+            ui_render_commands,
+            rectangle_f32(widget_x, ui_cursor_y, bar_max_width, 15),
+            color32u8(12,19,12,255),
+            BLEND_MODE_ALPHA
+          );
+          render_commands_push_quad(
+            ui_render_commands,
+            rectangle_f32(widget_x, ui_cursor_y, bar_max_width * (player_charge_percentage), 15),
+            color32u8(200, 200, 222, 255),
+            BLEND_MODE_ALPHA
+          );
+          ui_cursor_y += 20;
         }
 
         // Render Boss HP
         {
-            state->boss_health_displays.position = V2(play_area_x + play_area_width + 55, 200);
-            state->boss_health_displays.update(this->state, dt);
-            state->boss_health_displays.render(ui_render_commands, this->state);
+          state->boss_health_displays.position = V2(ui_cursor_x_left + 25, ui_cursor_y);
+          state->boss_health_displays.update(this->state, dt);
+          state->boss_health_displays.render(ui_render_commands, this->state);
+          ui_cursor_y += state->boss_health_displays.get_pixel_height();
         }
 
         // Replay_Demo_UI
         if (state->recording.in_playback && this->state->ui_state == UI_STATE_INACTIVE) {
-            auto& viewer_ui = state->demo_viewer;
-            f32 y = play_area_height-180;
+          auto& viewer_ui = state->demo_viewer;
+          //f32 y = play_area_height - 180;
+          f32 y = ui_cursor_y;
 
-            auto media_button_string =
-                (viewer_ui.paused) ?
-                string_literal("[PLAY]") :
-                string_literal("[PAUSE]");
+          auto media_button_string =
+            (viewer_ui.paused) ?
+            string_literal("[PLAY]") :
+            string_literal("[PAUSE]");
 
-            GameUI::set_ui_id(0);
-            GameUI::begin_frame(ui_render_commands, &resources->graphics_assets);
-            GameUI::set_wobbly_contribution(1.0f);
-            if (GameUI::button(V2(play_area_x+play_area_width + 20, y), string_literal("[RESTART]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-                // partial clean up of resources...
-                state->unload_all_script_loaded_resources(this->state, this->state->resources);
-                state->prng = state->recording.old_prng;
-                state->recording.playback_frame_index = 0;
-                state->recording.frames_run           = 0;
-                reset_stage_simulation_state();
-            }
-            y += 30;
+          GameUI::set_ui_id(0);
+          GameUI::begin_frame(ui_render_commands, &resources->graphics_assets);
+          GameUI::set_wobbly_contribution(1.0f);
+          if (GameUI::button(V2(ui_cursor_x_left + 20, y), string_literal("[RESTART]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            // partial clean up of resources...
+            state->unload_all_script_loaded_resources(this->state, this->state->resources);
+            state->prng = state->recording.old_prng;
+            state->recording.playback_frame_index = 0;
+            state->recording.frames_run = 0;
+            reset_stage_simulation_state();
+          }
+          y += 30;
 #ifndef RELEASE
-            if (GameUI::button(V2(play_area_x+play_area_width + 20, y), string_literal("[TO END]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-                viewer_ui.arbitrary_frame_visit = true;
-                simulate_game_frames_until(state->recording.frame_count);
-                viewer_ui.arbitrary_frame_visit = false;
-                viewer_ui.paused = true;
-            }
-            y += 30;
+          if (GameUI::button(V2(ui_cursor_x_left + 20, y), string_literal("[TO END]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            viewer_ui.arbitrary_frame_visit = true;
+            simulate_game_frames_until(state->recording.frame_count);
+            viewer_ui.arbitrary_frame_visit = false;
+            viewer_ui.paused = true;
+          }
+          y += 30;
 #endif
-            if (GameUI::button(V2(play_area_x+play_area_width + 20, y), media_button_string, color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-                viewer_ui.paused ^= 1;
+          if (GameUI::button(V2(ui_cursor_x_left + 20, y), media_button_string, color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            viewer_ui.paused ^= 1;
+          }
+          y += 30;
+          if (GameUI::button(V2(ui_cursor_x_left + 20, y), string_from_cstring(format_temp("[TIMESCALE %f]", replay_timescale_choices[viewer_ui.timescale_index])), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            viewer_ui.timescale_index += 1;
+            if (viewer_ui.timescale_index >= array_count(replay_timescale_choices)) {
+              viewer_ui.timescale_index = 0;
             }
-            y += 30;
-            if (GameUI::button(V2(play_area_x+play_area_width + 20, y), string_from_cstring(format_temp("[TIMESCALE %f]", replay_timescale_choices[viewer_ui.timescale_index])), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-                viewer_ui.timescale_index += 1;
-                if (viewer_ui.timescale_index >= array_count(replay_timescale_choices)) {
-                    viewer_ui.timescale_index = 0;
-                }
-            }
-            y += 30;
-            GameUI::label(V2(play_area_x+play_area_width + 20, y), string_from_cstring(format_temp("FRAME %d/%d", state->recording.playback_frame_index+1, state->recording.frame_count)), color32f32(1, 1, 1, 1), 2);
-            y += 30;
+          }
+          y += 30;
+          GameUI::label(V2(play_area_x + play_area_width + 20, y), string_from_cstring(format_temp("FRAME %d/%d", state->recording.playback_frame_index + 1, state->recording.frame_count)), color32f32(1, 1, 1, 1), 2);
+          y += 30;
 #ifndef RELEASE
-            if (viewer_ui.paused) {
-                int  desired_frame   = state->recording.playback_frame_index;
-                bool change_to_frame = false;
+          if (viewer_ui.paused) {
+            int  desired_frame = state->recording.playback_frame_index;
+            bool change_to_frame = false;
 
 
-                f32 width_of_biggest_button = font_cache_text_width(resources->get_font(MENU_FONT_COLOR_GOLD), string_literal("[-5]"), 2) * 1.2;
-                if (GameUI::button(V2(play_area_x+play_area_width + 20 + width_of_biggest_button * 0, y), string_literal("[-]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-                    desired_frame -= 1;
-                    change_to_frame = true;
-                }
-                if (GameUI::button(V2(play_area_x+play_area_width + 20 + width_of_biggest_button * 1, y), string_literal("[-5]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-                    desired_frame -= 5;
-                    change_to_frame = true;
-                }
-                if (GameUI::button(V2(play_area_x+play_area_width + 20 + width_of_biggest_button * 2, y), string_literal("[+5]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-                    desired_frame += 5;
-                    change_to_frame = true;
-                }
-                if (GameUI::button(V2(play_area_x+play_area_width + 20 + width_of_biggest_button * 3, y), string_literal("[+]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
-                    desired_frame += 1;
-                    change_to_frame = true;
-                }
-
-                if (change_to_frame) {
-                    viewer_ui.arbitrary_frame_visit = true;
-                    simulate_game_frames_until(desired_frame);
-                    viewer_ui.arbitrary_frame_visit = false;
-                }
+            f32 width_of_biggest_button = font_cache_text_width(resources->get_font(MENU_FONT_COLOR_GOLD), string_literal("[-5]"), 2) * 1.2;
+            if (GameUI::button(V2(ui_cursor_x_left + 20 + width_of_biggest_button * 0, y), string_literal("[-]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+              desired_frame -= 1;
+              change_to_frame = true;
             }
+            if (GameUI::button(V2(ui_cursor_x_left + 20 + width_of_biggest_button * 1, y), string_literal("[-5]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+              desired_frame -= 5;
+              change_to_frame = true;
+            }
+            if (GameUI::button(V2(ui_cursor_x_left + 20 + width_of_biggest_button * 2, y), string_literal("[+5]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+              desired_frame += 5;
+              change_to_frame = true;
+            }
+            if (GameUI::button(V2(ui_cursor_x_left + 20 + width_of_biggest_button * 3, y), string_literal("[+]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+              desired_frame += 1;
+              change_to_frame = true;
+            }
+
+            if (change_to_frame) {
+              viewer_ui.arbitrary_frame_visit = true;
+              simulate_game_frames_until(desired_frame);
+              viewer_ui.arbitrary_frame_visit = false;
+            }
+          }
 #endif
-            GameUI::end_frame();
-            GameUI::update(dt);
+          GameUI::end_frame();
+          GameUI::update(dt);
         }
+      }
     }
-
     // Rendering Dialogue UI
     bool in_conversation = this->state->dialogue_state.in_conversation;
 
@@ -4474,7 +4551,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
         // Special case frame simulation
         if (state->recording.in_playback) {
-            timescale = replay_timescale_choices[state->demo_viewer.timescale_index];
+            timescale *= replay_timescale_choices[state->demo_viewer.timescale_index];
             if (state->demo_viewer.paused) {
                 simulate_frame = false;
             }
@@ -5875,6 +5952,11 @@ local void render_boss_health_bar(
 V2 Boss_Healthbar_Displays::element_position_for(s32 idx) {
     return V2(0, idx * BOSS_HEALTHBAR_DISPLAY_RADIUS * 2 * 1.15);
 }
+
+f32 Boss_Healthbar_Displays::get_pixel_height(void) {
+  return displays.size * BOSS_HEALTHBAR_DISPLAY_RADIUS * 2 * 1.15;
+}
+
 void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
     for (s32 healthbar_index = 0; healthbar_index < displays.size; ++healthbar_index) {
         auto& display = displays[healthbar_index];
@@ -5991,9 +6073,9 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
             rectangle_f32(position.x, position.y, 30, 30), color32u8(0, 0, 255, 128), BLEND_MODE_ALPHA);
     }
 
-    for (s32 healthbar_index = 0; healthbar_index < displays.size; ++healthbar_index) {
+    for (s32 healthbar_index = 0; healthbar_index < 3; ++healthbar_index) { // todo fix.
         auto& display = displays[healthbar_index];
-
+        V2 element_position = element_position_for(healthbar_index);
         Enemy_Entity* e = state->gameplay_data.lookup_enemy(display.entity_uid);
         f32 percentage = 0.0f;
         string name = string_from_cstring(display.bossnamebuffer);
@@ -6004,11 +6086,11 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
                 &Global_Engine()->scratch_arena,
                 string_from_cstring(format_temp("%d/%d", e->hp, e->max_hp))
             );
-        } ;
+        }
 
         render_boss_health_bar(
             ui_commands,
-            position + display.position,
+            position + element_position,
             percentage,
             hp,
             name,

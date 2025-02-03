@@ -356,6 +356,7 @@ struct Boss_Healthbar_Displays {
     void render(struct render_commands* ui_commands, Game_State* state);
 
     V2 element_position_for(s32 idx);
+    f32 get_pixel_height(void);
 };
 
 /*
