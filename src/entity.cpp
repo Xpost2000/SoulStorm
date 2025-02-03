@@ -843,7 +843,7 @@ void Player::handle_bomb_usage(Game_State* state, u32 bomb_pattern_id) {
 
     switch (bomb_pattern_id) {
         case BOMB_PATTERN_DEFAULT: {
-            if (gameplay_data.tries <= 1) {
+            if (gameplay_data.tries < 1) {
                 return;
             }
 
@@ -932,6 +932,20 @@ void Player::fire_weapon(Game_State* state, u32 attack_pattern_id) {
             unimplemented("ATTACK_PATTERN_EXTRA3");
         } break;
     }
+}
+
+// TODO(jerry): for now just to not have zero days...
+void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
+  if (burst_charge < PLAYER_BURST_CHARGE_CAPACITY) {
+    f32 charge_speed = 25;
+    if (under_focus) { // eh maybe change the way this works?
+      charge_speed = 35;
+    }
+    burst_charge += dt * charge_speed;
+  }
+  else {
+    burst_charge = PLAYER_BURST_CHARGE_CAPACITY;
+  }
 }
 
 void Player::update(Game_State* state, f32 dt) {
@@ -1034,6 +1048,8 @@ void Player::update(Game_State* state, f32 dt) {
             sprite_frame_end
         );
     }
+
+    handle_burst_charging_behavior(state, dt);
 
     if (firing) {
         if (attack()) {

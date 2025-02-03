@@ -27,6 +27,7 @@
 #define GRAZING_SCORE_AWARD_DELAY    (0.050f)
 #define GRAZING_DEFAULT_SCORE_AWARD  (100)
 #define PICKUP_ENTITY_DEFAULT_LIFETIME (7.4f)
+#define PLAYER_BURST_CHARGE_CAPACITY   (100.0f)
 
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
 #define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.5f)
@@ -385,12 +386,14 @@ struct Player : public Entity {
     void update(Game_State* state, f32 dt);
     s32  currently_grazing(Game_State* state);
     void handle_grazing_behavior(Game_State* state, f32 dt);
+    void handle_burst_charging_behavior(Game_State* state, f32 dt);
     f32  get_grazing_score_modifier(s32 amount);
 
     f32 grazing_award_timer = 0.0f;
     f32 grazing_award_score_pickup_timer = 0.0f;
     f32 grazing_delay       = PLAYER_DEFAULT_GRAZING_DELAY;
     f32 time_spent_grazing  = 0.0f;
+    f32 burst_charge = 0.0f;
 
     // a focused character will be slower and shoot 'harder' and faster.
     bool under_focus = false;
