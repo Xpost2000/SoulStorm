@@ -936,16 +936,14 @@ void Player::fire_weapon(Game_State* state, u32 attack_pattern_id) {
 
 // TODO(jerry): for now just to not have zero days...
 void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
-  if (burst_charge < PLAYER_BURST_CHARGE_CAPACITY) {
+    f32 drain_speed = 15;
     f32 charge_speed = 25;
-    if (under_focus) { // eh maybe change the way this works?
-      charge_speed = 35;
+
+    if (under_focus) {
+        burst_charge -= dt * drain_speed;
+    } else {
+        burst_charge += dt * charge_speed;
     }
-    burst_charge += dt * charge_speed;
-  }
-  else {
-    burst_charge = PLAYER_BURST_CHARGE_CAPACITY;
-  }
 }
 
 void Player::update(Game_State* state, f32 dt) {
@@ -1062,6 +1060,10 @@ void Player::update(Game_State* state, f32 dt) {
     if (use_bomb) {
         state->gameplay_data.queue_bomb_use = true;
     }
+
+    burst_charge = clamp<f32>(
+        burst_charge, 0.0f, PLAYER_BURST_CHARGE_CAPACITY
+    );
 }
 
 // BulletEntity
