@@ -378,6 +378,8 @@ struct Laser_Hazard {
 // NOTE: for slightly different player types, I might need to rework some player behaviors...
 //       This was not totally planned for, but I might just keep only one player type so I can actually
 //       meet my arbitrary deadline.
+int get_burst_mode_rank_count(void);
+
 struct Player : public Entity {
     // I did have plans for slightly different player types to make it interesting
     // but I'll see about that later.
@@ -394,6 +396,12 @@ struct Player : public Entity {
     f32 grazing_delay       = PLAYER_DEFAULT_GRAZING_DELAY;
     f32 time_spent_grazing  = 0.0f;
     f32 burst_charge = 0.0f;
+
+    f32 drain_speed = 0.0f;
+
+    // TODO(jerry):
+    // total burst charge drainage causes delayed recharging (unless it's a bomb)
+    // and disabling of all abilities until reaching tier 2 again...
 
     // a focused character will be slower and shoot 'harder' and faster.
     bool under_focus = false;

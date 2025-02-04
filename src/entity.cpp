@@ -837,42 +837,130 @@ f32 Player::get_grazing_score_modifier(s32 amount) {
     return base;
 }
 
-void Player::handle_bomb_usage(Game_State* state, u32 bomb_pattern_id) {
-    auto& gameplay_data = state->gameplay_data;
-    auto  resources     = state->resources;
 
-    switch (bomb_pattern_id) {
-        case BOMB_PATTERN_DEFAULT: {
-            if (gameplay_data.tries < 1) {
-                return;
-            }
+typedef void (*Burst_Fire)(Player* player, Game_State* state, u32 _unused);
+typedef bool (*Burst_Bomb)(Player* player, Game_State* state, u32 _unused);
+
+struct Player_Burst_Action {
+  Burst_Fire firing;
+  Burst_Bomb bomb;
+};
+
+void player_burst_fire_focus_tier0(Player* player, Game_State* state, u32 _unused);
+bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unused);
+bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _unused);
+
+// NOTE(jerry): ranks are evenly divided for now!
+local Player_Burst_Action g_player_burst_actions[] = {
+    {
+        player_burst_fire_focus_tier0,
+        //player_burst_bomb_focus_bkg_clear,
+         player_burst_bomb_focus_tier0,
+    }, // TIER 0, no bomb, default focus attack.
+};
+
+int get_burst_mode_rank_count(void) {
+  return array_count(g_player_burst_actions);
+}
+
+void player_burst_fire_focus_tier0(Player* player, Game_State* state, u32 _unused) {
+  auto resources = state->resources;
+  player->firing_cooldown = (DEFAULT_FIRING_COOLDOWN / 2);
+  state->set_led_target_color_anim(
+    color32u8(255, 0, 0, 255),
+    DEFAULT_FIRING_COOLDOWN / 4,
+    false,
+    true
+  );
+  Audio::play(
+    resources->random_attack_sound(
+      &state->gameplay_data.prng
+    )
+  );
+  controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
+  spawn_bullet_arc_pattern1(
+    state,
+    player->position,
+    3,
+    15,
+    V2(5, 5),
+    V2(0, -1),
+    1000.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_BLUE_DISK
+  );
+
+  player->drain_speed = 28;
+}
+
+bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unused) {
+  // tier0 has no bomb.
+  return false;
+}
+
+bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _unused) {
+  if (state->gameplay_data.tries < 1) {
+    return false;
+  }
+
+  auto resources = state->resources;
 
 #if 0
-            // NOTE(jerry):
-            /*
-             * I do not personally think this is a good idea because killing enemies would
-             * break the level flow in a detrimental way...
-             */
-            state->convert_enemies_to_score_pickups();
+  // NOTE(jerry):
+  /*
+   * I do not personally think this is a good idea because killing enemies would
+   * break the level flow in a detrimental way...
+   */
+  state->convert_enemies_to_score_pickups();
 #endif
-            state->convert_bullets_to_score_pickups();
-            gameplay_data.notify_score(5000, true);
-            state->set_led_target_color_anim_force(color32u8(255, 165, 0, 255), 0.08, false, true);
-            Audio::play(resources->random_hit_sound(&gameplay_data.prng));
-            controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
-            camera_traumatize(&gameplay_data.main_camera, 0.5f);
+  state->convert_bullets_to_score_pickups();
+  state->gameplay_data.notify_score(5000, true);
+  state->set_led_target_color_anim_force(color32u8(255, 165, 0, 255), 0.08, false, true);
+  Audio::play(resources->random_hit_sound(&state->gameplay_data.prng));
+  controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
+  camera_traumatize(&state->gameplay_data.main_camera, 0.5f);
 
-            gameplay_data.remove_life();
-        } break;
-        case BOMB_PATTERN_EXTRA1: {
-            unimplemented("BOMB_PATTERN_EXTRA1");
-        } break;
-        case BOMB_PATTERN_EXTRA2: {
-            unimplemented("BOMB_PATTERN_EXTRA2");
-        } break;
-        case BOMB_PATTERN_EXTRA3: {
-            unimplemented("BOMB_PATTERN_EXTRA3");
-        } break;
+  state->gameplay_data.remove_life();
+  return true;
+}
+
+Player_Burst_Action* get_player_burst_action_set(Player* player) {
+  int rank_count = get_burst_mode_rank_count();
+  int per_rank = ((int)PLAYER_BURST_CHARGE_CAPACITY / rank_count);
+  int tier_rank = (int)floorf(player->burst_charge / per_rank);
+  tier_rank = clamp<int>(tier_rank, 0, rank_count);
+  if (tier_rank < 0) tier_rank = 0;
+  return g_player_burst_actions + tier_rank;
+}
+
+
+void Player::handle_bomb_usage(Game_State* state, u32 bomb_pattern_id) {
+    if (under_focus) {
+        auto& gameplay_data = state->gameplay_data;
+        auto  resources     = state->resources;
+        auto action_set = get_player_burst_action_set(this);
+
+        bool successful = false;
+        switch (bomb_pattern_id) {
+            case BOMB_PATTERN_DEFAULT: {
+                successful = action_set->bomb(this, state, bomb_pattern_id);
+            } break;
+            case BOMB_PATTERN_EXTRA1: {
+                unimplemented("BOMB_PATTERN_EXTRA1");
+            } break;
+            case BOMB_PATTERN_EXTRA2: {
+                unimplemented("BOMB_PATTERN_EXTRA2");
+            } break;
+            case BOMB_PATTERN_EXTRA3: {
+                unimplemented("BOMB_PATTERN_EXTRA3");
+            } break;
+        }
+
+        if (successful) {
+            burst_charge = 0.0f; // TODO(jerry): add a cooldown.
+        }
+    } else {
+        // it is no longer to use the bomb when not under focus.
     }
 }
 
@@ -880,34 +968,26 @@ void Player::fire_weapon(Game_State* state, u32 attack_pattern_id) {
     auto resources = state->resources;
     switch (attack_pattern_id) {
         case ATTACK_PATTERN_DEFAULT: { // Default Attack Pattern
-            firing_cooldown = (under_focus) ? (DEFAULT_FIRING_COOLDOWN/2) : DEFAULT_FIRING_COOLDOWN;
+            auto action_set = get_player_burst_action_set(this);
 
-            state->set_led_target_color_anim(
-                color32u8(255, 0, 0, 255),
-                DEFAULT_FIRING_COOLDOWN/4,
-                false,
-                true
-            );
-            Audio::play(
-                resources->random_attack_sound(
-                    &state->gameplay_data.prng
-                )
-            );
-
-            controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
             if (under_focus) {
-                spawn_bullet_arc_pattern1(
-                    state,
-                    position,
-                    3,
-                    15,
-                    V2(5, 5),
-                    V2(0, -1),
-                    1000.0f,
-                    BULLET_SOURCE_PLAYER,
-                    PROJECTILE_SPRITE_BLUE_DISK
-                );
+                action_set->firing(this, state, attack_pattern_id);
             } else {
+                firing_cooldown = (under_focus) ? (DEFAULT_FIRING_COOLDOWN/2) : DEFAULT_FIRING_COOLDOWN;
+
+                state->set_led_target_color_anim(
+                    color32u8(255, 0, 0, 255),
+                    DEFAULT_FIRING_COOLDOWN/4,
+                    false,
+                    true
+                );
+                Audio::play(
+                    resources->random_attack_sound(
+                        &state->gameplay_data.prng
+                    )
+                );
+
+                controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
                 // spawn_bullet_line_pattern1(state, position, 1, 20.0f, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
                 spawn_bullet_arc_pattern1(
                     state,
@@ -936,7 +1016,6 @@ void Player::fire_weapon(Game_State* state, u32 attack_pattern_id) {
 
 // TODO(jerry): for now just to not have zero days...
 void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
-    f32 drain_speed = 15;
     f32 charge_speed = 25;
 
     if (under_focus) {
@@ -944,6 +1023,8 @@ void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
     } else {
         burst_charge += dt * charge_speed;
     }
+
+    drain_speed = 18;
 }
 
 void Player::update(Game_State* state, f32 dt) {
