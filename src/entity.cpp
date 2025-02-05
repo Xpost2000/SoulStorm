@@ -847,16 +847,33 @@ struct Player_Burst_Action {
 };
 
 void player_burst_fire_focus_tier0(Player* player, Game_State* state, u32 _unused);
+void player_burst_fire_focus_tier1(Player* player, Game_State* state, u32 _unused);
+void player_burst_fire_focus_tier2(Player* player, Game_State* state, u32 _unused);
+void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unused);
+
 bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unused);
+bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, u32 _unused);
+bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u32 _unused);
 bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _unused);
 
 // NOTE(jerry): ranks are evenly divided for now!
 local Player_Burst_Action g_player_burst_actions[] = {
     {
         player_burst_fire_focus_tier0,
-        //player_burst_bomb_focus_bkg_clear,
-         player_burst_bomb_focus_tier0,
+        player_burst_bomb_focus_tier0,
     }, // TIER 0, no bomb, default focus attack.
+    {
+        player_burst_fire_focus_tier1,
+        player_burst_bomb_focus_neutralizer_ray,
+    },
+    {
+        player_burst_fire_focus_tier2,
+        player_burst_bomb_focus_bullet_shield,
+    },
+    {
+        player_burst_fire_focus_tier3,
+        player_burst_bomb_focus_bkg_clear,
+    },
 };
 
 int get_burst_mode_rank_count(void) {
@@ -893,8 +910,33 @@ void player_burst_fire_focus_tier0(Player* player, Game_State* state, u32 _unuse
   player->drain_speed = 28;
 }
 
+void player_burst_fire_focus_tier1(Player* player, Game_State* state, u32 _unused) {
+  auto resources = state->resources;
+  // TODO
+}
+
+void player_burst_fire_focus_tier2(Player* player, Game_State* state, u32 _unused) {
+  auto resources = state->resources;
+  // TODO
+}
+
+void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unused) {
+  auto resources = state->resources;
+  // TODO
+}
+
 bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unused) {
   // tier0 has no bomb.
+  return false;
+}
+
+bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, u32 _unused) {
+    // TODO
+  return false;
+}
+
+bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u32 _unused) {
+    // TODO
   return false;
 }
 
