@@ -193,8 +193,8 @@ private:
      */
     void kill_all_bullets();
     void kill_all_enemies();
-    void convert_bullets_to_score_pickups(float radius=99999);
-    void convert_enemies_to_score_pickups(float radius=99999);
+    void convert_bullets_to_score_pickups(float radius=99999, float value=100);
+    void convert_enemies_to_score_pickups(float radius=99999, float value=100);
 
     void on_player_death();
     bool safely_resurrect_player();

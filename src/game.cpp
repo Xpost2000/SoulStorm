@@ -3125,7 +3125,7 @@ bool Game::safely_resurrect_player() {
 
         {
             // check nearby bullets and clear them.
-            convert_bullets_to_score_pickups(RESURRECT_NEARBY_RADIUS);
+            convert_bullets_to_score_pickups(RESURRECT_NEARBY_RADIUS, 125);
         }
     }
 
@@ -5312,7 +5312,7 @@ void Game_State::kill_all_enemies() {
     }
 }
 
-void Game_State::convert_bullets_to_score_pickups(float radius) {
+void Game_State::convert_bullets_to_score_pickups(float radius, float value) {
     auto state = &gameplay_data;
 
     for (s32 bullet_index = 0; bullet_index < state->bullets.size; ++bullet_index) {
@@ -5338,7 +5338,7 @@ void Game_State::convert_bullets_to_score_pickups(float radius) {
             this,
             b.position,
             b.position,
-            100
+            value
         );
         pe.seek_towards_player = true;
         pe.sprite.modulation = color32f32(242.0f / 255.0f, 121.0f / 255.0f, 53.0f / 255.0f, 1.0f);
@@ -5346,7 +5346,7 @@ void Game_State::convert_bullets_to_score_pickups(float radius) {
     }
 }
 
-void Game_State::convert_enemies_to_score_pickups(float radius) {
+void Game_State::convert_enemies_to_score_pickups(float radius, float value) {
     auto state = &gameplay_data;
 
     for (s32 enemy_index = 0; enemy_index < state->enemies.size; ++enemy_index) {
@@ -5369,7 +5369,7 @@ void Game_State::convert_enemies_to_score_pickups(float radius) {
             this,
             e.position,
             e.position,
-            e.score_value/2
+            e.score_value/2 + value
         );
         pe.sprite.modulation = color32f32(254.0f / 255.0f, 121.0f / 255.0f, 104.0f / 255.0f, 1.0f);
         pe.seek_towards_player = true;
@@ -5383,11 +5383,11 @@ void Game::kill_all_bullets() {
 void Game::kill_all_enemies() {
     state->kill_all_enemies();
 }
-void Game::convert_bullets_to_score_pickups(float radius) {
-    state->convert_bullets_to_score_pickups(radius);
+void Game::convert_bullets_to_score_pickups(float radius, float value) {
+    state->convert_bullets_to_score_pickups(radius, value);
 }
-void Game::convert_enemies_to_score_pickups(float radius) {
-    state->convert_enemies_to_score_pickups(radius);
+void Game::convert_enemies_to_score_pickups(float radius, float value) {
+    state->convert_enemies_to_score_pickups(radius, value);
 }
 
 void Game::handle_bomb_usage(f32 dt) {
@@ -5717,7 +5717,8 @@ void Game::handle_all_bullet_collisions(f32 dt) {
 
                 if (p.burst_absorption_shield_ability_timer > 0) {
                     convert_bullets_to_score_pickups(
-                        PLAYER_BURST_SHIELD_ABILITY_RADIUS
+                        PLAYER_BURST_SHIELD_ABILITY_RADIUS,
+                      500
                     );
                 } else {
                     if (rectangle_f32_intersect(player_rect, bullet_rect)) {

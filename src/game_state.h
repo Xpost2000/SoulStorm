@@ -841,8 +841,8 @@ struct Game_State {
 
     void kill_all_bullets();
     void kill_all_enemies();
-    void convert_bullets_to_score_pickups(float radius=9999);
-    void convert_enemies_to_score_pickups(float radius=9999);
+    void convert_bullets_to_score_pickups(float radius=9999, float value=100);
+    void convert_enemies_to_score_pickups(float radius=9999, float value=100);
 };
 
 inline static Game_State* lua_binding_get_gamestate(lua_State* L) {
