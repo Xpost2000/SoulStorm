@@ -22,7 +22,10 @@ namespace DebugUI {
     void print(string what);
     void render(struct render_commands* commands, struct font_cache* font);
     bool enabled();
+
+    // cheat settings
     bool godmode_enabled();
+    int  forced_burstmode_value(void);
 }
 
 #endif

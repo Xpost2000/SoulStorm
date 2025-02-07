@@ -18,12 +18,24 @@ local char lines[DEBUG_UI_MAX_STORED_LINES][DEBUG_UI_MAX_CHARACTER_LENGTH] = {};
 // 2 - show full
 local int show = 0;
 local bool godmode = false;
+local int  burstmode_forced = -1;
 
 namespace DebugUI {
     void cheat_controls() {
         show += Input::is_key_pressed(KEY_F1);
         if (Input::is_key_pressed(KEY_F2)) {
             godmode ^= 1;
+        }
+
+        if (Input::is_key_pressed(KEY_F3)) {
+            if (burstmode_forced == -1) {
+                burstmode_forced = 0;
+            } else {
+                burstmode_forced++;
+                if (burstmode_forced > 3) {
+                    burstmode_forced = -1;
+                }
+            }
         }
 
         if (show > 2) show = 0;
@@ -81,6 +93,10 @@ namespace DebugUI {
     bool godmode_enabled() {
         return godmode;
     }
+
+    int forced_burstmode_value(void) {
+        return burstmode_forced;
+    }
 }
 #else
 namespace DebugUI {
@@ -90,6 +106,13 @@ namespace DebugUI {
     void render(struct render_commands* commands, struct font_cache* font) {
         cheat_controls();
     }
-    bool godmode_enabled() { return godmode; }
+
+    bool godmode_enabled() {
+        return godmode;
+    }
+
+    int forced_burstmode_value(void) {
+        return burstmode_forced;
+    }
 }
 #endif
