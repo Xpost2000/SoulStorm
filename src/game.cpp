@@ -4153,6 +4153,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
       // These should also be nice images in the future.
       {
 #if 1 // NEO BKG
+        // TODO: would like this to be fade in
         auto modulation_shadow = color32u8_to_color32f32(color32u8(10 / 2, 10 / 2, 32 / 2, 255));
         {
           auto modulation = color32u8_to_color32f32(color32u8(200, 200, 200, 255));
@@ -4162,6 +4163,8 @@ GAME_SCREEN(update_and_render_game_ingame) {
           // This should be good for a decent amount of widescreen resolutions without having borders.
           int bkg_image_width = 854;
           int bkg_image_height = 480;
+
+          auto focus_mod_color = color32u8(25, 0, 50, 120);
           // left border
           {
             auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[0]);
@@ -4183,6 +4186,14 @@ GAME_SCREEN(update_and_render_game_ingame) {
               0,
               BLEND_MODE_ALPHA
             );
+
+            if (state->player.under_focus) {
+              render_commands_push_quad(
+                ui_render_commands, rectangle_f32(play_area_x - bkg_image_width, 0, bkg_image_width, bkg_image_height),
+                focus_mod_color, 
+                BLEND_MODE_ALPHA
+              );
+            }
           }
           // right border
           {
@@ -4205,6 +4216,13 @@ GAME_SCREEN(update_and_render_game_ingame) {
               DRAW_IMAGE_FLIP_HORIZONTALLY,
               BLEND_MODE_ALPHA
             );
+            if (state->player.under_focus) {
+              render_commands_push_quad(
+                ui_render_commands, rectangle_f32(play_area_x + play_area_width, 0, bkg_image_width, bkg_image_height),
+                focus_mod_color,
+                BLEND_MODE_ALPHA
+              );
+            }
           }
         }
 #else
@@ -4419,7 +4437,9 @@ GAME_SCREEN(update_and_render_game_ingame) {
           f32 widget_x = ui_cursor_x_left + 20;
           f32 bar_max_width = 165;
           f32 player_charge_percentage = (state->player.burst_charge / PLAYER_BURST_CHARGE_CAPACITY);
-
+          s32 tier_count = get_burst_mode_rank_count();
+          auto current_tier = (s32)(player_charge_percentage * tier_count);
+          f32 percent_per_tier = 1.0f / tier_count;
           // pick better colors.
           local color32u8 bar_portion_colors[] = {
             color32u8(200, 200, 222, 255),
@@ -4445,9 +4465,6 @@ GAME_SCREEN(update_and_render_game_ingame) {
             BLEND_MODE_ALPHA
           );
           {
-            s32 tier_count = get_burst_mode_rank_count();
-            auto current_tier = (s32)truncf(PLAYER_BURST_CHARGE_CAPACITY / state->player.burst_charge);
-          
             f32 x_cursor = widget_x;
             f32 slice_width = bar_max_width / tier_count;
             s32 tier_index = 0;
@@ -4461,11 +4478,12 @@ GAME_SCREEN(update_and_render_game_ingame) {
               x_cursor += slice_width;
             }
 
+            f32 currently_filled_upto_percent = (f32)tier_index/tier_count;
             render_commands_push_quad(
               ui_render_commands,
               rectangle_f32(
                 x_cursor, ui_cursor_y, 
-                slice_width * (player_charge_percentage - ((f32)tier_index/tier_count)), 
+                slice_width * (player_charge_percentage-currently_filled_upto_percent)/percent_per_tier,
                 15),
               bar_portion_colors[tier_index],
               BLEND_MODE_ALPHA

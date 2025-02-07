@@ -981,7 +981,7 @@ void player_burst_fire_focus_tier2(Player* player, Game_State* state, u32 _unuse
     PROJECTILE_SPRITE_GREEN_DISK,
     2
   );
-  player->drain_speed = 38;
+  player->drain_speed = 55;
 }
 
 void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unused) {
@@ -1025,7 +1025,7 @@ void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unuse
     PROJECTILE_SPRITE_GREEN_DISK,
     2
   );
-  player->drain_speed = 50;
+  player->drain_speed = 74;
 }
 
 bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unused) {
@@ -1161,7 +1161,7 @@ void Player::fire_weapon(Game_State* state, u32 attack_pattern_id) {
 
 // TODO(jerry): for now just to not have zero days...
 void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
-    f32 charge_speed = 22;
+    f32 charge_speed = 19; // make charging harder
 
     if (under_focus) {
         burst_charge -= dt * drain_speed;
@@ -1169,7 +1169,26 @@ void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
         burst_charge += dt * charge_speed;
     }
 
-    drain_speed = 18;
+    int tier_rank;
+    {
+      int rank_count = get_burst_mode_rank_count();
+      int per_rank = ((int)PLAYER_BURST_CHARGE_CAPACITY / rank_count);
+      tier_rank = (int)floorf(burst_charge / per_rank);
+      tier_rank = clamp<int>(tier_rank, 0, rank_count);
+      if (tier_rank < 0) tier_rank = 0;
+    }
+    switch (tier_rank) {
+    case 0:
+    case 1: {
+      drain_speed = 18;
+    } break;
+    case 2: {
+      drain_speed = 10;
+    } break;
+    case 3: {
+      drain_speed = 2; // At higher burst level, it's harder to drain because any attack will drain it massively.
+    } break;
+    }
 }
 
 void Player::update(Game_State* state, f32 dt) {
