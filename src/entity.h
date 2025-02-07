@@ -30,6 +30,11 @@
 #define PLAYER_BURST_CHARGE_CAPACITY   (100.0f)
 #define PLAYER_BURST_FLASH_T           (0.0555f)
 
+#define PLAYER_BURST_SHIELD_ABILITY_RADIUS (60)
+#define PLAYER_BURST_SHIELD_ABILITY_MAX_T (5.0f)
+#define PLAYER_BURST_RAY_ABILITY_MAX_T    (5.0f)
+#define PLAYER_BURST_BOMB_INVINCIBILITY_T (PLAYER_INVINICIBILITY_TIME * 5)
+
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
 #define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.5f)
 #define DEFAULT_FIRING_COOLDOWN (0.125)
@@ -386,6 +391,7 @@ int get_burst_mode_rank_count(void);
 struct Player : public Entity {
     // I did have plans for slightly different player types to make it interesting
     // but I'll see about that later.
+    void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
     void fire_weapon(Game_State* state, u32 attack_pattern_id);
     void handle_bomb_usage(Game_State* state, u32 bomb_pattern_id);
     void update(Game_State* state, f32 dt);
@@ -416,6 +422,9 @@ struct Player : public Entity {
     bool burst_charge_halt_regeneration = false;
     s32  burst_charge_flash_count  = 0;
     f32  burst_charge_halt_flash_t = 0.0f;
+
+    f32  burst_absorption_shield_ability_timer = 0.0f;
+    f32  burst_ray_attack_ability_timer = 0.0f;
 
     f32 drain_speed = 0.0f;
 

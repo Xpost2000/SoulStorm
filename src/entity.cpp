@@ -1,3 +1,5 @@
+// TODO(jerry): check the validity of some prng factors
+// some stuff should probably not use the regular prng gen
 #include "action_mapper.h"
 
 #include "entity.h"
@@ -319,14 +321,14 @@ s32 Entity::handle_play_area_edge_behavior(const Play_Area& play_area) {
                 bool interacted = false;
                 if (clamp_border(edge_index, play_area)) {
                     if (edge == PLAY_AREA_EDGE_DEADLY) {
-                      end_invincibility();
-                      kill();
+                        end_invincibility();
+                        kill();
                     }
                     interacted = true;
                 }
 
                 if (interacted) {
-                  return edge;
+                    return edge;
                 }
             } break;
             case PLAY_AREA_EDGE_WRAPPING: {
@@ -653,8 +655,7 @@ void Cosmetic_Pet::fire_weapon(Game_State* state) {
 
 void Cosmetic_Pet::update(Game_State* state, f32 dt) {
     if (!visible) {
-        auto& emitter = emitters[0];
-        emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
+        disable_all_particle_emitters();
         return;
     }
 
@@ -774,11 +775,47 @@ s32 Player::currently_grazing(Game_State* state) {
 // --- PLAYER_BURST_FLASH_T
 
 void Player::reset_burst_charge_status(void) {
-    burst_charge_disabled = false;
-    burst_charge_halt_regeneration = false;
-    burst_charge = 0.0f;
-    burst_charge_flash_count = 0;
-    burst_charge_halt_flash_t = 0.0f;
+    burst_charge_disabled                 = false;
+    burst_charge_halt_regeneration        = false;
+    burst_charge                          = 0.0f;
+    burst_charge_flash_count              = 0;
+    burst_charge_halt_flash_t             = 0.0f;
+    burst_absorption_shield_ability_timer = 0.0f;
+    burst_ray_attack_ability_timer        = 0.0f;
+}
+
+void Player::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
+    Entity::draw(state, render_commands, resources);
+
+    if (burst_absorption_shield_ability_timer > 0.0f) {
+        Texture_Atlas&       texture_atlas    = resources->gameplay_texture_atlas;
+        struct rectangle_f32 source_rectangle = texture_atlas.get_subrect(resources->circle);
+        struct image_buffer* image            = graphics_assets_get_image_by_id(&resources->graphics_assets, texture_atlas.atlas_image_id);
+
+        rectangle_f32 r;
+        auto pos = get_real_position();
+        float radius = PLAYER_BURST_SHIELD_ABILITY_RADIUS*0.85;
+        r.x = pos.x - radius;
+        r.y = pos.y - radius;
+        r.w = radius * 2;
+        r.h = radius * 2;
+
+        color32f32 modulation = color32f32(
+            1,1,1,
+            0.65 * burst_absorption_shield_ability_timer/(PLAYER_BURST_SHIELD_ABILITY_MAX_T*0.85));
+
+        render_commands_push_image_ext(
+            render_commands,
+            image,
+            r,
+            source_rectangle,
+            modulation,
+            V2(0.5, 0.5),
+            0.0,
+            0,
+            BLEND_MODE_ALPHA
+        );
+    }
 }
 
 void Player::disable_burst_charge_regeneration(void) {
@@ -878,8 +915,8 @@ typedef void (*Burst_Fire)(Player* player, Game_State* state, u32 _unused);
 typedef bool (*Burst_Bomb)(Player* player, Game_State* state, u32 _unused);
 
 struct Player_Burst_Action {
-  Burst_Fire firing;
-  Burst_Bomb bomb;
+    Burst_Fire firing;
+    Burst_Bomb bomb;
 };
 
 void player_burst_fire_focus_tier0(Player* player, Game_State* state, u32 _unused);
@@ -919,55 +956,55 @@ local Player_Burst_Action g_player_burst_actions[] = {
 };
 
 int get_burst_mode_rank_count(void) {
-  return array_count(g_player_burst_actions);
+    return array_count(g_player_burst_actions);
 }
 
 void player_burst_fire_focus_tier0(Player* player, Game_State* state, u32 _unused) {
-  auto resources = state->resources;
-  player->firing_cooldown = (DEFAULT_FIRING_COOLDOWN / 1.15);
-  state->set_led_target_color_anim(
-    color32u8(255, 0, 0, 255),
-    DEFAULT_FIRING_COOLDOWN / 4,
-    false,
-    true
-  );
-  Audio::play(
-    resources->random_attack_sound(
-      &state->gameplay_data.prng
-    )
-  );
-  controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
-  spawn_bullet_arc_pattern1(
-    state,
-    player->position,
-    3,
-    35/2.0f,
-    V2(5, 5),
-    V2(0, -1),
-    800.0f,
-    BULLET_SOURCE_PLAYER,
-    PROJECTILE_SPRITE_BLUE_STROBING
-  );
+    auto resources = state->resources;
+    player->firing_cooldown = (DEFAULT_FIRING_COOLDOWN / 1.15);
+    state->set_led_target_color_anim(
+        color32u8(255, 0, 0, 255),
+        DEFAULT_FIRING_COOLDOWN / 4,
+        false,
+        true
+    );
+    Audio::play(
+        resources->random_attack_sound(
+            &state->gameplay_data.prng
+        )
+    );
+    controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
+    spawn_bullet_arc_pattern1(
+        state,
+        player->position,
+        3,
+        35/2.0f,
+        V2(5, 5),
+        V2(0, -1),
+        800.0f,
+        BULLET_SOURCE_PLAYER,
+        PROJECTILE_SPRITE_BLUE_STROBING
+    );
 
-  player->drain_speed = 28;
+    player->drain_speed = 28;
 }
 
 void player_burst_fire_focus_tier1(Player* player, Game_State* state, u32 _unused) {
-  auto resources = state->resources;
-  player->firing_cooldown = (DEFAULT_FIRING_COOLDOWN / 1.5);
-  state->set_led_target_color_anim(
-    color32u8(255, 0, 0, 255),
-    DEFAULT_FIRING_COOLDOWN / 4,
-    false,
-    true
-  );
-  Audio::play(
-    resources->random_attack_sound(
-      &state->gameplay_data.prng
-    )
-  );
-  controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
-  spawn_bullet_arc_pattern1(
+    auto resources = state->resources;
+    player->firing_cooldown = (DEFAULT_FIRING_COOLDOWN / 1.5);
+    state->set_led_target_color_anim(
+        color32u8(255, 0, 0, 255),
+        DEFAULT_FIRING_COOLDOWN / 4,
+        false,
+        true
+    );
+    Audio::play(
+        resources->random_attack_sound(
+            &state->gameplay_data.prng
+        )
+    );
+    controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
+spawn_bullet_arc_pattern1(
     state,
     player->position,
     3,
@@ -1054,14 +1091,25 @@ bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, 
     player->halt_burst_charge_regeneration(
         calculate_amount_of_burst_depletion_flashes_for(3.5)
     );
-    return false;
+    player->burst_ray_attack_ability_timer = PLAYER_BURST_RAY_ABILITY_MAX_T;
+    _debugprintf("I need to be done!");
+    return true;
 }
 
 bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u32 _unused) {
     // TODO
-    state->gameplay_data.remove_life();
-    player->halt_burst_charge_regeneration(4);
-    return false;
+    if (state->gameplay_data.tries < 1) {
+        return false;
+    }
+    player->halt_burst_charge_regeneration(
+        calculate_amount_of_burst_depletion_flashes_for(1.0)
+    );
+    state->gameplay_data.notify_score(2500, true);
+    Audio::play(state->resources->random_explosion_sound(&state->gameplay_data.prng_unessential));
+    controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
+    camera_traumatize(&state->gameplay_data.main_camera, 0.5f);
+    player->burst_absorption_shield_ability_timer = PLAYER_BURST_SHIELD_ABILITY_MAX_T;
+    return true;
 }
 
 bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _unused) {
@@ -1080,9 +1128,9 @@ bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _u
     state->convert_enemies_to_score_pickups();
 #endif
     state->convert_bullets_to_score_pickups();
-    state->gameplay_data.notify_score(5000, true);
+    state->gameplay_data.notify_score(7500, true);
     state->set_led_target_color_anim_force(color32u8(255, 165, 0, 255), 0.08, false, true);
-    Audio::play(resources->random_hit_sound(&state->gameplay_data.prng));
+    Audio::play(resources->random_hit_sound(&state->gameplay_data.prng_unessential));
     controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
     camera_traumatize(&state->gameplay_data.main_camera, 0.5f);
 
@@ -1090,6 +1138,8 @@ bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _u
     player->halt_burst_charge_regeneration(
         calculate_amount_of_burst_depletion_flashes_for(2.5)
     );
+
+    player->begin_invincibility(true, PLAYER_BURST_BOMB_INVINCIBILITY_T);
     return true;
 }
 
@@ -1210,6 +1260,8 @@ void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
         if ((burstmode_cheat = DebugUI::forced_burstmode_value()) != -1) {
             enabled_cheat = true;
             burst_charge = burstmode_cheat * per_rank+1;
+            burst_charge_halt_regeneration = 0;
+            burst_charge_flash_count = 0;
         }
     }
 
@@ -1257,8 +1309,7 @@ void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
 
 void Player::update(Game_State* state, f32 dt) {
     if (!visible) {
-        auto& emitter = emitters[0];
-        emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
+        disable_all_particle_emitters();
         return;
     }
 
@@ -1322,6 +1373,39 @@ void Player::update(Game_State* state, f32 dt) {
         emitter.lifetime_variance   = V2(-0.1f, 0.7f);
         emitter.emission_max_timer = 0.045f;
         emitter.shape = particle_emit_shape_line(V2(left, bottom), V2(left + r.w*2, bottom));
+    }
+
+    // Handle Particle Emitter - Shield
+    {
+        auto& emitter = emitters[1];
+        if (burst_absorption_shield_ability_timer > 0) {
+            emitter.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE | PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
+            emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_SPARKLING_STAR]);
+            emitter.scale  = 1.0f;
+            emitter.emit_per_emission = 18;
+            emitter.lifetime = 0.65f;
+            emitter.velocity_x_variance = V2(-10, 50);
+            emitter.velocity_y_variance = V2(-10, 50);
+            emitter.acceleration_x_variance = V2(0, 10);
+            emitter.acceleration_y_variance = V2(0, 20);
+            emitter.lifetime_variance   = V2(-0.1f, 0.7f);
+            emitter.emission_max_timer = 0.020f;
+            emitter.shape = particle_emit_shape_circle(
+                get_real_position(),
+                PLAYER_BURST_SHIELD_ABILITY_RADIUS,
+                true
+            );
+            emitter.modulation = color32f32(1, 1, 0, 1);
+            // turn off original emitter for now.
+            {
+                auto& emitter = emitters[0];
+                emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
+            }
+
+        } else {
+            emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
+        }
+        burst_absorption_shield_ability_timer -= dt;
     }
 
     // Sprite animation

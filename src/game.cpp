@@ -5715,13 +5715,19 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                 auto& p = state->player;
                 auto player_rect = p.get_rect();
 
-                if (rectangle_f32_intersect(player_rect, bullet_rect)) {
-                    if (p.kill()) {
-                        spawn_game_entity_death_particle_emitter(state->particle_emitters, p.position, resources, 1);
-                        b.die = true;
-                        hit_death = true;
+                if (p.burst_absorption_shield_ability_timer > 0) {
+                    convert_bullets_to_score_pickups(
+                        PLAYER_BURST_SHIELD_ABILITY_RADIUS
+                    );
+                } else {
+                    if (rectangle_f32_intersect(player_rect, bullet_rect)) {
+                        if (p.kill()) {
+                            spawn_game_entity_death_particle_emitter(state->particle_emitters, p.position, resources, 1);
+                            b.die = true;
+                            hit_death = true;
+                        }
+                        break;
                     }
-                    break;
                 }
             }
         }
