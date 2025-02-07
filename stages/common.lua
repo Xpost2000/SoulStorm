@@ -99,12 +99,13 @@ function Make_Enemy_Burst360_1_1_2(
       exit_velocity,
       exit_acceleration,
 
-      bullet_visual
+      bullet_visual,
+      tcount
    )
    local e = enemy_new();
    enemy_set_hp(e, hp);
    enemy_set_position(e, initial_position[1], initial_position[2]);
-
+   tcount = tcount or 0;
    exit_direction = v2_normalized(exit_direction);
 
    enemy_task_lambda(
@@ -123,6 +124,8 @@ function Make_Enemy_Burst360_1_1_2(
                   v2(0.5, 0.5),
                   v2(5, 5)
                )
+               bullet_start_trail(b, tcount);
+               bullet_set_trail_modulation(b, 0.8,0.8,0.8,0.3);
                bullet_task_lambda(
                   b,
                   function(b)
@@ -172,12 +175,13 @@ function Make_Enemy_Burst360_1_1_2_EX(
 
       angle_displacement_per_frame,
 
-      bullet_visual
+      bullet_visual,
+      tcount
    )
    local e = enemy_new();
    enemy_set_hp(e, hp);
    enemy_set_position(e, initial_position[1], initial_position[2]);
-
+   tcount = tcount or 0;
    exit_direction = v2_normalized(exit_direction);
 
    enemy_task_lambda(
@@ -196,6 +200,8 @@ function Make_Enemy_Burst360_1_1_2_EX(
                   v2(0.5, 0.5),
                   v2(5, 5)
                )
+               bullet_start_trail(b, tcount);
+               bullet_set_trail_modulation(b, 0.8,0.8,0.8,0.3);
                bullet_task_lambda(
                   b,
                   function(b)
