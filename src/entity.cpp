@@ -771,6 +771,30 @@ s32 Player::currently_grazing(Game_State* state) {
     return grazed_bullets;
 }
 
+// --- PLAYER_BURST_FLASH_T
+
+void Player::reset_burst_charge_status(void) {
+    burst_charge_disabled = false;
+    burst_charge_halt_regeneration = false;
+    burst_charge = 0.0f;
+    burst_charge_flash_count = 0;
+    burst_charge_halt_flash_t = 0.0f;
+}
+
+void Player::disable_burst_charge_regeneration(void) {
+    burst_charge_disabled = true;
+}
+
+void Player::enable_burst_charge_regeneration(void) {
+    burst_charge_disabled = false;
+}
+
+void Player::halt_burst_charge_regeneration(s32 flash_count_required) {
+    burst_charge = 0.0f;
+    burst_charge_halt_regeneration = true;
+    burst_charge_flash_count = flash_count_required;
+}
+
 s32 Player::get_burst_rank(void) {
     s32 tier_count = get_burst_mode_rank_count();
     f32 charge_percentage = (burst_charge / PLAYER_BURST_CHARGE_CAPACITY);
@@ -1021,38 +1045,42 @@ bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unuse
 
 bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, u32 _unused) {
     // TODO
-  return false;
+    player->halt_burst_charge_regeneration(4);
+    return false;
 }
 
 bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u32 _unused) {
     // TODO
-  return false;
+    state->gameplay_data.remove_life();
+    player->halt_burst_charge_regeneration(4);
+    return false;
 }
 
 bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _unused) {
-  if (state->gameplay_data.tries < 1) {
-    return false;
-  }
+    if (state->gameplay_data.tries < 1) {
+        return false;
+    }
 
-  auto resources = state->resources;
+    auto resources = state->resources;
 
 #if 0
-  // NOTE(jerry):
-  /*
-   * I do not personally think this is a good idea because killing enemies would
-   * break the level flow in a detrimental way...
-   */
-  state->convert_enemies_to_score_pickups();
+    // NOTE(jerry):
+    /*
+     * I do not personally think this is a good idea because killing enemies would
+     * break the level flow in a detrimental way...
+     */
+    state->convert_enemies_to_score_pickups();
 #endif
-  state->convert_bullets_to_score_pickups();
-  state->gameplay_data.notify_score(5000, true);
-  state->set_led_target_color_anim_force(color32u8(255, 165, 0, 255), 0.08, false, true);
-  Audio::play(resources->random_hit_sound(&state->gameplay_data.prng));
-  controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
-  camera_traumatize(&state->gameplay_data.main_camera, 0.5f);
+    state->convert_bullets_to_score_pickups();
+    state->gameplay_data.notify_score(5000, true);
+    state->set_led_target_color_anim_force(color32u8(255, 165, 0, 255), 0.08, false, true);
+    Audio::play(resources->random_hit_sound(&state->gameplay_data.prng));
+    controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
+    camera_traumatize(&state->gameplay_data.main_camera, 0.5f);
 
-  state->gameplay_data.remove_life();
-  return true;
+    state->gameplay_data.remove_life();
+    player->halt_burst_charge_regeneration(12);
+    return true;
 }
 
 Player_Burst_Action* get_player_burst_action_set(Player* player) {
@@ -1088,7 +1116,7 @@ void Player::handle_bomb_usage(Game_State* state, u32 bomb_pattern_id) {
         }
 
         if (successful) {
-            burst_charge = 0.0f; // TODO(jerry): add a cooldown.
+            burst_charge = 0.0f;
         }
     } else {
         // it is no longer to use the bomb when not under focus.
@@ -1145,6 +1173,22 @@ void Player::fire_weapon(Game_State* state, u32 attack_pattern_id) {
     }
 }
 
+local f32 burst_charge_decay_rate(s32 rank) {
+    switch (rank) {
+        case 0:
+        case 1: {
+            return 18;
+        } break;
+        case 2: {
+            return 10;
+        } break;
+        case 3: {
+            return 2; // At higher burst level, it's harder to drain because any attack will drain it massively.
+        } break;
+    }
+    return 100;
+}
+
 // TODO(jerry): for now just to not have zero days...
 void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
     bool enabled_cheat = false;
@@ -1160,31 +1204,43 @@ void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
     }
 
     if (!enabled_cheat) {
-        f32 charge_speed = 19; // make charging harder
+        // NOTE(jerry):
+        // the stamina drain recovery is still allowed here
+        // as it would be problematic if disabling the entire burst charge
+        // would artificially extend your inability to act with focus.
+        if (burst_charge_halt_regeneration) {
+            if (burst_charge_flash_count) {
+                if (burst_charge_halt_flash_t < PLAYER_BURST_FLASH_T) {
+                    burst_charge_halt_flash_t += dt;
+                } else {
+                    burst_charge_halt_flash_t =  0.0f;
+                    burst_charge_flash_count  -= 1;
+                }
+            } else {
+                burst_charge_halt_regeneration = false;
+            }
+        }
 
-        if (under_focus) {
-            burst_charge -= dt * drain_speed;
+        if (burst_charge_disabled) {
+            burst_charge = 0.0f;
         } else {
-            burst_charge += dt * charge_speed;
-        }
+            if (!burst_charge_halt_regeneration) {
+                f32 charge_speed = 19; // make charging harder
 
-        int tier_rank;
-        {
-            tier_rank = (int)floorf(burst_charge / per_rank);
-            tier_rank = clamp<int>(tier_rank, 0, rank_count);
-            if (tier_rank < 0) tier_rank = 0;
-        }
-        switch (tier_rank) {
-            case 0:
-            case 1: {
-                drain_speed = 18;
-            } break;
-            case 2: {
-                drain_speed = 10;
-            } break;
-            case 3: {
-                drain_speed = 2; // At higher burst level, it's harder to drain because any attack will drain it massively.
-            } break;
+                if (under_focus) {
+                    burst_charge -= dt * drain_speed;
+                } else {
+                    burst_charge += dt * charge_speed;
+                }
+
+                int tier_rank;
+                {
+                    tier_rank = (int)floorf(burst_charge / per_rank);
+                    tier_rank = clamp<int>(tier_rank, 0, rank_count);
+                    if (tier_rank < 0) tier_rank = 0;
+                }
+                drain_speed = burst_charge_decay_rate(tier_rank);
+            }
         }
     }
 }
@@ -1206,7 +1262,13 @@ void Player::update(Game_State* state, f32 dt) {
     bool focusing = input_packet.actions & BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT);
     bool use_bomb = input_packet.actions & BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT);
 
-    under_focus = focusing;
+    // NOTE(jerry): You cannot focus if you're attempting to
+    //              recover.
+    if (!burst_charge_halt_regeneration) {
+        under_focus = focusing;
+    } else {
+        under_focus = false;
+    }
 
     V2 axes = gameplay_frame_input_packet_quantify_axes(input_packet);
     float UNIT_SPEED = ((under_focus) ? 225 : 325) * pet_data->speed_modifier;
@@ -1292,16 +1354,22 @@ void Player::update(Game_State* state, f32 dt) {
 
     handle_burst_charging_behavior(state, dt);
 
-    if (firing) {
-        if (attack()) {
-            fire_weapon(state, pet_data->attack_pattern_id);
-        }
-    } else {
-        stop_attack();
-    }
+    if (!burst_charge_halt_regeneration) {
+        if (firing) {
+            if (attack()) {
+                fire_weapon(state, pet_data->attack_pattern_id);
 
-    if (use_bomb) {
-        state->gameplay_data.queue_bomb_use = true;
+                if (f32_close_enough(burst_charge, 0.0f)) {
+                    halt_burst_charge_regeneration(8);
+                }
+            }
+        } else {
+            stop_attack();
+        }
+
+        if (use_bomb) {
+            state->gameplay_data.queue_bomb_use = true;
+        }
     }
 
     burst_charge = clamp<f32>(

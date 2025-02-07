@@ -1017,7 +1017,7 @@ void Game::reset_stage_simulation_state() {
         state->player.end_invincibility();
         state->player.grazing_award_timer              = 0.0f;
         state->player.grazing_award_score_pickup_timer = 0.0f;
-        state->player.burst_charge = 0.0f;
+        state->player.reset_burst_charge_status();
         state->player.time_spent_grazing               = 0.0f;
         state->player.under_focus                      = false;
         state->focus_tint_fade_t                       = 0.0f;

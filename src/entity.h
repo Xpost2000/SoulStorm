@@ -28,6 +28,7 @@
 #define GRAZING_DEFAULT_SCORE_AWARD  (100)
 #define PICKUP_ENTITY_DEFAULT_LIFETIME (7.4f)
 #define PLAYER_BURST_CHARGE_CAPACITY   (100.0f)
+#define PLAYER_BURST_FLASH_T           (0.0255f)
 
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
 #define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.5f)
@@ -393,11 +394,26 @@ struct Player : public Entity {
     s32  get_burst_rank(void);
     f32  get_burst_charge_percent(void);
 
+    void reset_burst_charge_status(void);
+    void disable_burst_charge_regeneration(void);
+    void enable_burst_charge_regeneration(void);
+    void halt_burst_charge_regeneration(s32 flash_count_required); // flashes are at fixed times, so this
+                                                                   // allows more precise gaging of time.
+
     f32 grazing_award_timer = 0.0f;
     f32 grazing_award_score_pickup_timer = 0.0f;
     f32 grazing_delay       = PLAYER_DEFAULT_GRAZING_DELAY;
     f32 time_spent_grazing  = 0.0f;
     f32 burst_charge = 0.0f;
+
+    // NOTE(jerry):
+    // while I appreciate "timing" based things, it doesn't
+    // seem right to do that, so I'll just do it through explicit
+    // flash counts.
+    bool burst_charge_disabled          = false; // should really be bit flags, but I'm a bit too lazy to deal with this.
+    bool burst_charge_halt_regeneration = false;
+    s32  burst_charge_flash_count  = 0;
+    f32  burst_charge_halt_flash_t = 0.0f;
 
     f32 drain_speed = 0.0f;
 
