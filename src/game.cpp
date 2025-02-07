@@ -4420,6 +4420,14 @@ GAME_SCREEN(update_and_render_game_ingame) {
           f32 bar_max_width = 165;
           f32 player_charge_percentage = (state->player.burst_charge / PLAYER_BURST_CHARGE_CAPACITY);
 
+          // pick better colors.
+          local color32u8 bar_portion_colors[] = {
+            color32u8(200, 200, 222, 255),
+            color32u8(225, 200, 200, 255),
+            color32u8(235, 140, 140, 255),
+            color32u8(255, 0, 0, 255),
+          };
+
           render_commands_push_text(
             ui_render_commands,
             font,
@@ -4436,12 +4444,14 @@ GAME_SCREEN(update_and_render_game_ingame) {
             color32u8(12,19,12,255),
             BLEND_MODE_ALPHA
           );
-          render_commands_push_quad(
-            ui_render_commands,
-            rectangle_f32(widget_x, ui_cursor_y, bar_max_width * (player_charge_percentage), 15),
-            color32u8(200, 200, 222, 255),
-            BLEND_MODE_ALPHA
-          );
+          {
+            render_commands_push_quad(
+              ui_render_commands,
+              rectangle_f32(widget_x, ui_cursor_y, bar_max_width* (player_charge_percentage), 15),
+              color32u8(200, 200, 222, 255),
+              BLEND_MODE_ALPHA
+            );
+          }
           ui_cursor_y += 20;
         }
 

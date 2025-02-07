@@ -899,7 +899,7 @@ void player_burst_fire_focus_tier0(Player* player, Game_State* state, u32 _unuse
     state,
     player->position,
     3,
-    15,
+    20,
     V2(5, 5),
     V2(0, -1),
     1000.0f,
@@ -912,17 +912,120 @@ void player_burst_fire_focus_tier0(Player* player, Game_State* state, u32 _unuse
 
 void player_burst_fire_focus_tier1(Player* player, Game_State* state, u32 _unused) {
   auto resources = state->resources;
-  // TODO
+  player->firing_cooldown = (DEFAULT_FIRING_COOLDOWN / 3);
+  state->set_led_target_color_anim(
+    color32u8(255, 0, 0, 255),
+    DEFAULT_FIRING_COOLDOWN / 4,
+    false,
+    true
+  );
+  Audio::play(
+    resources->random_attack_sound(
+      &state->gameplay_data.prng
+    )
+  );
+  controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 85);
+  spawn_bullet_arc_pattern1(
+    state,
+    player->position,
+    4,
+    15,
+    V2(5, 5),
+    V2(0, -1),
+    1055.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_BLUE_DISK
+  );
+
+  player->drain_speed = 36;
 }
 
 void player_burst_fire_focus_tier2(Player* player, Game_State* state, u32 _unused) {
   auto resources = state->resources;
-  // TODO
+  player->firing_cooldown = (DEFAULT_FIRING_COOLDOWN / 3);
+  state->set_led_target_color_anim(
+    color32u8(255, 0, 0, 255),
+    DEFAULT_FIRING_COOLDOWN / 4,
+    false,
+    true
+  );
+  Audio::play(
+    resources->random_attack_sound(
+      &state->gameplay_data.prng
+    )
+  );
+  controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 85);
+  spawn_bullet_arc_pattern2_trailed(
+    state,
+    player->position,
+    4,
+    15,
+    V2(5, 5),
+    V2(0, -1),
+    1155.0f,
+    0.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_BLUE_DISK,
+    3
+  );
+  spawn_bullet_arc_pattern2_trailed(
+    state,
+    player->position,
+    4,
+    25,
+    V2(5, 5),
+    V2(0, -1),
+    1000.0f,
+    0.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_GREEN_DISK,
+    2
+  );
+  player->drain_speed = 38;
 }
 
 void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unused) {
   auto resources = state->resources;
-  // TODO
+  player->firing_cooldown = (DEFAULT_FIRING_COOLDOWN / 4);
+  state->set_led_target_color_anim(
+    color32u8(255, 0, 0, 255),
+    DEFAULT_FIRING_COOLDOWN / 4,
+    false,
+    true
+  );
+  Audio::play(
+    resources->random_attack_sound(
+      &state->gameplay_data.prng
+    )
+  );
+  controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 85);
+  spawn_bullet_arc_pattern2_trailed(
+    state,
+    player->position,
+    6,
+    15,
+    V2(5, 5),
+    V2(0, -1),
+    1255.0f,
+    0.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_BLUE_DISK,
+    3
+  );
+  spawn_bullet_arc_pattern2_trailed(
+    state,
+    player->position,
+    8,
+    25,
+    V2(5, 5),
+    V2(0, -1),
+    1300.0f,
+    0.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_GREEN_DISK,
+    2
+  );
+  player->drain_speed = 50;
 }
 
 bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unused) {
@@ -1058,7 +1161,7 @@ void Player::fire_weapon(Game_State* state, u32 attack_pattern_id) {
 
 // TODO(jerry): for now just to not have zero days...
 void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
-    f32 charge_speed = 25;
+    f32 charge_speed = 22;
 
     if (under_focus) {
         burst_charge -= dt * drain_speed;

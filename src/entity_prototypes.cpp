@@ -180,19 +180,39 @@ void spawn_bullet_arc_pattern1(Game_State* state, V2 center, s32 how_many, s32 a
     );
 }
 
-void spawn_bullet_arc_pattern2(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, f32 distance_from_center, s32 source, s32 visual) {
-    direction = direction.normalized();
-    f32 arc_sub_length = (f32)arc_degrees / (how_many);
+void spawn_bullet_arc_pattern2_trailed(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, f32 distance_from_center, s32 source, s32 visual, s32 trailcount) {
+  direction = direction.normalized();
+  f32 arc_sub_length = (f32)arc_degrees / (how_many);
 
-    f32 direction_angle = radians_to_degrees(atan2(direction.y, direction.x));
-    for (s32 i = 0; i < how_many; ++i) {
-        f32 angle = direction_angle + arc_sub_length * (i-(how_many/2)); // adjust the center projectile to be 0 degrees
-        V2 current_arc_direction = V2_direction_from_degree(angle);
-        V2 position = center + current_arc_direction * distance_from_center;
-        state->gameplay_data.add_bullet(
-            bullet_upwards_linear(state, position, current_arc_direction, speed, visual, source)
-        );
-    }
+  f32 direction_angle = radians_to_degrees(atan2(direction.y, direction.x));
+  for (s32 i = 0; i < how_many; ++i) {
+    f32 angle = direction_angle + arc_sub_length * (i - (how_many / 2)); // adjust the center projectile to be 0 degrees
+    V2 current_arc_direction = V2_direction_from_degree(angle);
+    V2 position = center + current_arc_direction * distance_from_center;
+    auto b = bullet_upwards_linear(state, position, current_arc_direction, speed, visual, source);
+    b.trail_ghost_limit = trailcount;
+    b.trail_ghost_modulation = color32f32(0.8,0.8,0.8,1);
+    b.trail_ghost_max_alpha = 1;
+    state->gameplay_data.add_bullet(
+      b
+    );
+  }
+}
+
+void spawn_bullet_arc_pattern2(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, f32 distance_from_center, s32 source, s32 visual) {
+  spawn_bullet_arc_pattern2_trailed(
+    state, 
+    center, 
+    how_many, 
+    arc_degrees, 
+    scale, 
+    direction, 
+    speed, 
+    distance_from_center, 
+    source, 
+    visual, 
+    0
+  );
 }
 
 Enemy_Entity enemy_generic_with_task(Game_State* state, V2 position, V2 scale, jdr_duffcoroutine_fn task) {

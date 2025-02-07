@@ -48,6 +48,7 @@ void spawn_bullet_line_pattern1(Game_State* state, V2 center, s32 how_many, f32 
 void spawn_bullet_arc_pattern1(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, s32 source, s32 visual);
 // NOTE: spawns and spreads from an arc!
 void spawn_bullet_arc_pattern2(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, f32 distance_from_center, s32 source, s32 visual);
+void spawn_bullet_arc_pattern2_trailed(Game_State* state, V2 center, s32 how_many, s32 arc_degrees, V2 scale, V2 direction, f32 speed, f32 distance_from_center, s32 source, s32 visual, s32 trailcount);
 
 
 // Normal Enemy Types
