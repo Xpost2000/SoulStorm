@@ -4445,10 +4445,29 @@ GAME_SCREEN(update_and_render_game_ingame) {
             BLEND_MODE_ALPHA
           );
           {
+            s32 tier_count = get_burst_mode_rank_count();
+            auto current_tier = (s32)truncf(PLAYER_BURST_CHARGE_CAPACITY / state->player.burst_charge);
+          
+            f32 x_cursor = widget_x;
+            f32 slice_width = bar_max_width / tier_count;
+            s32 tier_index = 0;
+            for (tier_index = 0; tier_index < current_tier; ++tier_index) {
+              render_commands_push_quad(
+                ui_render_commands,
+                rectangle_f32(x_cursor, ui_cursor_y, slice_width, 15),
+                bar_portion_colors[tier_index],
+                BLEND_MODE_ALPHA
+              );
+              x_cursor += slice_width;
+            }
+
             render_commands_push_quad(
               ui_render_commands,
-              rectangle_f32(widget_x, ui_cursor_y, bar_max_width* (player_charge_percentage), 15),
-              color32u8(200, 200, 222, 255),
+              rectangle_f32(
+                x_cursor, ui_cursor_y, 
+                slice_width * (player_charge_percentage - ((f32)tier_index/tier_count)), 
+                15),
+              bar_portion_colors[tier_index],
               BLEND_MODE_ALPHA
             );
           }
