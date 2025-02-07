@@ -28,7 +28,7 @@
 #define GRAZING_DEFAULT_SCORE_AWARD  (100)
 #define PICKUP_ENTITY_DEFAULT_LIFETIME (7.4f)
 #define PLAYER_BURST_CHARGE_CAPACITY   (100.0f)
-#define PLAYER_BURST_FLASH_T           (0.0255f)
+#define PLAYER_BURST_FLASH_T           (0.0555f)
 
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
 #define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.5f)
@@ -42,6 +42,8 @@
 // This is a basic timer intended to do native timing related
 // things. Although the "game-plan" is to use Lua Coroutines to do
 // most of the nasty timing business.
+
+s32 calculate_amount_of_burst_depletion_flashes_for(f32 seconds);
 
 struct Game_State; // forward decl. Entities will need to be able to look at game_state
 struct Play_Area;

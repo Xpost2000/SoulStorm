@@ -3117,6 +3117,9 @@ bool Game::safely_resurrect_player() {
     if (worked) {
         state->gameplay_data.paused_from_death  = false;
         state->gameplay_data.remove_life();
+        state->gameplay_data.player.halt_burst_charge_regeneration(
+            calculate_amount_of_burst_depletion_flashes_for(1.285f)
+        );
         state->gameplay_data.player.begin_invincibility();
         state->gameplay_data.player.heal(1);
 
@@ -4613,30 +4616,49 @@ GAME_SCREEN(update_and_render_game_ingame) {
             color32u8(12,19,12,255),
             BLEND_MODE_ALPHA
           );
-          {
-            f32 x_cursor = widget_x;
-            f32 slice_width = bar_max_width / tier_count;
-            s32 tier_index = 0;
-            for (tier_index = 0; tier_index < current_tier; ++tier_index) {
-              render_commands_push_quad(
-                ui_render_commands,
-                rectangle_f32(x_cursor, ui_cursor_y, slice_width, 15),
-                bar_portion_colors[tier_index],
-                BLEND_MODE_ALPHA
-              );
-              x_cursor += slice_width;
-            }
 
-            f32 currently_filled_upto_percent = (f32)tier_index/tier_count;
-            render_commands_push_quad(
-              ui_render_commands,
-              rectangle_f32(
-                x_cursor, ui_cursor_y, 
-                slice_width * (player_charge_percentage-currently_filled_upto_percent)/percent_per_tier,
-                15),
-              bar_portion_colors[tier_index],
-              BLEND_MODE_ALPHA
-            );
+          if (state->player.burst_charge_halt_regeneration) {
+              f32 alpha;
+
+              if ((state->player.burst_charge_flash_count % 2) == 0) {
+                  alpha = state->player.burst_charge_halt_flash_t/(PLAYER_BURST_FLASH_T*0.8);
+              } else {
+                  alpha = 1.0 - state->player.burst_charge_halt_flash_t/(PLAYER_BURST_FLASH_T*0.8);
+              }
+
+              alpha = clamp<f32>(alpha, 0.0f, 1.0f);
+              color32u8 color = color32u8(80, 45, 220, 255 * alpha); // better color please?
+              render_commands_push_quad(
+                  ui_render_commands,
+                  rectangle_f32(widget_x, ui_cursor_y, bar_max_width, 15),
+                  color,
+                  // color32u8(12,19,12,255),
+                  BLEND_MODE_ALPHA
+              );
+          } else {
+              f32 x_cursor = widget_x;
+              f32 slice_width = bar_max_width / tier_count;
+              s32 tier_index = 0;
+              for (tier_index = 0; tier_index < current_tier; ++tier_index) {
+                  render_commands_push_quad(
+                      ui_render_commands,
+                      rectangle_f32(x_cursor, ui_cursor_y, slice_width, 15),
+                      bar_portion_colors[tier_index],
+                      BLEND_MODE_ALPHA
+                  );
+                  x_cursor += slice_width;
+              }
+
+              f32 currently_filled_upto_percent = (f32)tier_index/tier_count;
+              render_commands_push_quad(
+                  ui_render_commands,
+                  rectangle_f32(
+                      x_cursor, ui_cursor_y, 
+                      slice_width * (player_charge_percentage-currently_filled_upto_percent)/percent_per_tier,
+                      15),
+                  bar_portion_colors[tier_index],
+                  BLEND_MODE_ALPHA
+              );
           }
           ui_cursor_y += 20;
         }

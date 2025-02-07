@@ -892,6 +892,12 @@ bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, 
 bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u32 _unused);
 bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _unused);
 
+s32 calculate_amount_of_burst_depletion_flashes_for(f32 seconds)
+{
+    f32 rounded = (s32)ceilf(seconds / PLAYER_BURST_FLASH_T);
+    return (s32) rounded;
+}
+
 // NOTE(jerry): ranks are evenly divided for now!
 local Player_Burst_Action g_player_burst_actions[] = {
     {
@@ -1045,7 +1051,9 @@ bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unuse
 
 bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, u32 _unused) {
     // TODO
-    player->halt_burst_charge_regeneration(4);
+    player->halt_burst_charge_regeneration(
+        calculate_amount_of_burst_depletion_flashes_for(3.5)
+    );
     return false;
 }
 
@@ -1079,7 +1087,9 @@ bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _u
     camera_traumatize(&state->gameplay_data.main_camera, 0.5f);
 
     state->gameplay_data.remove_life();
-    player->halt_burst_charge_regeneration(12);
+    player->halt_burst_charge_regeneration(
+        calculate_amount_of_burst_depletion_flashes_for(2.5)
+    );
     return true;
 }
 
@@ -1358,10 +1368,6 @@ void Player::update(Game_State* state, f32 dt) {
         if (firing) {
             if (attack()) {
                 fire_weapon(state, pet_data->attack_pattern_id);
-
-                if (f32_close_enough(burst_charge, 0.0f)) {
-                    halt_burst_charge_regeneration(8);
-                }
             }
         } else {
             stop_attack();
@@ -1375,6 +1381,17 @@ void Player::update(Game_State* state, f32 dt) {
     burst_charge = clamp<f32>(
         burst_charge, 0.0f, PLAYER_BURST_CHARGE_CAPACITY
     );
+
+    if (!burst_charge_halt_regeneration) {
+        if (f32_close_enough(burst_charge, 0.0f)) {
+            _debugprintf("burn out!");
+            halt_burst_charge_regeneration(
+                calculate_amount_of_burst_depletion_flashes_for(
+                    4.5f
+                )
+            );
+        }
+    }
 }
 
 // BulletEntity
