@@ -979,6 +979,34 @@ int _lua_bind_player_velocity_y(lua_State* L) {
     return 0;
 }
 
+int _lua_bind_player_disable_burst_charge(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  auto e = &state->gameplay_data.player;
+  if (e) {
+    e->disable_burst_charge_regeneration();
+  }
+  return 0;
+}
+
+int _lua_bind_player_enable_burst_charge(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  auto e = &state->gameplay_data.player;
+  if (e) {
+    e->enable_burst_charge_regeneration();
+  }
+  return 0;
+}
+
+int _lua_bind_halt_burst_charge_regen(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  auto e = &state->gameplay_data.player;
+  if (e) {
+    int flashes = luaL_checkinteger(L, 0);
+    e->halt_burst_charge_regeneration(flashes);
+  }
+  return 0;
+}
+
 void bind_entity_lualib(lua_State* L) {
     /*
         NOTE: the lib is only in scalar values which isn't very good, but it's
@@ -1083,6 +1111,10 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "player_velocity_x", _lua_bind_player_velocity_x);
         lua_register(L, "player_velocity_y", _lua_bind_player_velocity_y);
         lua_register(L, "player_hp", _lua_bind_player_hp);
+        // except for these I guess...
+        lua_register(L, "disable_burst_charge", _lua_bind_player_disable_burst_charge);
+        lua_register(L, "enable_burst_charge", _lua_bind_player_enable_burst_charge);
+        lua_register(L, "halt_burst_charge_regen", _lua_bind_halt_burst_charge_regen);
 
         lua_register(L, "explosion_hazard_new", _lua_bind_explosion_hazard_new);
         lua_register(L, "laser_hazard_new", _lua_bind_laser_hazard_new);
