@@ -390,6 +390,8 @@ struct Player : public Entity {
     void handle_grazing_behavior(Game_State* state, f32 dt);
     void handle_burst_charging_behavior(Game_State* state, f32 dt);
     f32  get_grazing_score_modifier(s32 amount);
+    s32  get_burst_rank(void);
+    f32  get_burst_charge_percent(void);
 
     f32 grazing_award_timer = 0.0f;
     f32 grazing_award_score_pickup_timer = 0.0f;

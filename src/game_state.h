@@ -465,6 +465,7 @@ struct Gameplay_Data {
     bool playing_practice_mode;
     int  score_awarded_points = 0;
     f32  focus_tint_fade_t = 0.0f;
+    f32  focus_hitbox_fade_t = 0.0f;
 
     bool allow_border_switch_flashing = true; // automatic border flashing behavior
     Border_Flash_Data border_flashes[4];
@@ -564,6 +565,8 @@ struct Gameplay_Data {
     void add_scriptable_render_object(Scriptable_Render_Object ro);
     void update_and_render_all_background_scriptable_render_objects(Game_Resources* resources, struct render_commands* render_commands, f32 dt);
     void update_and_render_all_foreground_scriptable_render_objects(Game_Resources* resources, struct render_commands* render_commands, f32 dt);
+
+    void update_and_render_focus_mode_hitboxes(Game_State* state, struct render_commands* render_commands, Game_Resources* resources, f32 dt);
 
     Enemy_Entity*  lookup_enemy(u64 uid);
     Bullet* lookup_bullet(u64 uid);

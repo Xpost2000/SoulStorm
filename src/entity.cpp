@@ -771,6 +771,18 @@ s32 Player::currently_grazing(Game_State* state) {
     return grazed_bullets;
 }
 
+s32 Player::get_burst_rank(void) {
+    s32 tier_count = get_burst_mode_rank_count();
+    f32 charge_percentage = (burst_charge / PLAYER_BURST_CHARGE_CAPACITY);
+    auto current_tier = (s32)(charge_percentage * tier_count);
+    return current_tier;
+}
+
+f32 Player::get_burst_charge_percent(void) {
+    f32 charge_percentage = (burst_charge / PLAYER_BURST_CHARGE_CAPACITY);
+    return charge_percentage;
+}
+
 void Player::handle_grazing_behavior(Game_State* state, f32 dt) {
     s32 grazing = currently_grazing(state);
 

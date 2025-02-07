@@ -1021,6 +1021,7 @@ void Game::reset_stage_simulation_state() {
         state->player.time_spent_grazing               = 0.0f;
         state->player.under_focus                      = false;
         state->focus_tint_fade_t                       = 0.0f;
+        state->focus_hitbox_fade_t                     = 0.0f;
         {
             state->player.sprite   = sprite_instance(resources->player_sprite);
         }
@@ -1644,6 +1645,144 @@ void Gameplay_Data::update_and_render_all_foreground_scriptable_render_objects(G
     }
 }
 
+local void draw_outlined_box(struct render_commands* render_commands, rectangle_f32 where, union color32u8 color, f32 thickness) {
+    // Left
+    {
+        auto r = rectangle_f32(
+            where.x-thickness/2, where.y,
+            thickness, where.h
+        );
+        render_commands_push_quad_ext(
+            render_commands,
+            rectangle_f32(r.x, r.y, r.w, r.h),
+            color,
+            V2(0.5, 0.5), 0,
+            BLEND_MODE_ALPHA
+        );
+    }
+    // Right
+    {
+        auto r = rectangle_f32(
+            where.x+where.w-thickness/2, where.y,
+            thickness, where.h
+        );
+        render_commands_push_quad_ext(
+            render_commands,
+            rectangle_f32(r.x, r.y, r.w, r.h),
+            color,
+            V2(0.5, 0.5), 0,
+            BLEND_MODE_ALPHA
+        );
+    }
+    // Top
+    {
+        auto r = rectangle_f32(
+            where.x, where.y-thickness/2,
+            where.w, thickness
+        );
+        render_commands_push_quad_ext(
+            render_commands,
+            rectangle_f32(r.x, r.y, r.w, r.h),
+            color,
+            V2(0.5, 0.5), 0,
+            BLEND_MODE_ALPHA
+        );
+    }
+    // Bottom
+    {
+        auto r = rectangle_f32(
+            where.x, where.y+where.h-thickness/2,
+            where.w, thickness
+        );
+        render_commands_push_quad_ext(
+            render_commands,
+            rectangle_f32(r.x, r.y, r.w, r.h),
+            color,
+            V2(0.5, 0.5), 0,
+            BLEND_MODE_ALPHA
+        );
+    }
+}
+
+void Gameplay_Data::update_and_render_focus_mode_hitboxes(Game_State* state, struct render_commands* render_commands, Game_Resources* resources, f32 dt) {
+    /*
+      NOTE(jerry): 
+      It *would* be pretty nice to do a fancier animation than a fade in, but
+      it would be in a bad taste (and also more complicated since there's already
+      a lot of elements that are animated in code for the game...)
+    */
+
+    bool should_try_to_draw = !f32_close_enough(focus_hitbox_fade_t, 0.0f);
+    s32  burst_rank         = player.get_burst_rank();
+
+    {
+        const f32 HITBOX_FADE_T_CHARGE_MOD = 8;
+        const f32 HITBOX_FADE_T_DISCHARGE_MOD = 0.75; // very prolonged decay, since burst/focus doesn't tend to last long.
+
+        if (player.under_focus && burst_rank >= 2) {
+            focus_hitbox_fade_t += dt*HITBOX_FADE_T_CHARGE_MOD;
+        } else {
+            focus_hitbox_fade_t -= dt*HITBOX_FADE_T_DISCHARGE_MOD;
+        }
+
+        focus_hitbox_fade_t =
+            clamp<f32>(
+                focus_hitbox_fade_t,
+                0.0f, 1.0f
+            );
+    }
+
+    if (should_try_to_draw) {
+        /*
+         * TODO(jerry): perf is probably not
+         * going to be very acceptable like this,
+         * since I'm already pushing stuff due to how *relatively*
+         * complex and per-frame some of the lua code is (and it's being forced to run at 60fps!)
+         */
+        // NearbyEnemyHitboxes
+        const f32 CLOSE_ENOUGH_DISTANCE_THRESHOLD = 350; // pixels
+        const f32 CLOSE_ENOUGH_DISTANCE_ALPHA_DIV = 180; // NOTE(jerry): lower so that we have a buffer
+                                                         // zone of hard solid pixels.
+        const f32 BOX_THICKNESS = 2.0f;
+        const auto color = color32u8(255, 0, 0, focus_hitbox_fade_t*255); // is there a better color? I'd like to know.
+        /*
+         * NOTE(jerry):
+         * Squared distance doesn't work, I need a linear fade-in, and I don't know
+         * if linearizing it will look correct.
+         */
+
+        // NearbyEnemyHitboxes
+        {
+            for (s32 index = 0; index < (s32)enemies.size; ++index) {
+                auto& e        = enemies[index];
+                f32   distance = V2_distance(e.get_real_position(), player.get_real_position());
+                f32   alpha    = clamp<f32>(1.0f - (distance / CLOSE_ENOUGH_DISTANCE_ALPHA_DIV), 0.0f, 1.0f) * focus_hitbox_fade_t;
+                auto r = e.get_rect();
+                draw_outlined_box(render_commands, r, color32u8(color.r,color.g,color.b, 255*alpha), BOX_THICKNESS); 
+            }
+        }
+        // NearbyBulletHitboxes
+        {
+            for (s32 index = 0; index < (s32)bullets.size; ++index) {
+                auto& b = bullets[index];
+                if (b.source_type == BULLET_SOURCE_PLAYER) {
+                    continue;
+                }
+
+                f32   distance = V2_distance(b.get_real_position(), player.get_real_position());
+                f32   alpha    = clamp<f32>(1.0f - (distance / CLOSE_ENOUGH_DISTANCE_ALPHA_DIV), 0.0f, 1.0f) * focus_hitbox_fade_t;
+                auto r = b.get_rect();
+                draw_outlined_box(render_commands, r, color32u8(color.r,color.g,color.b, 255*alpha), BOX_THICKNESS); 
+            }
+        }
+        // PlayerHitbox
+        {
+            auto player_rectangle = player.get_rect();
+            auto r = player_rectangle;
+            draw_outlined_box(render_commands, r, color, BOX_THICKNESS); 
+        }
+    }
+}
 // End of Gameplay_Data
 
 bool Game::can_access_stage(s32 id) {
@@ -4446,9 +4585,9 @@ GAME_SCREEN(update_and_render_game_ingame) {
           auto font = resources->get_font(MENU_FONT_COLOR_SKYBLUE);
           f32 widget_x = ui_cursor_x_left + 20;
           f32 bar_max_width = 165;
-          f32 player_charge_percentage = (state->player.burst_charge / PLAYER_BURST_CHARGE_CAPACITY);
+          f32 player_charge_percentage = state->player.get_burst_charge_percent();
           s32 tier_count = get_burst_mode_rank_count();
-          auto current_tier = (s32)(player_charge_percentage * tier_count);
+          auto current_tier = state->player.get_burst_rank();
           f32 percent_per_tier = 1.0f / tier_count;
           // pick better colors.
           local color32u8 bar_portion_colors[] = {
@@ -4913,6 +5052,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
         state->particle_pool.draw(game_render_commands, resources);
         state->death_particle_pool.draw(game_render_commands, resources);
         state->stage_exit_particle_pool.draw(game_render_commands, resources);
+        state->update_and_render_focus_mode_hitboxes(this->state, game_render_commands, resources, dt);
     }
     state->update_and_render_all_foreground_scriptable_render_objects(this->state->resources, game_render_commands, dt);
 }
