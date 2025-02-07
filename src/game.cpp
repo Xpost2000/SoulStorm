@@ -1717,7 +1717,7 @@ void Gameplay_Data::update_and_render_focus_mode_hitboxes(Game_State* state, str
 
     {
         const f32 HITBOX_FADE_T_CHARGE_MOD = 8;
-        const f32 HITBOX_FADE_T_DISCHARGE_MOD = 0.75; // very prolonged decay, since burst/focus doesn't tend to last long.
+        const f32 HITBOX_FADE_T_DISCHARGE_MOD = 0.55; // very prolonged decay, since burst/focus doesn't tend to last long.
 
         if (player.under_focus && burst_rank >= 2) {
             focus_hitbox_fade_t += dt*HITBOX_FADE_T_CHARGE_MOD;
