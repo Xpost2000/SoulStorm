@@ -1020,6 +1020,7 @@ void Game::reset_stage_simulation_state() {
         state->player.burst_charge = 0.0f;
         state->player.time_spent_grazing               = 0.0f;
         state->player.under_focus                      = false;
+        state->focus_tint_fade_t                       = 0.0f;
         {
             state->player.sprite   = sprite_instance(resources->player_sprite);
         }
@@ -4141,6 +4142,19 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
     game_render_commands->camera = state->main_camera;
 
+    // HandleFocusUIFadeIn
+    {
+        const f32 T_SPEED_MOD = 8;
+        if (state->player.under_focus) {
+            state->focus_tint_fade_t += dt*T_SPEED_MOD;
+        } else {
+            state->focus_tint_fade_t -= dt*T_SPEED_MOD;
+        }
+
+        state->focus_tint_fade_t =
+            clamp<f32>(state->focus_tint_fade_t, 0.0f, 1.0f);
+    }
+
     // draw play area borders / Game UI
     // I'd like to have the UI fade in / animate all fancy like when I can
     {
@@ -4164,65 +4178,61 @@ GAME_SCREEN(update_and_render_game_ingame) {
           int bkg_image_width = 854;
           int bkg_image_height = 480;
 
-          auto focus_mod_color = color32u8(25, 0, 50, 120);
+          auto focus_mod_color = color32u8(25, 0, 50, 175 * state->focus_tint_fade_t);
           // left border
           {
-            auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[0]);
-            render_commands_push_image(
-              ui_render_commands,
-              marquee_bkg,
-              rectangle_f32(play_area_x - bkg_image_width, 0, bkg_image_width, bkg_image_height),
-              RECTANGLE_F32_NULL,
-              modulation,
-              0,
-              BLEND_MODE_ALPHA
-            );
-            render_commands_push_image(
-              ui_render_commands,
-              graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
-              rectangle_f32((play_area_x + 1) - shadow_width, 0, shadow_width, resolution.y),
-              RECTANGLE_F32_NULL,
-              modulation_shadow,
-              0,
-              BLEND_MODE_ALPHA
-            );
-
-            if (state->player.under_focus) {
-              render_commands_push_quad(
-                ui_render_commands, rectangle_f32(play_area_x - bkg_image_width, 0, bkg_image_width, bkg_image_height),
-                focus_mod_color, 
-                BLEND_MODE_ALPHA
+              auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[0]);
+              render_commands_push_image(
+                  ui_render_commands,
+                  marquee_bkg,
+                  rectangle_f32(play_area_x - bkg_image_width, 0, bkg_image_width, bkg_image_height),
+                  RECTANGLE_F32_NULL,
+                  modulation,
+                  0,
+                  BLEND_MODE_ALPHA
               );
-            }
+              render_commands_push_image(
+                  ui_render_commands,
+                  graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
+                  rectangle_f32((play_area_x + 1) - shadow_width, 0, shadow_width, resolution.y),
+                  RECTANGLE_F32_NULL,
+                  modulation_shadow,
+                  0,
+                  BLEND_MODE_ALPHA
+              );
+
+              render_commands_push_quad(
+                  ui_render_commands, rectangle_f32(play_area_x - bkg_image_width, 0, bkg_image_width, bkg_image_height),
+                  focus_mod_color, 
+                  BLEND_MODE_ALPHA
+              );
           }
           // right border
           {
-            auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[1]);
-            render_commands_push_image(
-              ui_render_commands,
-              marquee_bkg,
-              rectangle_f32(play_area_x + play_area_width, 0, bkg_image_width, bkg_image_height),
-              RECTANGLE_F32_NULL,
-              modulation,
-              0,
-              BLEND_MODE_ALPHA
-            );
-            render_commands_push_image(
-              ui_render_commands,
-              graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
-              rectangle_f32(play_area_x + play_area_width - 0.05f, 0, shadow_width, resolution.y),
-              RECTANGLE_F32_NULL,
-              modulation_shadow,
-              DRAW_IMAGE_FLIP_HORIZONTALLY,
-              BLEND_MODE_ALPHA
-            );
-            if (state->player.under_focus) {
-              render_commands_push_quad(
-                ui_render_commands, rectangle_f32(play_area_x + play_area_width, 0, bkg_image_width, bkg_image_height),
-                focus_mod_color,
-                BLEND_MODE_ALPHA
+              auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[1]);
+              render_commands_push_image(
+                  ui_render_commands,
+                  marquee_bkg,
+                  rectangle_f32(play_area_x + play_area_width, 0, bkg_image_width, bkg_image_height),
+                  RECTANGLE_F32_NULL,
+                  modulation,
+                  0,
+                  BLEND_MODE_ALPHA
               );
-            }
+              render_commands_push_image(
+                  ui_render_commands,
+                  graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_vignette_borders[0]),
+                  rectangle_f32(play_area_x + play_area_width - 0.05f, 0, shadow_width, resolution.y),
+                  RECTANGLE_F32_NULL,
+                  modulation_shadow,
+                  DRAW_IMAGE_FLIP_HORIZONTALLY,
+                  BLEND_MODE_ALPHA
+              );
+              render_commands_push_quad(
+                  ui_render_commands, rectangle_f32(play_area_x + play_area_width, 0, bkg_image_width, bkg_image_height),
+                  focus_mod_color,
+                  BLEND_MODE_ALPHA
+              );
           }
         }
 #else
@@ -5393,6 +5403,11 @@ void Game::handle_all_dead_entities(f32 dt) {
             on_player_death();
             cleanup_dead_entities();
         } else {
+            // TODO(jerry): 2/7/25
+            // I don't really like using the transition system to do this, since
+            // it can screw with how I reason about the determinism, so that's why
+            // this has been so special-cased, as otherwise a separate transition/animation
+            // system would need to be written just for this transition.
             if (state->paused_from_death == false) {
                 state->paused_from_death = true;
                 Transitions::do_color_transition_in(color32f32(1, 1, 1, 1), 0.10f, 0.05f);

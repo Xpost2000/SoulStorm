@@ -464,6 +464,7 @@ struct Gameplay_Data {
     bool stage_completed;
     bool playing_practice_mode;
     int  score_awarded_points = 0;
+    f32  focus_tint_fade_t = 0.0f;
 
     bool allow_border_switch_flashing = true; // automatic border flashing behavior
     Border_Flash_Data border_flashes[4];
