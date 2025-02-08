@@ -5709,6 +5709,39 @@ void Game::handle_all_bullet_collisions(f32 dt) {
             }
         }
 
+        if (b.flags & BULLET_FLAGS_BREAKS_OTHER_BULLETS) {
+            /*
+             * TODO(jerry):
+             * need performance enhancement here!
+             */
+            for (s32 other_bullet_index = 0;
+                 other_bullet_index < state->bullets.size;
+                 ++other_bullet_index) {
+                auto& ob = state->bullets[other_bullet_index];
+
+                if (ob.source_type == b.source_type) {
+                    continue;
+                }
+
+                if (other_bullet_index == bullet_index) {
+                    continue;
+                }
+
+                if (ob.die) {
+                    continue;
+                }
+
+                auto other_bullet_rect = ob.get_rect();
+
+                if (rectangle_f32_intersect(other_bullet_rect, bullet_rect)) {
+                    hit_death = true;
+                    b.die = true;
+                    ob.die = true;
+                    break;
+                }
+            }
+        }
+
 
         if (!DebugUI::godmode_enabled()) {
             if (!b.die && b.source_type == BULLET_SOURCE_NEUTRAL || b.source_type == BULLET_SOURCE_ENEMY) {

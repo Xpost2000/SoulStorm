@@ -461,10 +461,21 @@ enum Bullet_Source {
     // Maybe I just want to shoot random bullets in the environment to kill stuff.
     // who knows?
     BULLET_SOURCE_NEUTRAL, 
-
     BULLET_SOURCE_PLAYER,
-
     BULLET_SOURCE_ENEMY,
+    BULLET_SOURCE_COUNT,
+};
+
+static string bullet_source_strings[] = {
+    string_literal("(bullet-neutral)"),
+    string_literal("(bullet-player)"),
+    string_literal("(bullet-enemy)"),
+    string_literal("(count)"),
+};
+
+enum Bullet_Flags {
+    BULLET_FLAGS_NONE                 = 0,
+    BULLET_FLAGS_BREAKS_OTHER_BULLETS = BIT(0),
 };
 
 struct Bullet;
@@ -478,6 +489,7 @@ struct Bullet : public Entity {
       entity shot the bullet.
      */
     s32   source_type;
+    u8    flags;
 
     void update(Game_State* state, f32 dt);
     void reset_movement();
