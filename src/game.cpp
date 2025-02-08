@@ -268,7 +268,7 @@ Particle_Emitter& spawn_game_entity_death_particle_emitter(Fixed_Array<Particle_
     emitter.lifetime_variance = V2(-0.25f, 1.0f);
     emitter.emission_max_timer = 0.035f;
     emitter.max_emissions = 1;
-    emitter.emit_per_emission = 50;
+    emitter.emit_per_emission = 125;
     emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE | PARTICLE_EMITTER_FLAGS_USE_ANGULAR | PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
     emitter.scale = 1;
 
@@ -3993,7 +3993,22 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE: {} break;
     }
 
-                timer.update(dt);
+    timer.update(dt);
+}
+
+local void update_particle_emitters(
+    Fixed_Array<Particle_Emitter>& emitters,
+    Particle_Pool* pool,
+    random_state* prng,
+    f32 dt) {
+    for (s32 particle_emitter_index = 0; particle_emitter_index < emitters.size; ++particle_emitter_index) {
+        auto& particle_emitter = emitters[particle_emitter_index];
+        particle_emitter.update(pool, prng, dt);
+
+        if (!(particle_emitter.flags & PARTICLE_EMITTER_FLAGS_ACTIVE)) {
+            emitters.pop_and_swap(particle_emitter_index);
+        }
+    }
 }
 
 void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
@@ -4164,19 +4179,10 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
 #endif
         // Update all particle emitters
         // while we wait.
-        {
-            for (s32 particle_emitter_index = 0; particle_emitter_index < state->particle_emitters.size; ++particle_emitter_index) {
-                auto& particle_emitter = state->particle_emitters[particle_emitter_index];
-                particle_emitter.update(&state->particle_pool, &state->prng, dt);
-
-                if (!(particle_emitter.flags & PARTICLE_EMITTER_FLAGS_ACTIVE)) {
-                    state->particle_emitters.pop_and_swap(particle_emitter_index);
-                }
-            }
-
-            state->particle_pool.update(this->state, dt);
-            state->ui_particle_pool.update(this->state, dt);
-        }
+        update_particle_emitters(state->particle_emitters, &state->particle_pool, &state->prng, dt);
+        update_particle_emitters(state->ui_particle_emitters, &state->ui_particle_pool, &state->prng_unessential, dt);
+        state->particle_pool.update(this->state, dt);
+        state->ui_particle_pool.update(this->state, dt);
 
         handle_all_explosions(dt);
         handle_all_lasers(dt);
@@ -5728,9 +5734,11 @@ void Gameplay_Data::process_particle_spawn_request_queue(Game_Resources* resourc
         } break;
         case GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_LOST_LIFE: {
             _debugprintf("lost life particle spawn!");
+            spawn_game_entity_death_particle_emitter(ui_particle_emitters, current_cursor, resources, 0);
         } break;
         case GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_GAINED_LIFE: {
             _debugprintf("gained life particle spawn!");
+            spawn_game_entity_death_particle_emitter(ui_particle_emitters, current_cursor, resources, 1);
         } break;
     }
 
