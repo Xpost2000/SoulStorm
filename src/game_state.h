@@ -467,6 +467,9 @@ struct Gameplay_Data {
     f32  focus_tint_fade_t = 0.0f;
     f32  focus_hitbox_fade_t = 0.0f;
 
+    s32  invalid_usage_flash_count = 0;
+    f32  invalid_usage_flash_t = 0;
+
     bool allow_border_switch_flashing = true; // automatic border flashing behavior
     Border_Flash_Data border_flashes[4];
     void border_notify(s32 id, s32 type, bool override=false);

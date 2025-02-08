@@ -4302,6 +4302,18 @@ GAME_SCREEN(update_and_render_game_ingame) {
             clamp<f32>(state->focus_tint_fade_t, 0.0f, 1.0f);
     }
 
+    // HandleInvalidUsageFlash
+    {
+        if (state->invalid_usage_flash_count > 0) {
+            if (state->invalid_usage_flash_t < 0.05f) {
+                state->invalid_usage_flash_t += dt;
+            } else {
+                state->invalid_usage_flash_t = 0;
+                state->invalid_usage_flash_count -= 1;
+            }
+        }
+    }
+
     // draw play area borders / Game UI
     // I'd like to have the UI fade in / animate all fancy like when I can
     {
@@ -4326,6 +4338,8 @@ GAME_SCREEN(update_and_render_game_ingame) {
           int bkg_image_height = 480;
 
           auto focus_mod_color = color32u8(25, 0, 50, 175 * state->focus_tint_fade_t);
+          auto invalid_usage_color = color32u8(200, 15, 35, 175);
+          bool is_flashing_invalid_usage = state->invalid_usage_flash_count > 0 && (state->invalid_usage_flash_count % 2) == 0;
           // left border
           {
               auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[0]);
@@ -4353,6 +4367,14 @@ GAME_SCREEN(update_and_render_game_ingame) {
                   focus_mod_color, 
                   BLEND_MODE_ALPHA
               );
+
+              if (is_flashing_invalid_usage) {
+                  render_commands_push_quad(
+                      ui_render_commands, rectangle_f32(play_area_x - bkg_image_width, 0, bkg_image_width, bkg_image_height),
+                      invalid_usage_color, 
+                      BLEND_MODE_ALPHA
+                  );
+              }
           }
           // right border
           {
@@ -4375,11 +4397,20 @@ GAME_SCREEN(update_and_render_game_ingame) {
                   DRAW_IMAGE_FLIP_HORIZONTALLY,
                   BLEND_MODE_ALPHA
               );
+
               render_commands_push_quad(
                   ui_render_commands, rectangle_f32(play_area_x + play_area_width, 0, bkg_image_width, bkg_image_height),
                   focus_mod_color,
                   BLEND_MODE_ALPHA
               );
+
+              if (is_flashing_invalid_usage) {
+                  render_commands_push_quad(
+                      ui_render_commands, rectangle_f32(play_area_x + play_area_width, 0, bkg_image_width, bkg_image_height),
+                      invalid_usage_color, 
+                      BLEND_MODE_ALPHA
+                  );
+              }
           }
         }
 #else

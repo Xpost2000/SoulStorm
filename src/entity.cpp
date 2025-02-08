@@ -1214,6 +1214,10 @@ void Player::handle_bomb_usage(Game_State* state, u32 bomb_pattern_id) {
 
         if (successful) {
             burst_charge = 0.0f;
+        } else {
+            if (state->gameplay_data.invalid_usage_flash_count <= 0) {
+                state->gameplay_data.invalid_usage_flash_count = 16;
+            }
         }
     } else {
         // it is no longer to use the bomb when not under focus.
@@ -1405,6 +1409,11 @@ void Player::update(Game_State* state, f32 dt) {
     if (!burst_charge_halt_regeneration) {
         under_focus = focusing;
     } else {
+        if (focusing) {
+            if (state->gameplay_data.invalid_usage_flash_count <= 0) {
+                state->gameplay_data.invalid_usage_flash_count = 8;
+            }
+        }
         under_focus = false;
     }
 
@@ -1548,6 +1557,12 @@ void Player::update(Game_State* state, f32 dt) {
 
             if (use_bomb) {
                 state->gameplay_data.queue_bomb_use = true;
+            }
+        } else {
+            if (firing || use_bomb) {
+                if (state->gameplay_data.invalid_usage_flash_count <= 0) {
+                    state->gameplay_data.invalid_usage_flash_count = 8;
+                }
             }
         }
     }
