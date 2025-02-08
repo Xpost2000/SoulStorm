@@ -6,7 +6,7 @@ void gameplay_recording_file_start_recording(Gameplay_Recording_File* recording,
         prng_state.constant, prng_state.multiplier, prng_state.state, prng_state.seed, prng_state.modulus
     );
 
-    recording->version                    = GAMEPLAY_RECORDING_FILE_VERSION_1;
+    recording->version                    = GAMEPLAY_RECORDING_FILE_CURRENT_VERSION;
     recording->tickrate                   = TICKRATE;
     recording->prng                       = recording->start_prng = prng_state;
     recording->frame_count                = 0;
@@ -54,7 +54,7 @@ bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memor
     serialize_s32(serializer, &recording->frame_count);
     serialize_u8(serializer,  &recording->stage_id);
     serialize_u8(serializer,  &recording->level_id);
-    if (recording->version > GAMEPLAY_RECORDING_FILE_VERSION_2) {
+    if (recording->version >= GAMEPLAY_RECORDING_FILE_VERSION_2) {
         serialize_s8(serializer,  &recording->selected_pet);
     } else {
         recording->selected_pet = GAME_PET_ID_NONE;
@@ -66,9 +66,14 @@ bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memor
         recording->prng.constant, recording->prng.multiplier, recording->prng.state, recording->prng.seed, recording->prng.modulus
     );
 
+    if (recording->version != GAMEPLAY_RECORDING_FILE_CURRENT_VERSION) {
+        _debugprintf("Version mismatch");
+        return false;
+    }
+
     switch (recording->version) {
-        case GAMEPLAY_RECORDING_FILE_CURRENT_VERSION:
-        //case GAMEPLAY_RECORDING_FILE_VERSION_1: 
+        case GAMEPLAY_RECORDING_FILE_VERSION_2: 
+        case GAMEPLAY_RECORDING_FILE_VERSION_1: 
         {
             if (arena) {
                 recording->memory_arena = arena;

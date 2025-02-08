@@ -2596,13 +2596,13 @@ GAME_UI_SCREEN(update_and_render_replay_not_supported_menu) {
         GameUI::label(
             V2(75, y),
             string_literal("Unfortunately this replay is either:\noutdated or invalid/corrupt!"),
-            color32f32(1, 1, 1, 1), 4
+            color32f32(1, 1, 1, 1), 2
         );
 
         y += 80;
         
         if (GameUI::button(V2(100, y), string_literal("Return"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-            switch_ui(state->last_ui_state);
+            switch_ui(UI_STATE_REPLAY_COLLECTION);
         }
     }
     GameUI::end_frame();
@@ -2617,7 +2617,7 @@ GAME_UI_SCREEN(update_and_render_replay_collection_menu) {
     GameUI::set_ui_id((char*)"ui_replay_collection_menu");
 
     auto replay_files = directory_listing_list_all_files_in(&Global_Engine()->scratch_arena, DEFAULT_REPLAY_LOCATION);
-    int page_count = replay_files.count / MAX_REPLAYS_PER_PAGE;
+    int page_count = (replay_files.count+(MAX_REPLAYS_PER_PAGE-1)) / MAX_REPLAYS_PER_PAGE;
     int current_page_display_amount = replay_files.count % MAX_REPLAYS_PER_PAGE;
 
     GameUI::begin_frame(commands, &resources->graphics_assets);
@@ -2725,7 +2725,7 @@ GAME_UI_SCREEN(update_and_render_replay_collection_menu) {
             // the game has extremely basic UI layout and design, I don't think there's
             // anything crazy I need.
             if (Action::is_pressed(ACTION_CANCEL)) {
-                switch_ui(state->last_ui_state);
+                switch_ui(UI_STATE_PAUSED);
             }
         }
     }
