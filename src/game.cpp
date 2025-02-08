@@ -1046,7 +1046,9 @@ void Game::reset_stage_simulation_state() {
     state->particle_pool.clear();
     state->death_particle_pool.clear();
     state->stage_exit_particle_pool.clear();
+    state->ui_particle_pool.clear();
     state->particle_emitters.clear();
+    state->ui_particle_emitters.clear();
 
     state->to_create_enemy_bullets.zero();
     state->to_create_player_bullets.zero();
@@ -1218,6 +1220,7 @@ void Game::init(Graphics_Driver* driver) {
         state->score_notifications     = Fixed_Array<Gameplay_UI_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
         state->hit_score_notifications = Fixed_Array<Gameplay_UI_Hitmark_Score_Notification>(arena, MAX_SCORE_NOTIFICATIONS);
         state->particle_emitters       = Fixed_Array<Particle_Emitter>(arena, MAX_BULLETS + MAX_ENEMIES + MAX_LASER_HAZARDS + MAX_EXPLOSION_HAZARDS + 128);
+        state->ui_particle_emitters    = Fixed_Array<Particle_Emitter>(arena, 128);
         state->prng                    = random_state();
         state->prng_unessential        = random_state();
         state->main_camera             = camera(V2(0, 0), 1.0);
@@ -1225,6 +1228,7 @@ void Game::init(Graphics_Driver* driver) {
         state->particle_pool.init(arena, 16384);
         state->death_particle_pool.init(arena, 128);
         state->stage_exit_particle_pool.init(arena, 256);
+        state->ui_particle_pool.init(arena, 512);
 
         // creation queues
         {
@@ -1363,6 +1367,10 @@ void Gameplay_Data::remove_life(void) {
     campaign_perfect_clear = false;
 
     if (tries > 0) {
+        auto& ui_req = ui_particle_spawn_queue[ui_particle_spawn_queue_count++];
+        assertion(ui_particle_spawn_queue_count < array_count(ui_particle_spawn_queue) && "[crash, out of fixed space]");
+        ui_req.type = GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_LOST_LIFE;
+        ui_req.data = tries;
         tries -= 1;
     }
 }
@@ -1370,6 +1378,10 @@ void Gameplay_Data::remove_life(void) {
 void Gameplay_Data::add_life(void) {
     if (tries < MAX_TRIES_ALLOWED) {
         tries += 1;
+        auto& ui_req = ui_particle_spawn_queue[ui_particle_spawn_queue_count++];
+        assertion(ui_particle_spawn_queue_count < array_count(ui_particle_spawn_queue) && "[crash, out of fixed space]");
+        ui_req.type = GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_GAINED_LIFE;
+        ui_req.data = tries;
     }
 }
 
@@ -4163,6 +4175,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
             }
 
             state->particle_pool.update(this->state, dt);
+            state->ui_particle_pool.update(this->state, dt);
         }
 
         handle_all_explosions(dt);
@@ -4581,6 +4594,9 @@ GAME_SCREEN(update_and_render_game_ingame) {
               lives_widget_position.x = lives_widget_position_x;
             }
 
+            // ProcessParticleSpawnRequestQueue
+            state->process_particle_spawn_request_queue(resources, index, lives_widget_position);
+
             auto destination_rect =
               rectangle_f32(
                 lives_widget_position.x,
@@ -4787,6 +4803,9 @@ GAME_SCREEN(update_and_render_game_ingame) {
           GameUI::update(dt);
         }
       }
+    }
+    {
+        state->ui_particle_pool.draw(ui_render_commands, resources);
     }
     // Rendering Dialogue UI
     bool in_conversation = this->state->dialogue_state.in_conversation;
@@ -5682,6 +5701,41 @@ void Game::handle_all_explosions(f32 dt) {
             }
         }
     }
+}
+
+
+void Gameplay_Data::process_particle_spawn_request_queue(Game_Resources* resources, s32 index, V2 current_cursor) {
+    Gameplay_Data_Particle_Spawn_Request* target = nullptr;
+    bool found = false;
+    s32  request_index;
+
+    for (request_index = 0;
+         request_index < ui_particle_spawn_queue_count;
+         ++request_index) {
+        target = ui_particle_spawn_queue + request_index;
+        if (target->data == index) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        return;
+    }
+
+    switch (target->type) {
+        case GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_NONE: {
+        } break;
+        case GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_LOST_LIFE: {
+            _debugprintf("lost life particle spawn!");
+        } break;
+        case GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_GAINED_LIFE: {
+            _debugprintf("gained life particle spawn!");
+        } break;
+    }
+
+    ui_particle_spawn_queue[request_index] =
+        ui_particle_spawn_queue[--ui_particle_spawn_queue_count];
 }
 
 void Gameplay_Data::spawn_death_explosion(V2 position) {

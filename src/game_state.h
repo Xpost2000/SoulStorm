@@ -458,6 +458,17 @@ struct Border_Flash_Data {
 };
 
 #define POINTS_TO_AWARD_EXTRA_LIFE (100000)
+enum Gameplay_Data_Particle_Spawn_Request_Type {
+    GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_NONE,
+    GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_LOST_LIFE,
+    GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_GAINED_LIFE,
+};
+struct Gameplay_Data_Particle_Spawn_Request {
+    u8 type;
+    union {
+        s32 data; // god knows what this means.
+    };
+};
 struct Gameplay_Data {
     bool campaign_perfect_clear;
     bool stage_perfect_clear;
@@ -481,6 +492,7 @@ struct Gameplay_Data {
     Particle_Pool particle_pool;
     Particle_Pool death_particle_pool;
     Particle_Pool stage_exit_particle_pool;
+    Particle_Pool ui_particle_pool;
     // TODO: allow player name configuration
     /* char          player_name[64]; */
     void build_current_input_packet();
@@ -495,6 +507,7 @@ struct Gameplay_Data {
     Fixed_Array<Enemy_Entity>             to_create_enemies;
     Fixed_Array<Pickup_Entity>            to_create_pickups;
 
+    Fixed_Array<Particle_Emitter> ui_particle_emitters;
     Fixed_Array<Particle_Emitter> particle_emitters;
     Fixed_Array<Pickup_Entity>    pickups;
     Fixed_Array<Bullet>           bullets;
@@ -537,6 +550,9 @@ struct Gameplay_Data {
     Gameplay_Stage_Introduction_Sequence   intro;
     Gameplay_Stage_Complete_Stage_Sequence complete_stage;
 
+    Gameplay_Data_Particle_Spawn_Request ui_particle_spawn_queue[64];
+    s32 ui_particle_spawn_queue_count=0;
+
     s32 selected_pet = GAME_PET_ID_NONE;
     s32 unlocked_pets = 0; // [0,3]
     s32 tries = MAX_BASE_TRIES;
@@ -554,6 +570,7 @@ struct Gameplay_Data {
 
     void unload_all_dialogue_loaded_resources(Game_State* state, Game_Resources* resources);
     void unload_all_script_loaded_resources(Game_State* state, Game_Resources* resources);
+    void process_particle_spawn_request_queue(Game_Resources* resources, s32 index, V2 current_cursor);
 
     // NOTE:
     // Bullets and enemy entities are queued up because
