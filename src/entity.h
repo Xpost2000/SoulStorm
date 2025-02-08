@@ -31,7 +31,7 @@
 #define PLAYER_BURST_FLASH_T           (0.0555f)
 
 #define PLAYER_BURST_SHIELD_ABILITY_RADIUS (60)
-#define PLAYER_BURST_SHIELD_ABILITY_MAX_T (5.0f)
+#define PLAYER_BURST_SHIELD_ABILITY_MAX_T (4.5f)
 #define PLAYER_BURST_RAY_ABILITY_MAX_T    (5.0f)
 #define PLAYER_BURST_BOMB_INVINCIBILITY_T (PLAYER_INVINICIBILITY_TIME * 5)
 
@@ -409,7 +409,6 @@ struct Player : public Entity {
     void halt_burst_abilities(void);
     void halt_burst_charge_regeneration(s32 flash_count_required); // flashes are at fixed times, so this
                                                                    // allows more precise gaging of time.
-
     f32 grazing_award_timer = 0.0f;
     f32 grazing_award_score_pickup_timer = 0.0f;
     f32 grazing_delay       = PLAYER_DEFAULT_GRAZING_DELAY;
@@ -427,6 +426,12 @@ struct Player : public Entity {
 
     f32  burst_absorption_shield_ability_timer = 0.0f;
     f32  burst_ray_attack_ability_timer = 0.0f;
+
+    s32  get_burst_ability_usage(s32 id);
+    void add_burst_ability_usage(s32 id);
+
+    s32  last_used_tier = -1;
+    s32  burst_ability_streak_usage = 0;
 
     f32 drain_speed = 0.0f;
 

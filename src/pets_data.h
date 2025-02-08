@@ -16,7 +16,7 @@ Gameplay_Data_Pet_Information {
     string_literal("Cat"),
     string_literal("Nine lives, nine tries. Easiest difficulty setting.\n\nIf you're finding a stage difficult you can puss out!"),
     DIFFICULTY_NORMAL,
-    MAX_BASE_TRIES + 4,
+    9,
     ATTACK_PATTERN_DEFAULT,
     BOMB_PATTERN_DEFAULT,
     0.35f,
@@ -30,7 +30,7 @@ Gameplay_Data_Pet_Information {
     3,
     ATTACK_PATTERN_DEFAULT,
     BOMB_PATTERN_DEFAULT,
-    2.0f,
+    1.5f,
     1.25f
 },
 
@@ -41,7 +41,7 @@ Gameplay_Data_Pet_Information {
     1,
     ATTACK_PATTERN_DEFAULT,
     BOMB_PATTERN_DEFAULT,
-    8.0f,
+    4.0f,
     0.875f
 }
 

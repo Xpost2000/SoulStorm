@@ -915,6 +915,25 @@ f32 Player::get_grazing_score_modifier(s32 amount) {
     return base;
 }
 
+// NOTE(jerry):
+// this is a preliminary balancing idea as I am unsure as to why
+s32 Player::get_burst_ability_usage(s32 id) {
+    if (id != last_used_tier) {
+        return 0;
+    }
+
+    return burst_ability_streak_usage;
+}
+
+void Player::add_burst_ability_usage(s32 id) {
+    if (last_used_tier != id) {
+        burst_ability_streak_usage = 0;
+        last_used_tier = id;
+    }
+
+    burst_ability_streak_usage += 1;
+}
+
 
 typedef void (*Burst_Fire)(Player* player, Game_State* state, u32 _unused);
 typedef bool (*Burst_Bomb)(Player* player, Game_State* state, u32 _unused);
@@ -1052,7 +1071,7 @@ void player_burst_fire_focus_tier2(Player* player, Game_State* state, u32 _unuse
     PROJECTILE_SPRITE_RED_DISK,
     3
   );
-  player->drain_speed = 75;
+  player->drain_speed = 100;
 }
 
 void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unused) {
@@ -1083,7 +1102,7 @@ void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unuse
     PROJECTILE_SPRITE_GREEN_DISK,
     32
   );
-  player->drain_speed = 150;
+  player->drain_speed = 170;
 }
 
 bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unused) {
@@ -1092,6 +1111,8 @@ bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unuse
 }
 
 bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, u32 _unused) {
+    player->add_burst_ability_usage(1);
+    s32 usage_count = player->get_burst_ability_usage(1);
     const s32 SCORE_COST = 25000;
     // NOTE(jerry):
     // This is the only burst ability that will not use lives, so it
@@ -1103,7 +1124,7 @@ bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, 
     player->halt_burst_charge_regeneration(
         // NOTE(jerry):
         // this to discourage it's spamming since otherwise it builds up too fast.
-        calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_RAY_ABILITY_MAX_T*1.75)
+        calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_RAY_ABILITY_MAX_T*1.85)
     );
     player->burst_ray_attack_ability_timer = PLAYER_BURST_RAY_ABILITY_MAX_T;
     state->gameplay_data.current_score -= SCORE_COST;
@@ -1114,8 +1135,10 @@ bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u3
     if (state->gameplay_data.tries < 1) {
         return false;
     }
+    player->add_burst_ability_usage(2);
+    s32 usage_count = player->get_burst_ability_usage(2);
     player->halt_burst_charge_regeneration(
-        calculate_amount_of_burst_depletion_flashes_for(1.0)
+        calculate_amount_of_burst_depletion_flashes_for(1.25)
     );
     state->gameplay_data.notify_score(2500, true);
     Audio::play(state->resources->random_explosion_sound(&state->gameplay_data.prng_unessential));
@@ -1129,7 +1152,8 @@ bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _u
     if (state->gameplay_data.tries < 1) {
         return false;
     }
-
+    player->add_burst_ability_usage(3);
+    s32 usage_count = player->get_burst_ability_usage(3);
     auto resources = state->resources;
 
 #if 0
@@ -1149,7 +1173,7 @@ bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _u
 
     state->gameplay_data.remove_life();
     player->halt_burst_charge_regeneration(
-        calculate_amount_of_burst_depletion_flashes_for(2.5)
+        calculate_amount_of_burst_depletion_flashes_for(2.75)
     );
 
     player->begin_invincibility(true, PLAYER_BURST_BOMB_INVINCIBILITY_T);
@@ -1340,7 +1364,7 @@ void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
             burst_charge = 0.0f;
         } else {
             if (!burst_charge_halt_regeneration) {
-                f32 charge_speed = 19; // make charging harder
+                f32 charge_speed = 15; // make charging harder
 
                 if (under_focus) {
                     burst_charge -= dt * drain_speed;
@@ -1388,11 +1412,11 @@ void Player::update(Game_State* state, f32 dt) {
     float UNIT_SPEED = ((under_focus) ? 225 : 325) * pet_data->speed_modifier;
 
     if (burst_absorption_shield_ability_timer > 0.0f) {
-        UNIT_SPEED *= 0.875f;
+        UNIT_SPEED *= 0.675f;
     }
 
     if (burst_ray_attack_ability_timer > 0.0f) {
-        UNIT_SPEED *= 0.75f;
+        UNIT_SPEED *= 0.22f;
     }
 
     if (!state->gameplay_data.triggered_stage_completion_cutscene) {

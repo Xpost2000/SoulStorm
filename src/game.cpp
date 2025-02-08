@@ -3119,7 +3119,7 @@ bool Game::safely_resurrect_player() {
         state->gameplay_data.remove_life();
         state->gameplay_data.player.halt_burst_abilities();
         state->gameplay_data.player.halt_burst_charge_regeneration(
-            calculate_amount_of_burst_depletion_flashes_for(1.285f)
+            calculate_amount_of_burst_depletion_flashes_for(1.485f)
         );
         state->gameplay_data.player.begin_invincibility();
         state->gameplay_data.player.heal(1);
