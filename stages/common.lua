@@ -899,6 +899,7 @@ function MainBoss1_RainCloud_Attack2(phase_cycle, duration)
       function()
          disable_grazing();
          disable_bullet_to_points();
+         disable_burst_charge();
          async_task_lambda(
             function()
                local cycle_point = phase_cycle;
@@ -939,6 +940,7 @@ function MainBoss1_RainCloud_Attack2(phase_cycle, duration)
          )
          t_wait(duration)
          enable_grazing();
+         enable_burst_charge();
          enable_bullet_to_points();
          stop_task = 1;
          t_wait(2.5);
