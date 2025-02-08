@@ -3117,6 +3117,7 @@ bool Game::safely_resurrect_player() {
     if (worked) {
         state->gameplay_data.paused_from_death  = false;
         state->gameplay_data.remove_life();
+        state->gameplay_data.player.halt_burst_abilities();
         state->gameplay_data.player.halt_burst_charge_regeneration(
             calculate_amount_of_burst_depletion_flashes_for(1.285f)
         );
@@ -4287,7 +4288,11 @@ GAME_SCREEN(update_and_render_game_ingame) {
     // HandleFocusUIFadeIn
     {
         const f32 T_SPEED_MOD = 8;
-        if (state->player.under_focus) {
+        bool should_do_fade =
+            (state->player.under_focus) ||
+            (state->player.burst_ray_attack_ability_timer > 0.0f);
+
+        if (should_do_fade) {
             state->focus_tint_fade_t += dt*T_SPEED_MOD;
         } else {
             state->focus_tint_fade_t -= dt*T_SPEED_MOD;
@@ -5737,6 +5742,7 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                     hit_death = true;
                     b.die = true;
                     ob.die = true;
+                    state->notify_score_with_hitmarker(15, b.position);
                     break;
                 }
             }

@@ -393,6 +393,7 @@ struct Player : public Entity {
     // but I'll see about that later.
     void draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources);
     void fire_weapon(Game_State* state, u32 attack_pattern_id);
+    void fire_burst_ray_laser(Game_State* state);
     void handle_bomb_usage(Game_State* state, u32 bomb_pattern_id);
     void update(Game_State* state, f32 dt);
     s32  currently_grazing(Game_State* state);
@@ -405,6 +406,7 @@ struct Player : public Entity {
     void reset_burst_charge_status(void);
     void disable_burst_charge_regeneration(void);
     void enable_burst_charge_regeneration(void);
+    void halt_burst_abilities(void);
     void halt_burst_charge_regeneration(s32 flash_count_required); // flashes are at fixed times, so this
                                                                    // allows more precise gaging of time.
 

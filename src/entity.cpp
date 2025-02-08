@@ -784,6 +784,11 @@ void Player::reset_burst_charge_status(void) {
     burst_ray_attack_ability_timer        = 0.0f;
 }
 
+void Player::halt_burst_abilities(void) {
+    burst_absorption_shield_ability_timer = 0.0f;
+    burst_ray_attack_ability_timer = 0.0f;
+}
+
 void Player::draw(Game_State* const state, struct render_commands* render_commands, Game_Resources* resources) {
     Entity::draw(state, render_commands, resources);
 
@@ -1087,17 +1092,25 @@ bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unuse
 }
 
 bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, u32 _unused) {
-    // TODO
+    const s32 SCORE_COST = 25000;
+    // NOTE(jerry):
+    // This is the only burst ability that will not use lives, so it
+    // is always the "last" line of defense.
+    if (state->gameplay_data.current_score < SCORE_COST) { // Maybe have it vary based on score?
+        return false;
+    }
+
     player->halt_burst_charge_regeneration(
-        calculate_amount_of_burst_depletion_flashes_for(3.5)
+        // NOTE(jerry):
+        // this to discourage it's spamming since otherwise it builds up too fast.
+        calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_RAY_ABILITY_MAX_T*1.75)
     );
     player->burst_ray_attack_ability_timer = PLAYER_BURST_RAY_ABILITY_MAX_T;
-    _debugprintf("I need to be done!");
+    state->gameplay_data.current_score -= SCORE_COST;
     return true;
 }
 
 bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u32 _unused) {
-    // TODO
     if (state->gameplay_data.tries < 1) {
         return false;
     }
@@ -1180,6 +1193,46 @@ void Player::handle_bomb_usage(Game_State* state, u32 bomb_pattern_id) {
         }
     } else {
         // it is no longer to use the bomb when not under focus.
+    }
+}
+
+void Player::fire_burst_ray_laser(Game_State* state) {
+    auto resources = state->resources;
+    /* Burst Attack Laser */
+    {
+        firing_cooldown = (DEFAULT_FIRING_COOLDOWN/3.25);
+        // NOTE(jerry):
+        /*
+         * since the entity_prototypes.cpp stuff was never developed
+         * very much, I don't feel like trying to refactor it to
+         * be more tunable, so for now this projectile set will be made inline.
+         */
+        state->set_led_target_color_anim(
+            color32u8(255, 0, 0, 255),
+            DEFAULT_FIRING_COOLDOWN/4,
+            false,
+            true
+        );
+        s32 bullet_count = 1;
+        Audio::play(
+            resources->random_attack_sound(
+                &state->gameplay_data.prng
+            )
+        );
+        for (s32 bullet_index = 0; bullet_index < bullet_count; ++bullet_index) {
+            auto position = get_real_position();
+            auto bullet = bullet_upwards_linear(
+                state, position, V2(0, -1), 500.0f,
+                PROJECTILE_SPRITE_HOT_PINK_DISK, BULLET_SOURCE_PLAYER);
+            bullet.flags |= BULLET_FLAGS_BREAKS_OTHER_BULLETS;
+            bullet.trail_ghost_limit = 16;
+            bullet.trail_ghost_record_timer_max = 0.0100f;
+            bullet.trail_ghost_modulation = color32f32(0.9,0.9,0.9,0.85);
+            bullet.trail_ghost_max_alpha = 1.0f;
+            state->gameplay_data.add_bullet(
+                bullet
+            );
+        }
     }
 }
 
@@ -1334,6 +1387,14 @@ void Player::update(Game_State* state, f32 dt) {
     V2 axes = gameplay_frame_input_packet_quantify_axes(input_packet);
     float UNIT_SPEED = ((under_focus) ? 225 : 325) * pet_data->speed_modifier;
 
+    if (burst_absorption_shield_ability_timer > 0.0f) {
+        UNIT_SPEED *= 0.875f;
+    }
+
+    if (burst_ray_attack_ability_timer > 0.0f) {
+        UNIT_SPEED *= 0.75f;
+    }
+
     if (!state->gameplay_data.triggered_stage_completion_cutscene) {
         velocity.x = axes[0] * UNIT_SPEED;
         velocity.y = axes[1] * UNIT_SPEED;
@@ -1448,19 +1509,25 @@ void Player::update(Game_State* state, f32 dt) {
 
     handle_burst_charging_behavior(state, dt);
 
-    if (!burst_charge_halt_regeneration) {
-        if (firing) {
-            if (attack()) {
-                fire_weapon(state, pet_data->attack_pattern_id);
+    if (burst_ray_attack_ability_timer > 0.0f) {
+        fire_burst_ray_laser(state);
+        burst_ray_attack_ability_timer -= dt;
+    } else {
+        if (!burst_charge_halt_regeneration) {
+            if (firing) {
+                if (attack()) {
+                    fire_weapon(state, pet_data->attack_pattern_id);
+                }
+            } else {
+                stop_attack();
             }
-        } else {
-            stop_attack();
-        }
 
-        if (use_bomb) {
-            state->gameplay_data.queue_bomb_use = true;
+            if (use_bomb) {
+                state->gameplay_data.queue_bomb_use = true;
+            }
         }
     }
+
 
     burst_charge = clamp<f32>(
         burst_charge, 0.0f, PLAYER_BURST_CHARGE_CAPACITY
