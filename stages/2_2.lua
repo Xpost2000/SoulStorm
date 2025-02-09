@@ -522,6 +522,180 @@ function wave2()
       convert_all_bullets_to_score();
    end
    enable_grazing();
+   t_wait(4);
+   do
+      async_task_lambda( -- NOTE: async timeline
+         function()
+            DramaticExplosion_SpawnSpinnerObstacle1_2_1(
+               play_area_width()/2,
+               play_area_height()/2 - 150,
+               ENTITY_SPRITE_SKULL_B,
+               10,
+               30,
+               PROJECTILE_SPRITE_RED_DISK,
+               v2(0, 1),
+               4
+            );
+         end
+      )
+
+      async_task_lambda( -- NOTE: async timeline
+      function()
+         DramaticExplosion_SpawnSpinnerObstacle1_2_1(
+            play_area_width()/2+50,
+            play_area_height()/2 - 90,
+            ENTITY_SPRITE_SKULL_B,
+            10,
+            30,
+            PROJECTILE_SPRITE_GREEN_DISK,
+            v2(0, 1),
+            4
+         );
+      end
+      )
+
+      
+      async_task_lambda( -- NOTE: async timeline
+      function()
+         DramaticExplosion_SpawnSpinnerObstacle1_2_1(
+            play_area_width()/2-50,
+            play_area_height()/2 - 90,
+            ENTITY_SPRITE_SKULL_B,
+            10,
+            30,
+            PROJECTILE_SPRITE_GREEN_DISK,
+            v2(0, 1),
+            4
+         );
+      end
+      )
+
+      async_task_lambda( -- NOTE: async timeline
+         function()
+            t_wait(1);
+            DramaticExplosion_SpawnSpinnerObstacle1_2_1(
+               play_area_width()/2 - 150,
+               play_area_height()/2,
+               ENTITY_SPRITE_SKULL_B,
+               15,
+               25,
+               PROJECTILE_SPRITE_RED_DISK,
+               v2(1, 1),
+               4
+            );
+         end
+      )
+
+      async_task_lambda( -- NOTE: async timeline
+         function()
+            t_wait(1);
+            DramaticExplosion_SpawnSpinnerObstacle1_2_1(
+               play_area_width()/2 + 150,
+               play_area_height()/2,
+               ENTITY_SPRITE_SKULL_B,
+               15,
+               25,
+               PROJECTILE_SPRITE_RED_DISK,
+               v2(-1, 1),
+               4
+            );
+         end
+      )
+
+      t_wait(10)
+      do
+         Make_BrainDead_Enemy_Popcorn1(
+            10,
+            v2(play_area_width() + 10, play_area_height()/2 - 30),
+            0.086,
+            7,
+            -180,
+            30,
+            2,
+            25,
+            4,
+            -1);
+         t_wait(0.125);
+         Make_BrainDead_Enemy_Popcorn1(
+            10,
+            v2(-10, play_area_height()/2 - 50),
+            0.086,
+            7,
+            180,
+            30,
+            2,
+            25,
+            4,
+            -1);
+         t_wait(0.325);
+      end
+      t_wait(10)
+      do
+         Make_BrainDead_Enemy_Popcorn1(
+            10,
+            v2(play_area_width() + 10, play_area_height()/2 - 30),
+            0.086,
+            7,
+            -180,
+            30,
+            2,
+            25,
+            4,
+            -1);
+         t_wait(0.125);
+         Make_BrainDead_Enemy_Popcorn1(
+            10,
+            v2(-10, play_area_height()/2 - 50),
+            0.086,
+            7,
+            180,
+            30,
+            2,
+            25,
+            4,
+            -1);
+         t_wait(0.325);
+      end
+   end
+   t_wait(4);
+   convert_all_bullets_to_score();
+   async_task_lambda(
+      function ()
+         t_wait(4.5);
+         for i=1,4 do
+            local v = PROJECTILE_SPRITE_GREEN_DISK;
+            if i % 2 == 0 then
+               v = PROJECTILE_SPRITE_RED_DISK;
+            end
+            local e = Make_Enemy_Spinner_1_1_2(
+               15, 
+               v2(play_area_width() + i*15, 20 + i * 45),
+               v2(-1, 0),
+               120,
+               0.33,
+               0.0,
+               55,
+               5,
+               5,
+               v,
+               8
+               );
+            enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+         end
+      end
+   )
+
+   for i=1,8 do
+      do
+         local e0 = Make_Enemy_SideMoverWave1_1_1(10 + i * 35, -100, 0, 100, 1.5, 1, 0, 12, PROJECTILE_SPRITE_RED_ELECTRIC, PROJECTILE_SPRITE_RED_DISK);
+         enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
+         if i % 2 == 0 then
+            t_wait(0.5);
+         else
+            t_wait(1);
+         end
+      end
+   end
 end
 
 function stage_task()
@@ -548,7 +722,8 @@ function stage_task()
    wave1();
    t_wait(1);
    wave2();
-   t_wait(3);
+   t_wait(12);
+   convert_all_bullets_to_score();
    wait_no_danger();
    t_complete_stage();
 end

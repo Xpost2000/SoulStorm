@@ -5354,7 +5354,9 @@ void Game_State::kill_all_bullets() {
             continue;
 
         b.kill();
+#if 0
         spawn_game_entity_death_particle_emitter(state->particle_emitters, b.position, resources, 1);
+#endif
     }
 }
 
@@ -5368,8 +5370,10 @@ void Game_State::kill_all_enemies() {
             continue;
 
         e.kill();
+#if 0
         spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 0);
         spawn_game_entity_death_particle_emitter(state->particle_emitters, e.position, resources, 1);
+#endif
     }
 }
 
