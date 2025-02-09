@@ -475,6 +475,7 @@ struct Gameplay_Data {
     bool stage_completed;
     bool playing_practice_mode;
     int  score_awarded_points = 0;
+    int  extra_life_awarded_count = 0;
     f32  focus_tint_fade_t = 0.0f;
     f32  focus_hitbox_fade_t = 0.0f;
 

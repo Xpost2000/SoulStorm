@@ -1063,6 +1063,7 @@ void Game::reset_stage_simulation_state() {
 
     state->current_score = 0;
     state->score_awarded_points = 0;
+    state->extra_life_awarded_count = 0;
     state->paused_from_death = false;
     state->current_stage_timer = 0.0f;
     state->started_system_time = system_get_current_time();
@@ -1617,10 +1618,25 @@ void Gameplay_Data::notify_score(s32 amount, bool interesting) {
     current_score += amount * pet_data->score_modifier;
 
     s32 score_delta = current_score - score_awarded_points;
+    
+    // First 3 extra lives are generally pretty easy to obtain,
+    // everything else is a bit harder.
+    local s32 extra_life_score_table[] = {
+      POINTS_TO_AWARD_EXTRA_LIFE,
+      POINTS_TO_AWARD_EXTRA_LIFE * 1.5,
+      POINTS_TO_AWARD_EXTRA_LIFE * 1.75,
+      POINTS_TO_AWARD_EXTRA_LIFE * 2,
+      POINTS_TO_AWARD_EXTRA_LIFE * 4,
+      POINTS_TO_AWARD_EXTRA_LIFE * 4.5,
+    };
 
-    if (score_delta >= POINTS_TO_AWARD_EXTRA_LIFE) {
+    if (score_delta >= extra_life_score_table[extra_life_awarded_count++]) {
         add_life();
         score_awarded_points = current_score;
+    }
+
+    if (extra_life_awarded_count >= array_count(extra_life_score_table)) {
+      extra_life_awarded_count = array_count(extra_life_score_table) - 1;
     }
 
     if (!interesting)
