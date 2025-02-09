@@ -456,12 +456,12 @@ function wave3()
    end
 
    -- This might be pretty hard.
-   -- t_wait(3.5);
-   -- explosion_hazard_new(player_position_x(), player_position_y(), 50, 1, 1);
-   -- t_wait(6.5);
-   -- explosion_hazard_new(player_position_x(), player_position_y(), 80, 0.8, 0.8);
-   -- t_wait(9.5);
-   -- explosion_hazard_new(player_position_x(), player_position_y(), 120, 0.5, 0.5);
+   t_wait(3.5);
+   explosion_hazard_new(player_position_x(), player_position_y(), 50, 1, 1);
+   t_wait(6.5);
+   explosion_hazard_new(player_position_x(), player_position_y(), 80, 1, 1);
+   t_wait(9.5);
+   explosion_hazard_new(player_position_x(), player_position_y(), 120, 1, 1);
    enable_grazing();
    enable_bullet_to_points();
 
