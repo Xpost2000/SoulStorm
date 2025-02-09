@@ -1382,6 +1382,10 @@ void Gameplay_Data::add_life(void) {
         assertion(ui_particle_spawn_queue_count < array_count(ui_particle_spawn_queue) && "[crash, out of fixed space]");
         ui_req.type = GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_GAINED_LIFE;
         ui_req.data = tries;
+
+        if (tries > max_tries) {
+          max_tries = tries;
+        }
     }
 }
 
