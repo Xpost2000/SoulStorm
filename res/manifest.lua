@@ -197,6 +197,100 @@ projectiles = {
    },
 
    --- NEW CONTENT HERE THAT ISN'T TECHNICALLY HARD CODED
+
+   --- PURPLE
+   {
+      false, -- no rotation
+      -- frames
+      {
+         {"res/img/projectiles/projectile1_purple.png", nil, 0.0}
+      }
+   },
+   {
+      false,
+      {
+         {"res/img/projectiles/projectile1_purple.png", nil, 0.0},
+         {"res/img/projectiles/projectile1_1_purple.png", nil, 0.0}
+      }
+   },
+
+   {
+      false,
+      {
+         {"res/img/projectiles/projectile1_purple.png", nil, 0.0},
+         {"res/img/projectiles/projectile1_1_purple.png", nil, 0.0},
+         {"res/img/projectiles/projectile1_1_2_purple.png", nil, 0.0},
+         {"res/img/projectiles/projectile1_2_purple.png", nil, 0.0}
+      }
+   },
+   {
+      true,
+      {
+         {"res/img/projectiles/projectile1_flat_purple.png", nil, 0.0}
+      }
+   },
+   --- WRM
+   {
+      false, -- no rotation
+      -- frames
+      {
+         {"res/img/projectiles/projectile1_wrm.png", nil, 0.0}
+      }
+   },
+   {
+      false,
+      {
+         {"res/img/projectiles/projectile1_wrm.png", nil, 0.0},
+         {"res/img/projectiles/projectile1_1_wrm.png", nil, 0.0}
+      }
+   },
+
+   {
+      false,
+      {
+         {"res/img/projectiles/projectile1_wrm.png", nil, 0.0},
+         {"res/img/projectiles/projectile1_1_wrm.png", nil, 0.0},
+         {"res/img/projectiles/projectile1_1_2_wrm.png", nil, 0.0},
+         {"res/img/projectiles/projectile1_2_wrm.png", nil, 0.0}
+      }
+   },
+   {
+      true,
+      {
+         {"res/img/projectiles/projectile1_flat_wrm.png", nil, 0.0}
+      }
+   },
+   --- CAUSTIC
+   {
+      false, -- no rotation
+      -- frames
+      {
+         {"res/img/projectiles/projectile1_caustic.png", nil, 0.0}
+      }
+   },
+   {
+      false,
+      {
+         {"res/img/projectiles/projectile1_caustic.png", nil, 0.0},
+         {"res/img/projectiles/projectile1_1_caustic.png", nil, 0.0}
+      }
+   },
+
+   {
+      false,
+      {
+         {"res/img/projectiles/projectile1_caustic.png", nil, 0.0},
+         {"res/img/projectiles/projectile1_1_caustic.png", nil, 0.0},
+         {"res/img/projectiles/projectile1_1_2_caustic.png", nil, 0.0},
+         {"res/img/projectiles/projectile1_2_caustic.png", nil, 0.0}
+      }
+   },
+   {
+      true,
+      {
+         {"res/img/projectiles/projectile1_flat_caustic.png", nil, 0.0}
+      }
+   },
 };
 
 entities = {
