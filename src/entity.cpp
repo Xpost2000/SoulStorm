@@ -1431,6 +1431,8 @@ void Player::update(Game_State* state, f32 dt) {
     if (!state->gameplay_data.triggered_stage_completion_cutscene) {
         velocity.x = axes[0] * UNIT_SPEED;
         velocity.y = axes[1] * UNIT_SPEED;
+        acceleration.x = 0;
+        acceleration.y = 0;
         Entity::update(state, dt);
         switch (handle_play_area_edge_behavior(play_area)) {
             case PLAY_AREA_EDGE_DEADLY: {
@@ -1530,7 +1532,7 @@ void Player::update(Game_State* state, f32 dt) {
             default: {} break;
         }
 
-        sprite.offset.y = sinf(t_since_spawn * 0.775) * 6.5 + 8; // NOTE: +7 is to adjust visual location to make the hit box look less "unintuitive"
+        sprite.offset.y = sinf(t_since_spawn * 0.775) * 4.5 + 8; // NOTE: +7 is to adjust visual location to make the hit box look less "unintuitive"
         sprite.animate(
             &state->resources->graphics_assets,
             dt,
