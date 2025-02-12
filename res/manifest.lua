@@ -324,4 +324,27 @@ entities = {
          {"res/img/bats/enemy_bat2_3.png", nil,  0.0},
       }
    },
+   -- new 
+   {
+      {
+         {"res/img/skull/enemy_skull_a1_0.png", nil,  0.0},
+         {"res/img/skull/enemy_skull_a1_1.png", nil,  0.0},
+         {"res/img/skull/enemy_skull_a1_2.png", nil,  0.0},
+      }
+   },
+   {
+      {
+         {"res/img/skull/enemy_skull_b1_0.png", nil,  0.0},
+         {"res/img/skull/enemy_skull_b1_1.png", nil,  0.0},
+         {"res/img/skull/enemy_skull_b1_2.png", nil,  0.0},
+      }
+   },
+   {
+      {
+         {"res/img/bats/enemy_bat21_0.png", nil,  0.0},
+         {"res/img/bats/enemy_bat21_1.png", nil,  0.0},
+         {"res/img/bats/enemy_bat21_2.png", nil,  0.0},
+         {"res/img/bats/enemy_bat21_3.png", nil,  0.0},
+      }
+   },
 };
