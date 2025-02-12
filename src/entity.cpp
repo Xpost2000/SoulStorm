@@ -1418,7 +1418,7 @@ void Player::update(Game_State* state, f32 dt) {
     }
 
     V2 axes = gameplay_frame_input_packet_quantify_axes(input_packet);
-    float UNIT_SPEED = ((under_focus) ? 225 : 325) * pet_data->speed_modifier;
+    float UNIT_SPEED = ((under_focus) ? 150 : 235) * pet_data->speed_modifier;
 
     if (burst_absorption_shield_ability_timer > 0.0f) {
         UNIT_SPEED *= 0.675f;
