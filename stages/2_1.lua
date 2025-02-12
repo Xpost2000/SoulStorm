@@ -289,25 +289,20 @@ function wave3()
                            0, 40, 1.0, 0, 4, PROJECTILE_SPRITE_BLUE_STROBING, 0,
                            15, 20, 15
    );
-   enemy_set_visual(e4, ENTITY_SPRITE_BAT_B);
-   -- Make_Enemy_Spinster_1_1(play_area_width()/2,
-   --                         play_area_height() + 20,
-   --                         0, -40, 1.0, 0, 4, PROJECTILE_SPRITE_BLUE_STROBING, 180,
-   --                         15, 50, 15
-   -- );
+   enemy_set_visual(e4, ENTITY_SPRITE_BAT_B1);
    t_wait(1.5);
    local e5 = Make_Enemy_Spinster_1_1(-20,
                            play_area_height()/2,
                            40, 0, 1.0, 0, 3, PROJECTILE_SPRITE_GREEN_STROBING, -90,
-                           15, 40, 35
+                           15, 20, 25
    );
-   enemy_set_visual(e5, ENTITY_SPRITE_BAT_B);
+   enemy_set_visual(e5, ENTITY_SPRITE_BAT_B1);
    local e6 = Make_Enemy_Spinster_1_1(play_area_width()+20,
                            play_area_height()/2,
                            -20, 0, 1.0, 0, 3, PROJECTILE_SPRITE_GREEN_STROBING, 90,
-                           15, 40, 35
+                           15, 20, 25
    );
-   enemy_set_visual(e6, ENTITY_SPRITE_BAT_B);
+   enemy_set_visual(e6, ENTITY_SPRITE_BAT_B1);
    -- Add a nearly impossible scenario (dodge by staying in the center)
    t_wait(4);
    Make_BrainDead_Enemy_Popcorn1(
