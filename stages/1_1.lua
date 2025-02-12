@@ -144,10 +144,10 @@ end
 
 function _wave1_enemy_sweep_spinster(e, x_down, y_down, t_mv_speed, side)
    enemy_linear_move_to(e, enemy_position_x(e) + x_down, enemy_position_y(e) + y_down, t_mv_speed);
-   local fire_delay = 0.10;
+   local fire_delay = 0.15;
    local step       = 10;
-   local bspeed     = 90;
-   local bacel     =  55;
+   local bspeed     = 45;
+   local bacel     =  40;
 
    for p=0,3 do
       if p == 1 then
