@@ -714,7 +714,8 @@ function stage_task()
    Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star0.png", 0.27, 100, 65);
    Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star1.png", 0.37, 500, 200);
 
-   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_1.png", 0.250, 0, 230);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage2bkg2_1.png", 0.150, 0, 125);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage2bkg2_1_2.png", 0.150, 0, 125);
    play_area_notify_current_border_status();
    t_wait(3);
    wave1();

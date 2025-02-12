@@ -293,6 +293,9 @@ projectiles = {
    },
 };
 
+-- NOTE(jerry):
+-- due to engine limitations, the atlas packing isn't very smart, so these
+-- need to be sorted by height/width.
 entities = {
    {
       {
@@ -306,6 +309,20 @@ entities = {
          {"res/img/skull/enemy_skull_b_0.png", nil,  0.0},
          {"res/img/skull/enemy_skull_b_1.png", nil,  0.0},
          {"res/img/skull/enemy_skull_b_2.png", nil,  0.0},
+      }
+   },
+   {
+      {
+         {"res/img/skull/enemy_skull_a1_0.png", nil,  0.0},
+         {"res/img/skull/enemy_skull_a1_1.png", nil,  0.0},
+         {"res/img/skull/enemy_skull_a1_2.png", nil,  0.0},
+      }
+   },
+   {
+      {
+         {"res/img/skull/enemy_skull_b1_0.png", nil,  0.0},
+         {"res/img/skull/enemy_skull_b1_1.png", nil,  0.0},
+         {"res/img/skull/enemy_skull_b1_2.png", nil,  0.0},
       }
    },
    {
@@ -325,20 +342,6 @@ entities = {
       }
    },
    -- new 
-   {
-      {
-         {"res/img/skull/enemy_skull_a1_0.png", nil,  0.0},
-         {"res/img/skull/enemy_skull_a1_1.png", nil,  0.0},
-         {"res/img/skull/enemy_skull_a1_2.png", nil,  0.0},
-      }
-   },
-   {
-      {
-         {"res/img/skull/enemy_skull_b1_0.png", nil,  0.0},
-         {"res/img/skull/enemy_skull_b1_1.png", nil,  0.0},
-         {"res/img/skull/enemy_skull_b1_2.png", nil,  0.0},
-      }
-   },
    {
       {
          {"res/img/bats/enemy_bat21_0.png", nil,  0.0},
