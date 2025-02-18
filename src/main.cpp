@@ -81,6 +81,14 @@ const char* _build_flags =
 #ifdef MULTITHREADED_EXPERIMENTAL
     "using mt-sw,"
 #endif
+#ifdef _WIN32
+  "win32,"
+#else
+  "other"
+#endif
+#ifdef BUILD_DEMO
+   "demo,"
+#endif
 #ifdef RELEASE
     "release,"
 #else
