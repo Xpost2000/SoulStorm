@@ -7,6 +7,7 @@ TARGET=
 EXEC_EXT=
 EXEC_PATH_PREPEND=
 DISCORD_INTEGRATION=NO
+DEMO=
 
 ifeq ($(OS),Windows_NT)
 	TARGET:=win64
@@ -19,9 +20,11 @@ endif
 
 .phony: all clean run run-debug docgen distribute build-run-tree zip msbuild-release msbuild-debug msbuild-debug-release
 
-
 # CC=clang++
 CFLAGS:=-fpermissive -Wno-unused -Wno-unused-but-set-variable -std=c++17 -w
+ifeq ($(DEMO), True)
+	CFLAGS+=-DBUILD_DEMO
+endif
 
 ifeq ($(TARGET), win64)
 	CLIBS:=-lmingw32 -L./dependencies/x86-64/lib/ -L./dependencies/x86-64/bin/ -L./. -I./glad/include/\
