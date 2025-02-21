@@ -6,7 +6,10 @@
  * Most of the other code is otherwise pretty independent.
  *
  */
-#define NO_FANCY_FADEIN_INTRO
+
+// I wish I made this up.
+//#define UNUSUAL_INTEL_UHD_OPENGL_FULLSCREEN_FIX 
+//#define NO_FANCY_FADEIN_INTRO
 #define JDR_COROUTINE_IMPLEMENTATION
 #include "common.h"
 
@@ -136,6 +139,9 @@ local u32 SCREEN_HEIGHT                   = 0;
 local u32 REAL_SCREEN_WIDTH               = 1024;
 local u32 REAL_SCREEN_HEIGHT              = 768;
 const u32 ENGINE_BASE_VERTICAL_RESOLUTION = 480; // scaling up to 480p resolution
+
+local int last_resolution_w = REAL_SCREEN_WIDTH;
+local int last_resolution_h = REAL_SCREEN_HEIGHT;
 
 local V2 get_scaled_screen_resolution(V2 base_resolution) {
     f32 scale_factor = base_resolution.y / ENGINE_BASE_VERTICAL_RESOLUTION;
@@ -331,6 +337,7 @@ local void update_all_controller_inputs(void) {
     }
 }
 
+// NOTE(jerry): unused, events are set elsewhere.
 local void change_resolution(s32 new_resolution_x, s32 new_resolution_y) {
     REAL_SCREEN_WIDTH  = new_resolution_x;
     REAL_SCREEN_HEIGHT = new_resolution_y;
@@ -350,18 +357,46 @@ local void change_resolution(s32 new_resolution_x, s32 new_resolution_y) {
     Global_Engine()->real_screen_height = new_resolution_y;
 }
 
-local void set_fullscreen(bool v) {
+local void set_fullscreen(bool v, bool f=false) {
     LAST_SCREEN_IS_FULLSCREEN = SCREEN_IS_FULLSCREEN;
     SCREEN_IS_FULLSCREEN = v;
 
-    if (LAST_SCREEN_IS_FULLSCREEN != SCREEN_IS_FULLSCREEN) {
+    if (LAST_SCREEN_IS_FULLSCREEN != SCREEN_IS_FULLSCREEN || f) {
         if (SCREEN_IS_FULLSCREEN) {
-            // exclusive fullscreen now.
-            SDL_SetWindowFullscreen(global_game_window, SDL_WINDOW_FULLSCREEN);
-            SDL_SetWindowAlwaysOnTop(global_game_window, SDL_TRUE);
+          // exclusive fullscreen now.
+          /*
+            NOTE(jerry):
+            for opengl specifically, it seems to really... really dislike the fullscreen circus
+            and I can't even actually fake the fullscreen myself either! If I set it to exactly mode.h instead of
+            mode.h - 1, there's a weird flickering issue on Intel UHD ONLY?!
+          */
+#ifdef UNUSUAL_INTEL_UHD_OPENGL_FULLSCREEN_FIX
+          {
+            last_resolution_w = REAL_SCREEN_WIDTH;
+            last_resolution_h = REAL_SCREEN_HEIGHT;
+            SDL_SetWindowBordered(global_game_window, SDL_FALSE);
+            SDL_DisplayMode mode;
+            int index = SDL_GetWindowDisplayIndex(global_game_window);
+            SDL_GetCurrentDisplayMode(index, &mode);
+            SDL_SetWindowSize(global_game_window, mode.w, mode.h-1);
+          }
+          SDL_SetWindowPosition(global_game_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+#else
+          {
+            SDL_DisplayMode mode;
+            int index = SDL_GetWindowDisplayIndex(global_game_window);
+            SDL_GetCurrentDisplayMode(index, &mode);
+            SDL_SetWindowSize(global_game_window, mode.w, mode.h);
+          }
+          SDL_SetWindowFullscreen(global_game_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+#endif
+          SDL_SetWindowAlwaysOnTop(global_game_window, SDL_TRUE);
         } else {
             SDL_SetWindowFullscreen(global_game_window, SDL_FALSE);
             SDL_SetWindowAlwaysOnTop(global_game_window, SDL_FALSE);
+            SDL_SetWindowBordered(global_game_window, SDL_TRUE);
+            SDL_SetWindowSize(global_game_window, last_resolution_w, last_resolution_h);
+            SDL_SetWindowPosition(global_game_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
         }
     }
 
@@ -389,7 +424,7 @@ void handle_sdl_events(void) {
             switch (current_event.type) {
                 case SDL_WINDOWEVENT: {
                     switch (current_event.window.event) {
-                        // case SDL_WINDOWEVENT_RESIZED:
+                         case SDL_WINDOWEVENT_RESIZED:
                         case SDL_WINDOWEVENT_SIZE_CHANGED: {
                             s32 new_width  = current_event.window.data1;
                             s32 new_height = current_event.window.data2;
@@ -509,20 +544,17 @@ void initialize() {
      * annoying for me to go back and correct, especially since this is otherwise pretty stable.
      */
 #if 1
-    REAL_SCREEN_WIDTH = game.preferences.width;
+     REAL_SCREEN_WIDTH = game.preferences.width;
      REAL_SCREEN_HEIGHT = game.preferences.height;
      SCREEN_IS_FULLSCREEN = game.preferences.fullscreen;
+     last_resolution_w = REAL_SCREEN_WIDTH;
+     last_resolution_h = REAL_SCREEN_HEIGHT;
 
      Global_Engine()->real_screen_width  = REAL_SCREEN_WIDTH;
      Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
      Global_Engine()->fullscreen         = SCREEN_IS_FULLSCREEN;
      Audio::set_volume_sound(game.preferences.sound_volume);
      Audio::set_volume_music(game.preferences.music_volume);
-
-     if (Global_Engine()->fullscreen) {
-          //flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-         flags |= SDL_WINDOW_FULLSCREEN;
-     }
 #endif
 
     global_game_window = SDL_CreateWindow("SoulStorm",
@@ -533,6 +565,12 @@ void initialize() {
                                           flags);
     set_graphics_device(game.preferences.renderer_type);
     Thread_Pool::initialize();
+
+    if (Global_Engine()->fullscreen) {
+      //flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+      //flags |= SDL_WINDOW_FULLSCREEN;
+      set_fullscreen(true, true);
+    }
 
     Graphics_Driver::populate_display_mode_list(global_game_window); // update internal list of display modes.
 
@@ -570,10 +608,25 @@ void actually_confirm_and_update_preferences(Game_Preferences* preferences, Game
     set_graphics_device(preferences->renderer_type);
 
     // change_resolution(preferences->width, preferences->height);
-    global_graphics_driver->change_resolution(preferences->width, preferences->height);
 
     Audio::set_volume_sound(preferences->sound_volume);
     Audio::set_volume_music(preferences->music_volume);
+
+    global_graphics_driver->change_resolution(preferences->width, preferences->height);
+
+    if (preferences->fullscreen) {
+      SDL_DisplayMode mode;
+      int index = SDL_GetWindowDisplayIndex(global_game_window);
+      SDL_GetCurrentDisplayMode(index, &mode);
+      preferences->width = mode.w;
+      preferences->height = mode.h;
+    }
+    else {
+      last_resolution_w = preferences->width;
+      last_resolution_h = preferences->height;
+    }
+
+    SDL_SetWindowPosition(global_game_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
     preferences->resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences->width, preferences->height);
     _use_controller_rumble = preferences->controller_vibration;
@@ -697,6 +750,8 @@ void engine_main_loop() {
           toggle_fullscreen();
           Input::register_key_up(KEY_RETURN);
           Input::register_key_up(KEY_ALT);
+          // write this in to be consistent with what is currently seen.
+          game.preferences.fullscreen = game.temp_preferences.fullscreen = SCREEN_IS_FULLSCREEN;
         }
 
         if (!_did_window_intro_fade_in) {
