@@ -1921,6 +1921,11 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
         }
         if (GameUI::checkbox(V2(100, y), string_literal("Fullscreen "), color32f32(1, 1, 1, 1), 2, &temp_preferences.fullscreen)) {}
         y += 30;
+        {
+          extern string target_frame_rate_tick_strings[]; // in main.cpp
+          GameUI::option_selector(V2(100, y), string_literal("Framerate Limit: "), color32f32(1, 1, 1, 1), 2, target_frame_rate_tick_strings, 6, &temp_preferences.frame_limiter);
+        }
+        y += 30;
         if (GameUI::checkbox(V2(100, y), string_literal("Controller Vibration"), color32f32(1, 1, 1, 1), 2, &temp_preferences.controller_vibration)) {}
         y += 30;
         GameUI::f32_slider(V2(100, y), string_literal("Music Volume: "), color32f32(1, 1, 1, 1), 2, &temp_preferences.music_volume, 0, 1.0, 100);

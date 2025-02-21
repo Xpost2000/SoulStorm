@@ -5,6 +5,9 @@
  *
  * Most of the other code is otherwise pretty independent.
  *
+ * 2/21/2025(jerry): This platform layer inherited too much cruft
+ * from the last thing, so it might be time to clean wipe this mostly since it's
+ * not great for changing video modes too often.
  */
 
 // I wish I made this up.
@@ -125,6 +128,25 @@ f32 get_average_frametime(void) {
 
 // Globals
 #define TARGET_TICKS_PER_SECOND (1000.0f / 60.0f)
+
+// NOTE(jerry): after vsync
+const f32 target_frame_rate_ticks[] = {
+    1000.0f / 30.0f,
+    1000.0f / 45.0f,
+    1000.0f / 60.0f,
+    1000.0f / 120.0f,
+    1000.0f / 144.0f,
+    0, // no limiter
+};
+
+string target_frame_rate_tick_strings[] = {
+  string_literal("30 FPS"),
+  string_literal("45 FPS"),
+  string_literal("60 FPS"),
+  string_literal("120 FPS"),
+  string_literal("144 FPS"),
+  string_literal("Uncapped FPS"),
+};
 
 local SDL_Window*          global_game_window           = nullptr;
 local SDL_GameController*  global_controller_devices[4] = {};
@@ -537,6 +559,7 @@ void initialize() {
         preferences.renderer_type = GRAPHICS_DEVICE_D3D11;
         preferences.fullscreen   = SCREEN_IS_FULLSCREEN;
         preferences.controller_vibration = true;
+        preferences.frame_limiter = 2; // 60 fps default
     }
 
     // load preferences file primarily.
@@ -666,6 +689,7 @@ bool save_preferences_to_disk(Game_Preferences* preferences, string path) {
         fprintf(f, "renderer = %d\n", preferences->renderer_type);
         fprintf(f, "fullscreen = %s\n",    ((s32)preferences->fullscreen) ? "true" : "false");
         fprintf(f, "controller_vibration = %s\n",    ((s32)preferences->controller_vibration) ? "true" : "false");
+        fprintf(f, "framelimiter_option = %d\n", preferences->frame_limiter);
         // controls are separate.
     } fclose(f);
     return true;
@@ -721,6 +745,12 @@ bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
         int t = lua_getglobal(L, "controller_vibration");
         if (t != LUA_TNONE && t != LUA_TNIL)
             preferences->controller_vibration = lua_toboolean(L, -1);
+    }
+    {
+      int t = lua_getglobal(L, "framelimiter_option");
+      if (t != LUA_TNONE && t != LUA_TNIL) {
+        preferences->frame_limiter = lua_tointeger(L, -1);
+      }
     }
 
     preferences->resolution_option_index = Graphics_Driver::find_index_of_resolution(preferences->width, preferences->height);
@@ -865,15 +895,14 @@ int main(int argc, char** argv) {
         u32 start_frame_time = SDL_GetTicks();
         engine_main_loop();
 
-        Global_Engine()->last_elapsed_delta_time = (SDL_GetTicks() - start_frame_time) / 1000.0f;
-
-#ifdef TARGET_TICKS_PER_SECOND
-        if (SDL_GetTicks()-start_frame_time < TARGET_TICKS_PER_SECOND) {
-            int sleep_time = TARGET_TICKS_PER_SECOND - (SDL_GetTicks() - start_frame_time);
+        {
+          const f32 target_ticks_per_second = target_frame_rate_ticks[game.preferences.frame_limiter];
+          if (SDL_GetTicks() - start_frame_time < target_ticks_per_second) {
+            int sleep_time = target_ticks_per_second - (SDL_GetTicks() - start_frame_time);
             SDL_Delay(sleep_time);
+          }
         }
-#endif
-
+        
         Global_Engine()->last_elapsed_delta_time = (SDL_GetTicks() - start_frame_time) / 1000.0f;
         Global_Engine()->global_elapsed_time += Global_Engine()->last_elapsed_delta_time;
 

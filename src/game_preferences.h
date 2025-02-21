@@ -15,6 +15,7 @@ struct Game_Preferences {
     s32  height = 768;
 
     s32  resolution_option_index;
+    s32  frame_limiter = 0;
 
     f32 music_volume = 0.5;
     f32 sound_volume = 0.5;
