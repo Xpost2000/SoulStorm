@@ -6111,11 +6111,11 @@ Save_File Game::construct_save_data() {
         {
             save_data.post_game = can_access_stage(3);
         }
-        {
 #ifdef BUILD_DEMO
+        {
           save_data.beat_demo = can_access_stage(1);
-#endif
         }
+#endif
         {
             save_data.playtime = total_playtime;
         }
