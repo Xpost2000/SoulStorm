@@ -386,6 +386,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
     f32 ui_x_title = 50.0f; // ends at 50
     f32 ui_x = 100.0f;       // ends at 100
     f32 logo_y_final = 100 - 50;
+    f32 logo_y = logo_y_final;
     {
         s32 new_screen_width = game_render_commands->screen_width;
         s32 new_screen_height = game_render_commands->screen_height;
