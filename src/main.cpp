@@ -333,7 +333,18 @@ local void update_all_controller_inputs(void) {
 local void change_resolution(s32 new_resolution_x, s32 new_resolution_y) {
     REAL_SCREEN_WIDTH  = new_resolution_x;
     REAL_SCREEN_HEIGHT = new_resolution_y;
-    SDL_SetWindowSize(global_game_window, new_resolution_x, new_resolution_y);
+    if (SCREEN_IS_FULLSCREEN) {
+      // todo
+      SDL_DisplayMode mode;
+      mode.format = SDL_PIXELFORMAT_BGR24;
+      mode.w = new_resolution_x;
+      mode.h = new_resolution_y;
+
+      SDL_SetWindowDisplayMode(global_game_window,&mode);
+    }
+    else {
+      SDL_SetWindowSize(global_game_window, new_resolution_x, new_resolution_y);
+    }
     Global_Engine()->real_screen_width = new_resolution_x;
     Global_Engine()->real_screen_height = new_resolution_y;
 }
@@ -501,7 +512,7 @@ void initialize() {
     Audio::set_volume_music(game.preferences.music_volume);
 
     if (Global_Engine()->fullscreen) {
-        flags |= SDL_WINDOW_FULLSCREEN;
+        flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
     }
 
     global_game_window = SDL_CreateWindow("SoulStorm",
