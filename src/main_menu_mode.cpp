@@ -278,7 +278,7 @@ local color32f32 portal_color_from_stage_id(s32 stage_id) {
     // TODO: pick better colors.
     switch (stage_id) {
         case 0: {
-            return color32f32(210/255.0f, 77/255.0f, 87/255.0f, 1);
+            return color32f32(3 / 255.0f, 138 / 255.0f, 255 / 255.0f, 1.0f);
             // return color32f32(1, 0, 0, 1);
         } break;
         case 1: {
@@ -287,7 +287,7 @@ local color32f32 portal_color_from_stage_id(s32 stage_id) {
         } break;
         case 2: {
             // return color32f32(0, 0, 1, 1);
-            return color32f32(3/255.0f, 138/255.0f, 255/255.0f, 1.0f);
+            return color32f32(210 / 255.0f, 77 / 255.0f, 87 / 255.0f, 1);
         } break;
     }
 
@@ -949,10 +949,10 @@ void MainMenu_Data::reset_object_positions(Game_Resources* resources) {
         portal.visible = true;
 
         initialize_portal_particle_emitters(
-            &portal,
-            resources,
-            PROJECTILE_SPRITE_RED_ELECTRIC,
-            PROJECTILE_SPRITE_RED
+          &portal,
+          resources,
+          PROJECTILE_SPRITE_BLUE_ELECTRIC,
+          PROJECTILE_SPRITE_BLUE
         );
     }
 
@@ -986,15 +986,16 @@ void MainMenu_Data::reset_object_positions(Game_Resources* resources) {
         portal.visible = true;
 
         initialize_portal_particle_emitters(
-            &portal,
-            resources,
-            PROJECTILE_SPRITE_BLUE_ELECTRIC,
-            PROJECTILE_SPRITE_BLUE
+          &portal,
+          resources,
+          PROJECTILE_SPRITE_RED_ELECTRIC,
+          PROJECTILE_SPRITE_RED
         );
     }
 
     // NOTE: postgame portal.
     // NOTE: unused, I do not have time to make more levels :(
+    // NOTE(jerry):... maybe this is back on the menu!
     {
         auto& portal = portals[3];
         portal.stage_id = 3;
@@ -1031,7 +1032,13 @@ void MainMenu_Data::reset_object_positions(Game_Resources* resources) {
             emitter.emission_max_timer = 0.025f;
         }
     }
-
+#ifdef BUILD_DEMO
+    {
+      portals[1].visible = false;
+      portals[2].visible = false;
+      portals[3].visible = false;
+    }
+#endif
 }
 
 void Game::mainmenu_data_initialize(Graphics_Driver* driver) {
@@ -1178,6 +1185,7 @@ void MainMenu_Data::adjust_entities_for_screen_resolution(int new_screen_width, 
 
         // NOTE: only the three playable portals (there is a fourth postgame portal that I'm just disabling, and
         // unlikely to re-enable. Ever.)
+#ifndef BUILD_DEMO
         {
             f32 screen_width = (new_screen_width);
             f32 screen_third = (screen_width*0.9f / 3.0f);
@@ -1189,6 +1197,16 @@ void MainMenu_Data::adjust_entities_for_screen_resolution(int new_screen_width, 
                 portal.emitter_vortex.shape = particle_emit_shape_circle(portal.position, 80.0f);
             }
         }
+#else
+        {
+          f32 screen_width = (new_screen_width);
+          auto& portal = main_menu_state.portals[0];
+          portal.position = V2(screen_width / 2, 80);
+          portal.emitter_main.shape = particle_emit_shape_circle(portal.position, 35.0f);
+          portal.emitter_vortex.attraction_point = portal.position;
+          portal.emitter_vortex.shape = particle_emit_shape_circle(portal.position, 80.0f);
+        }
+#endif
     }
 }
 
