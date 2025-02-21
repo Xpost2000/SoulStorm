@@ -910,15 +910,23 @@ int _lua_bind_laser_hazard_new(lua_State* L) {
     s32 direction = luaL_checkinteger(L, 3);
     f32 warning_time = luaL_checknumber(L, 4);
     f32 lifetime = luaL_checknumber(L, 5);
+    s32 projectile_sprite_type = -1;
+    
+    if (lua_gettop(L) >= 6) {
+      projectile_sprite_type = lua_tointeger(L, 6);
+    }
+
+    auto laser = Laser_Hazard(
+      position,
+      radius,
+      direction,
+      warning_time,
+      lifetime
+    );
+    laser.projectile_sprite_id = projectile_sprite_type;
 
     state->gameplay_data.add_laser_hazard(
-        Laser_Hazard(
-            position,
-            radius,
-            direction,
-            warning_time,
-            lifetime
-        )
+      laser  
     );
     return 0;
 }
