@@ -3271,6 +3271,7 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
                 f32 rect_y = lerp_f32(commands->screen_height - (y_cursor_from_bottom), final_y, percentage_t);
 
                 rectangle.y = rect_y;
+#ifndef BUILD_DEMO
                 // render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255 * percentage_t), BLEND_MODE_ALPHA);
                 modulation_color.a = border_color.a = (percentage_t);
                 game_ui_draw_bordered_box(V2(rectangle.x, rectangle.y), notification_tile_w, notification_tile_h, modulation_color, border_color);
@@ -3279,6 +3280,7 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
                     string text = achievement->name;
                     render_commands_push_text(commands, subtitle_font, 2, V2(rectangle.x + 65, rectangle.y+13), text, color32f32(1, 1, 1, percentage_t), BLEND_MODE_ALPHA);
                 }
+#endif
 
                 if (notification.timer >= MAX_PHASE_TIME) {
                     notification.phase = ACHIEVEMENT_NOTIFICATION_PHASE_LINGER;
@@ -3289,7 +3291,7 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
             case ACHIEVEMENT_NOTIFICATION_PHASE_LINGER: {
                 const f32 MAX_PHASE_TIME = 1.25f;
                 f32 percentage_t = clamp<f32>(notification.timer / MAX_PHASE_TIME, 0.0f, 1.0f);
-
+#ifndef BUILD_DEMO
                 // render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255), BLEND_MODE_ALPHA);
                 game_ui_draw_bordered_box(V2(rectangle.x, rectangle.y), notification_tile_w, notification_tile_h, modulation_color, border_color);
                 game_ui_draw_achievement_icon(*achievement, commands, V2(rectangle.x, rectangle.y-7), 1);
@@ -3297,6 +3299,8 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
                     string text = achievement->name;
                     render_commands_push_text(commands, subtitle_font, 2, V2(rectangle.x+65, rectangle.y+13), text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
                 }
+
+#endif
 
                 if (notification.timer >= MAX_PHASE_TIME) {
                     notification.phase = ACHIEVEMENT_NOTIFICATION_PHASE_BYE;
@@ -3310,7 +3314,7 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
                     notifications.erase(index);
                 } else {
                     f32 percentage_t = clamp<f32>(notification.timer / MAX_PHASE_TIME, 0.0f, 1.0f);
-
+#ifndef BUILD_DEMO
                     // render_commands_push_quad(commands, rectangle, color32u8(0, 0, 0, 255 * (1 - percentage_t)), BLEND_MODE_ALPHA);
                     modulation_color.a = border_color.a = (1 - percentage_t);
                     game_ui_draw_bordered_box(V2(rectangle.x, rectangle.y), notification_tile_w, notification_tile_h, modulation_color, border_color);
@@ -3319,7 +3323,7 @@ void Game::update_and_render_achievement_notifications(struct render_commands* c
                         string text = achievement->name;
                         render_commands_push_text(commands, subtitle_font, 2, V2(rectangle.x+65, rectangle.y+13), text, color32f32(1, 1, 1, 1 - percentage_t), BLEND_MODE_ALPHA);
                     }
-
+#endif
                     y_cursor_from_bottom += 60;
                 }
             } break;
