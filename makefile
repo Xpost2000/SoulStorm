@@ -99,6 +99,7 @@ HEADER_FILES= src/achievement_list.h \
 		src/stages.h \
 		src/string.h \
 		src/thread_pool.h \
+		src/banner_launcher.h \
 		src/title_screen_mode.h \
 		Bigfilepacker/bigfile.h \
 		src/v2.h
@@ -143,6 +144,7 @@ OBJECT_FILES=./build_intermediaries/achievements.o \
 	     ./build_intermediaries/discord_rich_presence_integration.o \
 	     ./build_intermediaries/stage.o \
 	     ./build_intermediaries/string.o \
+	     ./build_intermediaries/banner_launcher.o \
 	     ./build_intermediaries/thread_pool.o \
 	     ./build_intermediaries/v2.o
 
@@ -185,6 +187,7 @@ DOBJECT_FILES=./build_intermediaries/achievements_debug.o \
 	      ./build_intermediaries/discord_rich_presence_integration_debug.o \
 	      ./build_intermediaries/stage_debug.o \
 	      ./build_intermediaries/string_debug.o \
+	      ./build_intermediaries/banner_launcher_debug.o \
 	      ./build_intermediaries/thread_pool_debug.o \
 	      ./build_intermediaries/v2_debug.o
 
@@ -225,6 +228,7 @@ DROBJECT_FILES=./build_intermediaries/achievements.o \
 	      ./build_intermediaries/serializer.o \
 	      ./build_intermediaries/software_renderer.o \
 	      ./build_intermediaries/discord_rich_presence_integration.o \
+	      ./build_intermediaries/banner_launcher.o \
 	      ./build_intermediaries/stage.o \
 	      ./build_intermediaries/string.o \
 	      ./build_intermediaries/thread_pool.o \
@@ -329,6 +333,8 @@ endif
 	$(CC) -o $@ -c src/thread_pool.cpp $(CFLAGS) $(CLIBS) 
 ./build_intermediaries/v2.o: src/v2.cpp $(HEADER_FILES)
 	$(CC) -o $@ -c src/v2.cpp $(CFLAGS) $(CLIBS) 
+./build_intermediaries/banner_launcher.o: src/banner_launcher.cpp $(HEADER_FILES)
+	$(CC) -o $@ -c src/banner_launcher.cpp $(CFLAGS) $(CLIBS) 
 
 # NOTE: could be made as one target... with suffixing
 ./build_intermediaries/achievements_debug.o: src/achievements.cpp $(HEADER_FILES)
@@ -415,6 +421,8 @@ endif
 	$(CC) -o $@ -c src/thread_pool.cpp -g $(CFLAGS) $(CLIBS) 
 ./build_intermediaries/v2_debug.o: src/v2.cpp $(HEADER_FILES)
 	$(CC) -o $@ -c src/v2.cpp -g $(CFLAGS) $(CLIBS) 
+./build_intermediaries/banner_launcher_debug.o: src/banner_launcher.cpp $(HEADER_FILES)
+	$(CC) -o $@ -c src/banner_launcher.cpp $(CFLAGS) $(CLIBS) 
 
 ## end modules
 docgen: src/lua_metagen.cpp

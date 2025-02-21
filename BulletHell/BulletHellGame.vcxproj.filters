@@ -141,6 +141,9 @@
     <ClCompile Include="..\src\discord_rich_presence_integration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\banner_launcher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\allocators.h">
@@ -300,6 +303,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\demo_recording.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\banner_launcher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -46,6 +46,8 @@
 #include "game.h"
 #include "game_state.h"
 
+#include "banner_launcher.h"
+
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -540,6 +542,9 @@ void handle_sdl_events(void) {
 
 void initialize() {
     SDL_Init(SDL_INIT_EVERYTHING);
+    
+    start_launcher_banner();
+    
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, 0);
     SDL_GameControllerAddMappingsFromFile("./gamecontrollerdb.txt");
 
@@ -619,6 +624,8 @@ void initialize() {
     game.init(global_graphics_driver);
     Input::initialize();
     Discord_Integration::initialize();
+
+    kill_launcher_banner();
 }
 
 void update_preferences(Game_Preferences* a, Game_Preferences* b) {

@@ -407,6 +407,7 @@
     <ClCompile Include="..\src\action_mapper.cpp" />
     <ClCompile Include="..\src\allocators.cpp" />
     <ClCompile Include="..\src\audio.cpp" />
+    <ClCompile Include="..\src\banner_launcher.cpp" />
     <ClCompile Include="..\src\camera.cpp" />
     <ClCompile Include="..\src\color.cpp" />
     <ClCompile Include="..\src\common.cpp" />
@@ -469,6 +470,7 @@
     <ClInclude Include="..\src\action_mapper.h" />
     <ClInclude Include="..\src\allocators.h" />
     <ClInclude Include="..\src\audio.h" />
+    <ClInclude Include="..\src\banner_launcher.h" />
     <ClInclude Include="..\src\bigfile.h" />
     <ClInclude Include="..\src\color.h" />
     <ClInclude Include="..\src\common.h" />
