@@ -1,5 +1,132 @@
 engine_dofile("stages/common.lua")
 
+function wave1()
+   Stage1_Batflood();
+   t_wait(1)
+   do
+      local rx = 50 - 10;
+      local ry = 50 + 10;
+      local e0 = Make_Enemy_Spinner_1_1_2(25, v2(45, -30), v2(0, 1), 200, 0.5, 0.5, 25, rx, ry, PROJECTILE_SPRITE_CAUSTIC_DISK);
+      local e1 = Make_Enemy_Spinner_1_1_2(25, v2(play_area_width()-45, -30), v2(0, 1), 200, 0.5, 0.5, 25, rx, ry, PROJECTILE_SPRITE_CAUSTIC_DISK);
+      enemy_set_visual(e0, ENTITY_SPRITE_SKULL_A1);
+      enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A1);
+   end
+   LaserChaser_Horizontal_1_2(4, 1.25);
+   do
+      local e0 = Make_Enemy_Burst360_1_1_2(
+         15,
+         v2(-10, play_area_height()/2),
+         v2(50, play_area_height()/2 - 50),
+         0.85,
+
+         0.5,
+         5,
+         25,
+         45,
+
+         15, 30,
+
+         v2(1, 0),
+         100,
+         30,
+
+         PROJECTILE_SPRITE_CAUSTIC_STROBING,
+         4
+      );
+      enemy_set_visual(e0, ENTITY_SPRITE_SKULL_A1);
+
+      local e1 = Make_Enemy_Burst360_1_1_2(
+         15,
+         v2(play_area_width() + 10, play_area_height()/2),
+         v2(play_area_width() - 50, play_area_height()/2 - 50),
+         0.85,
+
+         0.5,
+         5,
+         25,
+         45,
+
+         15, 30,
+
+         v2(1, 0),
+         100,
+         30,
+
+         PROJECTILE_SPRITE_CAUSTIC_STROBING,
+         4
+      );
+      enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A1);
+   end
+   t_wait(2);
+   LaserChaser_Vertical_1_2(4, 1.25);
+   t_wait(3);
+   Stage1_Batflood();
+   t_wait(2.5);
+   do
+      for i=1,6 do
+         do
+            local p0 = PROJECTILE_SPRITE_RED_ELECTRIC;
+            local p1 = PROJECTILE_SPRITE_RED_DISK;
+            if i % 2 == 0 then
+               p0 = PROJECTILE_SPRITE_BLUE_STROBING;
+               p1 = PROJECTILE_SPRITE_BLUE_DISK;
+            end
+            local e0 = Make_Enemy_SideMoverWave1_1_1(10 + i * 35, -100, 0, 100, 1.5, 1, 0, 12, p0, p1);
+            enemy_set_visual(e0, ENTITY_SPRITE_BAT_B1);
+            if i % 2 == 0 then
+               t_wait(0.75);
+            else
+               t_wait(1.0);
+            end
+         end
+      end
+   end
+   -- right
+   Make_BrainDead_Enemy_Popcorn1(
+      20,
+      v2(play_area_width() + 25, player_position_y()),
+      0.086,
+      7,
+      -150,
+      30,
+      2,
+      25,
+      4,
+      -1);
+   t_wait(2.5);
+   --left
+   Make_BrainDead_Enemy_Popcorn1(
+      32,
+      v2(-30, player_position_y()),
+      0.14,
+      5,
+      150,
+      -10,
+      30,
+      25,
+      2,
+      2
+   );
+   t_wait(3);
+   for i=1,6 do
+      local e = Make_Enemy_Spinner_1_1_2(
+         15, 
+         v2(-15 - i*15, 20 + i * 45),
+         v2(1, 0),
+         80,
+         2.0,
+         0.0,
+         45,
+         5,
+         5,
+         PROJECTILE_SPRITE_PURPLE_DISK,
+         4
+         );
+      -- NOTE(jerry): make new bat sprites for these things
+      enemy_set_visual(e, ENTITY_SPRITE_SKULL_B1);
+   end
+end
+
 function stage_task()
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_0.png", 0.25, 0, -25);
    Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star0.png", 0.187, 355, 15);
@@ -12,11 +139,10 @@ function stage_task()
    Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.552, 90, 50);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/boss_0_light_streak.png", 0.150, 0, 125);
 
+   t_wait(2.5);
+   wave1();
    -- wait_no_danger();
    -- explosion_hazard_new(100, 100, 50, 0.5, 2);
    -- explosion_hazard_new(100, 180, 100, 0.5, 1);
-   laser_hazard_new(100, 20, 0, 0.5, 1.5);
-   laser_hazard_new(100, 20, 1, 0.5, 1.5);
-   laser_hazard_new(200, 20, 1, 0.5, 1.5);
    -- t_complete_stage();
 end
