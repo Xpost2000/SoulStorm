@@ -39,11 +39,14 @@ GAME_SCREEN(update_and_render_game_credits) {
         }
         y += 45/2;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+#ifndef BUILD_DEMO
+// demo is not open source technically, or rather it's pre license
         {
             GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
-            GameUI::label(V2(50, y), string_literal("SOURCE CODE IS PUBLIC DOMAIN"), color32f32(1, 1, 1, 1), 2);
+            GameUI::label(V2(50, y), string_literal("SOURCE CODE IS LGPL2"), color32f32(1, 1, 1, 1), 2);
         }
         y += 45/2;
+#endif
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         {
             if (GameUI::button(V2(100, y), string_literal("gnsh fonts - https://opengameart.org/content/bitmap-font-0"), color32f32(1, 1, 1, 1), 1) == WIDGET_ACTION_ACTIVATE) {

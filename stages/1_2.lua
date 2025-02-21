@@ -224,7 +224,7 @@ function wave1_sub2()
 
       PROJECTILE_SPRITE_GREEN_ELECTRIC
    )
-
+   enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
    t_wait(1.5);
    local e1 = Make_Enemy_ArcPattern2_1_1_2(
       15,
@@ -246,6 +246,7 @@ function wave1_sub2()
 
       PROJECTILE_SPRITE_GREEN_ELECTRIC
    )
+   enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A);
    t_wait(1.5);
    local e2 = Make_Enemy_ArcPattern2_1_1_2(
       15,
@@ -267,8 +268,6 @@ function wave1_sub2()
 
       PROJECTILE_SPRITE_GREEN_ELECTRIC
    )
-   enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
-   enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A);
    enemy_set_visual(e2, ENTITY_SPRITE_SKULL_A);
    t_wait(2.0);
 
@@ -279,7 +278,7 @@ function wave1_sub2()
             local e = enemy_new();
             enemy_set_hp(e, 60); -- requires focus to break
             enemy_set_position(e, play_area_width()/2 - 25, -30);
-            enemy_set_scale(e, 20, 20);
+            enemy_set_scale(e, 30, 30);
             enemy_move_linear(e, v2(0, 1), 120);
             enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
             enemy_set_visual_scale(e, 2, 2);
@@ -288,7 +287,7 @@ function wave1_sub2()
             local e = enemy_new();
             enemy_set_hp(e, 60); -- requires focus to break
             enemy_set_position(e, play_area_width()/2 + 25, -30);
-            enemy_set_scale(e, 20, 20);
+            enemy_set_scale(e, 30, 30);
             enemy_move_linear(e, v2(0, 1), 120);
             enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
             enemy_set_visual_scale(e, 2, 2);
