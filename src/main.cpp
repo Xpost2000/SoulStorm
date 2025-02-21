@@ -6,6 +6,7 @@
  * Most of the other code is otherwise pretty independent.
  *
  */
+#define NO_FANCY_FADEIN_INTRO
 #define JDR_COROUTINE_IMPLEMENTATION
 #include "common.h"
 
@@ -162,7 +163,7 @@ local void initialize_framebuffer(void) {
         global_graphics_driver->initialize(global_game_window, framebuffer_resolution.x, framebuffer_resolution.y);
         _debugprintf("first time initialize");
     }
-
+    _debugprintf("Update backbuffer");
 #if 0
     if (last_screen_width == SCREEN_WIDTH && last_screen_height == SCREEN_HEIGHT) {
         _debugprintf("Framebuffer did not change resolutions. No change needed.");
@@ -334,7 +335,7 @@ local void change_resolution(s32 new_resolution_x, s32 new_resolution_y) {
     REAL_SCREEN_WIDTH  = new_resolution_x;
     REAL_SCREEN_HEIGHT = new_resolution_y;
     if (SCREEN_IS_FULLSCREEN) {
-      // todo
+      //// todo
       SDL_DisplayMode mode;
       mode.format = SDL_PIXELFORMAT_BGR24;
       mode.w = new_resolution_x;
@@ -388,16 +389,22 @@ void handle_sdl_events(void) {
             switch (current_event.type) {
                 case SDL_WINDOWEVENT: {
                     switch (current_event.window.event) {
-                        case SDL_WINDOWEVENT_RESIZED:
+                        // case SDL_WINDOWEVENT_RESIZED:
                         case SDL_WINDOWEVENT_SIZE_CHANGED: {
                             s32 new_width  = current_event.window.data1;
                             s32 new_height = current_event.window.data2;
 
                             _debugprintf("Size change event... Reevaluating framebuffers (%d, %d)", new_width, new_height);
-
-                            REAL_SCREEN_WIDTH  = new_width;
-                            REAL_SCREEN_HEIGHT = new_height;
-                            initialize_framebuffer();
+                            if (REAL_SCREEN_WIDTH != new_width ||
+                              REAL_SCREEN_HEIGHT != new_height) {
+                              REAL_SCREEN_WIDTH = new_width;
+                              REAL_SCREEN_HEIGHT = new_height;
+                              initialize_framebuffer();
+                            }
+                        } break;
+                        case SDL_WINDOWEVENT_FOCUS_LOST:
+                        case SDL_WINDOWEVENT_LEAVE: {
+                          _debugprintf("lost focus?");
                         } break;
                     }
                 } break;
@@ -501,19 +508,22 @@ void initialize() {
      * from stale pointers and other weird problems due to some architectural mistakes I made pretty early on, and are
      * annoying for me to go back and correct, especially since this is otherwise pretty stable.
      */
+#if 1
     REAL_SCREEN_WIDTH = game.preferences.width;
-    REAL_SCREEN_HEIGHT = game.preferences.height;
-    SCREEN_IS_FULLSCREEN = game.preferences.fullscreen;
+     REAL_SCREEN_HEIGHT = game.preferences.height;
+     SCREEN_IS_FULLSCREEN = game.preferences.fullscreen;
 
-    Global_Engine()->real_screen_width  = REAL_SCREEN_WIDTH;
-    Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
-    Global_Engine()->fullscreen         = SCREEN_IS_FULLSCREEN;
-    Audio::set_volume_sound(game.preferences.sound_volume);
-    Audio::set_volume_music(game.preferences.music_volume);
+     Global_Engine()->real_screen_width  = REAL_SCREEN_WIDTH;
+     Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
+     Global_Engine()->fullscreen         = SCREEN_IS_FULLSCREEN;
+     Audio::set_volume_sound(game.preferences.sound_volume);
+     Audio::set_volume_music(game.preferences.music_volume);
 
-    if (Global_Engine()->fullscreen) {
-        flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-    }
+     if (Global_Engine()->fullscreen) {
+          //flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+         flags |= SDL_WINDOW_FULLSCREEN;
+     }
+#endif
 
     global_game_window = SDL_CreateWindow("SoulStorm",
                                           SDL_WINDOWPOS_CENTERED,
@@ -555,9 +565,11 @@ void actually_confirm_and_update_preferences(Game_Preferences* preferences, Game
     if (!queued_preference_update) {
         return;
     }
+    _debugprintf("Updating preferences");
     set_fullscreen(preferences->fullscreen);
     set_graphics_device(preferences->renderer_type);
 
+    // change_resolution(preferences->width, preferences->height);
     global_graphics_driver->change_resolution(preferences->width, preferences->height);
 
     Audio::set_volume_sound(preferences->sound_volume);
@@ -568,6 +580,7 @@ void actually_confirm_and_update_preferences(Game_Preferences* preferences, Game
     queued_preference_update = false;
 
     game.on_resolution_change(preferences->width, preferences->height);
+    initialize_framebuffer();
 }
 
 void confirm_preferences(Game_Preferences* preferences, Game_Resources* resources) {
@@ -707,7 +720,6 @@ void engine_main_loop() {
             game.update_and_render(global_graphics_driver, Global_Engine()->last_elapsed_delta_time);
         }
     }
-
     Input::end_input_frame();
     global_graphics_driver->swap_and_present();
 
