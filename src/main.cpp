@@ -669,6 +669,11 @@ void engine_main_loop() {
 #ifdef NO_FANCY_FADEIN_INTRO
         _did_window_intro_fade_in = true;
 #endif
+        if (Input::is_key_down(KEY_ALT) && Input::is_key_pressed(KEY_RETURN)) {
+          toggle_fullscreen();
+          Input::register_key_up(KEY_RETURN);
+          Input::register_key_up(KEY_ALT);
+        }
 
         if (!_did_window_intro_fade_in) {
             const f32 MAX_INTRO_FADE_IN_TIMER = 0.4;

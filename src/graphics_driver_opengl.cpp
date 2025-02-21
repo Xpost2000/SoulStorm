@@ -309,7 +309,7 @@ void OpenGL_Graphics_Driver::swap_and_present() {
         return;
     }
 
-    SDL_GL_SetSwapInterval(-1);
+    SDL_GL_SetSwapInterval(0);
     SDL_GL_SwapWindow(game_window);
 }
 
