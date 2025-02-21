@@ -2531,7 +2531,8 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
 
                         // Check for postgame cutscene playing
                         {
-                            auto& main_menu_state = state->mainmenu_data;
+                          auto& main_menu_state = state->mainmenu_data;
+#ifndef BUILD_DEMO
                             if (!main_menu_state.cutscene1.triggered && can_access_stage(3)) {
                                 _debugprintf("Switched to ending");
                                 switch_screen(GAME_SCREEN_ENDING);
@@ -2540,6 +2541,13 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
                                 _debugprintf("Switched to main menu");
                                 switch_screen(GAME_SCREEN_MAIN_MENU);
                             }
+#else 
+                          if (!main_menu_state.cutscene4.triggered && can_access_stage(1)) {
+                            _debugprintf("demo ending!"); // no special ending state
+                            switch_screen(GAME_SCREEN_MAIN_MENU);
+                            main_menu_state.start_completed_demo_cutscene(state);
+                          }
+#endif
                         }
 
                         Transitions::do_shuteye_out(
@@ -6144,8 +6152,12 @@ void Game::update_from_save_data(Save_File* save_data) {
     {
         auto state = &this->state->mainmenu_data;
         bool have_postgame_access = can_access_stage(3);
+        bool likely_completed_demo = can_access_stage(1);
         {
             state->cutscene1.triggered = have_postgame_access;
+        }
+        {
+            state->cutscene4.triggered = likely_completed_demo;
         }
 #if 0
         // Enable postgame portal if we're in the postgame

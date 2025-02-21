@@ -105,7 +105,7 @@ void cutscene_completed_maingame_task(jdr_duffcoroutine_t* co) {
 
     *trauma_timer = 0;
 
-    main_menu_state->screen_message_add(string_literal("Congratulations for beating SoulStorm!"));
+    main_menu_state->screen_message_add(string_literal("Congratulations for beating SolStorm!"));
     while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
     main_menu_state->screen_message_add(string_literal("Feel free to maximize your score!"));
     while (!main_menu_state->screen_messages_finished()) {JDR_Coroutine_YieldNR();}
@@ -161,6 +161,34 @@ void cutscene_completed_maingame_task(jdr_duffcoroutine_t* co) {
 
     main_menu_state->cutscene1.phase = 0;
     JDR_Coroutine_End;
+}
+
+void cutscene_completed_demo_task(jdr_duffcoroutine_t* co) {
+  _jdr_bind_current(co);
+  Game_State* state = ((Game_Task_Userdata*)(co->userdata))->game_state;
+  auto        main_menu_state = &state->mainmenu_data;
+  f32         dt = ((Game_Task_Userdata*)(co->userdata))->dt;
+  V2          resolution = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);
+
+  auto& camera = main_menu_state->main_camera;
+  float* trauma_timer = (float*)_jdr_alloc_var(sizeof(*trauma_timer));
+  camera.rng = &main_menu_state->prng;
+
+  JDR_Coroutine_Start(co, Start);
+
+  *trauma_timer = 0;
+
+  main_menu_state->screen_message_add(string_literal("Thank you for completing the demo."));
+  while (!main_menu_state->screen_messages_finished()) { JDR_Coroutine_YieldNR(); }
+  main_menu_state->screen_message_add(string_literal("Keep an eye out for the full-release!"));
+  while (!main_menu_state->screen_messages_finished()) { JDR_Coroutine_YieldNR(); }
+  main_menu_state->screen_message_add(string_literal("Your save data will carry over!"));
+  while (!main_menu_state->screen_messages_finished()) { JDR_Coroutine_YieldNR(); }
+
+  TASK_WAIT(0.5f);
+
+  main_menu_state->cutscene4.phase = 0;
+  JDR_Coroutine_End;
 }
 
 void cutscene_introduction_fasttrack_task(jdr_duffcoroutine_t* co) {
@@ -873,6 +901,14 @@ void MainMenu_Data::start_completed_maingame_cutscene(Game_State* game_state) {
     }
 }
 
+void MainMenu_Data::start_completed_demo_cutscene(Game_State* game_state) {
+  if (!cutscene4.triggered) {
+    _debugprintf("Starting main game completion cutscene!");
+    cutscene4.triggered = true;
+    cutscene_queue_add(MAINMENU_CUTSCENE_ID_COMPLETED_DEMO);
+  }
+}
+
 void MainMenu_Data::start_introduction_cutscene(Game_State* game_state, bool fasttrack){
     if (!cutscene2.triggered) {
         cutscene2.triggered = true;
@@ -889,7 +925,11 @@ void MainMenu_Data::start_introduction_cutscene(Game_State* game_state, bool fas
 }
 
 bool MainMenu_Data::cutscene_active() {
-    return cutscene1.phase != 0 || cutscene2.phase != 0 || cutscene3.phase != 0;
+    return 
+      cutscene1.phase != 0 || 
+      cutscene2.phase != 0 || 
+      cutscene3.phase != 0 || 
+      cutscene4.phase != 0;
 }
 
 bool MainMenu_Data::screen_messages_finished() {
@@ -1147,6 +1187,11 @@ void MainMenu_Data::cutscene_queue_start_and_play_cutscenes(Game_State* game_sta
             cutscene1.phase            = 1;
             game_state->coroutine_tasks.add_task(game_state, cutscene_completed_maingame_task);
         } break;
+        case MAINMENU_CUTSCENE_ID_COMPLETED_DEMO: {
+          _debugprintf("Completed demo cutscene...");
+          cutscene4.phase = 1;
+          game_state->coroutine_tasks.add_task(game_state, cutscene_completed_demo_task);
+        } break;
         case MAINMENU_CUTSCENE_ID_INTRODUCTION: {
             _debugprintf("Cutscene introduction");
             cutscene2.phase     = 1;
@@ -1317,10 +1362,16 @@ GAME_SCREEN(update_and_render_game_main_menu) {
     if (Input::is_key_pressed(KEY_O)) {
         main_menu_state.start_unlock_pet_cutscene(state);
     }
+#ifndef BUILD_DEMO
     if (Input::is_key_pressed(KEY_P)) {
         main_menu_state.start_unlock_pet_cutscene(state);
         main_menu_state.start_completed_maingame_cutscene(state);
     }
+#else
+    if (Input::is_key_pressed(KEY_P)) {
+      main_menu_state.start_completed_demo_cutscene(state);
+    }
+#endif
 #endif
 
     if (Action::is_pressed(ACTION_MENU)) {

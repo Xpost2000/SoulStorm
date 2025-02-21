@@ -16,6 +16,7 @@
  *
  * Just a nice thing to add a little world building.
  *
+ * * TODO(jerry): readd final post game portal for new set of stages.
  */
 
 struct MainMenu_Data;
@@ -106,14 +107,21 @@ struct MainMenu_Stage_Portal {
     rectangle_f32 get_rect();
 };
 
-struct MainMenu_Completed_MainGame_Cutscene_Data {
-    bool triggered        = false;
-    s32  phase            = 0;
+struct MainMenu_CutsceneData_Base {
+  bool triggered = false;
+  s32  phase = 0;
 };
 
-struct MainMenu_Introduction_Cutscene_Data {
-    bool triggered        = false;
-    s32  phase            = 0;
+struct MainMenu_Completed_MainGame_Cutscene_Data 
+  : public MainMenu_CutsceneData_Base {
+};
+
+struct MainMenu_Introduction_Cutscene_Data 
+  : public MainMenu_CutsceneData_Base {
+};
+
+struct MainMenu_Completed_Demo_Cutscene_Data
+  : public MainMenu_CutsceneData_Base {
 };
 
 enum MainMenu_Unlock_Pet_Cutscene_Phase {
@@ -124,9 +132,8 @@ enum MainMenu_Unlock_Pet_Cutscene_Phase {
     MAIN_MENU_UNLOCK_PET_CUTSCENE_IDLE                = 4,
     MAIN_MENU_UNLOCK_PET_CUTSCENE_FADE_OUT_UNLOCK_BOX = 5,
 };
-struct MainMenu_Unlock_Pet_Cutscene_Data {
-    bool triggered        = false;
-    s32  phase            = 0;
+struct MainMenu_Unlock_Pet_Cutscene_Data 
+  : public MainMenu_CutsceneData_Base {
     f32  timer            = 0;
     f32  pet_spin_timer   = 0;
     // NOTE: I have to remap this because
@@ -180,7 +187,8 @@ enum MainMenu_Cutscene_ID {
     MAINMENU_CUTSCENE_ID_INTRODUCTION           = 1,
     MAINMENU_CUTSCENE_ID_INTRODUCTION_FASTTRACK = 2,
     MAINMENU_CUTSCENE_ID_UNLOCK_PET             = 3,
-    MAINMENU_CUTSCENE_ID_TYPES                  = 4,
+    MAINMENU_CUTSCENE_ID_COMPLETED_DEMO         = 4,
+    MAINMENU_CUTSCENE_ID_TYPES                  = 5,
 };
 
 struct MainMenu_Data {
@@ -205,6 +213,7 @@ struct MainMenu_Data {
     MainMenu_Completed_MainGame_Cutscene_Data cutscene1;
     MainMenu_Introduction_Cutscene_Data       cutscene2;
     MainMenu_Unlock_Pet_Cutscene_Data         cutscene3;
+    MainMenu_Completed_Demo_Cutscene_Data     cutscene4;
 
     Fixed_Array<MainMenu_ScreenMessage> screen_messages;
     Fixed_Array<MainMenu_Clutter_Poop>  clutter_poops;
@@ -237,6 +246,7 @@ struct MainMenu_Data {
     void cleanup_all_dead_poops(void);
 
     void start_completed_maingame_cutscene(Game_State* game_state);
+    void start_completed_demo_cutscene(Game_State* game_state);
     void start_unlock_pet_cutscene(Game_State* game_state);
     void start_introduction_cutscene(Game_State* game_state, bool fasttrack);
     
