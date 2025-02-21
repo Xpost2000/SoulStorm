@@ -2583,7 +2583,7 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
             case GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY: {
                 Transitions::register_on_finish(
                     [&](void*) mutable {
-                        switch_ui(UI_STATE_STAGE_SELECT);
+                        switch_ui(UI_STATE_REPLAY_COLLECTION);
                         switch_screen(GAME_SCREEN_MAIN_MENU);
 
                         Transitions::do_shuteye_out(
