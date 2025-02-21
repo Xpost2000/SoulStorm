@@ -6112,6 +6112,11 @@ Save_File Game::construct_save_data() {
             save_data.post_game = can_access_stage(3);
         }
         {
+#ifdef BUILD_DEMO
+          save_data.beat_demo = can_access_stage(1);
+#endif
+        }
+        {
             save_data.playtime = total_playtime;
         }
         {
@@ -6199,7 +6204,7 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
     // Serialize fields
     {
         serialize_s32(serializer, &save_data.version);
-
+        _debugprintf("savefile version id: %s", save_file_version_strings[save_data.version].data);
         // only one version for now anyways.
         switch (save_data.version) {
             case SAVE_FILE_VERSION_PRERELEASE0:
@@ -6211,8 +6216,7 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
                 return save_data;
             } break;
 
-            case SAVE_FILE_VERSION_CURRENT:
-            default: {
+            case SAVE_FILE_VERSION_PRERELEASE5: {
                 for (int stage_index = 0; stage_index < 4; ++stage_index) {
                     for (int level_index = 0; level_index < MAX_LEVELS_PER_STAGE; ++level_index) {
                         serialize_s32(serializer, &save_data.stage_last_scores[stage_index][level_index]);
@@ -6241,6 +6245,39 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
                         serialize_achievement(serializer, achievement);
                     }
                 }
+            } break;
+
+            case SAVE_FILE_VERSION_CURRENT:
+            default: {
+              for (int stage_index = 0; stage_index < 4; ++stage_index) {
+                for (int level_index = 0; level_index < MAX_LEVELS_PER_STAGE; ++level_index) {
+                  serialize_s32(serializer, &save_data.stage_last_scores[stage_index][level_index]);
+                  serialize_s32(serializer, &save_data.stage_best_scores[stage_index][level_index]);
+                  serialize_s32(serializer, &save_data.stage_attempts[stage_index][level_index]);
+                  serialize_s32(serializer, &save_data.stage_completions[stage_index][level_index]);
+                }
+              }
+              for (int stage_index = 0; stage_index < 4; ++stage_index) {
+                serialize_s32(serializer, &save_data.stage_unlocks[stage_index]);
+              }
+
+              serialize_u8(serializer, &save_data.post_game);
+              serialize_u8(serializer, &save_data.beat_demo);
+              serialize_f32(serializer, &save_data.playtime);
+              serialize_s32(serializer, &save_data.first_load);
+              serialize_s32(serializer, &save_data.pets_unlocked);
+
+              // serialize all achievements
+              // NOTE: slices are writable in my "library of code" so I'm
+              // just going to take advantage of this.
+              {
+                auto achievements = Achievements::get_all();
+
+                for (int achievement_index = 0; achievement_index < achievements.length; ++achievement_index) {
+                  auto achievement = &achievements[achievement_index];
+                  serialize_achievement(serializer, achievement);
+                }
+              }
             } break;
         }
     }
