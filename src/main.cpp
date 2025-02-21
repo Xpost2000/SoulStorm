@@ -164,6 +164,7 @@ local void initialize_framebuffer(void) {
     Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
     Global_Engine()->virtual_screen_width  = SCREEN_WIDTH;
     Global_Engine()->virtual_screen_height = SCREEN_HEIGHT;
+    Global_Engine()->fullscreen = SCREEN_IS_FULLSCREEN;
 
     if (!global_graphics_driver->is_initialized()) {
         global_graphics_driver->initialize(global_game_window, framebuffer_resolution.x, framebuffer_resolution.y);
@@ -382,13 +383,15 @@ local void set_fullscreen(bool v, bool f=false) {
           }
           SDL_SetWindowPosition(global_game_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 #else
+          SDL_SetWindowFullscreen(global_game_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
           {
             SDL_DisplayMode mode;
             int index = SDL_GetWindowDisplayIndex(global_game_window);
             SDL_GetCurrentDisplayMode(index, &mode);
-            SDL_SetWindowSize(global_game_window, mode.w, mode.h);
+            //SDL_SetWindowSize(global_game_window, mode.w, mode.h);
+            _debugprintf("set display mode %d, %d", mode.w, mode.h);
+            SDL_SetWindowDisplayMode(global_game_window, &mode);
           }
-          SDL_SetWindowFullscreen(global_game_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 #endif
           SDL_SetWindowAlwaysOnTop(global_game_window, SDL_TRUE);
         } else {
@@ -396,6 +399,7 @@ local void set_fullscreen(bool v, bool f=false) {
             SDL_SetWindowAlwaysOnTop(global_game_window, SDL_FALSE);
             SDL_SetWindowBordered(global_game_window, SDL_TRUE);
             SDL_SetWindowSize(global_game_window, last_resolution_w, last_resolution_h);
+            _debugprintf("resolution change, %d, %d", last_resolution_w, last_resolution_h);
             SDL_SetWindowPosition(global_game_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
         }
     }
@@ -405,9 +409,9 @@ local void set_fullscreen(bool v, bool f=false) {
 
 local void toggle_fullscreen(void) {
     if (SCREEN_IS_FULLSCREEN) {
-        set_fullscreen(false);
+        set_fullscreen(false, true);
     } else {
-        set_fullscreen(true);
+        set_fullscreen(true, true);
     }
 }
 
@@ -424,7 +428,7 @@ void handle_sdl_events(void) {
             switch (current_event.type) {
                 case SDL_WINDOWEVENT: {
                     switch (current_event.window.event) {
-                         case SDL_WINDOWEVENT_RESIZED:
+                        case SDL_WINDOWEVENT_RESIZED:
                         case SDL_WINDOWEVENT_SIZE_CHANGED: {
                             s32 new_width  = current_event.window.data1;
                             s32 new_height = current_event.window.data2;
@@ -435,6 +439,7 @@ void handle_sdl_events(void) {
                               REAL_SCREEN_WIDTH = new_width;
                               REAL_SCREEN_HEIGHT = new_height;
                               initialize_framebuffer();
+                              SDL_SetWindowPosition(global_game_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
                             }
                         } break;
                         case SDL_WINDOWEVENT_FOCUS_LOST:
@@ -544,20 +549,26 @@ void initialize() {
      * annoying for me to go back and correct, especially since this is otherwise pretty stable.
      */
 #if 1
+     SCREEN_IS_FULLSCREEN = game.preferences.fullscreen;
+     Global_Engine()->fullscreen = SCREEN_IS_FULLSCREEN;
+
+     if (Global_Engine()->fullscreen) {
+       SDL_DisplayMode mode;
+       SDL_GetCurrentDisplayMode(0, &mode); // assume monitor 0
+       game.preferences.width = mode.w;
+       game.preferences.height = mode.h;
+     }
      REAL_SCREEN_WIDTH = game.preferences.width;
      REAL_SCREEN_HEIGHT = game.preferences.height;
-     SCREEN_IS_FULLSCREEN = game.preferences.fullscreen;
      last_resolution_w = REAL_SCREEN_WIDTH;
      last_resolution_h = REAL_SCREEN_HEIGHT;
-
      Global_Engine()->real_screen_width  = REAL_SCREEN_WIDTH;
      Global_Engine()->real_screen_height = REAL_SCREEN_HEIGHT;
-     Global_Engine()->fullscreen         = SCREEN_IS_FULLSCREEN;
      Audio::set_volume_sound(game.preferences.sound_volume);
      Audio::set_volume_music(game.preferences.music_volume);
 #endif
 
-    global_game_window = SDL_CreateWindow("SoulStorm",
+    global_game_window = SDL_CreateWindow("SolStorm",
                                           SDL_WINDOWPOS_CENTERED,
                                           SDL_WINDOWPOS_CENTERED,
                                           REAL_SCREEN_WIDTH,
@@ -566,10 +577,10 @@ void initialize() {
     set_graphics_device(game.preferences.renderer_type);
     Thread_Pool::initialize();
 
+    // NOTE(jerry): fullscreen adjustments.
     if (Global_Engine()->fullscreen) {
-      //flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-      //flags |= SDL_WINDOW_FULLSCREEN;
       set_fullscreen(true, true);
+       update_preferences(&game.temp_preferences, &game.preferences);
     }
 
     Graphics_Driver::populate_display_mode_list(global_game_window); // update internal list of display modes.
@@ -612,21 +623,21 @@ void actually_confirm_and_update_preferences(Game_Preferences* preferences, Game
     Audio::set_volume_sound(preferences->sound_volume);
     Audio::set_volume_music(preferences->music_volume);
 
-    global_graphics_driver->change_resolution(preferences->width, preferences->height);
 
     if (preferences->fullscreen) {
       SDL_DisplayMode mode;
       int index = SDL_GetWindowDisplayIndex(global_game_window);
       SDL_GetCurrentDisplayMode(index, &mode);
+      _debugprintf("window display mode: %d, %d", mode.w, mode.h);
       preferences->width = mode.w;
       preferences->height = mode.h;
     }
     else {
       last_resolution_w = preferences->width;
       last_resolution_h = preferences->height;
+      global_graphics_driver->change_resolution(preferences->width, preferences->height);
+      _debugprintf("not windowed, changing window res to %d, %d", preferences->width, preferences->height);
     }
-
-    SDL_SetWindowPosition(global_game_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
     preferences->resolution_option_index = global_graphics_driver->find_index_of_resolution(preferences->width, preferences->height);
     _use_controller_rumble = preferences->controller_vibration;
@@ -746,13 +757,18 @@ void engine_main_loop() {
 #ifdef NO_FANCY_FADEIN_INTRO
         _did_window_intro_fade_in = true;
 #endif
+
+        // NOTE(jerry): platform layer is a mess, so this is hard to move around.
+        // alt enter is not reliable due to so much desync with video settings everywhere
+#if 0
         if (Input::is_key_down(KEY_ALT) && Input::is_key_pressed(KEY_RETURN)) {
-          toggle_fullscreen();
           Input::register_key_up(KEY_RETURN);
           Input::register_key_up(KEY_ALT);
           // write this in to be consistent with what is currently seen.
-          game.preferences.fullscreen = game.temp_preferences.fullscreen = SCREEN_IS_FULLSCREEN;
+          queued_preference_update = true;
+          game.preferences.fullscreen = (game.temp_preferences.fullscreen ^= true);
         }
+#endif
 
         if (!_did_window_intro_fade_in) {
             const f32 MAX_INTRO_FADE_IN_TIMER = 0.4;

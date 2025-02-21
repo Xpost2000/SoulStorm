@@ -1136,8 +1136,8 @@ void Game::handle_preferences(void) {
         // preferences struct.
         save_preferences_to_disk(&preferences, string_literal("preferences.lua"));
     }
-    confirm_preferences(&preferences, resources);
     update_preferences(&temp_preferences, &preferences);
+    confirm_preferences(&preferences, resources);
 }
 
 void Game::on_resolution_change(int new_width, int new_height) {
@@ -1905,7 +1905,7 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
                 options_list.push(s);
             }
             //_debugprintf("displaymode sz: %d", display_modes.length);
-            GameUI::option_selector(V2(100, y), string_literal("Resolution: "), color32f32(1, 1, 1, 1), 2, options_list.data, options_list.size, &temp_preferences.resolution_option_index);
+            GameUI::option_selector(V2(100, y), string_literal("Resolution: "), color32f32(1, 1, 1, 1), 2, options_list.data, options_list.size, &temp_preferences.resolution_option_index, !temp_preferences.fullscreen);
             y += 30;
         }
 #endif
