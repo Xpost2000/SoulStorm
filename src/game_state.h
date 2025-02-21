@@ -199,6 +199,10 @@ enum Game_Screen_Modes {
     GAME_SCREEN_ENDING    = 5,
     GAME_SCREEN_COUNT     = 6,
 
+#ifdef BUILD_DEMO
+    // The demo is always with the title screen
+  GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_TITLE_SCREEN,
+#else
 #ifndef RELEASE
     // Testing purposes I want to skip the intro.
     GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_TITLE_SCREEN,
@@ -207,6 +211,7 @@ enum Game_Screen_Modes {
 #else
     GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_OPENING,
     /* GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_ENDING, */
+#endif
 #endif
 };
 
@@ -308,7 +313,7 @@ struct Gameplay_Stage_Complete_Stage_Sequence {
 // NOTE: you can achieve this through various different things
 // like maximizing your score.
 #define MAX_TRIES_ALLOWED (15)
-#define MAX_BASE_TRIES (5)
+#define MAX_BASE_TRIES (4)
 
 // will do a small jump before dying.
 // NOTE: not the same as the hit marker score notifications

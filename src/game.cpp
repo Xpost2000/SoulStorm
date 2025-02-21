@@ -594,6 +594,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         }
     }
 
+#ifndef BUILD_DEMO
     {
         {
             resources->title_screen_puppet_eyes[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_eye0.png"));
@@ -606,6 +607,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         resources->title_screen_puppet_arm      = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_arm.png"));
         resources->title_screen_puppet_torso    = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_torso0.png"));
     }
+#endif
 
     {
         resources->title_screen_logo_fills[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_part_0_fill.png"));
@@ -2833,16 +2835,19 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
         }
         y += 30;
 
+#ifndef BUILD_DEMO
         if (GameUI::button(V2(100, y), string_literal("Achievements"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(UI_STATE_ACHIEVEMENTS);
         }
         y += 30;
+#endif
 
         if (GameUI::button(V2(100, y), string_literal("Replays"), color32f32(1, 1, 1, 1), 2, !Transitions::fading() && state->screen_mode != GAME_SCREEN_INGAME) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(UI_STATE_REPLAY_COLLECTION);
         }
         y += 30;
 
+#ifndef BUILD_DEMO
 #ifndef RELEASE
         if (state->screen_mode != GAME_SCREEN_TITLE_SCREEN) {
             if (GameUI::button(V2(100, y), string_literal("Custom Levels"), color32f32(1, 1, 1, 1), 2, !Transitions::fading() && state->screen_mode != GAME_SCREEN_INGAME) == WIDGET_ACTION_ACTIVATE) {
@@ -2851,6 +2856,7 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
             }
             y += 30;
         }
+#endif
 #endif
 
         if (state->screen_mode != GAME_SCREEN_CREDITS) {
@@ -3373,7 +3379,7 @@ void Game::game_ui_draw_title_logo(struct render_commands* commands, V2 where, f
     };
 
     V2 logo_cursor = where;
-#if 1
+#ifndef BUILD_DEMO
     // BLUE LOGO
     color32f32 logo_color = RGBA32f32(3, 138, 255, alpha*255.0f);
     color32f32 logo_color2 = RGBA32f32(0, 181, 204, alpha*255.0f);

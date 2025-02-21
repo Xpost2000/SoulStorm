@@ -359,6 +359,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
         .Large_Image(DISCORD_GAMEICON_ASSET_KEY)
     );
 
+#ifndef BUILD_DEMO
     {
         auto& state = this->state->titlescreen_data;
         if (state.phase == TITLE_SCREEN_ANIMATION_PHASE_IDLE) {
@@ -372,15 +373,19 @@ GAME_SCREEN(update_and_render_game_title_screen) {
             }
         }
     }
+#endif
 
     Audio::play_music_transition_into(resources->title_music, 1500, 2000, 0, -1);
 
     auto commands = ui_render_commands;
     auto resolution = V2(Global_Engine()->virtual_screen_width, Global_Engine()->virtual_screen_height);
 
+
+#ifndef BUILD_DEMO
+    // setup camera for rendering main part
     f32 ui_x_title = 50.0f; // ends at 50
     f32 ui_x = 100.0f;       // ends at 100
-    // setup camera for rendering main part
+    f32 logo_y_final = 100 - 50;
     {
         s32 new_screen_width = game_render_commands->screen_width;
         s32 new_screen_height = game_render_commands->screen_height;
@@ -450,8 +455,8 @@ GAME_SCREEN(update_and_render_game_title_screen) {
                         titlescreen_data.anim_timer = 0.0f;
                         titlescreen_data.phase      = TITLE_SCREEN_ANIMATION_PHASE_IDLE;
                         titlescreen_data.puppet.allow_looking_random = true;
-                        
                     }
+
                     {
                         state->titlescreen_data.puppet.position = V2(quadratic_ease_in_out_f32(-new_screen_width/2,  -new_screen_width/2 + new_screen_width/4, effective_t2), -new_screen_height/2+55);
                     }
@@ -506,6 +511,122 @@ GAME_SCREEN(update_and_render_game_title_screen) {
         state->titlescreen_data.puppet.update(dt);
         state->titlescreen_data.puppet.draw(dt, game_render_commands, resources);
     }
+#else
+// NOTE(jerry):
+// without the main character I'll just center only the title screen
+// all other UI is still not unjustified since it doesn't really look as nice otherwise.
+    f32 ui_x_title = resolution.x/2 - 150; // ends at 50
+    f32 ui_x = resolution.x/2 - 150;       // ends at 100
+    f32 logo_y_final = 25;
+    f32 logo_y_start = resolution.y / 2 - 25;
+    f32 logo_y = logo_y_start;
+
+    {
+      s32 new_screen_width = game_render_commands->screen_width;
+      s32 new_screen_height = game_render_commands->screen_height;
+      {
+        if (state->titlescreen_data.last_screen_width != new_screen_width ||
+          state->titlescreen_data.last_screen_height != new_screen_height) {
+          state->titlescreen_data.last_screen_width = new_screen_width;
+          state->titlescreen_data.last_screen_height = new_screen_height;
+          state->titlescreen_data.main_camera.xy = V2(new_screen_width / 2, new_screen_height / 2);
+        }
+      }
+
+      // Handle_Title_Screen_Animation_Phase
+      {
+        auto& titlescreen_data = state->titlescreen_data;
+        switch (titlescreen_data.phase) {
+          case TITLE_SCREEN_ANIMATION_PHASE_BLACK0: {
+            const f32 phase_max_t = 0.5f;
+            GameUI::set_all_visual_alpha(0.0f);
+
+            if (titlescreen_data.anim_timer < phase_max_t) {
+              titlescreen_data.anim_timer += dt;
+            }
+            else {
+              titlescreen_data.anim_timer = 0.0f;
+              titlescreen_data.phase = TITLE_SCREEN_ANIMATION_PHASE_FADE_LOGO;
+            }
+          } break;
+          case TITLE_SCREEN_ANIMATION_PHASE_FADE_LOGO: {
+            const f32 phase_max_t = 0.75f;
+
+            if (titlescreen_data.anim_timer < phase_max_t) {
+              titlescreen_data.demo_logo_fade_alpha = titlescreen_data.anim_timer / phase_max_t;
+              titlescreen_data.anim_timer += dt;
+            }
+            else {
+              titlescreen_data.anim_timer = 0.0f;
+              titlescreen_data.demo_logo_fade_alpha = 1.0f;
+              titlescreen_data.phase = TITLE_SCREEN_ANIMATION_PHASE_UNBLACK0;
+            }
+          } break;
+          case TITLE_SCREEN_ANIMATION_PHASE_UNBLACK0: {
+            const f32 phase_max_t = 1.0f;
+            titlescreen_data.demo_logo_fade_alpha = 1.0f;
+
+            if (titlescreen_data.anim_timer < phase_max_t) {
+              titlescreen_data.anim_timer += dt;
+              titlescreen_data.demo_black_screen_alpha = titlescreen_data.anim_timer / phase_max_t;
+              //logo_y = lerp_f32(logo_y_start, logo_y_final, titlescreen_data.anim_timer / phase_max_t);
+              logo_y = quadratic_ease_in_out_f32(logo_y_start, logo_y_final, titlescreen_data.anim_timer / phase_max_t);
+            }
+            else {
+              titlescreen_data.anim_timer = 0.0f;
+              titlescreen_data.demo_black_screen_alpha = 1.0f;
+              titlescreen_data.phase = TITLE_SCREEN_ANIMATION_PHASE_FADE_IN_UI;
+              logo_y = logo_y_final;
+            }
+          } break;
+          case TITLE_SCREEN_ANIMATION_PHASE_FADE_IN_UI: {
+            const f32 phase_max_t = 1.25f;
+            titlescreen_data.demo_logo_fade_alpha = 1.0f;
+            logo_y = logo_y_final;
+
+            if (titlescreen_data.anim_timer < phase_max_t) {
+              titlescreen_data.anim_timer += dt;
+              GameUI::set_all_visual_alpha(titlescreen_data.anim_timer / phase_max_t);
+            }
+            else {
+              titlescreen_data.anim_timer = 0.0f;
+              GameUI::set_all_visual_alpha(1.0f);
+              titlescreen_data.phase = TITLE_SCREEN_ANIMATION_PHASE_IDLE;
+            }
+          } break;
+          case TITLE_SCREEN_ANIMATION_PHASE_IDLE: {
+            // nothing
+            logo_y = logo_y_final;
+            titlescreen_data.demo_black_screen_alpha = 1.0f;
+            titlescreen_data.demo_logo_fade_alpha = 1.0f;
+            GameUI::set_all_visual_alpha(1.0f);
+          } break;
+        }
+      }
+    }
+
+    game_render_commands->camera = state->titlescreen_data.main_camera;
+
+    {
+      // Need to make these have different sizes.
+      for (int i = 0; i < array_count(state->titlescreen_data.star_positions); ++i) {
+        auto r = rectangle_f32(state->titlescreen_data.star_positions[i].x, state->titlescreen_data.star_positions[i].y, 1, 1);
+
+        render_commands_push_quad_ext(
+          game_render_commands,
+          r,
+          color32u8(230, 230, 255, 255),
+          V2(0, 0), 0,
+          BLEND_MODE_ALPHA
+        );
+      }
+
+      for (int i = 0; i < array_count(state->titlescreen_data.sparkling_stars); ++i) {
+        state->titlescreen_data.sparkling_stars[i].update(dt);
+        state->titlescreen_data.sparkling_stars[i].draw(game_render_commands, resources);
+      }
+    }
+#endif
 
     if (state->ui_state != UI_STATE_INACTIVE) {
         handle_ui_update_and_render(commands, dt);
@@ -518,12 +639,30 @@ GAME_SCREEN(update_and_render_game_title_screen) {
         GameUI::set_ui_id((char*)"ui_titlescreen_menu");
         GameUI::begin_frame(commands, &resources->graphics_assets);
         {
-            f32 y = 100;
+#ifndef BUILD_DEMO
+          f32 y = 100;
+#else
+          f32 y = 100;
+#endif
             GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
             // GameUI::label(V2(ui_x_title, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
             GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
             GameUI::set_wobbly_contribution(1.0f);
-            game_ui_draw_title_logo(commands, V2(ui_x_title, y-50), 1.25, GameUI::get_visual_alpha());
+
+            game_ui_draw_title_logo(commands, 
+              V2(ui_x_title, logo_y), 1.25, 
+              saturate<f32>(GameUI::get_visual_alpha() + state->titlescreen_data.demo_logo_fade_alpha));
+
+            // TitleBlackScreen 
+            {
+              render_commands_push_quad(
+                game_render_commands,
+                rectangle_f32(0, 0, 9999, 9999),
+                color32u8(0, 0, 0, 
+                  saturate<f32>((1.0 - state->titlescreen_data.demo_black_screen_alpha)) * 255),
+                BLEND_MODE_ALPHA
+              );
+            }
 
             y += 45;
 
@@ -571,11 +710,13 @@ GAME_SCREEN(update_and_render_game_title_screen) {
                 switch_ui(UI_STATE_OPTIONS);
             }
             y += 30;
-
+#if 0
+            // Save file hasn't been loaded yet.
             if (GameUI::button(V2(ui_x, y), string_literal("Achievements"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(UI_STATE_ACHIEVEMENTS);
             }
             y += 30;
+#endif
             if (GameUI::button(V2(ui_x, y), string_literal("Credits"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 Transitions::do_shuteye_in(
                     color32f32(0, 0, 0, 1),
@@ -598,10 +739,12 @@ GAME_SCREEN(update_and_render_game_title_screen) {
                 );
             }
             y += 30;
+#ifndef BUILD_DEMO
             if (GameUI::button(V2(ui_x, y), string_literal("Opening"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 title_screen_replay_opening();
             }
             y += 30;
+#endif
             if (GameUI::button(V2(ui_x, y),
 #ifdef _WIN32
                                string_literal("Exit To Windows")

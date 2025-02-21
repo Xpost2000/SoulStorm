@@ -142,6 +142,10 @@ T clamp(T x, T min, T max) {
     T i = (x < min) ? min : x;
     return (i > max)  ? max : i;
 }
+template <typename T>
+T saturate(T x) {
+  return clamp<T>(x, (T)0, (T)1);
+}
 
 inline static s32 sign_s32(s32 a) {
     if (a > 0) return 1;

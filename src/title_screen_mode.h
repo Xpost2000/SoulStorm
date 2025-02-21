@@ -55,9 +55,16 @@ struct TitleScreen_MainCharacter_Puppet {
 };
 
 enum TitleScreen_Animation_Phase {
+#ifndef BUILD_DEMO
     TITLE_SCREEN_ANIMATION_PHASE_CLOSE_UP_OF_FACE,
     TITLE_SCREEN_ANIMATION_PHASE_ZOOM_OUT,
     TITLE_SCREEN_ANIMATION_PHASE_MOVE_PUPPET_TO_RIGHT_AND_FADE_IN_MENU,
+#else
+  TITLE_SCREEN_ANIMATION_PHASE_BLACK0,
+  TITLE_SCREEN_ANIMATION_PHASE_FADE_LOGO,
+  TITLE_SCREEN_ANIMATION_PHASE_UNBLACK0,
+  TITLE_SCREEN_ANIMATION_PHASE_FADE_IN_UI,
+#endif
     TITLE_SCREEN_ANIMATION_PHASE_IDLE,
 };
 
@@ -78,8 +85,14 @@ struct TitleScreen_Data {
     struct camera main_camera;
     random_state  prng;
 
-    s32 phase      = TITLE_SCREEN_ANIMATION_PHASE_CLOSE_UP_OF_FACE;
+    s32 phase      = 0; // start phase
     f32 anim_timer = 0.0f;
+
+    // NOTE(jerry): only for demo version of title screen,
+    // I don't want to split it into an entirely different file
+    // right now.
+    f32 demo_logo_fade_alpha = 0.0f;
+    f32 demo_black_screen_alpha = 0.0f;
 
     f32 attract_mode_timer = 0.0f;
 
