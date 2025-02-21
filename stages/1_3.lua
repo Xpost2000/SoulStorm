@@ -108,7 +108,7 @@ function wave1()
       2
    );
    t_wait(3);
-   for i=1,6 do
+   for i=1,8 do
       local e = Make_Enemy_Spinner_1_1_2(
          15, 
          v2(-15 - i*15, 20 + i * 45),
@@ -125,24 +125,67 @@ function wave1()
       -- NOTE(jerry): make new bat sprites for these things
       enemy_set_visual(e, ENTITY_SPRITE_SKULL_B1);
    end
+   t_wait(2);
+end
+
+function boss_intro_wave()
+   start_black_fade(0.065);
+
+   explosion_hazard_new(50, 50, 25, 0.25, 0.25);
+   explosion_hazard_new(play_area_width()-50, 50, 25, 0.25, 0.25);
+   t_wait(0.55);
+   explosion_hazard_new(75, 65, 35, 0.10, 0.10);
+   t_wait(0.15);
+   explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
+   t_wait(0.15);
+   explosion_hazard_new(110, 25, 35, 0.10, 0.10);
+   t_wait(0.15);
+   explosion_hazard_new(play_area_width()-100, 25, 35, 0.10, 0.10);
+   t_wait(0.15);
+   explosion_hazard_new(140, 45, 35, 0.15, 0.15);
+   t_wait(0.35);
+   explosion_hazard_new(75, 65, 35, 0.10, 0.10);
+   t_wait(0.25);
+   explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
+   t_wait(0.25);
+   explosion_hazard_new(110, 25, 35, 0.10, 0.10);
+   t_wait(1.25);
+   explosion_hazard_new(play_area_width()/2+25, 35, 35, 0.10, 0.10);
+   explosion_hazard_new(play_area_width()/2-50, 35, 35, 0.10, 0.10);
+   explosion_hazard_new(play_area_width()/2-35, 45, 35, 0.10, 0.10);
+   explosion_hazard_new(play_area_width()/2, 85, 35, 0.10, 0.10);
+   explosion_hazard_new(play_area_width()/2, 50, 65, 0.125, 0.25);
+   t_wait(3.5);
+   -- boss spawn!!
+   end_black_fade();
 end
 
 function stage_task()
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_0.png", 0.25, 0, -25);
    Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star0.png", 0.187, 355, 15);
    Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star1.png", 0.117, -150, 255);
-   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.450, 35, 0);
-   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.800, 85, 200);
-   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.650, 450, 200);
-   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.750, 100, 377);
-   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.800, -70, 200);
-   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.552, 90, 50);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.450, 35, 0);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.800, 85, 200);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.650, 450, 200);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.750, 100, 377);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.800, -70, 200);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.552, 90, 50);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/boss_0_light_streak.png", 0.150, 0, 125);
 
-   t_wait(2.5);
+   t_wait(1.5);
    wave1();
+   t_wait(12.5);
+   convert_all_bullets_to_score()
+   t_wait(3.5);
+   LaserChaser_Horizontal_1_2(4, 1.25);
+   t_wait(1.0);
+   boss_intro_wave();
+   -- Add "cinematic mode", player is moved to starting position
+   -- and cannot shoot until boss spawns
+   -- Boss main is a separate task
+
    -- wait_no_danger();
    -- explosion_hazard_new(100, 100, 50, 0.5, 2);
    -- explosion_hazard_new(100, 180, 100, 0.5, 1);
-   -- t_complete_stage();
+   t_complete_stage();
 end
