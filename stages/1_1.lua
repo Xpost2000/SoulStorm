@@ -1063,7 +1063,7 @@ function wave_2_sub5()
       goon[1] = enemy_new();
       enemy_set_visual(goon[1], ENTITY_SPRITE_SKULL_A);
       enemy_set_scale(goon[1], 10, 10);
-      enemy_set_hp(goon[1], 125);
+      enemy_set_hp(goon[1], 450);
       enemy_set_position(goon[1], 50, 80);
       t_wait(1.0);
       goon[2] = enemy_new();
@@ -1075,7 +1075,7 @@ function wave_2_sub5()
       goon[3] = enemy_new();
       enemy_set_scale(goon[3], 10, 10);
       enemy_set_visual(goon[3], ENTITY_SPRITE_SKULL_A);
-      enemy_set_hp(goon[3], 125);
+      enemy_set_hp(goon[3], 450);
       enemy_set_position(goon[3], play_area_width() - 50, 80);
       t_wait(1.0);
 
