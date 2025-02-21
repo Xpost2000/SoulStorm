@@ -2583,7 +2583,11 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
             case GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY: {
                 Transitions::register_on_finish(
                     [&](void*) mutable {
-                        switch_ui(UI_STATE_REPLAY_COLLECTION);
+                        if (state->gameplay_data.recording.in_playback) {
+                          switch_ui(UI_STATE_REPLAY_COLLECTION);
+                        } else {
+                          switch_ui(UI_STATE_STAGE_SELECT);
+                        }
                         switch_screen(GAME_SCREEN_MAIN_MENU);
 
                         Transitions::do_shuteye_out(
@@ -2674,7 +2678,7 @@ GAME_UI_SCREEN(update_and_render_replay_collection_menu) {
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         y += 45;
         if (GameUI::button(V2(100, y), string_literal("Return"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-            switch_ui(state->last_ui_state);
+            switch_ui(UI_STATE_PAUSED);
         }
 
         if (GameUI::button(V2(180, y), string_literal("Next"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
