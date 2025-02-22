@@ -5768,6 +5768,44 @@ void Game::handle_all_explosions(f32 dt) {
     }
 }
 
+image_id Gameplay_Data::script_load_image(Game_Resources* resources, char* where) {
+    auto img_id = graphics_assets_load_image(
+        &resources->graphics_assets,
+        string_from_cstring(where)
+    );
+
+    bool already_exists = false;
+    for (s32 index = 0; index < script_loaded_images.size; ++index) {
+        if (script_loaded_images[index].index == img_id.index) {
+            already_exists = true;
+            break;
+        }
+    }
+
+    if (!already_exists) {
+        script_loaded_images.push(img_id);
+    }
+
+    return img_id;
+}
+
+Audio::Sound_ID Gameplay_Data::script_load_sound(Game_Resources* resources, char* where) {
+    auto sound_id = Audio::load(where, false);
+    bool already_exists = false;
+
+    for (s32 index = 0; index < script_loaded_sounds.size; ++index) {
+        if (sound_id_match(script_loaded_sounds[index], sound_id)) {
+            already_exists = true;
+            break;
+        }
+    }
+
+    if (!already_exists) {
+        script_loaded_sounds.push(sound_id);
+    }
+
+    return sound_id;
+}
 
 void Gameplay_Data::process_particle_spawn_request_queue(Game_Resources* resources, s32 index, V2 current_cursor) {
     Gameplay_Data_Particle_Spawn_Request* target = nullptr;

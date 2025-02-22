@@ -247,24 +247,8 @@ int _lua_bind_load_image(lua_State* L) {
     lua_getglobal(L, "_gamestate");
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     auto        resources = state->resources;
-
-    auto img_id = graphics_assets_load_image(
-        &resources->graphics_assets,
-        string_from_cstring((char*)lua_tostring(L, 1))
-    );
-
-    bool already_exists = false;
-    for (s32 index = 0; index < state->gameplay_data.script_loaded_images.size; ++index) {
-        if (state->gameplay_data.script_loaded_images[index].index == img_id.index) {
-            already_exists = true;
-            break;
-        }
-    }
-
-    if (!already_exists) {
-        state->gameplay_data.script_loaded_images.push(img_id);
-    }
-
+    char* filepath = (char*) lua_tostring(L, 1);
+    auto img_id = state->gameplay_data.script_load_image(resources, filepath);
     lua_pushinteger(L, img_id.index);
     return 1;
 }
@@ -273,11 +257,9 @@ int _lua_bind_load_sound(lua_State* L) {
     lua_getglobal(L, "_gamestate");
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     auto        resources = state->resources;
-    const char* filepath = lua_tostring(L, 1);
-    auto sound_id = Audio::load(filepath, false);
-
+    char* filepath = (char*) lua_tostring(L, 1);
+    auto sound_id = state->gameplay_data.script_load_sound(resources, filepath);
     lua_pushinteger(L, sound_id.index);
-    state->gameplay_data.script_loaded_sounds.push(sound_id);
     return 1;
 }
 
