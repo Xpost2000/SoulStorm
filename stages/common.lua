@@ -997,7 +997,8 @@ end
 -- If you're lazy and don't want to do much for a level background
 -- NOTE: expects the image to be 375, 480 or some ratio of it because that's the size of the playable region!.
 -- Just for "playtesting" or "development"
-function Generic_Infinite_Stage_ScrollV(image_resource_location, scrollspeed, offx, offy, layer)
+function Generic_Infinite_Stage_ScrollV_Ref(image_resource_location, scrollspeed, offx, offy, layer)
+   print("LUA REFERENCE IMPLEMENTATION")
    async_task_lambda(
       function ()
          local background_image         = load_image(image_resource_location);
