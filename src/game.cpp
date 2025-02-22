@@ -399,9 +399,6 @@ void Game::load_entity_sprites(Graphics_Driver* driver, lua_State* L) {
  *
  * Some stuff is probably going to be pushed out to be data driven, but a lot of core stuff is hard coded.
  */
-// TODO: convert some of these to be sprite atlases
-// in order to reduce draw call overhead on hardware paths.
-// Although the game seems to run quite acceptably...
 void Game::init_graphics_resources(Graphics_Driver* driver) {
     if (!initialized) {
         return;
@@ -639,7 +636,6 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             }
         }
 
-        // TODO: UI Atlas should include UI_HP_Icons and maybe even the text.
         // build UI atlas
         {
             auto& ui_chunky        = resources->ui_chunky;
@@ -1365,7 +1361,6 @@ void Gameplay_Data::set_pet_id(s8 id, Game_Resources* resources) {
 }
 
 void Gameplay_Data::remove_life(void) {
-    // TODO: Add notification(?)
     stage_perfect_clear    = false;
     campaign_perfect_clear = false;
 
@@ -1663,6 +1658,11 @@ void Gameplay_Data::add_scriptable_render_object(Scriptable_Render_Object ro) {
     scriptable_render_objects.push(ro);
 }
 
+//////////// TODO(jerry):
+/*
+ * I really, really, really hate this set up here, I should've been using a proper layering
+ * system so that way I didn't need to functions to do this stupid thing!
+ */
 void Gameplay_Data::update_and_render_all_background_scriptable_render_objects(Game_Resources* resources, struct render_commands* render_commands, f32 dt) {
     for (s32 index = 0; index < scriptable_render_objects.size; ++index) {
         auto& render_object = scriptable_render_objects[index];
@@ -4400,7 +4400,6 @@ GAME_SCREEN(update_and_render_game_ingame) {
       // These should also be nice images in the future.
       {
 #if 1 // NEO BKG
-        // TODO: would like this to be fade in
         auto modulation_shadow = color32u8_to_color32f32(color32u8(10 / 2, 10 / 2, 32 / 2, 255));
         {
           auto modulation = color32u8_to_color32f32(color32u8(200, 200, 200, 255));
@@ -5087,8 +5086,6 @@ GAME_SCREEN(update_and_render_game_ingame) {
                     BLEND_MODE_ALPHA);
 
                 if (border_flash_image) {
-                    // TODO(jerry):
-                    // I don't have images for these yet.
                     rectangle_f32 dest;
                     dest.x = border_rectangle_center.x - border_flash_image->width/2;
                     dest.y = border_rectangle_center.y - border_flash_image->height/2;
@@ -5677,15 +5674,10 @@ void Game::handle_all_dead_entities(f32 dt) {
             // the transition would interrupt the simulation, so I cannot play the transition
             // without risking a desync.
 
-            // TODO:
-            // I... don't like skipping the animation, but the simulation requires the animation
-            // for timing...
-            // however, I also am unaware of a way to do so given my replay method because I do not record any
-            // animations.
             on_player_death();
             cleanup_dead_entities();
         } else {
-            // TODO(jerry): 2/7/25
+            // NOTE(jerry): 2/7/25
             // I don't really like using the transition system to do this, since
             // it can screw with how I reason about the determinism, so that's why
             // this has been so special-cased, as otherwise a separate transition/animation
@@ -5852,7 +5844,7 @@ void Gameplay_Data::spawn_death_explosion(V2 position) {
   explosion->scale = random_ranged_float(&prng_unessential, 0.5f, 1.5f);
 }
 
-// TODO: Spatial partition all the bullets some how. Probably going to use another spatial hash.
+// TODO(jerry): Spatial partition all the bullets some how. Probably going to use another spatial hash.
 void Game::handle_all_bullet_collisions(f32 dt) {
     auto state = &this->state->gameplay_data;
 
