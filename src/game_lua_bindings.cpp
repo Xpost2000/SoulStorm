@@ -267,11 +267,9 @@ int _lua_bind_load_music(lua_State* L) {
     lua_getglobal(L, "_gamestate");
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     auto        resources = state->resources;
-    const char* filepath = lua_tostring(L, 1);
-    auto sound_id = Audio::load(filepath, true);
-
+    char* filepath = (char*) lua_tostring(L, 1);
+    auto sound_id = state->gameplay_data.script_load_sound(resources, filepath, true);
     lua_pushinteger(L, sound_id.index);
-    state->gameplay_data.script_loaded_sounds.push(sound_id);
     return 1;
 }
 

@@ -1330,7 +1330,6 @@ local f32 burst_charge_decay_rate(s32 rank) {
     return 100;
 }
 
-// TODO(jerry): for now just to not have zero days...
 void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
     bool enabled_cheat = false;
     int  rank_count    = get_burst_mode_rank_count();
@@ -2248,4 +2247,164 @@ void DeathExplosion::draw(Game_State* const state, struct render_commands* rende
 
 bool DeathExplosion::dead(void) {
   return frame_index >= frame_count; // hardcoded;
+}
+
+// Simple scrollable background entities
+Simple_Scrollable_Background_Entities::Simple_Scrollable_Background_Entities(
+    Memory_Arena* arena,
+    s32 count
+)
+{
+    s32 padded_count = (count + 7) & ~7;
+    backgrounds      = Fixed_Array<Simple_Scrollable_Background_Entity_Main_Data>(arena, padded_count);
+    scroll_xs        = Fixed_Array<f32>(arena, padded_count);
+    scroll_ys        = Fixed_Array<f32>(arena, padded_count);
+    scroll_speed_xs  = Fixed_Array<f32>(arena, padded_count);
+    scroll_speed_ys  = Fixed_Array<f32>(arena, padded_count);
+}
+
+void Simple_Scrollable_Background_Entities::clear(void) {
+    scroll_xs.clear();
+    scroll_ys.clear();
+    scroll_speed_xs.clear();
+    scroll_speed_ys.clear();
+    backgrounds.clear();
+
+    foreground_start = nullptr;
+    background_start = nullptr;
+}
+
+void Simple_Scrollable_Background_Entities::update(f32 dt) {
+    // please vectorize!
+    s32 count = scroll_ys.size;
+    for (s32 index = 0; index < count; ++index) {
+        scroll_xs[index] += scroll_speed_xs[index];
+        scroll_ys[index] += scroll_speed_ys[index];
+    }
+}
+
+void Simple_Scrollable_Background_Entities::draw_list(
+    Simple_Scrollable_Background_Entity_Main_Data* list,
+    struct render_commands* render_commands,
+    Game_Resources* resources
+)
+{
+    for (Simple_Scrollable_Background_Entity_Main_Data* cursor = list;
+         cursor;
+         cursor = cursor->next) {
+        s32 index = (s32)(cursor - backgrounds.data);
+        f32 scroll_x = scroll_xs[index];
+        f32 scroll_y = scroll_ys[index];
+
+        auto destination_rect =
+            rectangle_f32(
+                0,
+                0,
+                cursor->scale.x,
+                cursor->scale.y
+            );
+        auto src_rect =
+            rectangle_f32(
+                scroll_x,
+                scroll_y,
+                SIMPLE_BACKGROUND_WIDTH,
+                SIMPLE_BACKGROUND_HEIGHT
+            );
+        render_commands_push_image_ext2(
+            render_commands,
+            graphics_assets_get_image_by_id(&resources->graphics_assets, cursor->image_id),
+            destination_rect,
+            src_rect,
+            color32f32(1,1,1,1), // modulation is always white for these guys
+            V2(0,0), // rotation_centre
+            0, // unused angle_z
+            0, // unused angle_y
+            // unused angle_x
+            0, // flags param not used
+            // blend mode param not used
+            BLEND_MODE_ALPHA
+        );
+    }
+}
+
+void Simple_Scrollable_Background_Entities::draw_foreground(
+    struct render_commands* render_commands,
+    Game_Resources* resources
+)
+{
+    draw_list(foreground_start, render_commands, resources);
+}
+
+void Simple_Scrollable_Background_Entities::draw_background(
+    struct render_commands* render_commands,
+    Game_Resources* resources
+)
+{
+    draw_list(background_start, render_commands, resources);
+}
+
+Simple_Scrollable_Background_Entity_Bundle
+Simple_Scrollable_Background_Entities::allocate_background(s32 layer)
+{
+    Simple_Scrollable_Background_Entity_Bundle result = {};
+
+    // NOTE(jerry): all parallel
+    auto current                = backgrounds.alloc();
+    auto current_scroll_speed_x = scroll_speed_xs.alloc();
+    auto current_scroll_speed_y = scroll_speed_ys.alloc();
+    auto current_scroll_x       = scroll_xs.alloc();
+    auto current_scroll_y       = scroll_ys.alloc();
+
+    switch (layer) {
+        case SIMPLE_SCROLLABLE_BACKGROUND_ENTITY_LAYER_BACKGROUND: {
+            if (!background_start) {
+                background_start = background_end = current;
+                background_end->next = nullptr;
+            } else {
+                background_end->next = current;
+                background_end = current;
+            }
+        } break;
+        case SIMPLE_SCROLLABLE_BACKGROUND_ENTITY_LAYER_FOREGROUND: {
+            if (!foreground_start) {
+                foreground_start = foreground_end = current;
+                foreground_end->next = nullptr;
+            } else {
+                foreground_end->next = current;
+                foreground_end = current;
+            }
+        } break;
+    }
+
+    // AssembleDataBundle()
+    {
+        result.image_id       = &current->image_id;
+        result.scale          = &current->scale;
+        result.scroll_x       = current_scroll_x;
+        result.scroll_y       = current_scroll_y;
+        result.scroll_speed_x = current_scroll_speed_x;
+        result.scroll_speed_y = current_scroll_speed_y;
+    }
+
+    return result;
+}
+
+Simple_Scrollable_Background_Entity_Bundle
+Simple_Scrollable_Background_Entities::get_background(s32 index)
+{
+    Simple_Scrollable_Background_Entity_Bundle result = {}; 
+    auto background_data = &backgrounds[index];
+    auto scroll_x        = &scroll_xs[index];
+    auto scroll_y        = &scroll_ys[index];
+    auto scroll_speed_x  = &scroll_speed_xs[index];
+    auto scroll_speed_y  = &scroll_speed_ys[index];
+    {
+        result.image_id       = &background_data->image_id;
+        result.scale          = &background_data->scale;
+        result.scroll_x       = scroll_x;
+        result.scroll_y       = scroll_y;
+        result.scroll_speed_x = scroll_speed_x;
+        result.scroll_speed_y = scroll_speed_y;
+    }
+    return result;
 }

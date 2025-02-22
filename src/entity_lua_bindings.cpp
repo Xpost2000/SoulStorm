@@ -1015,6 +1015,30 @@ int _lua_bind_halt_burst_charge_regen(lua_State* L) {
   return 0;
 }
 
+// function Generic_Infinite_Stage_ScrollV_Ref(image_resource_location, scrollspeed, offx, offy, layer)
+int _lua_bind_spawn_simple_scrollable_background_vertical(lua_State* L) {
+    Game_State* state        = lua_binding_get_gamestate(L);
+    char*       image_path   = (char*) lua_tostring(L, 1);
+    f32         scroll_speed = luaL_checknumber(L, 2);
+    f32         offx         = luaL_checknumber(L, 3);
+    f32         offy         = luaL_checknumber(L, 4);
+    s32         layer        = luaL_checkinteger(L, 5);
+
+    auto bkg = state->gameplay_data.simple_scrollable_backgrounds.allocate_background(
+        layer
+    );
+
+    *bkg.image_id      = state->gameplay_data.script_load_image(state->resources, image_path);
+    // NOTE(jerry): hard-coded
+    *bkg.scale         = V2(SIMPLE_BACKGROUND_WIDTH, SIMPLE_BACKGROUND_HEIGHT);
+    *bkg.scroll_y      = offy;
+    *bkg.scroll_x      = offx;
+    *bkg.scroll_speed_y = scroll_speed;
+    *bkg.scroll_speed_x = 0;
+
+    return 0;
+}
+
 void bind_entity_lualib(lua_State* L) {
     /*
         NOTE: the lib is only in scalar values which isn't very good, but it's
@@ -1126,5 +1150,8 @@ void bind_entity_lualib(lua_State* L) {
 
         lua_register(L, "explosion_hazard_new", _lua_bind_explosion_hazard_new);
         lua_register(L, "laser_hazard_new", _lua_bind_laser_hazard_new);
+
+        // Simple_Scrollable_Background_Entities
+        lua_register(L, "Generic_Infinite_Stage_ScrollV", _lua_bind_spawn_simple_scrollable_background_vertical);
     }
 }

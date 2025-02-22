@@ -4096,7 +4096,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     }
 
     this->state->coroutine_tasks.schedule_by_type(this->state, dt, GAME_TASK_SOURCE_GAME_FIXED);
-    this->state->simple_scrollable_backgrounds.update(dt);
+    this->state->gameplay_data.simple_scrollable_backgrounds.update(dt);
 
     // shouldn't happen during replays.
     if (this->state->ui_state != UI_STATE_REVIEW_SCRIPT_ERROR && this->state->coroutine_tasks.need_to_address_error()) {
@@ -4343,7 +4343,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
     if (Action::is_pressed(ACTION_MENU)) {
         bool allow_pausing = true;
 
-        if (this->state->ui_state != UI_STATE_DEAD_MAYBE_RETRY) {
+        if (this->state->ui_state == UI_STATE_DEAD_MAYBE_RETRY) {
             allow_pausing = false;
         }
 
@@ -5786,7 +5786,7 @@ image_id Gameplay_Data::script_load_image(Game_Resources* resources, char* where
     return img_id;
 }
 
-Audio::Sound_ID Gameplay_Data::script_load_sound(Game_Resources* resources, char* where, bool streamed=false) {
+Audio::Sound_ID Gameplay_Data::script_load_sound(Game_Resources* resources, char* where, bool streamed) {
     auto sound_id = Audio::load(where, streamed);
     bool already_exists = false;
 

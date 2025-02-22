@@ -557,6 +557,67 @@ Pickup_Entity pickup_score_entity(Game_State* state,        V2 start, V2 end, s3
 Pickup_Entity pickup_attack_power_entity(Game_State* state, V2 start, V2 end, s32 value);
 Pickup_Entity pickup_life_entity(Game_State* state,         V2 start, V2 end);
 
+/*
+ * This is a native implementation for
+ * Generic_Infinite_Stage_ScrollV as it's per-frame update is
+ * not very performant.
+ * It's written to mainly try and be simd-friendly just as a way
+ * to get some easy data oriented programming style ideas.
+ *
+ * NOTE(jerry): these guys do not get halted for any reason for now.
+ *
+ * Backgrounds aren't really meant to be removed or faded/transitioned currently, if that functionality
+ * is needed I guess I'll modify this...
+ *
+ * In any case, it's not really a lot of code anyway.
+ */
+enum Simple_Scrollable_Background_Entity_Layer {
+    SIMPLE_SCROLLABLE_BACKGROUND_ENTITY_LAYER_BACKGROUND = 0,
+    SIMPLE_SCROLLABLE_BACKGROUND_ENTITY_LAYER_FOREGROUND = 1,
+};
+#define SIMPLE_BACKGROUND_WIDTH  (375)
+#define SIMPLE_BACKGROUND_HEIGHT (480)
+struct Simple_Scrollable_Background_Entity_Main_Data {
+    image_id      image_id;
+    V2            scale = V2(SIMPLE_BACKGROUND_WIDTH, SIMPLE_BACKGROUND_HEIGHT);
+    Simple_Scrollable_Background_Entity_Main_Data* next;
+};
+
+struct Simple_Scrollable_Background_Entity_Bundle {
+    image_id*      image_id;
+    V2*            scale;
+    f32*           scroll_y;
+    f32*           scroll_x;
+    f32*           scroll_speed_y;
+    f32*           scroll_speed_x;
+};
+
+struct Simple_Scrollable_Background_Entities {
+    Simple_Scrollable_Background_Entities() {}
+    Simple_Scrollable_Background_Entities(Memory_Arena* arena, s32 count);
+    Fixed_Array<Simple_Scrollable_Background_Entity_Main_Data> backgrounds;
+    Fixed_Array<f32> scroll_xs;
+    Fixed_Array<f32> scroll_ys;
+    Fixed_Array<f32> scroll_speed_ys;
+    Fixed_Array<f32> scroll_speed_xs;
+
+    void clear(void);
+    void update(f32 dt);
+
+    Simple_Scrollable_Background_Entity_Bundle allocate_background(s32 layer);
+    Simple_Scrollable_Background_Entity_Bundle get_background(s32 index);
+
+    Simple_Scrollable_Background_Entity_Main_Data* foreground_start, *foreground_end;
+    Simple_Scrollable_Background_Entity_Main_Data* background_start, *background_end;
+
+    void draw_foreground(struct render_commands* render_commands, Game_Resources* resources);
+    void draw_background(struct render_commands* render_commands, Game_Resources* resources);
+
+private:
+    void draw_list(Simple_Scrollable_Background_Entity_Main_Data* list, struct render_commands* render_commands, Game_Resources* resources);
+};
+
+
 struct lua_State;
 void bind_entity_lualib(lua_State* L);
 
