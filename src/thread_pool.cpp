@@ -119,7 +119,7 @@ namespace Thread_Pool {
         return;
 #else
         s32 cpu_count = SDL_GetCPUCount();
-        global_thread_count = cpu_count * 2;
+        global_thread_count = cpu_count;
         _debugprintf("%d cpus reported.", cpu_count);
 
         global_job_queue.notification = SDL_CreateSemaphore(0);
