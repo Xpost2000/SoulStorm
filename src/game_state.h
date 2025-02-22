@@ -18,15 +18,16 @@
 #include "game_task_scheduler.h"
 #include "game_ui.h"
 
-#define MAX_PICKUP_ENTITIES     (7000)
-#define MAX_BULLETS             (3500)
-#define MAX_SCORE_NOTIFICATIONS (2500)
-#define MAX_ENEMIES             (512)
-#define MAX_EXPLOSION_HAZARDS   (MAX_ENEMIES)
-#define MAX_LASER_HAZARDS       (128)
-#define MAX_SCRIPTABLE_RENDER_OBJECTS (512)
-#define MAX_TRACKED_SCRIPT_LOADABLE_IMAGES (64)
-#define MAX_TRACKED_SCRIPT_LOADABLE_SOUNDS (64)
+#define MAX_PICKUP_ENTITIES                (7000)
+#define MAX_BULLETS                        (2500)
+#define MAX_SCORE_NOTIFICATIONS            (2500)
+#define MAX_ENEMIES                        (512)
+#define MAX_EXPLOSION_HAZARDS              (MAX_ENEMIES)
+#define MAX_LASER_HAZARDS                  (128)
+#define MAX_SCRIPTABLE_RENDER_OBJECTS      (512)
+#define MAX_BACKGROUND_ENTITIES            (64)
+#define MAX_TRACKED_SCRIPT_LOADABLE_IMAGES (128)
+#define MAX_TRACKED_SCRIPT_LOADABLE_SOUNDS (128)
 
 static string menu_font_variation_string_names[] = {
     string_literal("res/fonts/gnsh-bitmapfont-colour1.png"),
@@ -524,6 +525,7 @@ struct Gameplay_Data {
 
     // NOTE: these are per frame.
     Fixed_Array<Scriptable_Render_Object> scriptable_render_objects;
+    Simple_Scrollable_Background_Entities simple_scrollable_backgrounds;
 
     // TODO: adjust the position of these items.
     Fixed_Array<Gameplay_UI_Score_Notification> score_notifications;
@@ -571,7 +573,7 @@ struct Gameplay_Data {
     Fixed_Array<Audio::Sound_ID> script_loaded_sounds;
 
     image_id script_load_image(Game_Resources* resources, char* where);
-    Audio::Sound_ID script_load_sound(Game_Resources* resources, char* where);
+    Audio::Sound_ID script_load_sound(Game_Resources* resources, char* where, bool streamed=false);
 
     void set_pet_id(s8 id, Game_Resources* resources);
     void remove_life(void);

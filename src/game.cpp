@@ -1040,6 +1040,7 @@ void Game::reset_stage_simulation_state() {
     state->laser_hazards.clear();
     state->score_notifications.clear();
     state->scriptable_render_objects.clear();
+    state->simple_scrollable_backgrounds.clear();
     state->hit_score_notifications.clear();
     state->particle_pool.clear();
     state->death_particle_pool.clear();
@@ -1240,6 +1241,7 @@ void Game::init(Graphics_Driver* driver) {
 
         state->boss_health_displays.displays = Fixed_Array<Boss_Healthbar_Display>(arena, 16);
         state->scriptable_render_objects     = Fixed_Array<Scriptable_Render_Object>(arena, MAX_SCRIPTABLE_RENDER_OBJECTS);
+        state->simple_scrollable_backgrounds = Simple_Scrollable_Background_Entities(arena, MAX_BACKGROUND_ENTITIES);
         state->script_loaded_images          = Fixed_Array<image_id>(arena, MAX_TRACKED_SCRIPT_LOADABLE_IMAGES);
         state->script_loaded_sounds          = Fixed_Array<Audio::Sound_ID>(arena, MAX_TRACKED_SCRIPT_LOADABLE_SOUNDS);
     }
@@ -4094,6 +4096,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     }
 
     this->state->coroutine_tasks.schedule_by_type(this->state, dt, GAME_TASK_SOURCE_GAME_FIXED);
+    this->state->simple_scrollable_backgrounds.update(dt);
 
     // shouldn't happen during replays.
     if (this->state->ui_state != UI_STATE_REVIEW_SCRIPT_ERROR && this->state->coroutine_tasks.need_to_address_error()) {
@@ -5023,6 +5026,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
     }
 
 
+    state->simple_scrollable_backgrounds.draw_background(game_render_commands, this->state->resources);
     state->update_and_render_all_background_scriptable_render_objects(this->state->resources, game_render_commands, dt);
     {
         for (unsigned border_index = 0; border_index < PLAY_AREA_EDGE_ID_COUNT; ++border_index) {
@@ -5189,6 +5193,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
         state->stage_exit_particle_pool.draw(game_render_commands, resources);
         state->update_and_render_focus_mode_hitboxes(this->state, game_render_commands, resources, dt);
     }
+    state->simple_scrollable_backgrounds.draw_foreground(game_render_commands, this->state->resources);
     state->update_and_render_all_foreground_scriptable_render_objects(this->state->resources, game_render_commands, dt);
 }
 
@@ -5781,8 +5786,8 @@ image_id Gameplay_Data::script_load_image(Game_Resources* resources, char* where
     return img_id;
 }
 
-Audio::Sound_ID Gameplay_Data::script_load_sound(Game_Resources* resources, char* where) {
-    auto sound_id = Audio::load(where, false);
+Audio::Sound_ID Gameplay_Data::script_load_sound(Game_Resources* resources, char* where, bool streamed=false) {
+    auto sound_id = Audio::load(where, streamed);
     bool already_exists = false;
 
     for (s32 index = 0; index < script_loaded_sounds.size; ++index) {
