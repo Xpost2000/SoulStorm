@@ -4338,21 +4338,21 @@ GAME_SCREEN(update_and_render_game_ingame) {
     }
 
     if (Action::is_pressed(ACTION_MENU)) {
+        bool allow_pausing = true;
+
         if (this->state->ui_state != UI_STATE_DEAD_MAYBE_RETRY) {
+            allow_pausing = false;
+        }
+
+        if (this->state->gameplay_data.complete_stage.stage != GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE) {
+            allow_pausing = false;
+        }
+
+        if (allow_pausing) {
             if (this->state->ui_state != UI_STATE_PAUSED) {
                 switch_ui(UI_STATE_PAUSED);
-#if 0
-                if (this->state->screen_mode == GAME_SCREEN_INGAME) {
-                  Audio::pause_music();
-                }
-#endif
             } else {
                 switch_ui(UI_STATE_INACTIVE);
-#if 0
-                if (this->state->screen_mode == GAME_SCREEN_INGAME) {
-                  Audio::resume_music();
-                }
-#endif 
             }
         }
     }
