@@ -4006,9 +4006,9 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
       string_literal("TOTAL SCORE"),
     };
 
-    s32 high_score = state->gameplay_data.total_score;
+    s32 high_score = stage_list[stage_id].levels[level_id].best_score;
     if (new_highscore_obtained) {
-      high_score = stage_list[stage_id].levels[level_id].best_score;
+      high_score = state->gameplay_data.total_score;
     }
 
     f32 score_modifier = pets_data[clamp<s32>(state->gameplay_data.selected_pet, 0, array_count(pets_data)-1)].score_modifier;
@@ -4409,7 +4409,9 @@ void Game::simulate_game_frames_until(int nth_frame) {
             this->state->coroutine_tasks.schedule_by_type(this->state, FIXED_TICKTIME, GAME_TASK_SOURCE_GAME);
             simulate_game_frame(update_packet_data);
             if (!this->state->dialogue_state.in_conversation) {
-                state->current_stage_timer  += FIXED_TICKTIME;
+              if (state->complete_stage.stage != GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE) {
+                state->current_stage_timer += FIXED_TICKTIME;
+              }
             } else {
                 // no dialogue during replays
                 // might still play the waits the dialogues have... Which is a problem...
@@ -5021,7 +5023,9 @@ GAME_SCREEN(update_and_render_game_ingame) {
                 state->fixed_tickrate_timer -= FIXED_TICKTIME;
 
                 if (!this->state->dialogue_state.in_conversation) {
-                    state->current_stage_timer  += FIXED_TICKTIME;
+                    if (state->complete_stage.stage == GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE) {
+                      state->current_stage_timer += FIXED_TICKTIME;
+                    }
                 }
             }
 
