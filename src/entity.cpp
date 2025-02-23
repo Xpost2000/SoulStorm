@@ -239,6 +239,8 @@ bool Entity::damage(s32 dmg) {
     hp -= dmg;
     if (hp <= 0) die = true;
 
+    hit_flash_timer.start();
+    hit_flash_count = 4;
     return true;
 }
 
@@ -430,15 +432,41 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         // to optimize the hardware renderers that much, which means I'm incuring
         // the wrath of a state change...
         if (flashing) {
-            render_commands_push_image(
-                render_commands,
-                image,
-                rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
-                source_rectangle,
-                sprite.modulation,
-                0,
-                BLEND_MODE_ADDITIVE
-            );
+            // flash harder
+            for (int i = 0; i < 10; ++i) {
+                render_commands_push_image_ext(
+                    render_commands,
+                    image,
+                    rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+                    source_rectangle,
+                    sprite.modulation,
+                    V2(0.5, 0.5),
+                    facing_angle,
+                    0,
+                    BLEND_MODE_ADDITIVE
+                );
+            }
+        }
+
+        // Different type of flashing...
+        {
+            bool show_damage_flash = ((hit_flash_count % 2) == 0) && hit_flash_count;
+            if (show_damage_flash) {
+                // flash harder
+                for (int i = 0; i < 10; ++i) {
+                    render_commands_push_image_ext(
+                        render_commands,
+                        image,
+                        rectangle_f32(sprite_position.x, sprite_position.y, sprite_image_size.x, sprite_image_size.y),
+                        source_rectangle,
+                        color32f32(1, 0, 0, 1),
+                        V2(0.5, 0.5),
+                        facing_angle,
+                        0,
+                        BLEND_MODE_ADDITIVE
+                    );
+                }
+            }
         }
     } else {
         // NOTE: this is lowkey debug code, which is the default thing
@@ -597,6 +625,17 @@ void Entity::update(Game_State* state, f32 dt) {
             auto velocity_direction = velocity.normalized();
             auto new_velocity       = velocity_direction * velocity_mag;
             velocity                = new_velocity;
+        }
+    }
+
+    {
+        hit_flash_timer.update(dt);
+        if (hit_flash_timer.triggered()) {
+            hit_flash_count -= 1;
+            if (hit_flash_count) {
+                hit_flash_timer.reset();
+                hit_flash_timer.start();
+            }
         }
     }
 

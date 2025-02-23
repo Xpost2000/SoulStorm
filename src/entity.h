@@ -36,6 +36,7 @@
 #define PLAYER_BURST_BOMB_INVINCIBILITY_T (PLAYER_INVINICIBILITY_TIME * 5)
 
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
+#define DAMAGE_FLASH_TIME_PERIOD        (0.05)
 #define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.5f)
 #define DEFAULT_FIRING_COOLDOWN (0.125)
 #define DEFAULT_ENTITY_SCORE_VALUE_PER_HIT (30)
@@ -205,6 +206,9 @@ struct Entity {
 
     s32   score_value      = DEFAULT_ENTITY_SCORE_VALUE_PER_HIT;
     s16   death_multiplier = DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER;
+
+    s32 hit_flash_count = 0;
+    Timer hit_flash_timer = Timer(DAMAGE_FLASH_TIME_PERIOD);
 
     bool attack();
     void stop_attack();
