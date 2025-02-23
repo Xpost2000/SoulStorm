@@ -286,6 +286,7 @@ enum Gameplay_Stage_Complete_Stage_Sequence_Stage {
     // would like to count up the score visually but for now just to make it quick no.
     GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_SHOW_SCORE,
     // Maybe allow going to the next stage immediately? Probably not.
+    GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_TALLY_TOTAL_SCORE,
     GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT,
     GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT,
     GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_COUNT,
@@ -482,6 +483,12 @@ struct Gameplay_Data {
     bool playing_practice_mode;
     int  score_awarded_points = 0;
     int  extra_life_awarded_count = 0;
+    
+    // gameplay current stage statistics
+    int  death_count = 0;
+    int  burst_usage_count = 0;
+    int  total_score = 0; // calculate after adjustments
+
     f32  focus_tint_fade_t = 0.0f;
     f32  focus_hitbox_fade_t = 0.0f;
 

@@ -1060,6 +1060,9 @@ void Game::reset_stage_simulation_state() {
         state->max_tries = pet_data->maximum_lives;
     }
 
+    state->death_count = 0;
+    state->burst_usage_count = 0;
+    state->total_score = 0;
     state->current_score = 0;
     state->score_awarded_points = 0;
     state->extra_life_awarded_count = 0;
@@ -3907,6 +3910,8 @@ struct Stage_Completion_Score_Category {
   string name;
   int    value;
   int    text_font_color;
+  float  value2;
+  bool   floatv = false;
   bool   enabled=true;
 };
 
@@ -3948,10 +3953,18 @@ draw_completion_score_list(
       scale, V2(commands->screen_width / 2 - x_offset, where_y), category.name, 
       color32f32(1, 1, 1, alpha), BLEND_MODE_ALPHA);
 
-    string text_string = memory_arena_push_string(
-      &Global_Engine()->scratch_arena, 
-      string_from_cstring(format_temp("%d", category.value)));
-
+    string text_string;
+    if (category.floatv) {
+      text_string = memory_arena_push_string(
+        &Global_Engine()->scratch_arena,
+        string_from_cstring(format_temp("%f", category.value2)));
+    }
+    else {
+      text_string = memory_arena_push_string(
+        &Global_Engine()->scratch_arena,
+        string_from_cstring(format_temp("%d", category.value)));
+    }
+    
     render_commands_push_text(
       commands, font1,
       scale, V2(commands->screen_width / 2 - x_offset + longest_string_width*1.25, where_y), text_string,
@@ -3979,11 +3992,12 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
         level_complete_text = string_literal("RECORDING COMPLETE");
     }
 
-    bool new_highscore_obtained = game_will_be_new_high_score(stage_id, level_id, state->gameplay_data.current_score);
+    bool new_highscore_obtained = game_will_be_new_high_score(stage_id, level_id, state->gameplay_data.total_score);
 
     string label_strings[] = {
       (new_highscore_obtained) ? string_literal("NEW HIGH SCORE") : string_literal("HIGH SCORE"),
-      string_literal("DEATHS"),
+      string_literal("PET SCORE MODIFIER"),
+      string_literal("DEATH PENALTY"),
       string_literal("BASE SCORE"),
       string_literal("PERFECT CLEAR BONUS"),
       string_literal("PERFECT CAMPAIGN CLEAR BONUS"),
@@ -3992,29 +4006,31 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
       string_literal("TOTAL SCORE"),
     };
 
+    s32 high_score = state->gameplay_data.total_score;
+    if (new_highscore_obtained) {
+      high_score = stage_list[stage_id].levels[level_id].best_score;
+    }
+
+    f32 score_modifier = pets_data[clamp<s32>(state->gameplay_data.selected_pet, 0, array_count(pets_data)-1)].score_modifier;
+    s32 death_count_deducation_score = state->gameplay_data.death_count * 10000;
+    s32 perfect_clear_score_addition = state->gameplay_data.stage_perfect_clear * 100000 * score_modifier;
+    s32 campaign_clear_perfect_score_addition = (level_id==2)*state->gameplay_data.campaign_perfect_clear * 500000 * score_modifier;
+    s32 burst_usage_count_score_addition = state->gameplay_data.burst_usage_count * 2500 * score_modifier;
+    s32 remaining_lives_score_addition = (state->gameplay_data.tries) * 1000 * score_modifier;
+
     Stage_Completion_Score_Category score_categories[] = {
-      {label_strings[0], 0, MENU_FONT_COLOR_STEEL},
-      {label_strings[1], 0, MENU_FONT_COLOR_STEEL},
-      {label_strings[2], 0, MENU_FONT_COLOR_STEEL},
-      {label_strings[3], 0, MENU_FONT_COLOR_STEEL},
-      {label_strings[4], 0, MENU_FONT_COLOR_SKYBLUE},
-      {label_strings[5], 0, MENU_FONT_COLOR_SKYBLUE},
-      {label_strings[6], 0, MENU_FONT_COLOR_SKYBLUE},
-      {label_strings[7], 0, MENU_FONT_COLOR_GOLD},
+      {label_strings[0], high_score, MENU_FONT_COLOR_STEEL},
+      {label_strings[1], 0, MENU_FONT_COLOR_STEEL, score_modifier, true, state->gameplay_data.unlocked_pets>0 || state->gameplay_data.selected_pet>0}, // no spoilers until you have a pet.
+      {label_strings[2], -death_count_deducation_score, MENU_FONT_COLOR_BLOODRED},
+      {label_strings[3], state->gameplay_data.current_score, MENU_FONT_COLOR_STEEL},
+      {label_strings[4], perfect_clear_score_addition, MENU_FONT_COLOR_STEEL},
+      {label_strings[5], campaign_clear_perfect_score_addition, MENU_FONT_COLOR_SKYBLUE},
+      {label_strings[6], remaining_lives_score_addition, MENU_FONT_COLOR_SKYBLUE},
+      {label_strings[7], burst_usage_count_score_addition, MENU_FONT_COLOR_SKYBLUE},
+      {label_strings[8], state->gameplay_data.total_score, MENU_FONT_COLOR_GOLD},
     };
 
-    char* text = format_temp(
-      (new_highscore_obtained) ? "NEW HIGH SCORE: %d\n" :
-      "HIGH SCORE: %d",
-      (new_highscore_obtained) ? state->gameplay_data.current_score : stage_list[stage_id].levels[level_id].best_score
-    );
-    text = format_temp(
-      "%s\nSCORE: %d\nLIVES BONUS: TBA\nPERFECT CLEAR BONUS: TBA\nGRAZE BONUS: TBA\nTIME: TBA", 
-      text, state->gameplay_data.current_score
-    );
-    string score_string_result = string_from_cstring(text);
     f32 rect_y = 100;
-
     switch (complete_stage_state.stage) {
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_ANIMATE_PLAYER_EXIT: {
             ingame_update_complete_stage_sequence_player_animate_exit(dt);
@@ -4038,10 +4054,33 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             draw_completion_score_list(score_categories, array_count(score_categories), rect_y, commands, resources, alpha);
 
             if (timer.triggered()) {
-                timer = Timer(1.0f);
+                timer = Timer(0.1); // TODO: animation.
                 timer.reset();
-                complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT;
+                complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_TALLY_TOTAL_SCORE;
             }
+        } break;
+        case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_TALLY_TOTAL_SCORE: {
+          render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+          {
+            auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
+            render_commands_push_text(commands, title_font, 4, V2(commands->screen_width / 2 - text_width / 2, rect_y), level_complete_text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+          }
+          rect_y += 64;
+          draw_completion_score_list(score_categories, array_count(score_categories), rect_y, commands, resources, 1);
+
+          if (Input::any_input_activity()) {
+            timer.trigger_immediate();
+          }
+
+          if (timer.triggered()) {
+            timer = Timer(5.5f);
+            timer.reset();
+            state->gameplay_data.total_score =
+              state->gameplay_data.current_score - death_count_deducation_score +
+              perfect_clear_score_addition + campaign_clear_perfect_score_addition +
+              burst_usage_count_score_addition + remaining_lives_score_addition;
+            complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT;
+          }
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT: {
             render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
@@ -4052,8 +4091,12 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             rect_y += 64;
             draw_completion_score_list(score_categories, array_count(score_categories), rect_y, commands, resources, 1);
 
+            if (Input::any_input_activity()) {
+              timer.trigger_immediate();
+            }
+
             if (timer.triggered()) {
-                timer = Timer(3.5f);
+                timer = Timer(0.5f); // allow skip
                 timer.reset();
                 complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT;
                 Audio::stop_music();
@@ -4076,7 +4119,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                 s32 completion_type =  GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY;
 
                 if (!state->gameplay_data.recording.in_playback) {
-                    game_update_stage_score(stage_id, level_id, state->gameplay_data.current_score);
+                    game_update_stage_score(stage_id, level_id, state->gameplay_data.total_score);
                     game_register_stage_completion(stage_id, level_id);
                     completion_type = game_complete_stage_level(stage_id, level_id, state->gameplay_data.playing_practice_mode);
 
@@ -5595,6 +5638,7 @@ void Game::handle_bomb_usage(f32 dt) {
     auto& player  = state->player;
 
     player.handle_bomb_usage(this->state, pet_data->bomb_pattern_id);
+    state->burst_usage_count++;
     state->queue_bomb_use = false;
 }
 
@@ -5603,6 +5647,7 @@ void Game::on_player_death() {
     _debugprintf("On finish death");
 
     Audio::play(resources->hit_sounds[0]);
+    state->death_count++;
     if (safely_resurrect_player()) {
         _debugprintf("Resurrected player?");
     } else {
@@ -5632,7 +5677,6 @@ void Game::on_player_death() {
                 deathanimation_data.player_explosion_emitter.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE;
                 deathanimation_data.player_explosion_emitter.shape  = particle_emit_shape_point(state->player.position);
                 deathanimation_data.player_explosion_emitter.reset();
-
                 Audio::play(resources->death_sound);
             }
         }
