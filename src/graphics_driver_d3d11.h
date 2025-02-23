@@ -48,6 +48,7 @@ public:
     const char* get_name(void);
 private:
     void setup_viewport(void);
+    void setup_virtual_viewport(void);
     void initialize_default_rendering_resources(void);
 
     void set_blend_mode(u8 blend_mode);
@@ -75,6 +76,8 @@ private:
     D3D11_Image* current_image;
     u8           current_blend_mode = -1;
     Fixed_Array<D3D11_Vertex_Format> quad_vertices;
+    D3D11_Vertex_Format virtual_framebuffer_fullscreen_quad[6];
+    ID3D11Buffer* virtual_framebuffer_fullscreen_buffer = nullptr;
 
     ID3D11Device*        device  = nullptr;
     ID3D11DeviceContext* context = nullptr;
@@ -87,6 +90,12 @@ private:
     IDXGISwapChain*         swapchain = nullptr;
     ID3D11RenderTargetView* rendertarget = nullptr;
     ID3D11Texture2D*        swapchain_framebuffer_texture = nullptr;
+
+    ID3D11RenderTargetView* virtual_rendertarget = nullptr;
+    ID3D11Texture2D* virtual_framebuffer_texture = nullptr;
+    ID3D11ShaderResourceView* virtual_framebuffer_shader_resource_view = nullptr;
+
+    void construct_virtual_render_target(V2 virtual_resolution);
 
     ID3D11InputLayout* vertex_layout = nullptr;
     ID3D11SamplerState* nearest_neighbor_sampler_state = nullptr;

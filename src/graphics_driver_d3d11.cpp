@@ -378,6 +378,93 @@ void Direct3D11_Graphics_Driver::setup_viewport(void) {
     }
 }
 
+void Direct3D11_Graphics_Driver::setup_virtual_viewport(void) {
+  {
+    D3D11_VIEWPORT viewport = {
+        0.0f, 0.0f,
+        virtual_resolution.x, virtual_resolution.y,
+        0.0f, 1.0f
+    };
+
+    context->RSSetViewports(1, &viewport);
+  }
+}
+
+
+void Direct3D11_Graphics_Driver::construct_virtual_render_target(V2 virtual_resolution)
+{
+  if (virtual_rendertarget) {
+    virtual_rendertarget->Release();
+    virtual_rendertarget = nullptr;
+  }
+
+  if (virtual_framebuffer_texture) {
+    virtual_framebuffer_texture->Release();
+    virtual_framebuffer_texture = nullptr;
+  }
+
+  if (virtual_framebuffer_shader_resource_view) {
+    virtual_framebuffer_shader_resource_view->Release();
+    virtual_framebuffer_shader_resource_view = nullptr;
+  }
+
+  {
+    {
+      D3D11_TEXTURE2D_DESC texture_description;
+      zero_memory(&texture_description, sizeof(texture_description));
+
+      auto image_width = virtual_resolution.x;
+      auto image_height = virtual_resolution.y;
+      texture_description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+      texture_description.Width = image_width;
+      texture_description.Height = image_height;
+      texture_description.ArraySize = 1;
+      texture_description.MipLevels = 1;
+      texture_description.Usage = D3D11_USAGE_DEFAULT;
+      texture_description.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+      texture_description.SampleDesc.Count = 1;
+
+      assertion(
+        SUCCEEDED(
+          device->CreateTexture2D(
+            &texture_description,
+            nullptr,
+            &virtual_framebuffer_texture
+          )
+        ) &&
+        "Texture2D creation failure?"
+      );
+    }
+
+    {
+      D3D11_SHADER_RESOURCE_VIEW_DESC texture_shader_resource_view_description;
+      zero_memory(&texture_shader_resource_view_description, sizeof(texture_shader_resource_view_description));
+      texture_shader_resource_view_description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+      texture_shader_resource_view_description.Texture2D.MipLevels = 1;
+      texture_shader_resource_view_description.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+
+      assertion(
+        SUCCEEDED(
+          device->CreateShaderResourceView(
+            virtual_framebuffer_texture,
+            &texture_shader_resource_view_description,
+            &virtual_framebuffer_shader_resource_view
+          )
+        ) &&
+        "Texture2D SRV creation failure?"
+      );
+    }
+
+    {
+      device->CreateRenderTargetView(
+        virtual_framebuffer_texture,
+        nullptr,
+        &virtual_rendertarget
+      );
+    }
+  }
+}
+
 void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
     _debugprintf("Direct3D11 Initialize Backbuffer");
 
@@ -425,7 +512,6 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
 #ifndef RELEASE
         flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
-
         D3D11CreateDeviceAndSwapChain(
             nullptr,
             D3D_DRIVER_TYPE_HARDWARE,
@@ -440,6 +526,74 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
             &context
         );
 
+        // Fullscreen quad
+        {
+          int i = 0;
+          // Top Left
+          {
+            virtual_framebuffer_fullscreen_quad[i].color = color32f32(1, 1, 1, 1);
+            virtual_framebuffer_fullscreen_quad[i].position = V2(-1, 1);
+            virtual_framebuffer_fullscreen_quad[i].texcoord = V2(0, 0);
+          }
+          i++;
+          // Bottom Right
+          {
+            virtual_framebuffer_fullscreen_quad[i].color = color32f32(1, 1, 1, 1);
+            virtual_framebuffer_fullscreen_quad[i].position = V2(1, -1);
+            virtual_framebuffer_fullscreen_quad[i].texcoord = V2(1, 1);
+          }
+          i++;
+          // Bottom Left
+          {
+            virtual_framebuffer_fullscreen_quad[i].color = color32f32(1, 1, 1, 1);
+            virtual_framebuffer_fullscreen_quad[i].position = V2(-1, -1);
+            virtual_framebuffer_fullscreen_quad[i].texcoord = V2(0, 1);
+          }
+          i++;
+          // Bottom Right
+          {
+            virtual_framebuffer_fullscreen_quad[i].color = color32f32(1, 1, 1, 1);
+            virtual_framebuffer_fullscreen_quad[i].position = V2(1, -1);
+            virtual_framebuffer_fullscreen_quad[i].texcoord = V2(1, 1);
+          }
+          i++;
+          // Top Left
+          {
+            virtual_framebuffer_fullscreen_quad[i].color = color32f32(1, 1, 1, 1);
+            virtual_framebuffer_fullscreen_quad[i].position = V2(-1, 1);
+            virtual_framebuffer_fullscreen_quad[i].texcoord = V2(0, 0);
+          }
+          i++;
+          // Top Right
+          {
+            virtual_framebuffer_fullscreen_quad[i].color = color32f32(1, 1, 1, 1);
+            virtual_framebuffer_fullscreen_quad[i].position = V2(1, 1);
+            virtual_framebuffer_fullscreen_quad[i].texcoord = V2(1, 0);
+          }
+          i++;
+          // Allocate vertex buffer
+          {
+            D3D11_BUFFER_DESC vertex_buffer_description = {};
+            zero_memory(&vertex_buffer_description, sizeof(vertex_buffer_description));
+            vertex_buffer_description.ByteWidth = 6 * sizeof(D3D11_Vertex_Format);
+            vertex_buffer_description.Usage = D3D11_USAGE_IMMUTABLE;
+            vertex_buffer_description.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+            D3D11_SUBRESOURCE_DATA initial_data = {};
+            initial_data.pSysMem = virtual_framebuffer_fullscreen_quad;
+            //initial_data.SysMemPitch = sizeof(D3D11_Vertex_Format);
+
+            assertion(
+              SUCCEEDED(
+                device->CreateBuffer(&vertex_buffer_description, &initial_data, &virtual_framebuffer_fullscreen_buffer)
+              ) &&
+              "Failed to allocate orphaned vertex buffer"
+            );
+          }
+        }
+        {
+
+        }
     } else {
         // Update swapchain and reset rendertarget view texture
         _debugprintf("Resizing swap chain to %d x %d", (s32)real_resolution.x, (s32)real_resolution.y);
@@ -467,14 +621,75 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
         &rendertarget
     );
 
-    setup_viewport();
-    context->OMSetRenderTargets(1, &rendertarget, nullptr);
-
+    construct_virtual_render_target(virtual_resolution);
     initialize_default_rendering_resources();
 }
 
 void Direct3D11_Graphics_Driver::swap_and_present() {
-    swapchain->Present(1, 0);
+  context->OMSetRenderTargets(1, &rendertarget, nullptr);
+  context->OMSetBlendState(blending_states[BLEND_MODE_NONE], 0, 0xffffffff);
+  context->VSSetShader(vertex_shader, 0, 0);
+  context->PSSetShader(pixel_shader, 0, 0);
+  context->PSSetSamplers(0, 1, &nearest_neighbor_sampler_state);
+  context->PSSetShaderResources(0, 1, &virtual_framebuffer_shader_resource_view);
+  {
+    float rgba[] = { 0,0,0,1 };
+    context->ClearRenderTargetView(rendertarget, rgba);
+  }
+  setup_viewport();
+  {
+    D3D11_MAPPED_SUBRESOURCE mapped;
+    assertion(SUCCEEDED(context->Map(matrix_constant_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped)) && "Could not map vertex buffer for writing?");
+    D3D11_Matrix_Constant_Buffer* constant_buffer = (D3D11_Matrix_Constant_Buffer*)mapped.pData;
+    {
+      // projection matrix
+      {
+        float orthographic_matrix[] = {
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        };
+
+        memory_copy(orthographic_matrix, constant_buffer->projection_matrix, sizeof(orthographic_matrix));
+      }
+      // view matrix
+      {
+        float transform_x = 0;
+        float transform_y = 0;
+        float scale_x = 1;
+        float scale_y = 1;
+
+        float view_matrix[] = {
+            scale_x, 0,       0,                          0,
+            0,       scale_y, 0,                          0,
+            0,       0,       1.0f,                       0.0,
+            transform_x,       transform_y,       0,    1.0
+        };
+
+        memory_copy(view_matrix, constant_buffer->view_matrix, sizeof(view_matrix));
+      }
+      constant_buffer->global_elapsed_time = Global_Engine()->global_elapsed_time;
+    }
+    context->Unmap(matrix_constant_buffer, 0);
+    context->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    context->IASetInputLayout(vertex_layout);
+    {
+      unsigned int stride = sizeof(D3D11_Vertex_Format);
+      unsigned int offset = 0;
+      context->IASetVertexBuffers(0, 1, &virtual_framebuffer_fullscreen_buffer, &stride, &offset);
+    }
+    context->Draw(6, 0);
+  }
+  swapchain->Present(1, 0);
+
+  // NOTE(jerry): unbind current sprite batcher data
+  {
+    ID3D11ShaderResourceView* shader_resources[1] = { nullptr };
+    context->PSSetShaderResources(0, 1, shader_resources);
+  }
+  current_image = 0;
+  current_blend_mode = 255;
 }
 
 void Direct3D11_Graphics_Driver::finish() {
@@ -522,6 +737,15 @@ void Direct3D11_Graphics_Driver::finish() {
         nearest_neighbor_sampler_state->Release();
         nearest_neighbor_sampler_state = nullptr;
     }
+    {
+      virtual_rendertarget->Release();
+      virtual_framebuffer_texture->Release();
+      virtual_framebuffer_shader_resource_view->Release();
+
+      virtual_rendertarget = nullptr;
+      virtual_framebuffer_texture = nullptr;
+      virtual_framebuffer_shader_resource_view = nullptr;
+    }
 
     for (unsigned image_index = 0; image_index < MAX_D3D11_TEXTURES; ++image_index) {
         auto& image = images[image_index];
@@ -547,7 +771,7 @@ void Direct3D11_Graphics_Driver::finish() {
 void Direct3D11_Graphics_Driver::clear_color_buffer(color32u8 color) {
     // unimplemented("Not done");
     float rgba[] = {color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f};
-    context->ClearRenderTargetView(rendertarget, rgba);
+    context->ClearRenderTargetView(virtual_rendertarget, rgba);
 }
 
 void Direct3D11_Graphics_Driver::set_texture_id(D3D11_Image* image) {
@@ -822,6 +1046,8 @@ void Direct3D11_Graphics_Driver::consume_render_commands(struct render_commands*
         // when I try to change graphics devices at runtime.
         return;
     }
+    setup_virtual_viewport();
+    context->OMSetRenderTargets(1, &virtual_rendertarget, nullptr);
 
     set_blend_mode(BLEND_MODE_ALPHA);
 
