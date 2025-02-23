@@ -3903,6 +3903,63 @@ void Gameplay_Stage_Complete_Stage_Sequence::begin_sequence(bool replay_mode) {
     }
 }
 
+struct Stage_Completion_Score_Category {
+  string name;
+  int    value;
+  int    text_font_color;
+  bool   enabled=true;
+};
+
+static void 
+draw_completion_score_list(
+  Stage_Completion_Score_Category* categories, int count, 
+  f32 where_y,
+  struct render_commands* commands, 
+  Game_Resources* resources,
+  f32 alpha)
+{
+  f32 scale = 2.0f;
+  f32 longest_string_width;
+  {
+    font_cache* _font = resources->get_font(MENU_FONT_COLOR_BLUE);
+    string* string_list = (string*) Global_Engine()->scratch_arena.push_unaligned(count * sizeof(*string_list));
+    for (int index = 0; index < count; ++index) {
+      string_list[index] = categories[index].name;
+    }
+
+    longest_string_width = font_cache_text_width(
+      _font, longest_string_in_list(string_list, count), scale);
+  }
+
+  f32 x_offset = 150;
+  for (int index = 0; index < count; ++index) {
+    auto& category = categories[index];
+    
+    if (!category.enabled) {
+      continue;
+    }
+
+    font_cache* font = resources->get_font(category.text_font_color);
+    font_cache* font1 = resources->get_font(MENU_FONT_COLOR_WHITE);
+    f32 text_height = font_cache_text_height(font) * scale;
+    
+    render_commands_push_text(
+      commands, font, 
+      scale, V2(commands->screen_width / 2 - x_offset, where_y), category.name, 
+      color32f32(1, 1, 1, alpha), BLEND_MODE_ALPHA);
+
+    string text_string = memory_arena_push_string(
+      &Global_Engine()->scratch_arena, 
+      string_from_cstring(format_temp("%d", category.value)));
+
+    render_commands_push_text(
+      commands, font1,
+      scale, V2(commands->screen_width / 2 - x_offset + longest_string_width*1.25, where_y), text_string,
+      color32f32(1, 1, 1, alpha), BLEND_MODE_ALPHA);
+    where_y += text_height*1.1;
+  }
+}
+
 void Game::ingame_update_complete_stage_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt) {
     auto& complete_stage_state = state->gameplay_data.complete_stage;
     auto& timer                = complete_stage_state.stage_timer;
@@ -3924,6 +3981,28 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
 
     bool new_highscore_obtained = game_will_be_new_high_score(stage_id, level_id, state->gameplay_data.current_score);
 
+    string label_strings[] = {
+      (new_highscore_obtained) ? string_literal("NEW HIGH SCORE") : string_literal("HIGH SCORE"),
+      string_literal("DEATHS"),
+      string_literal("BASE SCORE"),
+      string_literal("PERFECT CLEAR BONUS"),
+      string_literal("PERFECT CAMPAIGN CLEAR BONUS"),
+      string_literal("LIVES REMAINING BONUS"),
+      string_literal("BURST USAGE BONUS"),
+      string_literal("TOTAL SCORE"),
+    };
+
+    Stage_Completion_Score_Category score_categories[] = {
+      {label_strings[0], 0, MENU_FONT_COLOR_STEEL},
+      {label_strings[1], 0, MENU_FONT_COLOR_STEEL},
+      {label_strings[2], 0, MENU_FONT_COLOR_STEEL},
+      {label_strings[3], 0, MENU_FONT_COLOR_STEEL},
+      {label_strings[4], 0, MENU_FONT_COLOR_SKYBLUE},
+      {label_strings[5], 0, MENU_FONT_COLOR_SKYBLUE},
+      {label_strings[6], 0, MENU_FONT_COLOR_SKYBLUE},
+      {label_strings[7], 0, MENU_FONT_COLOR_GOLD},
+    };
+
     char* text = format_temp(
       (new_highscore_obtained) ? "NEW HIGH SCORE: %d\n" :
       "HIGH SCORE: %d",
@@ -3934,7 +4013,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
       text, state->gameplay_data.current_score
     );
     string score_string_result = string_from_cstring(text);
-    f32 rect_y = commands->screen_height / 2 - 100;
+    f32 rect_y = 100;
 
     switch (complete_stage_state.stage) {
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_ANIMATE_PLAYER_EXIT: {
@@ -3950,18 +4029,16 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_SHOW_SCORE: {
             render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+            f32 alpha = saturate(timer_percentage * 2);
             {
                 auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
-                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
+                render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, alpha), BLEND_MODE_ALPHA);
             }
-            {
-                rect_y += 64;
-                auto   text_width = font_cache_text_width(subtitle_font, score_string_result, 2);
-                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), score_string_result, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
-            }
+            rect_y += 64;
+            draw_completion_score_list(score_categories, array_count(score_categories), rect_y, commands, resources, alpha);
 
             if (timer.triggered()) {
-                timer = Timer(0.45f);
+                timer = Timer(1.0f);
                 timer.reset();
                 complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT;
             }
@@ -3972,30 +4049,25 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                 auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
                 render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
-            {
-                rect_y += 64;
-                auto   text_width = font_cache_text_width(subtitle_font, score_string_result, 2);
-                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), score_string_result, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
-            }
+            rect_y += 64;
+            draw_completion_score_list(score_categories, array_count(score_categories), rect_y, commands, resources, 1);
 
             if (timer.triggered()) {
-                timer = Timer(0.35f);
+                timer = Timer(3.5f);
                 timer.reset();
                 complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT;
                 Audio::stop_music();
             }
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT: {
-            render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128 * (1 - timer_percentage)), BLEND_MODE_ALPHA);
+            f32 alpha = saturate((1.0f - timer_percentage));
+            render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128 * alpha), BLEND_MODE_ALPHA);
             {
                 auto   text_width = font_cache_text_width(title_font, level_complete_text, 4);
                 render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), level_complete_text, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
             }
-            {
-                rect_y += 64;
-                auto   text_width = font_cache_text_width(subtitle_font, score_string_result, 2);
-                render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y), score_string_result, color32f32(1, 1, 1, 1 - timer_percentage), BLEND_MODE_ALPHA);
-            }
+            rect_y += 64;
+            draw_completion_score_list(score_categories, array_count(score_categories), rect_y, commands, resources, alpha);
 
             if (timer.triggered())  {
                 _debugprintf("Okay. Transition bye?");
