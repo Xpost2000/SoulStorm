@@ -302,12 +302,49 @@ void OpenGL_Graphics_Driver::initialize_backbuffer(V2 resolution) {
 
     _debugprintf("Real resolution %d, %d", (s32)real_resolution.x, (s32)real_resolution.y);
     _debugprintf("virtual resolution %d, %d", (s32)virtual_resolution.x, (s32)virtual_resolution.y);
+    {
+      if (virtual_fbo) {
+        glDeleteFramebuffers(1, &virtual_fbo);
+        virtual_fbo = 0;
+      }
+
+      if (virtual_rbo) {
+        glDeleteRenderbuffers(1, &virtual_rbo);
+        virtual_rbo = 0;
+      }
+
+      glGenFramebuffers(1, &virtual_fbo);
+      glGenRenderbuffers(1, &virtual_rbo);
+
+      glBindRenderbuffer(GL_RENDERBUFFER, virtual_rbo);
+      glBindFramebuffer(GL_FRAMEBUFFER, virtual_fbo);
+      
+      glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, resolution.x, resolution.y);
+      glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, virtual_rbo);
+
+      assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE && "framebuffer creation error");
+
+      glBindRenderbuffer(GL_RENDERBUFFER, 0);
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 }
 
 void OpenGL_Graphics_Driver::swap_and_present() {
     if (!initialized_default_shader) {
         return;
     }
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, virtual_fbo);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    {
+      glBlitFramebuffer(
+        0, 0, virtual_resolution.x, virtual_resolution.y,
+        0, 0, real_resolution.x, real_resolution.y,
+        GL_COLOR_BUFFER_BIT, GL_NEAREST
+      );
+    }
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
     SDL_GL_SetSwapInterval(0);
     SDL_GL_SwapWindow(game_window);
@@ -674,12 +711,14 @@ void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* com
 
       glUniformMatrix4fv(projection_matrix_uniform_location, 1, 0, orthographic_matrix);
     }
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, virtual_fbo);
+    glViewport(0, 0, virtual_resolution.x, virtual_resolution.y);
 
     if (commands->should_clear_buffer) {
         clear_color_buffer(commands->clear_buffer_color);
     }
 
-    glViewport(0, 0, real_resolution.x, real_resolution.y);
     set_blend_mode(BLEND_MODE_ALPHA); // good default.
     for (unsigned command_index = 0; command_index < commands->command_count; ++command_index) {
         auto& command = commands->commands[command_index];
@@ -711,6 +750,7 @@ void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* com
 
     flush_and_render_quads();
     glUseProgram(0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 V2 OpenGL_Graphics_Driver::resolution() {

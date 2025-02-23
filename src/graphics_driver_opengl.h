@@ -46,6 +46,9 @@ private:
     GLuint current_texture_id;
     GLuint quad_vertex_buffer;
     GLuint quad_vertex_array_object;
+
+    GLuint virtual_fbo = 0;
+    GLuint virtual_rbo = 0;
     Fixed_Array<OpenGL_Vertex_Format> quad_vertices;
     // End Batching State
     void render_command_draw_quad(const render_command& rc);
