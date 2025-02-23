@@ -433,7 +433,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
         // the wrath of a state change...
         if (flashing) {
             // flash harder
-            for (int i = 0; i < 10; ++i) {
+            for (int i = 0; i < 3; ++i) {
                 render_commands_push_image_ext(
                     render_commands,
                     image,
@@ -453,7 +453,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
             bool show_damage_flash = ((hit_flash_count % 2) == 0) && hit_flash_count;
             if (show_damage_flash) {
                 // flash harder
-                for (int i = 0; i < 10; ++i) {
+                for (int i = 0; i < 3; ++i) {
                     render_commands_push_image_ext(
                         render_commands,
                         image,

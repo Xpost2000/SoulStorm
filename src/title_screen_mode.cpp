@@ -689,7 +689,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
         auto& titlescreen_data = state->titlescreen_data;
         switch (titlescreen_data.phase) {
           case TITLE_SCREEN_ANIMATION_PHASE_BLACK0: {
-            const f32 phase_max_t = 0.5f;
+            const f32 phase_max_t = 1.5f;
             GameUI::set_all_visual_alpha(0.0f);
 
             if (titlescreen_data.anim_timer < phase_max_t) {
@@ -701,7 +701,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
             }
           } break;
           case TITLE_SCREEN_ANIMATION_PHASE_FADE_LOGO: {
-            const f32 phase_max_t = 0.75f;
+            const f32 phase_max_t = 1.25f;
 
             if (titlescreen_data.anim_timer < phase_max_t) {
               titlescreen_data.demo_logo_fade_alpha = titlescreen_data.anim_timer / phase_max_t;
@@ -714,7 +714,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
             }
           } break;
           case TITLE_SCREEN_ANIMATION_PHASE_UNBLACK0: {
-            const f32 phase_max_t = 1.0f;
+            const f32 phase_max_t = 1.2f;
             titlescreen_data.demo_logo_fade_alpha = 1.0f;
 
             if (titlescreen_data.anim_timer < phase_max_t) {
