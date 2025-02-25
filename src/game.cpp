@@ -122,6 +122,20 @@ enum Game_Complete_Stage_Type {
     GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE,
 };
 
+bool g_prefpath_portable = false;
+
+string prefqpath(string path)
+{
+  string full_pref_path;
+  if (g_prefpath_portable) {
+    full_pref_path = string_literal("./");
+  } else {
+    full_pref_path = get_preference_directory(string_literal("xpostgames"), string_literal("solstorm"));
+  }
+  full_pref_path = string_concatenate(&Global_Engine()->scratch_arena, full_pref_path, path);
+  return full_pref_path;
+}
+
 local bool game_will_be_new_high_score(s32 stage_index, s32 level_index, s32 new_score) {
     auto& level = stage_list[stage_index].levels[level_index];
     return (new_score > level.best_score);
@@ -2483,13 +2497,15 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
             0.3f
         );
 
+        string full_replay_path = PREF_PATH;
+        full_replay_path = string_concatenate(&Global_Engine()->scratch_arena, full_replay_path, DEFAULT_REPLAY_LOCATION);
         if (action == REPLAY_SAVE_MENU_ACTION_SAVE_RECORDING) {
             // save recording
             if (!state->gameplay_data.recording.in_playback) {
                 if (state->gameplay_data.recording.memory_arena) {
                     _debugprintf("Writing recording... (%d recorded score)", state->gameplay_data.current_score);
 
-                    if (OS_create_directory(DEFAULT_REPLAY_LOCATION)) {
+                    if (OS_create_directory(full_replay_path)) {
                         auto calendar_date   = current_calendar_time();
                         string recordingpath = string_from_cstring(
                             format_temp(
@@ -2505,7 +2521,7 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
                             )
                         );
 
-                        auto serializer = open_write_file_serializer(string_concatenate(&Global_Engine()->scratch_arena, DEFAULT_REPLAY_LOCATION, recordingpath));
+                        auto serializer = open_write_file_serializer(string_concatenate(&Global_Engine()->scratch_arena, full_replay_path, recordingpath));
 
                         serializer.expected_endianess = ENDIANESS_LITTLE;
                         gameplay_recording_file_serialize(
@@ -2668,7 +2684,10 @@ GAME_UI_SCREEN(update_and_render_replay_collection_menu) {
 
     GameUI::set_ui_id((char*)"ui_replay_collection_menu");
 
-    auto replay_files = directory_listing_list_all_files_in(&Global_Engine()->scratch_arena, DEFAULT_REPLAY_LOCATION);
+    string full_replay_path = PREF_PATH;
+    full_replay_path = string_concatenate(&Global_Engine()->scratch_arena, full_replay_path, DEFAULT_REPLAY_LOCATION);
+
+    auto replay_files = directory_listing_list_all_files_in(&Global_Engine()->scratch_arena, full_replay_path);
     int page_count = (replay_files.count+(MAX_REPLAYS_PER_PAGE-1)) / MAX_REPLAYS_PER_PAGE;
     int current_page_display_amount = replay_files.count % MAX_REPLAYS_PER_PAGE;
 
@@ -6220,11 +6239,12 @@ void Game::notify_new_achievement(s32 id) {
 
 bool Game::save_game() {
     _debugprintf("Attempting to save game.");
-    if (OS_file_exists(save_file_name)) {
+    string full_save_path = prefqpath(save_file_name);
+    if (OS_file_exists(full_save_path)) {
         _debugprintf("NOTE: overriding old save file.");
     }
 
-    auto serializer = open_write_file_serializer(save_file_name);
+    auto serializer = open_write_file_serializer(full_save_path);
     serializer.expected_endianess = ENDIANESS_LITTLE;
     serialize_game_state(&serializer);
     serializer_finish(&serializer);
@@ -6233,9 +6253,11 @@ bool Game::save_game() {
 }
 
 bool Game::load_game() {
-    if (OS_file_exists(save_file_name)) {
+    string full_save_path = prefqpath(save_file_name);
+
+    if (OS_file_exists(full_save_path)) {
         _debugprintf("Attempting to load save game.");
-        auto serializer = open_read_file_serializer(save_file_name);
+        auto serializer = open_read_file_serializer(full_save_path);
         serializer.expected_endianess = ENDIANESS_LITTLE;
         // NOTE: serialize game_state should be allowed to fail.
         auto updated_save_data = serialize_game_state(&serializer);

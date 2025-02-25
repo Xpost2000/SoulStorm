@@ -18,11 +18,24 @@
 
 #include "game_preferences.h"
 
+#ifdef PORTABLE_INSTALL
+#define PREF_PATH (string_literal("./")
+#else
+#define PREF_PATH (get_preference_directory(string_literal("xpostgames"), string_literal("solstorm")))
+#endif
+
 #define TICKRATE       (60)
 #define FIXED_TICKTIME (1.0f / TICKRATE)
-#define DEFAULT_REPLAY_LOCATION (string_literal(".\\replays\\"))
+#ifdef _WIN32
+#define DEFAULT_REPLAY_LOCATION (string_literal("\\replays\\"))
+#else
+#define DEFAULT_REPLAY_LOCATION (string_literal("/replays/"))
+#endif
 #define MAX_REPLAYS_PER_PAGE   (6)
 local string save_file_name = string_literal("game_save.save");
+
+string prefqpath(string path);
+extern bool g_prefpath_portable;
 
 // forward decl some opaque types
 struct Game_State;

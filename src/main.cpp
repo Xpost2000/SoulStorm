@@ -685,6 +685,8 @@ void confirm_preferences(Game_Preferences* preferences, Game_Resources* resource
  * These are my first LUA proving grounds.
  */
 bool save_preferences_to_disk(Game_Preferences* preferences, string path) {
+    path = prefqpath(path);
+
     _debugprintf("Hi, preferences are not written to disk yet.");
     FILE* f = fopen(path.data, "wb+");
     {
@@ -705,6 +707,7 @@ bool save_preferences_to_disk(Game_Preferences* preferences, string path) {
 // TODO: sandbox by removing loops and similar keywords that cause danger.
 bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
     lua_State* L = luaL_newstate();
+    path = prefqpath(path);
 
     if (luaL_dofile(L, path.data) != 0) {
         _debugprintf("Could not exec %.*s. Hopefully it doesn't exist.", path.length, path.data);
@@ -887,6 +890,43 @@ local void set_graphics_device(s32 id) {
     game.init_graphics_resources(global_graphics_driver);
 }
 
+string get_preference_directory(string org, string path) {
+#if 1
+  char* SDL_GetPrefPath(const char*, const char*);
+  void SDL_free(void*);
+  char* ptr = SDL_GetPrefPath(org.data, path.data);
+  char* str = format_temp("%s", ptr);
+  SDL_free(ptr);
+  return string_from_cstring(str);
+#else
+#ifdef _WIN32
+  char buffer[MAX_PATH];
+  assertion(
+    SUCCEEDED(
+      SHGetFolderPath(
+        NULL,
+        CSIDL_APPDATA | CSIDL_FLAG_CREATE,
+        NULL, 0,
+        buffer
+      )
+    )
+  );
+
+  if (org.length > 0) {
+    return string_from_cstring(format_temp("%s\\%.*s\\%.*s\\", buffer, org.length, org.data, path.length, path.data));
+  }
+  else {
+    return string_from_cstring(format_temp("%s\\%.*s\\", buffer, path.length, path.data));
+  }
+  return string_from_cstring(buffer);
+#else
+  // todo;
+  return string_literal("./");
+#endif
+#endif
+}
+
+
 int main(int argc, char** argv) {
 #ifdef _WIN32
     SetProcessDPIAware();
@@ -895,7 +935,7 @@ int main(int argc, char** argv) {
 
     Discord_Integration::update_activity(discord_activity());
     {
-        string s = get_preference_directory(string_null, string_literal("Soulstorm"));
+        string s = get_preference_directory(string_literal("xpostgames"), string_literal("Solstorm"));
         _debugprintf("Preference Writing Path: %.*s", _string_unwrap(s));
     }
     while (Global_Engine()->running) {
