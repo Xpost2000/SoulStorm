@@ -6615,14 +6615,14 @@ local void render_boss_health_bar(
 // of being stuck in weird "inbetween" positions in normal play.
 // Also to mostly be non-intrusive.
 #define BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME    (2.000f)
-#define BOSS_HEALTHBAR_DISPLAY_READJUST_TIME (0.195f)
-#define BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME  (1.075f)
+#define BOSS_HEALTHBAR_DISPLAY_READJUST_TIME (0.100f)
+#define BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME  (1.000f)
 #define BOSS_HEALTHBAR_DISPLAY_OFFSET_X      (10)
 #define BOSS_HEALTHBAR_DISPLAY_RADIUS        (4)
+#define BOSS_HEALTHBAR_DISPLAY_Y_ADV         (BOSS_HEALTHBAR_DISPLAY_RADIUS * 2.5)
 
 V2 Boss_Healthbar_Displays::element_position_for(s32 idx) {
-    auto& disp = displays[idx];
-    return V2(0, idx * BOSS_HEALTHBAR_DISPLAY_RADIUS * 1.25) + disp.position;
+    return V2(0, idx * BOSS_HEALTHBAR_DISPLAY_Y_ADV);
 }
 
 void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
@@ -6637,6 +6637,8 @@ void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
         .entity_uid = entity_uid,
     };
     _debugprintf("(%d)%.*s\n", name.length, name.length, name.data);
+    // NOTE(jerry):
+    // buggy if new enemies respawn after a while...
     for (int i = 0; i < name.length; ++i) display.bossnamebuffer[i] = name.data[i];
     V2 element_position           = element_position_for(displays.size);
     display.start_position_target = element_position;
@@ -6669,9 +6671,10 @@ void Boss_Healthbar_Displays::update(Game_State* state, f32 dt) {
     for (s32 healthbar_index = 0; healthbar_index < displays.size; ++healthbar_index) {
         auto& display = displays[healthbar_index];
 
-        if (state->gameplay_data.lookup_enemy(display.entity_uid) == nullptr && display.animation_state != BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN) {
-            display.animation_t = 0.0f;
-            display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN;
+        if (state->gameplay_data.lookup_enemy(display.entity_uid) == nullptr &&
+            display.animation_state != BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN)
+        {
+            remove(display.entity_uid);
         }
 
         // need the hp bars to fall in order.
@@ -6735,7 +6738,8 @@ void Boss_Healthbar_Displays::update(Game_State* state, f32 dt) {
             case BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN: {
                 const f32 max_t = BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME;
                 f32 effective_t = (display.animation_t / max_t);
-                display.alpha = clamp<f32>(1.0 - effective_t, 0.0f, 1.0f);
+                f32 effective_t2 = (display.animation_t / (max_t/2));
+                display.alpha = clamp<f32>(1.0 - effective_t2, 0.0f, 1.0f);
                 display.position.x = lerp_f32(display.start_position_target.x, display.end_position_target.x, effective_t);
                 display.position.y = lerp_f32(display.start_position_target.y, display.end_position_target.y, effective_t);
 
@@ -6758,11 +6762,10 @@ void Boss_Healthbar_Displays::update(Game_State* state, f32 dt) {
     if (any_removed) {
         for (s32 healthbar_index = earliest_removed_index; healthbar_index < displays.size; ++healthbar_index) {
             auto& display = displays[healthbar_index];
-            V2 target_position = element_position_for(healthbar_index-1);
             display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_FALL_INTO_ORDER;
             display.animation_t     = 0.0f;
             display.start_position_target = display.position;
-            display.end_position_target   = display.position;
+            display.end_position_target   = display.position - V2(0, BOSS_HEALTHBAR_DISPLAY_Y_ADV);
         }
     }
 }
@@ -6777,13 +6780,12 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
 
     for (s32 healthbar_index = 0; healthbar_index < displays.size; ++healthbar_index) { // todo fix.
         auto& display = displays[healthbar_index];
-        V2 element_position = element_position_for(healthbar_index);
         Enemy_Entity* e = state->gameplay_data.lookup_enemy(display.entity_uid);
         f32 percentage = 0.0f;
         string name = string_from_cstring(display.bossnamebuffer);
         string hp   = string_literal("???");
 
-        auto display_position = position + element_position;
+        auto display_position = position + display.position;
         if (display.animation_state == BOSS_HEALTHBAR_ANIMATION_DISPLAY_SPAWN) {
             percentage = saturate(display.animation_t/BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME);
 
