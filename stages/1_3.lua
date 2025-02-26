@@ -166,10 +166,13 @@ function boss_intro_wave()
    explosion_hazard_new(play_area_width()/2-35, 45, 35, 0.10, 0.10);
    explosion_hazard_new(play_area_width()/2, 85, 35, 0.10, 0.10);
    explosion_hazard_new(play_area_width()/2, 50, 65, 0.125, 0.25);
-   Game_Spawn_Stage1_Boss();
+   t_wait(2.0);
+   local b = Game_Spawn_Stage1_Boss();
+   enemy_begin_invincibility(b, true, 99999);
    t_wait(3.5);
    -- boss spawn!!
    end_black_fade();
+   enemy_end_invincibility(b);
 end
 
 function stage_task()
@@ -194,5 +197,6 @@ function stage_task()
     t_wait(1.0);
    end
    boss_intro_wave();
-   t_complete_stage();
+   
+  -- t_complete_stage();
 end
