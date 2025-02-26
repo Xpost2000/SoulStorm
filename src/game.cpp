@@ -4916,10 +4916,9 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
         // Render Boss HP
         {
-          state->boss_health_displays.position = V2(ui_cursor_x_left + 25, ui_cursor_y);
+          state->boss_health_displays.position = V2(state->play_area.x, 10);
           state->boss_health_displays.update(this->state, dt);
           state->boss_health_displays.render(ui_render_commands, this->state);
-          ui_cursor_y += state->boss_health_displays.get_pixel_height();
         }
 
         // Replay_Demo_UI
@@ -6514,8 +6513,8 @@ local void render_boss_health_bar(
     struct render_commands* ui_render_commands,
     V2 position,
     f32 percentage,
-    string text,
-    string text2,
+    string text, // HP
+    string text2, // BOSSNAME
     f32 alpha,
     f32 r,
     f32 text_scale,
@@ -6523,60 +6522,92 @@ local void render_boss_health_bar(
 ) {
     {
         // The only time I'm rendering any lines.
+        auto font = resources->get_font(MENU_FONT_COLOR_WHITE);
+        auto full_bar = rectangle_f32(position.x, position.y, PLAY_AREA_WIDTH_PX - 20, r);
+        auto health_bar = full_bar;
+        health_bar.w *= percentage;
+
+        f32 boss_name_width = font_cache_text_width(font, text2, text_scale);
+        f32 text_height = font_cache_text_height(font) * text_scale;
+
+        // Inner Bar
         {
-            auto font = resources->get_font(MENU_FONT_COLOR_STEEL);
-
-            s32 arc_max    = 360 * percentage;
-            // Uh... Yeah. This is uh. Performant. I don't have shaders, and
-            // don't have complex gradients. Or triangle strips. Or anything in the software
-            // renderer that can make this faster!
-
-            local auto red = color32u8(220, 20, 60, 255);
-            local auto yellow = color32u8(255, 250, 205, 255);
-            local auto green = color32u8(0, 255, 127, 255);
-            /*
-              NOTE: multi_linear_gradient_blend doesn't have "curve control",
-              so I'm manually controlling the curve by padding out the gradient color with more
-              points.
-            */
-            local color32u8 gradient_colors[] = {
-                red, red, red, red,
-                yellow, yellow, yellow, yellow, yellow, yellow,
-                green, green
-            };
-            auto color_choice = multi_linear_gradient_blend(
-                make_slice<color32u8>(gradient_colors, array_count(gradient_colors)),
-                percentage
+            render_commands_push_quad_ext(
+                ui_render_commands,
+                full_bar,
+                color32u8(128,25,45,255*alpha),
+                V2(0.5, 0.5),
+                0,
+                BLEND_MODE_ALPHA
             );
-            color_choice.a = 255 * alpha;
-            for (f32 degree = 0; degree < arc_max; degree += 0.125) {
-                V2 d = V2_direction_from_degree(degree);
-                V2 start = position;
-                V2 end   = start + (d * -r);
-
-                render_commands_push_line(ui_render_commands, start, end, color_choice, BLEND_MODE_ALPHA);
-            }
-
-            f32 sub_r = (r * 0.75);
-            render_commands_push_image(ui_render_commands,
-                                       graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle),
-                                       rectangle_f32(position.x - sub_r, position.y - sub_r, sub_r*2, sub_r*2),
-                                       RECTANGLE_F32_NULL,
-                                       color32f32(0.0, 0, 0.0, alpha),
-                                       0,
-                                       BLEND_MODE_ALPHA);
-
-            render_commands_push_text(ui_render_commands,
-                                      font,
-                                      text_scale,
-                                      position + V2(-font_cache_text_width(font, text, text_scale)/2, -font_cache_text_height(font) * text_scale),
-                                      text, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA); 
-            render_commands_push_text(ui_render_commands,
-                                      font,
-                                      text_scale,
-                                      position + V2(-font_cache_text_width(font, text2, text_scale)/2, 0),
-                                      text2, color32f32(1,1,1,alpha), BLEND_MODE_ALPHA); 
+            render_commands_push_quad_ext(
+                ui_render_commands,
+                rectangle_f32(full_bar.x, full_bar.y, full_bar.w, full_bar.h/2),
+                color32u8(128/2,25/2,45/2,255*alpha),
+                V2(0.5, 0.5),
+                0,
+                BLEND_MODE_ALPHA
+            );
         }
+        
+        // Main Healthbar
+        // NOTE(jerry): hardcoded for R = 4 since I don't want to draw a sprite
+        // so this will be done in code.
+        {
+            // Main Green
+            render_commands_push_quad_ext(
+                ui_render_commands,
+                health_bar,
+                color32u8(15,200,45,255*alpha),
+                V2(0.5, 0.5),
+                0,
+                BLEND_MODE_ALPHA
+            );
+
+            // highlight
+            render_commands_push_quad_ext(
+                ui_render_commands,
+                rectangle_f32(health_bar.x, health_bar.y+0, health_bar.w, 1),
+                color32u8(255,255,255,alpha*255),
+                V2(0.5, 0.5),
+                0,
+                BLEND_MODE_ALPHA
+            );
+            render_commands_push_quad_ext(
+                ui_render_commands,
+                rectangle_f32(health_bar.x, health_bar.y+1, health_bar.w, 1),
+                color32u8(200,255,200,alpha*255),
+                V2(0.5, 0.5),
+                0,
+                BLEND_MODE_ALPHA
+            );
+            // Darker Green
+            render_commands_push_quad_ext(
+                ui_render_commands,
+                rectangle_f32(health_bar.x, health_bar.y+health_bar.h-1, health_bar.w, 2),
+                color32u8(15*0.5,200*0.5,45*0.5,255*alpha),
+                V2(0.5, 0.5),
+                0,
+                BLEND_MODE_ALPHA
+            );
+        }
+
+        render_commands_push_text(
+          ui_render_commands,
+          font,
+          text_scale,
+          V2(full_bar.x + full_bar.w / 2 - boss_name_width / 2-1, position.y + full_bar.h / 2 - text_height / 2-1),
+          text2,
+          color32f32(0,0,0, alpha),
+          BLEND_MODE_ALPHA);
+        render_commands_push_text(
+            ui_render_commands,
+            font,
+            text_scale,
+            V2(full_bar.x + full_bar.w/2 - boss_name_width/2, position.y + full_bar.h/2 - text_height/2),
+            text2,
+            color32f32(1,1,1,alpha),
+            BLEND_MODE_ALPHA);
     }
 }
 
@@ -6586,15 +6617,12 @@ local void render_boss_health_bar(
 #define BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME    (0.255f)
 #define BOSS_HEALTHBAR_DISPLAY_READJUST_TIME (0.185f)
 #define BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME  (0.225f)
-#define BOSS_HEALTHBAR_DISPLAY_OFFSET_X      (50)
-#define BOSS_HEALTHBAR_DISPLAY_RADIUS        (50)
+#define BOSS_HEALTHBAR_DISPLAY_OFFSET_X      (10)
+#define BOSS_HEALTHBAR_DISPLAY_RADIUS        (4)
 
 V2 Boss_Healthbar_Displays::element_position_for(s32 idx) {
-    return V2(0, idx * BOSS_HEALTHBAR_DISPLAY_RADIUS * 2 * 1.15);
-}
-
-f32 Boss_Healthbar_Displays::get_pixel_height(void) {
-  return displays.size * BOSS_HEALTHBAR_DISPLAY_RADIUS * 2 * 1.15;
+    auto& disp = displays[idx];
+    return V2(0, idx * BOSS_HEALTHBAR_DISPLAY_RADIUS * 2) + disp.position;
 }
 
 void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
@@ -6611,8 +6639,8 @@ void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
     _debugprintf("(%d)%.*s\n", name.length, name.length, name.data);
     for (int i = 0; i < name.length; ++i) display.bossnamebuffer[i] = name.data[i];
     V2 element_position           = element_position_for(displays.size);
-    display.start_position_target = element_position + V2(BOSS_HEALTHBAR_DISPLAY_OFFSET_X, 0);
-    display.end_position_target   = element_position;
+    display.start_position_target = element_position;
+    display.end_position_target   = element_position + V2(BOSS_HEALTHBAR_DISPLAY_OFFSET_X, 0);
     display.animation_t = 0.0f;
     displays.push(display);
 }
@@ -6713,7 +6741,7 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
             rectangle_f32(position.x, position.y, 30, 30), color32u8(0, 0, 255, 128), BLEND_MODE_ALPHA);
     }
 
-    for (s32 healthbar_index = 0; healthbar_index < 3; ++healthbar_index) { // todo fix.
+    for (s32 healthbar_index = 0; healthbar_index < displays.size; ++healthbar_index) { // todo fix.
         auto& display = displays[healthbar_index];
         V2 element_position = element_position_for(healthbar_index);
         Enemy_Entity* e = state->gameplay_data.lookup_enemy(display.entity_uid);
@@ -6736,7 +6764,7 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
             name,
             display.alpha,
             BOSS_HEALTHBAR_DISPLAY_RADIUS,
-            2,
+            1,
             state->resources
         );
     }
