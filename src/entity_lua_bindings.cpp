@@ -453,11 +453,16 @@ int _lua_bind_enemy_show_boss_hp(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
     auto e = state->gameplay_data.lookup_enemy(uid);
+    char* bossstr = (char*) lua_tostring(L,2);
+
+    if (!bossstr) {
+        bossstr = (char*) "BOSS_IS_MISSING_NAME";
+    }
 
     if (e) {
         state->gameplay_data.boss_health_displays.add(
             uid,
-            string_from_cstring((char*)lua_tostring(L, 2))
+            string_from_cstring(bossstr)
         );
     }
 

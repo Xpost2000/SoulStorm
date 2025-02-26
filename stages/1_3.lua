@@ -128,6 +128,17 @@ function wave1()
    t_wait(2);
 end
 
+function Game_Spawn_Stage1_Boss()
+   local e = enemy_new();
+   local initial_boss_pos = v2(play_area_width()/2, 50);
+   enemy_set_hp(e, 3500);
+   enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
+   enemy_set_visual(e, ENTITY_SPRITE_BAT_A); -- for now...
+   enemy_show_boss_hp(e, "WITCH");
+
+   return e;
+end
+
 function boss_intro_wave()
    start_black_fade(0.065);
 
@@ -155,6 +166,7 @@ function boss_intro_wave()
    explosion_hazard_new(play_area_width()/2-35, 45, 35, 0.10, 0.10);
    explosion_hazard_new(play_area_width()/2, 85, 35, 0.10, 0.10);
    explosion_hazard_new(play_area_width()/2, 50, 65, 0.125, 0.25);
+   Game_Spawn_Stage1_Boss();
    t_wait(3.5);
    -- boss spawn!!
    end_black_fade();
@@ -172,20 +184,15 @@ function stage_task()
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.552, 90, 50);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/boss_0_light_streak.png", 0.150, 0, 125);
 
-   t_wait(1.5);
-   wave1();
-   t_wait(12.5);
-   convert_all_bullets_to_score()
-   t_wait(3.5);
-   LaserChaser_Horizontal_1_2(4, 1.25);
-   t_wait(1.0);
+   if false then
+    t_wait(1.5);
+    wave1();
+    t_wait(12.5);
+    convert_all_bullets_to_score()
+    t_wait(3.5);
+    LaserChaser_Horizontal_1_2(4, 1.25);
+    t_wait(1.0);
+   end
    boss_intro_wave();
-   -- Add "cinematic mode", player is moved to starting position
-   -- and cannot shoot until boss spawns
-   -- Boss main is a separate task
-
-   -- wait_no_danger();
-   -- explosion_hazard_new(100, 100, 50, 0.5, 2);
-   -- explosion_hazard_new(100, 180, 100, 0.5, 1);
    t_complete_stage();
 end
