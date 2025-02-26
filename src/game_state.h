@@ -350,6 +350,7 @@ struct Boss_Healthbar_Display {
     f32    animation_t     = 0.0f; // used when spawning in, or removal.
     V2     start_position_target;
     V2     end_position_target;
+    Particle_Emitter* emitter = 0;
 };
 
 struct Boss_Healthbar_Displays {

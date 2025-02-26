@@ -131,10 +131,32 @@ end
 function Game_Spawn_Stage1_Boss()
    local e = enemy_new();
    local initial_boss_pos = v2(play_area_width()/2, 50);
-   enemy_set_hp(e, 3500);
+   enemy_set_hp(e, 100);
    enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
    enemy_set_visual(e, ENTITY_SPRITE_BAT_A); -- for now...
    enemy_show_boss_hp(e, "WITCH");
+
+   return e;
+end
+
+function Game_Spawn_Stage1_Boss_HexBind0()
+   local e = enemy_new();
+   local initial_boss_pos = v2(play_area_width()/2 + 50, 50);
+   enemy_set_hp(e, 100);
+   enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
+   enemy_set_visual(e, ENTITY_SPRITE_SKULL_A); -- for now...
+   enemy_show_boss_hp(e, "HEX BINDING");
+
+   return e;
+end
+
+function Game_Spawn_Stage1_Boss_HexBind1()
+   local e = enemy_new();
+   local initial_boss_pos = v2(play_area_width()/2 - 50, 50);
+   enemy_set_hp(e, 100);
+   enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
+   enemy_set_visual(e, ENTITY_SPRITE_SKULL_A); -- for now...
+   enemy_show_boss_hp(e, "HEX BINDING");
 
    return e;
 end
@@ -168,6 +190,8 @@ function boss_intro_wave()
    explosion_hazard_new(play_area_width()/2, 50, 65, 0.125, 0.25);
    t_wait(2.0);
    local b = Game_Spawn_Stage1_Boss();
+   local e = Game_Spawn_Stage1_Boss_HexBind0();
+   local y = Game_Spawn_Stage1_Boss_HexBind1();
    enemy_begin_invincibility(b, true, 99999);
    t_wait(3.5);
    -- boss spawn!!

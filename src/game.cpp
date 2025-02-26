@@ -1245,7 +1245,7 @@ void Game::init(Graphics_Driver* driver) {
         state->particle_pool.init(arena, 16384);
         state->death_particle_pool.init(arena, 128);
         state->stage_exit_particle_pool.init(arena, 256);
-        state->ui_particle_pool.init(arena, 512);
+        state->ui_particle_pool.init(arena, 3500);
 
         // creation queues
         {
@@ -6614,15 +6614,15 @@ local void render_boss_health_bar(
 // NOTE: these times are selected to reduce the possibility
 // of being stuck in weird "inbetween" positions in normal play.
 // Also to mostly be non-intrusive.
-#define BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME    (0.255f)
-#define BOSS_HEALTHBAR_DISPLAY_READJUST_TIME (0.185f)
-#define BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME  (0.225f)
+#define BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME    (2.000f)
+#define BOSS_HEALTHBAR_DISPLAY_READJUST_TIME (0.195f)
+#define BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME  (1.075f)
 #define BOSS_HEALTHBAR_DISPLAY_OFFSET_X      (10)
 #define BOSS_HEALTHBAR_DISPLAY_RADIUS        (4)
 
 V2 Boss_Healthbar_Displays::element_position_for(s32 idx) {
     auto& disp = displays[idx];
-    return V2(0, idx * BOSS_HEALTHBAR_DISPLAY_RADIUS * 2) + disp.position;
+    return V2(0, idx * BOSS_HEALTHBAR_DISPLAY_RADIUS * 1.25) + disp.position;
 }
 
 void Boss_Healthbar_Displays::add(u64 entity_uid, string name) {
@@ -6656,7 +6656,7 @@ void Boss_Healthbar_Displays::remove(u64 entity_uid) {
             display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN;
             display.animation_t     = 0.0f;
             display.start_position_target = display.position;
-            display.end_position_target   = display.position + V2(BOSS_HEALTHBAR_DISPLAY_OFFSET_X, 0);
+            display.end_position_target   = display.position + V2(PLAY_AREA_WIDTH_PX, 0);
             break;
         }
     }
@@ -6677,36 +6677,69 @@ void Boss_Healthbar_Displays::update(Game_State* state, f32 dt) {
         // need the hp bars to fall in order.
         switch (display.animation_state) {
             case BOSS_HEALTHBAR_ANIMATION_DISPLAY_SPAWN: {
-                f32 effective_t = (display.animation_t / BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME);
+                const f32 max_t = BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME;
+                f32 effective_t = (display.animation_t / max_t);
                 display.alpha = clamp<f32>(effective_t, 0.0f, 1.0f);
                 display.position.x = lerp_f32(display.start_position_target.x, display.end_position_target.x, effective_t);
                 display.position.y = lerp_f32(display.start_position_target.y, display.end_position_target.y, effective_t);
 
-                if (display.animation_t >= BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME) {
+                if (!display.emitter){
+                    display.emitter = state->gameplay_data.ui_particle_emitters.alloc();
+                } 
+                
+                if (display.emitter) {
+                    auto& emitter = *display.emitter;
+
+                    emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE |
+                        PARTICLE_EMITTER_FLAGS_USE_ANGULAR |
+                        PARTICLE_EMITTER_FLAGS_USE_COLOR_FADE;
+                    emitter.sprite = sprite_instance(state->resources->circle_sprite);
+                    emitter.sprite.scale            = V2(0.125/4, 0.125/4);
+                    emitter.modulation              = color32f32(0.12, 0.85, 0.12, 1);
+                    emitter.target_modulation       = color32f32(59/255.0f, 59/255.0f, 56/255.0f, 127/255.0f);
+                    emitter.lifetime                = 1.25f;
+                    emitter.scale_variance          = V2(-0.005, 0.005);
+                    emitter.velocity_x_variance     = V2(-30, 100);
+                    emitter.velocity_y_variance     = V2(100, 205);
+                    emitter.acceleration_x_variance = V2(-100, 100);
+                    emitter.acceleration_y_variance = V2(-50, 350);
+                    emitter.lifetime_variance       = V2(-0.25f, 1.0f);
+                    emitter.emission_max_timer      = 0.045f;
+                    emitter.max_emissions           = -1;
+                    emitter.emit_per_emission       = 18;
+                    emitter.scale                   = 1;
+                }
+
+                if (display.animation_t >= max_t) {
                     display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_IDLE;
                     display.animation_t = 0.0f;
+                    if (display.emitter) display.emitter->flags = 0; // disable emitter
+                    display.emitter = 0;
                 }
+
                 display.animation_t += dt;
             } break;
             case BOSS_HEALTHBAR_ANIMATION_DISPLAY_IDLE: {/* do nothing. */} break;
             case BOSS_HEALTHBAR_ANIMATION_DISPLAY_FALL_INTO_ORDER: {
-                f32 effective_t = (display.animation_t / BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME);
+                const f32 max_t = BOSS_HEALTHBAR_DISPLAY_READJUST_TIME;
+                f32 effective_t = (display.animation_t / max_t);
                 display.position.x = lerp_f32(display.start_position_target.x, display.end_position_target.x, effective_t);
                 display.position.y = lerp_f32(display.start_position_target.y, display.end_position_target.y, effective_t);
 
-                if (display.animation_t >= BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME) {
+                if (display.animation_t >= max_t) {
                     display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_IDLE;
                     display.animation_t = 0.0f;
                 }
                 display.animation_t += dt;
             } break;
             case BOSS_HEALTHBAR_ANIMATION_DISPLAY_DESPAWN: {
-                f32 effective_t = (display.animation_t / BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME);
-                display.alpha = clamp<f32>(1.0 - (display.animation_t / BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME), 0.0f, 1.0f);
+                const f32 max_t = BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME;
+                f32 effective_t = (display.animation_t / max_t);
+                display.alpha = clamp<f32>(1.0 - effective_t, 0.0f, 1.0f);
                 display.position.x = lerp_f32(display.start_position_target.x, display.end_position_target.x, effective_t);
                 display.position.y = lerp_f32(display.start_position_target.y, display.end_position_target.y, effective_t);
 
-                if (display.animation_t >= BOSS_HEALTHBAR_DISPLAY_DESPAWN_TIME+0.15f) {
+                if (display.animation_t >= max_t+0.15f) {
                     displays.pop_and_swap(healthbar_index);
                     if (healthbar_index < earliest_removed_index) {
                         earliest_removed_index = healthbar_index;
@@ -6725,10 +6758,11 @@ void Boss_Healthbar_Displays::update(Game_State* state, f32 dt) {
     if (any_removed) {
         for (s32 healthbar_index = earliest_removed_index; healthbar_index < displays.size; ++healthbar_index) {
             auto& display = displays[healthbar_index];
+            V2 target_position = element_position_for(healthbar_index-1);
             display.animation_state = BOSS_HEALTHBAR_ANIMATION_DISPLAY_FALL_INTO_ORDER;
             display.animation_t     = 0.0f;
             display.start_position_target = display.position;
-            display.end_position_target   = element_position_for(healthbar_index);
+            display.end_position_target   = display.position;
         }
     }
 }
@@ -6748,17 +6782,39 @@ void Boss_Healthbar_Displays::render(struct render_commands* ui_commands, Game_S
         f32 percentage = 0.0f;
         string name = string_from_cstring(display.bossnamebuffer);
         string hp   = string_literal("???");
-        if (e) {
-            percentage = e->hp_percentage();
-            hp = memory_arena_push_string(
-                &Global_Engine()->scratch_arena,
-                string_from_cstring(format_temp("%d/%d", e->hp, e->max_hp))
-            );
+
+        auto display_position = position + element_position;
+        if (display.animation_state == BOSS_HEALTHBAR_ANIMATION_DISPLAY_SPAWN) {
+            percentage = saturate(display.animation_t/BOSS_HEALTHBAR_DISPLAY_SPAWN_TIME);
+
+            if (display.emitter) {
+              auto& emitter = *display.emitter;
+              auto full_bar = rectangle_f32(display_position.x, display_position.y, PLAY_AREA_WIDTH_PX - 20, BOSS_HEALTHBAR_DISPLAY_RADIUS);
+              auto health_bar = full_bar;
+              health_bar.w *= percentage;
+              emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE |
+                PARTICLE_EMITTER_FLAGS_USE_ANGULAR |
+                PARTICLE_EMITTER_FLAGS_USE_COLOR_FADE;
+              display.emitter->shape =
+                particle_emit_shape_quad(
+                  V2(health_bar.x + health_bar.w / 2, health_bar.y + health_bar.h / 2),
+                  V2(health_bar.w / 2, health_bar.h / 2),
+                  true
+                );
+            }
+        } else {
+            if (e) {
+                percentage = e->hp_percentage();
+                hp = memory_arena_push_string(
+                    &Global_Engine()->scratch_arena,
+                    string_from_cstring(format_temp("%d/%d", e->hp, e->max_hp))
+                );
+            }
         }
 
         render_boss_health_bar(
             ui_commands,
-            position + element_position,
+            display_position,
             percentage,
             hp,
             name,
