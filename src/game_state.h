@@ -198,7 +198,10 @@ enum Game_Screen_Modes {
     // Only one ending. Need to draw more assets for this one!
     // Probably just a cheesy congratulations screen.
     GAME_SCREEN_ENDING    = 5,
-    GAME_SCREEN_COUNT     = 6,
+
+    // NOTE(jerry): needed to composite some scenes with the puppet
+    GAME_SCREEN_TRAILER_CUTAWAY = 6,
+    GAME_SCREEN_COUNT     = 7,
 
 #ifdef BUILD_DEMO
     // The demo is always with the title screen
@@ -253,6 +256,7 @@ struct Visual_Sparkling_Star_Data {
 #include "main_menu_mode.h"
 #include "opening_mode.h"
 #include "ending_mode.h"
+#include "trailer_cutaway_mode.h"
 
 // I do like using state machines for this kind of thing
 // at least when you have to write code for animation.
@@ -862,6 +866,7 @@ struct Game_State {
     Gameplay_Data    gameplay_data;
     MainMenu_Data    mainmenu_data;
     TitleScreen_Data titlescreen_data;
+    Trailer_Cutaway_Mode_Data trailer_cutaway_data;
     OpeningMode_Data opening_data;
     EndingMode_Data  ending_data;
     Achievement_Menu_Data achievement_menu;

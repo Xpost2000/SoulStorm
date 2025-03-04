@@ -855,6 +855,12 @@ GAME_SCREEN(update_and_render_game_title_screen) {
                 switch_ui(UI_STATE_OPTIONS);
             }
             y += 30;
+#if COMPILE_IN_TRAILER_CLIPPING_CODE == 1
+            if (GameUI::button(V2(ui_x, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
+                switch_screen(GAME_SCREEN_TRAILER_CUTAWAY);
+            }
+            y += 30;
+#endif
 #if 0
             // Save file hasn't been loaded yet.
             if (GameUI::button(V2(ui_x, y), string_literal("Achievements"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {

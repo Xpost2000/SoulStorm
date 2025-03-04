@@ -126,6 +126,7 @@ public:
     void opening_data_initialize(Graphics_Driver* driver);
     void ending_data_initialize(Graphics_Driver* driver);
     void title_data_initialize(Graphics_Driver* driver);
+    void trailer_cutaway_data_initialize(Graphics_Driver* driver);
 
     void update_and_render(Graphics_Driver* driver, f32 dt);
     void handle_preferences(void);
@@ -183,6 +184,7 @@ private:
     GAME_SCREEN(update_and_render_game_credits);
     void       title_screen_replay_opening(void);
     GAME_SCREEN(update_and_render_game_title_screen);
+    GAME_SCREEN(update_and_render_game_trailer_cutaway_screen);
     GAME_SCREEN(update_and_render_game_ending);
 
     void ingame_update_introduction_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt);

@@ -605,7 +605,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         }
     }
 
-#ifndef BUILD_DEMO
+#if BUILD_DEMO==0 || COMPILE_IN_TRAILER_CLIPPING_CODE==1
     {
         {
             resources->title_screen_puppet_eyes[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/title/title_eye0.png"));
@@ -5447,6 +5447,9 @@ void Game::update_and_render(Graphics_Driver* driver, f32 dt) {
         case GAME_SCREEN_CREDITS: {
             update_and_render_game_credits(&game_render_commands, &ui_render_commands, dt);
         } break;
+        case GAME_SCREEN_TRAILER_CUTAWAY: {
+            update_and_render_game_trailer_cutaway_screen(&game_render_commands, &ui_render_commands, dt);
+        } break;
     }
 
     // Achievement related updates.
@@ -6505,6 +6508,7 @@ u64 UID::enemy_uid() {
 #include "main_menu_mode.cpp"
 #include "opening_mode.cpp"
 #include "ending_mode.cpp"
+#include "trailer_cutaway_mode.cpp"
 
 // Boss_Healthbar_Displays
 // This is a big parameter list, but that's alright
