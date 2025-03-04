@@ -18,7 +18,7 @@
 */
 
 enum Trailer_Cutaway_Animation_Phase {
-    TRAILER_CUTAWAY_ANIMATION_PHASE_NOT_READY,
+    TRAILER_CUTAWAY_ANIMATION_PHASE_MAKING_CHOICES=0,
     TRAILER_CUTAWAY_ANIMATION_PHASE_IDLE_BLINK,
     TRAILER_CUTAWAY_ANIMATION_PHASE_LOOK_UP,
     TRAILER_CUTAWAY_ANIMATION_PHASE_PAN_UPWARDS_TO_SHOW_LOGO,
@@ -44,6 +44,12 @@ local string g_platform_logo_paths[] = {
     string_literal("srcart/trailerad/platform_linux.png"),
 };
 
+local string g_platform_logo_strings[] = {
+    string_literal("WINDOWS 11"),
+    string_literal("MAC OS"),
+    string_literal("[UBUNTU] LINUX"),
+};
+
 enum Trailer_Cutaway_Storefront_Mask_Flags {
     TRALIER_CUTAWAY_STOREFRONT_LOGO_NONE    = 0,
     // Storefronts
@@ -57,8 +63,15 @@ local string g_storefront_logo_paths[] = {
     string_literal("srcart/trailerad/platform_itch.png"),
 };
 
+local string g_storefront_strings[] = {
+    string_literal("STEAM"),
+    string_literal("ITCH.IO"),
+};
+
 struct Trailer_Cutaway_Mode_Data {
 #ifdef COMPILE_IN_TRAILER_CLIPPING_CODE
+    struct camera main_camera;
+    random_state  prng;
     u32 platform_mask_flags=0;
     u32 storefront_mask_flags=0;
     s32 anim_phase=0;

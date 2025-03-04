@@ -1297,6 +1297,9 @@ void Game::init(Graphics_Driver* driver) {
     // title screen initialize
     title_data_initialize(driver);
 
+    // trailer cutaway initialize
+    trailer_cutaway_data_initialize(driver);
+
     Achievements::init_achievements(arena, make_slice<Achievement>(achievement_list, array_count(achievement_list)));
     GameUI::initialize(arena);
 
