@@ -18,6 +18,7 @@
 
 #include "game_preferences.h"
 
+// TODO(jerry): This should be a flag
 #ifdef PORTABLE_INSTALL
 #define PREF_PATH (string_literal("./")
 #else

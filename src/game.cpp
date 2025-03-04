@@ -605,6 +605,21 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         }
     }
 
+#if COMPILE_IN_TRAILER_CLIPPING_CODE == 1
+    {
+        for (unsigned index = 0; index < array_count(resources->trailer_platform_logos); ++index) {
+            resources->trailer_platform_logos[index] =
+                graphics_assets_load_image(&resources->graphics_assets,
+                                           g_platform_logo_paths[index]);
+        }
+        for (unsigned index = 0; index < array_count(resources->trailer_storefront_logos); ++index) {
+            resources->trailer_storefront_logos[index] =
+                graphics_assets_load_image(&resources->graphics_assets,
+                                           g_storefront_logo_paths[index]);
+        }
+    }
+#endif
+
 #if BUILD_DEMO==0 || COMPILE_IN_TRAILER_CLIPPING_CODE==1
     {
         {

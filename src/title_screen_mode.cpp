@@ -856,7 +856,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
             }
             y += 30;
 #if COMPILE_IN_TRAILER_CLIPPING_CODE == 1
-            if (GameUI::button(V2(ui_x, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(ui_x, y), string_literal("[DEVELOPER] Trailer Title Card Maker"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 switch_screen(GAME_SCREEN_TRAILER_CUTAWAY);
             }
             y += 30;

@@ -989,6 +989,11 @@ struct Game_Resources {
     image_id title_screen_logo_fills[3];
     image_id title_screen_logo_masks[3];
 
+    // NOTE(jerry): these assets are not shipped with the game at all!
+    // they're set up for the development repositor paths.
+    image_id trailer_platform_logos[TRAILER_CUTAWAY_PLATFORM_LOGO_COUNT];
+    image_id trailer_storefront_logos[TRAILER_CUTAWAY_STOREFRONT_LOGO_COUNT];
+
     // end title screen
 
     image_id        ui_marquee_bkrnd;

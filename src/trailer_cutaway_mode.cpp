@@ -1,3 +1,4 @@
+#define COMPILE_IN_TRAILER_CLIPPING_CODE 1
 #if COMPILE_IN_TRAILER_CLIPPING_CODE == 0
 void Game::trailer_cutaway_data_initialize(Graphics_Driver* driver) { }
 GAME_SCREEN(update_and_render_game_trailer_cutaway_screen) { }
