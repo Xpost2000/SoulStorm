@@ -53,20 +53,22 @@ void TitleScreen_MainCharacter_Puppet::update_blinking(f32 dt) {
 void TitleScreen_MainCharacter_Puppet::update(f32 dt) {
     update_blinking(dt);
 
-    if (!allow_looking_random)
-        return;
+    if (allow_looking_random) {
+        if (time_between_finding_new_look_target <= 0.0f) {
+            s32 random_look = random_ranged_integer(prng, 0, 7);
+            V2 eye_direction = V2_direction_from_degree(random_ranged_float(prng, -360.0f, 360.0f));
+            f32 time_to_look = random_ranged_float(prng, 1.5f, 2.2f);
 
-    if (time_between_finding_new_look_target <= 0.0f) {
-        s32 random_look = random_ranged_integer(prng, 0, 7);
-        V2 eye_direction = V2_direction_from_degree(random_ranged_float(prng, -360.0f, 360.0f));
-        f32 time_to_look = random_ranged_float(prng, 1.5f, 2.2f);
+            if (random_look < 3) {
+                eye_direction = V2(0, 0);
+            }
+            set_new_eye_target(eye_direction.normalized(), time_to_look);
+            time_between_finding_new_look_target = random_ranged_float(prng, 3.0f, 6.0f);
+        } 
+    }
 
-        if (random_look < 3) {
-            eye_direction = V2(0, 0);
-        }
-        set_new_eye_target(eye_direction.normalized(), time_to_look);
-        time_between_finding_new_look_target = random_ranged_float(prng, 3.0f, 6.0f);
-    } else {
+    /* LookAtEyeTarget() */
+    {
         if (look_target_anim_t < max_look_target_anim_t) {
             // _debugprintf("looking at target (%f/%f) (%f, %f)", look_target_anim_t, max_look_target_anim_t, eye_look_target.x, eye_look_target.y);
             
