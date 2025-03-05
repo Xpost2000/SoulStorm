@@ -605,16 +605,50 @@ void initialize() {
     set_graphics_device(game.preferences.renderer_type);
     Thread_Pool::initialize();
 
+    // NOTE(jerry): It might be worth repopulating this often, but that requires remembering which monitor
+    // you were on, and that can also be a mess. So I'll choose to only support the initial monitor.
+    Graphics_Driver::populate_display_mode_list(global_game_window); // update internal list of display modes.
+
     // NOTE(jerry): fullscreen adjustments.
     if (Global_Engine()->fullscreen) {
       set_fullscreen(true, true);
        update_preferences(&game.temp_preferences, &game.preferences);
     }
 
-    Graphics_Driver::populate_display_mode_list(global_game_window); // update internal list of display modes.
-
     // properly populate the resolution_option_index field
     game.preferences.resolution_option_index = Graphics_Driver::find_index_of_resolution(game.preferences.width, game.preferences.height);
+    if (game.preferences.resolution_option_index == -1) {
+        /*
+         * NOTE(jerry):
+         * The display mode thing... is a little weird because theoretically you should let the
+         * game resize however it wants (in windowed mode), but your resolution selector typically only works based on
+         * the video modes your monitor supports...
+         * 
+         * So for now the engine will choose to just snap you to the best resolution that is in the known set of
+         * video modes your monitor supports so that way it has something to actually supply for the options menu.
+         */
+        s32 resolution_area = (s32) (game.preferences.width*game.preferences.height);
+        s32 best_index = 0;
+        s32 best_area_delta = INT_MAX;
+        
+        auto display_modes = Graphics_Driver::get_display_modes();
+        for (unsigned index = 0; index < display_modes.length; ++index) {
+            auto display_mode = display_modes[index];
+            s32 area = display_mode.width * display_mode.height; 
+            s32 current_delta = (resolution_area - area);
+
+            if (current_delta < 0) current_delta *= -1;
+
+            if (current_delta < best_area_delta) {
+                best_area_delta = current_delta;
+                best_index = index;
+            }
+        }
+
+        game.preferences.resolution_option_index = best_index;
+        game.preferences.width  = display_modes[best_index].width;
+        game.preferences.height = display_modes[best_index].height;
+    }
     update_preferences(&game.temp_preferences, &game.preferences);
 
 #ifndef NO_FANCY_FADEIN_INTRO
