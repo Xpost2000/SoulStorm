@@ -2311,6 +2311,8 @@ void Simple_Scrollable_Background_Entities::clear(void) {
 
     foreground_start = nullptr;
     background_start = nullptr;
+    foreground_end = nullptr;
+    background_end = nullptr;
 }
 
 void Simple_Scrollable_Background_Entities::update(f32 dt) {
