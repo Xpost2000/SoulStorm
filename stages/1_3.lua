@@ -1,4 +1,8 @@
 engine_dofile("stages/common.lua")
+engine_dofile("stages/boss1.lua");
+
+enable_boss_prewave = false;
+enable_boss_intro_explosions = false;
 
 function wave1()
    Stage1_Batflood();
@@ -128,70 +132,39 @@ function wave1()
    t_wait(2);
 end
 
-function Game_Spawn_Stage1_Boss()
-   local e = enemy_new();
-   local initial_boss_pos = v2(play_area_width()/2, 50);
-   enemy_set_hp(e, 100);
-   enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-   enemy_set_visual(e, ENTITY_SPRITE_BAT_A); -- for now...
-   enemy_show_boss_hp(e, "WITCH");
-
-   return e;
-end
-
-function Game_Spawn_Stage1_Boss_HexBind0()
-   local e = enemy_new();
-   local initial_boss_pos = v2(play_area_width()/2 + 50, 50);
-   enemy_set_hp(e, 100);
-   enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-   enemy_set_visual(e, ENTITY_SPRITE_SKULL_A); -- for now...
-   enemy_show_boss_hp(e, "HEX BINDING");
-
-   return e;
-end
-
-function Game_Spawn_Stage1_Boss_HexBind1()
-   local e = enemy_new();
-   local initial_boss_pos = v2(play_area_width()/2 - 50, 50);
-   enemy_set_hp(e, 100);
-   enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-   enemy_set_visual(e, ENTITY_SPRITE_SKULL_A); -- for now...
-   enemy_show_boss_hp(e, "HEX BINDING");
-
-   return e;
-end
-
 function boss_intro_wave()
-   start_black_fade(0.065);
+   if enable_boss_intro_explosions then
+      start_black_fade(0.065);
 
-   explosion_hazard_new(50, 50, 25, 0.25, 0.25);
-   explosion_hazard_new(play_area_width()-50, 50, 25, 0.25, 0.25);
-   t_wait(0.55);
-   explosion_hazard_new(75, 65, 35, 0.10, 0.10);
-   t_wait(0.15);
-   explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
-   t_wait(0.15);
-   explosion_hazard_new(110, 25, 35, 0.10, 0.10);
-   t_wait(0.15);
-   explosion_hazard_new(play_area_width()-100, 25, 35, 0.10, 0.10);
-   t_wait(0.15);
-   explosion_hazard_new(140, 45, 35, 0.15, 0.15);
-   t_wait(0.35);
-   explosion_hazard_new(75, 65, 35, 0.10, 0.10);
-   t_wait(0.25);
-   explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
-   t_wait(0.25);
-   explosion_hazard_new(110, 25, 35, 0.10, 0.10);
-   t_wait(1.25);
-   explosion_hazard_new(play_area_width()/2+25, 35, 35, 0.10, 0.10);
-   explosion_hazard_new(play_area_width()/2-50, 35, 35, 0.10, 0.10);
-   explosion_hazard_new(play_area_width()/2-35, 45, 35, 0.10, 0.10);
-   explosion_hazard_new(play_area_width()/2, 85, 35, 0.10, 0.10);
-   explosion_hazard_new(play_area_width()/2, 50, 65, 0.125, 0.25);
-   t_wait(2.0);
+      explosion_hazard_new(50, 50, 25, 0.25, 0.25);
+      explosion_hazard_new(play_area_width()-50, 50, 25, 0.25, 0.25);
+      t_wait(0.55);
+      explosion_hazard_new(75, 65, 35, 0.10, 0.10);
+      t_wait(0.15);
+      explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
+      t_wait(0.15);
+      explosion_hazard_new(110, 25, 35, 0.10, 0.10);
+      t_wait(0.15);
+      explosion_hazard_new(play_area_width()-100, 25, 35, 0.10, 0.10);
+      t_wait(0.15);
+      explosion_hazard_new(140, 45, 35, 0.15, 0.15);
+      t_wait(0.35);
+      explosion_hazard_new(75, 65, 35, 0.10, 0.10);
+      t_wait(0.25);
+      explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
+      t_wait(0.25);
+      explosion_hazard_new(110, 25, 35, 0.10, 0.10);
+      t_wait(1.25);
+      explosion_hazard_new(play_area_width()/2+25, 35, 35, 0.10, 0.10);
+      explosion_hazard_new(play_area_width()/2-50, 35, 35, 0.10, 0.10);
+      explosion_hazard_new(play_area_width()/2-35, 45, 35, 0.10, 0.10);
+      explosion_hazard_new(play_area_width()/2, 85, 35, 0.10, 0.10);
+      explosion_hazard_new(play_area_width()/2, 50, 65, 0.125, 0.25);
+      t_wait(2.0);
+   end
    local b = Game_Spawn_Stage1_Boss();
-   local e = Game_Spawn_Stage1_Boss_HexBind0();
-   local y = Game_Spawn_Stage1_Boss_HexBind1();
+   --local e = Game_Spawn_Stage1_Boss_HexBind0();
+   --local y = Game_Spawn_Stage1_Boss_HexBind1();
    enemy_begin_invincibility(b, true, 99999);
    t_wait(3.5);
    -- boss spawn!!
@@ -211,7 +184,7 @@ function stage_task()
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.552, 90, 50);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/boss_0_light_streak.png", 0.150, 0, 125);
 
-   if false then
+   if enable_boss_prewave then
     t_wait(1.5);
     wave1();
     t_wait(12.5);
@@ -220,6 +193,7 @@ function stage_task()
     LaserChaser_Horizontal_1_2(4, 1.25);
     t_wait(1.0);
    end
+
    boss_intro_wave();
    
   -- t_complete_stage();
