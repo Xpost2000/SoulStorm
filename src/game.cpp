@@ -4953,7 +4953,10 @@ GAME_SCREEN(update_and_render_game_ingame) {
           GameUI::set_ui_id(0);
           GameUI::begin_frame(ui_render_commands, &resources->graphics_assets);
           GameUI::set_wobbly_contribution(1.0f);
-          if (GameUI::button(V2(ui_cursor_x_left + 20, y), string_literal("[RESTART]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+
+          bool demo_recording_ui_allowed = !state->triggered_stage_completion_cutscene;
+
+          if (GameUI::button(V2(ui_cursor_x_left + 20, y), string_literal("[RESTART]"), color32f32(1, 1, 1, 1), 2, demo_recording_ui_allowed) == WIDGET_ACTION_ACTIVATE) {
             // partial clean up of resources...
             state->unload_all_script_loaded_resources(this->state, this->state->resources);
             state->prng = state->recording.old_prng;
@@ -4963,7 +4966,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
           }
           y += 30;
 #ifndef RELEASE
-          if (GameUI::button(V2(ui_cursor_x_left + 20, y), string_literal("[TO END]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+          if (GameUI::button(V2(ui_cursor_x_left + 20, y), string_literal("[TO END]"), color32f32(1, 1, 1, 1), 2, demo_recording_ui_allowed) == WIDGET_ACTION_ACTIVATE) {
             viewer_ui.arbitrary_frame_visit = true;
             simulate_game_frames_until(state->recording.frame_count);
             viewer_ui.arbitrary_frame_visit = false;
@@ -4971,18 +4974,18 @@ GAME_SCREEN(update_and_render_game_ingame) {
           }
           y += 30;
 #endif
-          if (GameUI::button(V2(ui_cursor_x_left + 20, y), media_button_string, color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+          if (GameUI::button(V2(ui_cursor_x_left + 20, y), media_button_string, color32f32(1, 1, 1, 1), 2, demo_recording_ui_allowed) == WIDGET_ACTION_ACTIVATE) {
             viewer_ui.paused ^= 1;
           }
           y += 30;
-          if (GameUI::button(V2(ui_cursor_x_left + 20, y), string_from_cstring(format_temp("[TIMESCALE %f]", replay_timescale_choices[viewer_ui.timescale_index])), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+          if (GameUI::button(V2(ui_cursor_x_left + 20, y), string_from_cstring(format_temp("[TIMESCALE %f]", replay_timescale_choices[viewer_ui.timescale_index])), color32f32(1, 1, 1, 1), 2, demo_recording_ui_allowed) == WIDGET_ACTION_ACTIVATE) {
             viewer_ui.timescale_index += 1;
             if (viewer_ui.timescale_index >= array_count(replay_timescale_choices)) {
               viewer_ui.timescale_index = 0;
             }
           }
           y += 30;
-          GameUI::label(V2(play_area_x + play_area_width + 20, y), string_from_cstring(format_temp("FRAME %d/%d", state->recording.playback_frame_index + 1, state->recording.frame_count)), color32f32(1, 1, 1, 1), 2);
+          GameUI::label(V2(ui_cursor_x_left + 20, y), string_from_cstring(format_temp("FRAME %d/%d", state->recording.playback_frame_index + 1, state->recording.frame_count)), color32f32(1, 1, 1, 1), 2, demo_recording_ui_allowed);
           y += 30;
 #ifndef RELEASE
           if (viewer_ui.paused) {
@@ -4991,19 +4994,19 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
 
             f32 width_of_biggest_button = font_cache_text_width(resources->get_font(MENU_FONT_COLOR_GOLD), string_literal("[-5]"), 2) * 1.2;
-            if (GameUI::button(V2(ui_cursor_x_left + 20 + width_of_biggest_button * 0, y), string_literal("[-]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(ui_cursor_x_left + 20 + width_of_biggest_button * 0, y), string_literal("[-]"), color32f32(1, 1, 1, 1), 2, demo_recording_ui_allowed) == WIDGET_ACTION_ACTIVATE) {
               desired_frame -= 1;
               change_to_frame = true;
             }
-            if (GameUI::button(V2(ui_cursor_x_left + 20 + width_of_biggest_button * 1, y), string_literal("[-5]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(ui_cursor_x_left + 20 + width_of_biggest_button * 1, y), string_literal("[-5]"), color32f32(1, 1, 1, 1), 2, demo_recording_ui_allowed) == WIDGET_ACTION_ACTIVATE) {
               desired_frame -= 5;
               change_to_frame = true;
             }
-            if (GameUI::button(V2(ui_cursor_x_left + 20 + width_of_biggest_button * 2, y), string_literal("[+5]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(ui_cursor_x_left + 20 + width_of_biggest_button * 2, y), string_literal("[+5]"), color32f32(1, 1, 1, 1), 2, demo_recording_ui_allowed) == WIDGET_ACTION_ACTIVATE) {
               desired_frame += 5;
               change_to_frame = true;
             }
-            if (GameUI::button(V2(ui_cursor_x_left + 20 + width_of_biggest_button * 3, y), string_literal("[+]"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            if (GameUI::button(V2(ui_cursor_x_left + 20 + width_of_biggest_button * 3, y), string_literal("[+]"), color32f32(1, 1, 1, 1), 2, demo_recording_ui_allowed) == WIDGET_ACTION_ACTIVATE) {
               desired_frame += 1;
               change_to_frame = true;
             }
