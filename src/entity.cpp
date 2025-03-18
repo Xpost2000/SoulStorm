@@ -1108,7 +1108,7 @@ void player_burst_fire_focus_tier2(Player* player, Game_State* state, u32 _unuse
     0.0f,
     BULLET_SOURCE_PLAYER,
     PROJECTILE_SPRITE_RED_DISK,
-    3
+    18
   );
   player->drain_speed = 100;
 }
@@ -1139,7 +1139,7 @@ void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unuse
     0.0f,
     BULLET_SOURCE_PLAYER,
     PROJECTILE_SPRITE_GREEN_DISK,
-    32
+    18
   );
   player->drain_speed = 170;
 }

@@ -193,6 +193,7 @@ void spawn_bullet_arc_pattern2_trailed(Game_State* state, V2 center, s32 how_man
     b.trail_ghost_limit = trailcount;
     b.trail_ghost_modulation = color32f32(0.8,0.8,0.8,1);
     b.trail_ghost_max_alpha = 1;
+    b.trail_ghost_record_timer_max = 2/60.0f;
     state->gameplay_data.add_bullet(
       b
     );
