@@ -85,6 +85,16 @@ function Bullet_Pattern_Sprout_Outwards360(
    btrailcount = btrailcount or 0;
    btrailrecordspeed = btrailrecordspeed or 0;
 
+   local mvsgn = 1;
+   if angle_step < 0 then
+      local temp = angend;
+      angend = angstart;
+      angstart = temp;
+      mvsgn = -1;
+   end
+
+   -- print(angstart, angend, angle_step)
+
    for angle=angstart,angend,angle_step do
       local bullet = bullet_new(BULLET_SOURCE_ENEMY);
       bullet_set_position(bullet, center[1], center[2]);
@@ -94,8 +104,8 @@ function Bullet_Pattern_Sprout_Outwards360(
       bullet_set_visual_scale(bullet, bscale/10, bscale/10);
 
       local bdir = v2_direction_from_degree(angle+angoffset);
-      bullet_set_velocity(bullet, bdir[1] * bspeed, bdir[2] * bspeed);
-      bullet_set_acceleration(bullet, bdir[1] * bacceleration, bdir[2] * bacceleration);
+      bullet_set_velocity(bullet, mvsgn*bdir[1] * bspeed, mvsgn*bdir[2] * bspeed);
+      bullet_set_acceleration(bullet, mvsgn*bdir[1] * bacceleration, mvsgn*bdir[2] * bacceleration);
       bullet_start_trail(bullet, btrailcount);
       bullet_set_trail_record_speed(btrailrecordspeed);
    end

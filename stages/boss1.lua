@@ -3,6 +3,7 @@
 
 boss1_state = {
     me,
+    last_good_position, -- for if the entity is deleted for any reason
 
     -- general boss logic state
     next_rain_attack_until = -9999,
@@ -42,14 +43,59 @@ function Boss1_SelectRain_Attack()
     end
 end
 
+function Boss1_Sprout1(
+    times,
+    bloom_pattern_table,
+    adjustment_to_i, angstep, angoffset,
+    accel, bspeedmin, bspeedmax, basedelay
+)
+    function max(a, b)
+        if a > b then
+            return a;
+        end
+        return b;
+    end
+
+    for i=0,times do
+        local adji = i+adjustment_to_i;
+        Bullet_Pattern_Sprout_Outwards360(
+            boss1_state.last_good_position, 
+            bloom_pattern_table[1 + i%#bloom_pattern_table], 
+            max(bspeedmin + adji * 10, bspeedmax), 
+            angstep,
+            adji * angoffset,
+            1,
+            360,
+            15, 
+            5, 
+            accel, -- accel
+            7 -- trail count
+        );
+        t_wait(basedelay - adji*0.025);
+    end
+end
+
 -- Per Frame Logic
 function _Stage1_Boss_Logic(eid)
     t_wait(2.5); -- wait out invincibiility.
-    local eposition = enemy_final_position(eid);
+    boss1_state.last_good_position = enemy_final_position(eid);
     while enemy_valid(eid) do 
         -- Boss1_SelectRain_Attack();
-        eposition = enemy_final_position(eid);
-        t_yield();
+        boss1_state.last_good_position = enemy_final_position(eid);
+        Boss1_Sprout1(
+            8,
+            {PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_WARM_DISK},
+            0, -15, prng_ranged_integer(10, 40),
+            25, 75, 100, 0.5
+        );
+        t_wait(2.5);
+        boss1_state.last_good_position = enemy_final_position(eid);
+        Boss1_Sprout1(
+            16,
+            {PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_HOT_PINK_DISK, PROJECTILE_SPRITE_WARM_DISK},
+            prng_ranged_integer(4, 9), -30, prng_ranged_integer(10, 120),
+            25, 75, 150, 0.23
+        );
     end
     -- we have latency of 1 dt after death :/
     -- for angle=1,360,30 do
@@ -71,29 +117,12 @@ function _Stage1_Boss_Logic(eid)
         PROJECTILE_SPRITE_PURPLE_DISK
     };
 
-    function max(a, b)
-        if a > b then
-            return a;
-        end
-        return b;
-    end
-
-    for i=0,25 do
-        Bullet_Pattern_Sprout_Outwards360(
-            eposition, 
-            death_pattern[1 + i%4], 
-            max(75 + i * 10, 150), 
-            15,
-            i * 5,
-            1,
-            360,
-            15, 
-            5, 
-            5,
-            7
-         );
-         t_wait(0.29 - i*0.025);
-    end
+    Boss1_Sprout1(
+        25,
+        death_pattern,
+        0, 15, 5,
+        5, 75, 250, 0.28
+    );
 
     -- do some explosions and stuff for
     -- a dramatic death.
