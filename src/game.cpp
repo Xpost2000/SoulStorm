@@ -4510,6 +4510,10 @@ GAME_SCREEN(update_and_render_game_ingame) {
             allow_pausing = false;
         }
 
+        if (this->state->gameplay_data.triggered_stage_completion_cutscene == true) {
+          allow_pausing = false;
+        }
+
         if (allow_pausing) {
             if (this->state->ui_state != UI_STATE_PAUSED) {
                 switch_ui(UI_STATE_PAUSED);
