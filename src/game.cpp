@@ -4024,6 +4024,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
 
     timer.start();
 
+    // TODO(jerry): make this look nicer
     string level_complete_text = string_literal("LEVEL COMPLETE");
     if (state->gameplay_data.recording.in_playback) {
         level_complete_text = string_literal("RECORDING COMPLETE");
@@ -4499,6 +4500,10 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
         if (this->state->ui_state == UI_STATE_DEAD_MAYBE_RETRY) {
             allow_pausing = false;
+        }
+
+        if (this->state->ui_state == UI_STATE_REPLAY_ASK_TO_SAVE) {
+          allow_pausing = false;
         }
 
         if (this->state->gameplay_data.complete_stage.stage != GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE) {
