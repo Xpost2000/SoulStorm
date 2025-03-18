@@ -51,6 +51,56 @@ function spawn_bullet_arc_pattern2(center, how_many, arc_degrees, direction, spe
    return new_bullets;
 end
 
+-----------------
+--
+-- Some really generic bullet patterns if I got nothing else to try...
+--
+-- these are "staticy" patterns,
+-- some enemies have these patterns built-in and I'm not refactoring anything
+-- this late in development cause I just wanna finish the game!
+--
+-- So stuff might suffer, but yeah...
+--
+-----------------
+function Bullet_Pattern_Sprout_Outwards360(
+   center, 
+   bvisual, 
+   bspeed, 
+   angle_step,
+   angoffset,
+   angstart,
+   angend,
+   blifetime, 
+   bscale, 
+   bacceleration,
+   btrailcount,
+   btrailrecordspeed
+)
+   angoffset = angoffset or 0;
+   angstart = angstart or 1;
+   angend = angend or 360;
+   blifetime = blifetime or 15;
+   bscale = bscale or 5;
+   bacceleration = bacceleration or 0;
+   btrailcount = btrailcount or 0;
+   btrailrecordspeed = btrailrecordspeed or 0;
+
+   for angle=angstart,angend,angle_step do
+      local bullet = bullet_new(BULLET_SOURCE_ENEMY);
+      bullet_set_position(bullet, center[1], center[2]);
+      bullet_set_visual(bullet, bvisual)
+      bullet_set_lifetime(bullet, blifetime);
+      bullet_set_scale(bullet, bscale,bscale);
+      bullet_set_visual_scale(bullet, bscale/10, bscale/10);
+
+      local bdir = v2_direction_from_degree(angle+angoffset);
+      bullet_set_velocity(bullet, bdir[1] * bspeed, bdir[2] * bspeed);
+      bullet_set_acceleration(bullet, bdir[1] * bacceleration, bdir[2] * bacceleration);
+      bullet_start_trail(bullet, btrailcount);
+      bullet_set_trail_record_speed(btrailrecordspeed);
+   end
+end
+
 ------------------
 -- Game preset enemy types because I realized programming enemies individually is dumb.
 -- name scheme
