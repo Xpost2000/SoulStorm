@@ -209,9 +209,9 @@ end
 function Boss1_ExplosionChase(explosion_count)
     async_task_lambda(
         function()
-            for i=1,laser_count do
-                explosion_hazard_new(110, 25, 35, 0.10, 0.10);
-                t_wait(0.6);
+            for i=1,explosion_count do
+                explosion_hazard_new(player_position_x(), player_position_y(), 45, 0.015, 0.02);
+                t_wait(0.43);
             end
         end
     )
@@ -272,6 +272,10 @@ function _Stage1_Boss_Logic(eid)
                     5, 60, 120, 0.21
                 );
             end
+        else
+            -- default boss logic
+            Boss1_ExplosionChase(10);
+            t_wait(5);
         end
 
         -- another attack will be bomb bananza!
