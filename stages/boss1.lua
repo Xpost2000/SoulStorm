@@ -223,6 +223,8 @@ function _Stage1_Boss_Logic(eid)
     boss1_state.last_good_position = enemy_final_position(eid);
     while enemy_valid(eid) do 
         -- Boss1_SelectRain_Attack();
+        local boss_health_percentage = enemy_hp_percent(boss1_state.me);
+
         boss1_state.last_good_position = enemy_final_position(eid);
         -- param pattern 1
         -- Boss1_Sprout1(
@@ -240,6 +242,29 @@ function _Stage1_Boss_Logic(eid)
         --     25, 75, 150, 0.23
         -- );
 
+        if boss_health_percentage <= 0.12 then
+            disable_grazing();
+            -- teleport back to center first then
+            -- do panic attack until death
+
+            -- param pattern 3
+            for i=0,4 do
+                Boss1_Sprout1(
+                    prng_ranged_integer(6, 7),
+                    {PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK},
+                    prng_ranged_integer(6, 9), 30, prng_ranged_integer(15, 120),
+                    5, 60, 110, 0.21
+                );
+                t_wait(prng_ranged_float(0.125, 0.45));
+                Boss1_Sprout1(
+                    prng_ranged_integer(6, 8),
+                    {PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK},
+                    prng_ranged_integer(5, 12), 50, prng_ranged_integer(50, 90),
+                    5, 60, 120, 0.21
+                );
+            end
+        end
+
         -- another attack will be bomb bananza!
         -- each attack will have a specific cooldown associated with it, and movement patterns will not
         -- be synced for any particular attack, the boss just won't move to many places but hopefully the
@@ -256,7 +281,7 @@ function _Stage1_Boss_Logic(eid)
         --Boss1_GridCrossBoxIn(5.0, 2, 4, PROJECTILE_SPRITE_GREEN, PROJECTILE_SPRITE_GREEN);
         -- Grid 2
         --Boss1_GridCrossBoxIn(5.0, 3, 3, PROJECTILE_SPRITE_WRM_ELECTRIC, PROJECTILE_SPRITE_WRM_ELECTRIC);
-        t_wait(6);
+        -- t_wait(6);
         
         -- Rain 1
         -- Boss1_XCross_RainDown(
@@ -284,21 +309,9 @@ function _Stage1_Boss_Logic(eid)
         --     2.25 -- chase for
         -- )
         -- t_wait(5);
-
+        t_yield();
     end
     -- we have latency of 1 dt after death :/
-    -- for angle=1,360,30 do
-    --     local bullet = bullet_new(BULLET_SOURCE_ENEMY);
-    --     bullet_set_position(bullet, eposition[1], eposition[2]);
-    --     bullet_set_visual(bullet, PROJECTILE_SPRITE_CAUSTIC_DISK)
-    --     bullet_set_lifetime(bullet, 15);
-    --     bullet_set_scale(bullet, 5, 5);
-    --     bullet_set_visual_scale(bullet, 0.5, 0.5);
-
-    --     local bdir = v2_direction_from_degree(angle);
-    --     bullet_set_velocity(bullet, bdir[1] * 45, bdir[2] * 45);
-    --     bullet_start_trail(bullet, 4);
-    --  end
     local death_pattern = {
         PROJECTILE_SPRITE_CAUSTIC_DISK, 
         PROJECTILE_SPRITE_BLUE_DISK,
@@ -306,36 +319,38 @@ function _Stage1_Boss_Logic(eid)
         PROJECTILE_SPRITE_PURPLE_DISK
     };
 
+    enable_grazing();
     Boss1_Sprout1(
-        25,
+        45,
         death_pattern,
         0, 15, 5,
-        5, 75, 250, 0.28
+        5, 75, 200, 0.28
     );
 
-    explosion_hazard_new(50, 50, 25, 0.00, 0.00);
-    explosion_hazard_new(play_area_width()-50, 50, 25, 0.25, 0.25);
-    t_wait(0.25);
-    explosion_hazard_new(75, 65, 35, 0.10, 0.10);
-    t_wait(0.15);
-    explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
-    t_wait(0.15);
-    explosion_hazard_new(110, 25, 35, 0.10, 0.10);
-    t_wait(0.15);
-    explosion_hazard_new(play_area_width()-100, 25, 35, 0.10, 0.10);
-    t_wait(0.15);
-    explosion_hazard_new(140, 45, 35, 0.15, 0.15);
-    t_wait(0.35);
-    explosion_hazard_new(75, 65, 35, 0.10, 0.10);
-    t_wait(0.25);
-    explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
-    t_wait(0.25);
-    explosion_hazard_new(110, 25, 35, 0.10, 0.10);
-    t_wait(1.25);
+    -- explosion_hazard_new(50, 50, 25, 0.00, 0.00);
+    -- explosion_hazard_new(play_area_width()-50, 50, 25, 0.25, 0.25);
+    -- t_wait(0.25);
+    -- explosion_hazard_new(75, 65, 35, 0.10, 0.10);
+    -- t_wait(0.15);
+    -- explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
+    -- t_wait(0.15);
+    -- explosion_hazard_new(110, 25, 35, 0.10, 0.10);
+    -- t_wait(0.15);
+    -- explosion_hazard_new(play_area_width()-100, 25, 35, 0.10, 0.10);
+    -- t_wait(0.15);
+    -- explosion_hazard_new(140, 45, 35, 0.15, 0.15);
+    -- t_wait(0.35);
+    -- explosion_hazard_new(75, 65, 35, 0.10, 0.10);
+    -- t_wait(0.25);
+    -- explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
+    -- t_wait(0.25);
+    -- explosion_hazard_new(110, 25, 35, 0.10, 0.10);
+    -- t_wait(1.25);
 
     while enemy_valid(boss1_state.hexbind0) or enemy_valid(boss1_state.hexbind1) do 
         t_yield();
     end
+    t_wait(1.5);
     t_complete_stage();
 end
 
@@ -348,7 +363,7 @@ end
 function Game_Spawn_Stage1_Boss()
    local e = enemy_new();
    local initial_boss_pos = v2(play_area_width()/2, 50);
-   enemy_set_hp(e, 525); -- TODO for now
+   enemy_set_hp(e, 555); -- TODO for now
    enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
    enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
    enemy_show_boss_hp(e, "WITCH");
