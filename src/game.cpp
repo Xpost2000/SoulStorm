@@ -5896,7 +5896,7 @@ void Game::handle_all_lasers(f32 dt) {
                 h.already_emitted = true;
                 Audio::play(resources->random_explosion_sound(&state->prng_unessential), Audio::get_volume_sound() * 0.7 * -128);
                 controller_rumble(Input::get_gamepad(0), 0.5f, 0.5f, 150);
-                camera_traumatize(&state->main_camera, 0.15f);
+                camera_traumatize(&state->main_camera, 0.045f);
             }
 
             auto laser_rect  = h.get_rect(&state->play_area);

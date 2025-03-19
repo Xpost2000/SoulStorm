@@ -1992,7 +1992,7 @@ void Laser_Hazard::update(Game_State* state, f32 dt) {
             {
                 auto& emitter = dust_emitter;
                 emitter.reset();
-                emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
+                emitter.sprite = sprite_instance(state->resources->projectile_sprites[projectile_sprite_id]);
                 emitter.sprite.scale            = V2(0.255f, 0.255);
                 emitter.shape                   = particle_emit_shape_quad(V2(rectangle.x + rectangle.w/2, rectangle.y + rectangle.h/2), V2(rectangle.w/2, rectangle.h/2), true);
                 emitter.modulation              = color32f32(108/255.0f, 122/255.0f, 137/255.0f, 1.0f);
