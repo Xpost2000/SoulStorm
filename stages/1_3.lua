@@ -1,8 +1,8 @@
 engine_dofile("stages/common.lua")
 engine_dofile("stages/boss1.lua");
 
-enable_boss_prewave = false;
-enable_boss_intro_explosions = false;
+enable_boss_prewave = true;
+enable_boss_intro_explosions = true;
 
 function wave1()
    Stage1_Batflood();
