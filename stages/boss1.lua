@@ -224,8 +224,17 @@ function _Stage1_Boss_Logic(eid)
     while enemy_valid(eid) do 
         -- Boss1_SelectRain_Attack();
         local boss_health_percentage = enemy_hp_percent(boss1_state.me);
-
         boss1_state.last_good_position = enemy_final_position(eid);
+
+        if (player_using_burst_power1()) then
+           enemy_begin_invincibility(boss1_state.me, true, 99999);
+        else
+           -- there's a small window where the boss can get hit
+           -- but that's okay, since you're very vulnerable after burstpower1
+           -- anyway...
+           t_wait(0.65);
+           enemy_end_invincibility(boss1_state.me);
+        end
         -- param pattern 1
         -- Boss1_Sprout1(
         --     8,

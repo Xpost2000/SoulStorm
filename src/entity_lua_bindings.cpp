@@ -1044,6 +1044,21 @@ int _lua_bind_spawn_simple_scrollable_background_vertical(lua_State* L) {
     return 0;
 }
 
+// I hope floating point epsilon shouldn't matter for this.
+int _lua_bind_player_using_burst_power1(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  bool is_ray_attack_active = state->gameplay_data.player.burst_ray_attack_ability_timer > 0.0f;
+  lua_pushboolean(L, is_ray_attack_active);
+  return 1;
+}
+
+int _lua_bind_player_using_burst_power2(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  bool is_absorption_shield_active = state->gameplay_data.player.burst_absorption_shield_ability_timer > 0.0f;
+  lua_pushboolean(L, is_absorption_shield_active);
+  return 1;
+}
+
 void bind_entity_lualib(lua_State* L) {
     /*
         NOTE: the lib is only in scalar values which isn't very good, but it's
@@ -1148,6 +1163,9 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "player_velocity_x", _lua_bind_player_velocity_x);
         lua_register(L, "player_velocity_y", _lua_bind_player_velocity_y);
         lua_register(L, "player_hp", _lua_bind_player_hp);
+        lua_register(L, "player_using_burst_power1", _lua_bind_player_using_burst_power1);
+        lua_register(L, "player_using_burst_power2", _lua_bind_player_using_burst_power2);
+
         // except for these I guess...
         lua_register(L, "disable_burst_charge", _lua_bind_player_disable_burst_charge);
         lua_register(L, "enable_burst_charge", _lua_bind_player_enable_burst_charge);
