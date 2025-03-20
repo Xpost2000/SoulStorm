@@ -888,6 +888,7 @@ end
 -- I've concluded it *is* possible to dodge but it's really hard, and I might need to reduce some visual noise.
 
 -- RAIN STORM ATTACK: try to dodge
+boss1_raining = false; -- NOTE(jerry): used to disable certain attacks that might be impossible to really dodge otherwise
 function MainBoss1_RainCloud_Attack1(phase_cycle, duration)
    local stop_task = 0;
 
@@ -938,11 +939,13 @@ function MainBoss1_RainCloud_Attack1(phase_cycle, duration)
             end
          )
 
+         boss1_raining = true;
          t_wait(duration)
          stop_task = 1;
          enable_grazing();
          enable_bullet_to_points();
          t_wait(2.5);
+         boss1_raining = false;
          end_black_fade();
       end
    )
@@ -998,12 +1001,14 @@ function MainBoss1_RainCloud_Attack2(phase_cycle, duration)
                end
             end
          )
+         boss1_raining = true;
          t_wait(duration)
          enable_grazing();
          enable_burst_charge();
          enable_bullet_to_points();
          stop_task = 1;
          t_wait(2.5);
+         boss1_raining = false;
          end_black_fade();
       end
    )

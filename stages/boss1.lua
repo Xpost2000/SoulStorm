@@ -27,7 +27,7 @@
 -- doing things.
 --
 enable_boss_death_explosion = false;
-BOSS_HP = 725;
+BOSS_HP = 700;
 
 boss1_teleport_positions = {}; -- forward declaration
 boss1_state = {
@@ -265,7 +265,7 @@ function Boss1_ExplosionChase(explosion_count)
     async_task_lambda(
         function()
             for i=1,explosion_count do
-                explosion_hazard_new(player_position_x(), player_position_y(), 45, 0.015, 0.02);
+                explosion_hazard_new(player_position_x(), player_position_y(), 32, 0.015, 0.02);
                 t_wait(0.43);
             end
         end
@@ -331,7 +331,7 @@ function _Stage1_Boss_Logic(eid)
            end
         end
 
-        if boss_health_percentage <= 0.12 then
+        if boss_health_percentage <= 0.15 then
             disable_grazing();
             start_black_fade(0.065);
             -- teleport back to center first then
@@ -384,10 +384,10 @@ function _Stage1_Boss_Logic(eid)
 
               -- 75% of attack
               if action_rng < 75 then
-                 action_rng = prng_ranged_integer(0, 12);
+                 action_rng = prng_ranged_integer(0, 13);
 
                  -- Attack ID
-                 if action_rng == 0 or action_rng == 12 then
+                 if action_rng == 0 or action_rng == 12 or action_rng == 13 then
                     if (Boss1_SelectRain_Attack()) then
                        -- ?
                     end
@@ -438,7 +438,7 @@ function _Stage1_Boss_Logic(eid)
                     end
 
                     Boss1_XCross_RainDown(
-                       6,
+                       prng_ranged_integer(6, 15),
                        PROJECTILE_SPRITE_WRM,
                        PROJECTILE_SPRITE_WRM_DISK,
                        55, -- present speed
@@ -451,23 +451,27 @@ function _Stage1_Boss_Logic(eid)
                  end
 
                  if action_rng == 6 or action_rng == 10 then
-                    Boss1_XCross_Chasing(
-                        9,
-                        PROJECTILE_SPRITE_CAUSTIC,
-                        PROJECTILE_SPRITE_CAUSTIC_DISK,
-                        80, -- present speed
-                        125, -- fire speed
-                        25,  -- acceleration
-                        6, -- trailcount
-                        0.5, -- time until chase
-                        2.25 -- chase for
-                    )
-                    boss1_state.next_think_action_t = current_t + prng_ranged_float(4.5, 6.5);
+                    if not boss1_raining then
+                       Boss1_XCross_Chasing(
+                          prng_ranged_integer(6, 12),
+                          PROJECTILE_SPRITE_CAUSTIC,
+                          PROJECTILE_SPRITE_CAUSTIC_DISK,
+                          80, -- present speed
+                          120, -- fire speed
+                          20,  -- acceleration
+                          6, -- trailcount
+                          0.5, -- time until chase
+                          1.55 -- chase for
+                       )
+                       boss1_state.next_think_action_t = current_t + prng_ranged_float(4.5, 6.5);
+                    end
                  end
 
-                 if action_rng == 7 then
-                    Boss1_ExplosionChase(10);
-                    boss1_state.next_think_action_t = current_t + prng_ranged_float(5.0, 6.5);
+                 if action_rng == 7 then -- check for grid
+                    if not boss1_raining then
+                       Boss1_ExplosionChase(10);
+                       boss1_state.next_think_action_t = current_t + prng_ranged_float(5.0, 6.5);
+                    end
                  end
               end
            end
