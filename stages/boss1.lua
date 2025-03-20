@@ -27,7 +27,9 @@
 -- doing things.
 --
 enable_boss_death_explosion = false;
-BOSS_HP = 700;
+BOSS_HP = 680;
+MINI_BOSS_HP = 100;
+BOSS_HP_LOSS_FROM_HEX_FINISH = BOSS_HP/8;
 
 boss1_teleport_positions = {}; -- forward declaration
 boss1_state = {
@@ -52,6 +54,18 @@ boss1_state = {
     hexbind2=0,
     hexbind3=0,
 
+    -- PHASE 0 default
+    -- PHASE 1 HEX BINDER WAVE 1 -- 75% hp
+    -- PHASE 2 WAIT UNTIL BINDER 1 DEATH
+    -- These hexbinders do not move really
+    -- PHASE 3 HEX BINDER WAVE 2 -- 45% hp
+    -- PHASE 4 WAIT UNTIL BINDER 2 DEATH
+    -- These hexbinders will move around
+    -- PHASE 5 HEX BINDER WAVE 3 -- 25% hp
+    -- These hexbinders are static, the numbers are overwhelming
+    -- PHASE 6 PANIC LAST STAND  -- 15% hp
+    phase=0,
+
     -- movement data
     wants_to_move=false,
     moving_to=false,
@@ -61,10 +75,18 @@ boss1_state = {
     -- explosion speed is fixed size
 };
 
-hexbind0_state = {};
-hexbind1_state = {};
-hexbind2_state = {};
-hexbind3_state = {};
+hexbind0_state = {
+   id=0,
+};
+hexbind1_state = {
+   id=1,
+};
+hexbind2_state = {
+   id=2,
+};
+hexbind3_state = {
+   id=3,
+};
 
 function Boss1_Schedule_Teleport_To(position, force)
    force = force or false;
@@ -313,14 +335,16 @@ function _Stage1_Boss_Logic(eid)
                           boss1_state.move_target[2],
                           35, 0.01, 0.01);
                        t_wait(1);
-                       enemy_set_position(
-                          e,
-                          boss1_state.move_target[1],
-                          boss1_state.move_target[2]
-                       );
-                       boss1_state.last_good_position = enemy_final_position(eid);
-                       boss1_state.wants_to_move = false;
-                       boss1_state.moving_to = false;
+                       if enemy_valid(eid) then
+                          enemy_set_position(
+                             e,
+                             boss1_state.move_target[1],
+                             boss1_state.move_target[2]
+                          );
+                          boss1_state.last_good_position = enemy_final_position(eid);
+                          boss1_state.wants_to_move = false;
+                          boss1_state.moving_to = false;
+                       end
                     end
                  );
               end
@@ -331,13 +355,53 @@ function _Stage1_Boss_Logic(eid)
            end
         end
 
-        if boss_health_percentage <= 0.15 then
+        -- NOTE(jerry): needs to be put here due to frame latency reasons.
+        if boss1_state.phase == 1 or boss1_state.phase == 3 or boss1_state.phase == 5 then
+           if not remaining_hexbind_minions() then
+              boss1_state.phase = boss1_state.phase + 1;
+              enemy_hurt(boss1_state.me, BOSS_HP_LOSS_FROM_HEX_FINISH);
+              play_sound(load_sound('res/snds/hitcrit.wav'))
+              enemy_end_invincibility(boss1_state.me);
+           else
+              -- invincible while hexbinders are active
+              enemy_begin_invincibility(boss1_state.me, true, 99999);
+           end
+        end
+
+        -- Spawn Hex Binders
+        -- Is there a more elegant way to write the code?
+        -- probably, right now that doesn't matter!
+        if boss_health_percentage <= 0.75 and boss1_state.phase == 0 then
+           boss1_state.phase = 1;
+           Game_Spawn_Stage1_Boss_HexBind0();
+           Game_Spawn_Stage1_Boss_HexBind1();
+           enemy_begin_invincibility(boss1_state.me, true, 99999);
+        end
+
+        if boss_health_percentage <= 0.50 and boss1_state.phase == 2 then
+           boss1_state.phase = 3;
+           Game_Spawn_Stage1_Boss_HexBind0();
+           Game_Spawn_Stage1_Boss_HexBind1();
+           enemy_begin_invincibility(boss1_state.me, true, 99999);
+        end
+
+        if boss_health_percentage <= 0.27 and boss1_state.phase == 4 then
+           boss1_state.phase = 5;
+           Game_Spawn_Stage1_Boss_HexBind0();
+           Game_Spawn_Stage1_Boss_HexBind1();
+           Game_Spawn_Stage1_Boss_HexBind2();
+           Game_Spawn_Stage1_Boss_HexBind3();
+           enemy_begin_invincibility(boss1_state.me, true, 99999);
+        end
+
+        if boss_health_percentage <= 0.12 then
             disable_grazing();
             start_black_fade(0.065);
             -- teleport back to center first then
             -- do panic attack until death
 
             if (not v2_equal(boss1_state.last_good_position, boss1_state.starting_position)) then
+               enemy_begin_invincibility(boss1_state.me, true, 2);
                Boss1_Schedule_Teleport_To(
                   boss1_state.starting_position
                );
@@ -350,7 +414,7 @@ function _Stage1_Boss_Logic(eid)
                      prng_ranged_integer(6, 9), 30, prng_ranged_integer(15, 120),
                      5, 60, 110, 0.21
                   );
-                  t_wait(prng_ranged_float(0.125, 0.45));
+                  t_wait(prng_ranged_float(0.125, 0.35));
                   Boss1_Sprout1(
                      prng_ranged_integer(6, 8),
                      {PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK},
@@ -378,6 +442,9 @@ function _Stage1_Boss_Logic(eid)
               end
            end
 
+           -- Default Attack Patterns (until 75%)
+           -- TODO: add below 75% patterns which are just
+           -- faster and a few more.
            if (current_t >= boss1_state.next_think_action_t) then
               -- next think action depends on what attack was chosen
               local action_rng = prng_ranged_integer(0, 100);
@@ -416,7 +483,7 @@ function _Stage1_Boss_Logic(eid)
 
                  if action_rng == 3 then
                     if current_t >= boss1_state.next_grid_action_t  then
-                       Boss1_GridCrossBoxIn(5.0, 2, 4, PROJECTILE_SPRITE_GREEN, PROJECTILE_SPRITE_GREEN);
+                       Boss1_GridCrossBoxIn(3.0, 2, 4, PROJECTILE_SPRITE_GREEN, PROJECTILE_SPRITE_GREEN);
                        boss1_state.next_grid_action_t = current_t + prng_ranged_float(10.0, 12.0);
                     end
                     boss1_state.next_think_action_t = current_t;
@@ -424,7 +491,7 @@ function _Stage1_Boss_Logic(eid)
 
                  if action_rng == 4 then
                     if current_t >= boss1_state.next_grid_action_t  then
-                       Boss1_GridCrossBoxIn(5.0, 3, 3, PROJECTILE_SPRITE_WRM_ELECTRIC, PROJECTILE_SPRITE_WRM_ELECTRIC);
+                       Boss1_GridCrossBoxIn(3.0, 3, 3, PROJECTILE_SPRITE_WRM_ELECTRIC, PROJECTILE_SPRITE_WRM_ELECTRIC);
                        boss1_state.next_grid_action_t = current_t + prng_ranged_float(10.0, 12.0);
                     end
                     boss1_state.next_think_action_t = current_t;
@@ -453,15 +520,15 @@ function _Stage1_Boss_Logic(eid)
                  if action_rng == 6 or action_rng == 10 then
                     if not boss1_raining then
                        Boss1_XCross_Chasing(
-                          prng_ranged_integer(6, 12),
+                          prng_ranged_integer(4, 6),
                           PROJECTILE_SPRITE_CAUSTIC,
                           PROJECTILE_SPRITE_CAUSTIC_DISK,
                           80, -- present speed
-                          120, -- fire speed
+                          100, -- fire speed
                           20,  -- acceleration
                           6, -- trailcount
-                          0.5, -- time until chase
-                          1.55 -- chase for
+                          0.6, -- time until chase
+                          1.15 -- chase for
                        )
                        boss1_state.next_think_action_t = current_t + prng_ranged_float(4.5, 6.5);
                     end
@@ -469,83 +536,20 @@ function _Stage1_Boss_Logic(eid)
 
                  if action_rng == 7 then -- check for grid
                     if not boss1_raining then
-                       Boss1_ExplosionChase(10);
+                       Boss1_ExplosionChase(6);
                        boss1_state.next_think_action_t = current_t + prng_ranged_float(5.0, 6.5);
                     end
                  end
               end
            end
-
            -- default boss logic
            -- Boss1_ExplosionChase(10);
            -- t_wait(5);
         end
 
-        -- another attack will be bomb bananza!
-        -- each attack will have a specific cooldown associated with it, and movement patterns will not
-        -- be synced for any particular attack, the boss just won't move to many places but hopefully the
-        -- combination of movements and attacks might lead to interesting "emergent" difficulty.
-
-        -- Whenever I get a hex binder in, only teleports would be used though, and attacking cooldowns
-        -- might be increased as hex binders provide passive attacks?
-
-        -- last attack is a crazy spin whirl (like the 360 spin but more erratic)
-
-        -- a variation of this attack should indicate which cells are safe with an explosion
-        -- or something highlighting some of them?
-
-        -- Boss1_SelectRain_Attack();
-        -- param pattern 1
-        -- Boss1_Sprout1(
-        --     8,
-        --     {PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_WARM_DISK},
-        --     0, -15, prng_ranged_integer(10, 40),
-        --     25, 75, 100, 0.5
-        -- );
-
-        -- param pattern 2
-        -- Boss1_Sprout1(
-        --     16,
-        --     {PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_HOT_PINK_DISK, PROJECTILE_SPRITE_WARM_DISK},
-        --     prng_ranged_integer(4, 9), -30, prng_ranged_integer(10, 120),
-        --     25, 75, 150, 0.23
-        -- );
-
-
-        -- Grid 1
-        --Boss1_GridCrossBoxIn(5.0, 2, 4, PROJECTILE_SPRITE_GREEN, PROJECTILE_SPRITE_GREEN);
-        -- Grid 2
-        --Boss1_GridCrossBoxIn(5.0, 3, 3, PROJECTILE_SPRITE_WRM_ELECTRIC, PROJECTILE_SPRITE_WRM_ELECTRIC);
-
-        -- t_wait(6);
-        
-        -- Rain 1
-        -- Boss1_XCross_RainDown(
-        --     6,
-        --     PROJECTILE_SPRITE_WRM,
-        --     PROJECTILE_SPRITE_WRM_DISK,
-        --     55, -- present speed
-        --     100, -- fire speed
-        --     85,  -- acceleration
-        --     5, -- trailcount
-        --     1.0 -- time until chase
-        -- )
-        -- t_wait(5);
-
-        -- XCrossChase 1
-        -- Boss1_XCross_Chasing(
-        --     9,
-        --     PROJECTILE_SPRITE_CAUSTIC,
-        --     PROJECTILE_SPRITE_CAUSTIC_DISK,
-        --     80, -- present speed
-        --     125, -- fire speed
-        --     25,  -- acceleration
-        --     6, -- trailcount
-        --     0.5, -- time until chase
-        --     2.25 -- chase for
-        -- )
-        -- t_wait(5);
-        boss1_state.last_good_position = enemy_final_position(eid);
+        if enemy_valid(eid) then
+           boss1_state.last_good_position = enemy_final_position(eid);
+        end
         t_yield();
     end
 
@@ -595,10 +599,20 @@ function _Stage1_Boss_Logic(eid)
     t_complete_stage();
 end
 
-function _Stage1_Boss_HexBind0(eid)
-end
-
-function _Stage1_Boss_HexBind1(eid)
+function _Stage1_Boss_HexBind(eid, state)
+   -- Tell the boss I exist.
+   if state.id == 0 then
+      boss1_state.hexbind0 = eid;
+   end
+   if state.id == 1 then
+      boss1_state.hexbind1 = eid;
+   end
+   if state.id == 2 then
+      boss1_state.hexbind2 = eid;
+   end
+   if state.id == 3 then
+      boss1_state.hexbind3 = eid;
+   end
 end
 
 function Game_Spawn_Stage1_Boss()
@@ -647,22 +661,44 @@ end
 
 function Game_Spawn_Stage1_Boss_HexBind0()
     local e = enemy_new();
-    local initial_boss_pos = v2(play_area_width()/2 + 50, 50);
-    enemy_set_hp(e, 100);
+    local initial_boss_pos = v2(play_area_width()/2 + 80, 70);
+    enemy_set_hp(e, MINI_BOSS_HP);
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-    enemy_set_visual(e, ENTITY_SPRITE_SKULL_A); -- for now...
+    enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
     enemy_show_boss_hp(e, "HEX BINDING");
-    async_task_lambda(_Stage1_Boss_HexBind0, e);
+    async_task_lambda(_Stage1_Boss_HexBind, e, hexbind0_state);
     return e;
  end
  
  function Game_Spawn_Stage1_Boss_HexBind1()
     local e = enemy_new();
-    local initial_boss_pos = v2(play_area_width()/2 - 50, 50);
-    enemy_set_hp(e, 100);
+    local initial_boss_pos = v2(play_area_width()/2 - 80, 70);
+    enemy_set_hp(e, MINI_BOSS_HP);
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-    enemy_set_visual(e, ENTITY_SPRITE_SKULL_A); -- for now...
+    enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
     enemy_show_boss_hp(e, "HEX BINDING");
-    async_task_lambda(_Stage1_Boss_HexBind1, e);
+    async_task_lambda(_Stage1_Boss_HexBind, e, hexbind1_state);
+    return e;
+ end
+
+function Game_Spawn_Stage1_Boss_HexBind2()
+    local e = enemy_new();
+    local initial_boss_pos = v2(play_area_width()/2 + 80, 40);
+    enemy_set_hp(e, MINI_BOSS_HP);
+    enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
+    enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
+    enemy_show_boss_hp(e, "HEX BINDING");
+    async_task_lambda(_Stage1_Boss_HexBind, e, hexbind2_state);
+    return e;
+ end
+ 
+ function Game_Spawn_Stage1_Boss_HexBind3()
+    local e = enemy_new();
+    local initial_boss_pos = v2(play_area_width()/2 - 80, 40);
+    enemy_set_hp(e, MINI_BOSS_HP);
+    enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
+    enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
+    enemy_show_boss_hp(e, "HEX BINDING");
+    async_task_lambda(_Stage1_Boss_HexBind, e, hexbind3_state);
     return e;
  end
