@@ -12,27 +12,77 @@
 -- frantic way (this might be a common design pattern I'll use
 -- as it is a low-effort way of affectting difficulty)
 --
+-- TODO(jerry):
+-- Boss movement (handle movement request as Teleport/Explode or Slide)
+-- Random Attacks
+-- playtest attacks
+-- Incorporate HEX BINDERS + HEX MECHANIC IN-GAME
+--
+-- 2x 2 HEX BINDERS at 75% hp and 45% HP
+-- 1x 4 HEX BINDERS at 25% hp, supposed to lead into PANIC mode
+--
+-- Sprite Visuals
+--
+-- If I am slightly off, that's okay. I am doing better by actually
+-- doing things.
+--
+enable_boss_death_explosion = false;
 
 boss1_state = {
     me,
     last_good_position, -- for if the entity is deleted for any reason
+    starting_position,
 
     -- general boss logic state
     next_rain_attack_until = -9999,
+
+    -- Attacking actions. Attack actions and movements
+    -- are scheduled "simulatneously"
     next_think_action_t = -9999,
+
+    -- Not always moving, but sometimes move...
+    next_possible_move_action_t = -9999,
 
     -- attack pattern state specifics
     hexbind0=0,
     hexbind1=0,
+    hexbind2=0,
+    hexbind3=0,
+
+    -- movement data
+    wants_to_move=false,
+    moving_to=false,
+    move_target,
+    move_method='teleport',
+    move_speed, -- Velocity if not teleporting
+    -- explosion speed is fixed size
 };
 
-hexbind0_state = {
+hexbind0_state = {};
+hexbind1_state = {};
+hexbind2_state = {};
+hexbind3_state = {};
 
-};
+function Boss1_Schedule_Teleport_To(position, force)
+   force = force or false;
 
-hexbind1_state = {
+   if boss1_state.wants_to_move or boss1_state.moving_to then
+      if not force then
+         return false;
+      end
+   end
 
-};
+   if (v2_equal(position, boss1_state.last_good_position)) then
+      -- do not schedule movement that is redundant.
+      return false;
+   end
+
+   boss1_state.wants_to_move = true;
+   boss1_state.moving_to = false;
+   boss1_state.move_method = 'teleport';
+   boss1_state.move_target = position;
+   return true;
+end
 
 function Boss1_SelectRain_Attack()
     local boss_health_percentage = enemy_hp_percent(boss1_state.me);
@@ -217,12 +267,16 @@ function Boss1_ExplosionChase(explosion_count)
     )
 end
 
+function remaining_hexbind_minions()
+   return enemy_valid(boss1_state.hexbind0) or enemy_valid(boss1_state.hexbind1) or
+      enemy_valid(boss1_state.hexbind2) or enemy_valid(boss1_state.hexbind3);
+end
+
 -- Per Frame Logic
 function _Stage1_Boss_Logic(eid)
     t_wait(2.5); -- wait out invincibiility.
     boss1_state.last_good_position = enemy_final_position(eid);
     while enemy_valid(eid) do 
-        -- Boss1_SelectRain_Attack();
         local boss_health_percentage = enemy_hp_percent(boss1_state.me);
         boss1_state.last_good_position = enemy_final_position(eid);
 
@@ -235,6 +289,97 @@ function _Stage1_Boss_Logic(eid)
            t_wait(0.65);
            enemy_end_invincibility(boss1_state.me);
         end
+
+        -- Handle Boss Movement
+        if boss1_state.wants_to_move then
+           if boss1_state.moving_to == false then
+              boss1_state.moving_to = true;
+
+              if boss1_state.move_method == 'teleport' then
+                 enemy_task_lambda(
+                    boss1_state.me,
+                    function(e)
+                       explosion_hazard_new(
+                          boss1_state.last_good_position[1],
+                          boss1_state.last_good_position[2],
+                          35, 0.01, 0.01);
+                       explosion_hazard_new(
+                          boss1_state.move_target[1],
+                          boss1_state.move_target[2],
+                          35, 0.01, 0.01);
+                       t_wait(1);
+                       enemy_set_position(
+                          e,
+                          boss1_state.move_target[1],
+                          boss1_state.move_target[2]
+                       );
+                       boss1_state.last_good_position = enemy_final_position(eid);
+                       boss1_state.wants_to_move = false;
+                       boss1_state.moving_to = false;
+                    end
+                 );
+              end
+
+              -- ?
+              if boss1_state.move_method == 'slide' then
+              end
+           end
+        end
+
+        if boss_health_percentage <= 0.12 then
+            disable_grazing();
+            start_black_fade(0.065);
+            -- teleport back to center first then
+            -- do panic attack until death
+
+            if (not v2_equal(boss1_state.last_good_position, boss1_state.starting_position)) then
+               Boss1_Schedule_Teleport_To(
+                  boss1_state.starting_position
+               );
+            else
+               -- param pattern 3
+               for i=0,4 do
+                  Boss1_Sprout1(
+                     prng_ranged_integer(6, 7),
+                     {PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK},
+                     prng_ranged_integer(6, 9), 30, prng_ranged_integer(15, 120),
+                     5, 60, 110, 0.21
+                  );
+                  t_wait(prng_ranged_float(0.125, 0.45));
+                  Boss1_Sprout1(
+                     prng_ranged_integer(6, 8),
+                     {PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK},
+                     prng_ranged_integer(5, 12), 50, prng_ranged_integer(50, 90),
+                     5, 60, 120, 0.21
+                  );
+               end
+            end
+        else
+           Boss1_Schedule_Teleport_To(
+              v2(
+                 boss1_state.starting_position[1],
+                 boss1_state.starting_position[2] + 100
+              )
+           );
+           -- default boss logic
+           -- Boss1_ExplosionChase(10);
+           -- t_wait(5);
+        end
+
+        -- another attack will be bomb bananza!
+        -- each attack will have a specific cooldown associated with it, and movement patterns will not
+        -- be synced for any particular attack, the boss just won't move to many places but hopefully the
+        -- combination of movements and attacks might lead to interesting "emergent" difficulty.
+
+        -- Whenever I get a hex binder in, only teleports would be used though, and attacking cooldowns
+        -- might be increased as hex binders provide passive attacks?
+
+        -- last attack is a crazy spin whirl (like the 360 spin but more erratic)
+
+        -- a variation of this attack should indicate which cells are safe with an explosion
+        -- or something highlighting some of them?
+
+        -- Boss1_SelectRain_Attack();
         -- param pattern 1
         -- Boss1_Sprout1(
         --     8,
@@ -251,49 +396,12 @@ function _Stage1_Boss_Logic(eid)
         --     25, 75, 150, 0.23
         -- );
 
-        if boss_health_percentage <= 0.12 then
-            disable_grazing();
-            -- teleport back to center first then
-            -- do panic attack until death
 
-            -- param pattern 3
-            for i=0,4 do
-                Boss1_Sprout1(
-                    prng_ranged_integer(6, 7),
-                    {PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK},
-                    prng_ranged_integer(6, 9), 30, prng_ranged_integer(15, 120),
-                    5, 60, 110, 0.21
-                );
-                t_wait(prng_ranged_float(0.125, 0.45));
-                Boss1_Sprout1(
-                    prng_ranged_integer(6, 8),
-                    {PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK},
-                    prng_ranged_integer(5, 12), 50, prng_ranged_integer(50, 90),
-                    5, 60, 120, 0.21
-                );
-            end
-        else
-            -- default boss logic
-            Boss1_ExplosionChase(10);
-            t_wait(5);
-        end
-
-        -- another attack will be bomb bananza!
-        -- each attack will have a specific cooldown associated with it, and movement patterns will not
-        -- be synced for any particular attack, the boss just won't move to many places but hopefully the
-        -- combination of movements and attacks might lead to interesting "emergent" difficulty.
-
-        -- Whenever I get a hex binder in, only teleports would be used though, and attacking cooldowns
-        -- might be increased as hex binders provide passive attacks?
-
-        -- last attack is a crazy spin whirl (like the 360 spin but more erratic)
-
-        -- a variation of this attack should indicate which cells are safe with an explosion
-        -- or something highlighting some of them?
         -- Grid 1
         --Boss1_GridCrossBoxIn(5.0, 2, 4, PROJECTILE_SPRITE_GREEN, PROJECTILE_SPRITE_GREEN);
         -- Grid 2
         --Boss1_GridCrossBoxIn(5.0, 3, 3, PROJECTILE_SPRITE_WRM_ELECTRIC, PROJECTILE_SPRITE_WRM_ELECTRIC);
+
         -- t_wait(6);
         
         -- Rain 1
@@ -322,8 +430,11 @@ function _Stage1_Boss_Logic(eid)
         --     2.25 -- chase for
         -- )
         -- t_wait(5);
+        boss1_state.last_good_position = enemy_final_position(eid);
         t_yield();
     end
+
+    end_black_fade();
     -- we have latency of 1 dt after death :/
     local death_pattern = {
         PROJECTILE_SPRITE_CAUSTIC_DISK, 
@@ -340,27 +451,29 @@ function _Stage1_Boss_Logic(eid)
         5, 75, 200, 0.28
     );
 
-    -- explosion_hazard_new(50, 50, 25, 0.00, 0.00);
-    -- explosion_hazard_new(play_area_width()-50, 50, 25, 0.25, 0.25);
-    -- t_wait(0.25);
-    -- explosion_hazard_new(75, 65, 35, 0.10, 0.10);
-    -- t_wait(0.15);
-    -- explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
-    -- t_wait(0.15);
-    -- explosion_hazard_new(110, 25, 35, 0.10, 0.10);
-    -- t_wait(0.15);
-    -- explosion_hazard_new(play_area_width()-100, 25, 35, 0.10, 0.10);
-    -- t_wait(0.15);
-    -- explosion_hazard_new(140, 45, 35, 0.15, 0.15);
-    -- t_wait(0.35);
-    -- explosion_hazard_new(75, 65, 35, 0.10, 0.10);
-    -- t_wait(0.25);
-    -- explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
-    -- t_wait(0.25);
-    -- explosion_hazard_new(110, 25, 35, 0.10, 0.10);
-    -- t_wait(1.25);
-
-    while enemy_valid(boss1_state.hexbind0) or enemy_valid(boss1_state.hexbind1) do 
+    if enable_boss_death_explosion then
+       explosion_hazard_new(50, 50, 25, 0.00, 0.00);
+       explosion_hazard_new(play_area_width()-50, 50, 25, 0.25, 0.25);
+       t_wait(0.25);
+       explosion_hazard_new(75, 65, 35, 0.10, 0.10);
+       t_wait(0.15);
+       explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
+       t_wait(0.15);
+       explosion_hazard_new(110, 25, 35, 0.10, 0.10);
+       t_wait(0.15);
+       explosion_hazard_new(play_area_width()-100, 25, 35, 0.10, 0.10);
+       t_wait(0.15);
+       explosion_hazard_new(140, 45, 35, 0.15, 0.15);
+       t_wait(0.35);
+       explosion_hazard_new(75, 65, 35, 0.10, 0.10);
+       t_wait(0.25);
+       explosion_hazard_new(play_area_width()-95, 45, 35, 0.10, 0.10);
+       t_wait(0.25);
+       explosion_hazard_new(110, 25, 35, 0.10, 0.10);
+       t_wait(1.25);
+    end
+    -- Wait until minions have died.
+    while remaining_hexbind_minions() do 
         t_yield();
     end
     t_wait(1.5);
@@ -382,6 +495,7 @@ function Game_Spawn_Stage1_Boss()
    enemy_show_boss_hp(e, "WITCH");
    async_task_lambda(_Stage1_Boss_Logic, e);
    boss1_state.me = e;
+   boss1_state.starting_position = initial_boss_pos;
    return e;
 end
 

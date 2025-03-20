@@ -55,6 +55,16 @@ function bullet_list_set_scale(bullets, scale)
    end
 end
 
+function v2_equal(a, b)
+   local dx = math.abs(b[1] - a[1]);
+   local dy = math.abs(b[2] - a[2]);
+
+   if dx < 0.005 and dy < 0.005 then
+      return true;
+   end
+   return false;
+end
+
 -- Generalish
 function player_position()
    return v2(player_position_x(), player_position_y());

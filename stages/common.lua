@@ -1140,19 +1140,20 @@ end
 --
 -- This one avoids doing it to exhause the scriptable_render_object list.
 function start_black_fade(fade_speed)
-   if g_black_fader_id == -1 then
-      g_black_fader_id = render_object_create();
-      render_object_set_layer(g_black_fader_id, SCRIPTABLE_RENDER_OBJECT_LAYER_BACKGROUND);
-      render_object_set_img_id(g_black_fader_id, 0);
-      render_object_set_scale(g_black_fader_id, 375, 480);
-      render_object_set_position(g_black_fader_id, 0, 0);
-      render_object_set_modulation(g_black_fader_id, 0, 0, 0, 0.0);
+   if not g_black_fade_started then
+      if g_black_fader_id == -1 then
+         g_black_fader_id = render_object_create();
+         render_object_set_layer(g_black_fader_id, SCRIPTABLE_RENDER_OBJECT_LAYER_BACKGROUND);
+         render_object_set_img_id(g_black_fader_id, 0);
+         render_object_set_scale(g_black_fader_id, 375, 480);
+         render_object_set_position(g_black_fader_id, 0, 0);
+         render_object_set_modulation(g_black_fader_id, 0, 0, 0, 0.0);
+      end
+      g_black_fade_out_per_tick = fade_speed;
+      g_black_fade_started = true;
+      g_fade_direction = 0;
+      async_task_lambda(_fade_black_task);
    end
-
-   g_black_fade_out_per_tick = fade_speed;
-   g_black_fade_started = true;
-   g_fade_direction = 0;
-   async_task_lambda(_fade_black_task);
 end
 
 function end_black_fade()
