@@ -27,7 +27,9 @@
 -- doing things.
 --
 enable_boss_death_explosion = false;
+BOSS_HP = 725;
 
+boss1_teleport_positions = {}; -- forward declaration
 boss1_state = {
     me,
     last_good_position, -- for if the entity is deleted for any reason
@@ -39,6 +41,7 @@ boss1_state = {
     -- Attacking actions. Attack actions and movements
     -- are scheduled "simulatneously"
     next_think_action_t = -9999,
+    next_grid_action_t = -9999,
 
     -- Not always moving, but sometimes move...
     next_possible_move_action_t = -9999,
@@ -89,8 +92,8 @@ function Boss1_SelectRain_Attack()
     local atk_t = enemy_time_since_spawn(boss1_state.me);
     
     if atk_t < boss1_state.next_rain_attack_until then
-        print("Not ready to attack")
-        return;
+        print("Not ready to attack with rain")
+        return false;
     end
 
     local seed = prng_ranged_integer(1000, 9999);
@@ -103,6 +106,8 @@ function Boss1_SelectRain_Attack()
         MainBoss1_RainCloud_Attack2(seed, atkduration);
         boss1_state.next_rain_attack_until = atk_t + atkduration + prng_ranged_float(5.5, 7.5);
     end
+
+    return true;
 end
 
 
@@ -355,12 +360,118 @@ function _Stage1_Boss_Logic(eid)
                end
             end
         else
-           Boss1_Schedule_Teleport_To(
-              v2(
-                 boss1_state.starting_position[1],
-                 boss1_state.starting_position[2] + 100
-              )
-           );
+           local current_t = enemy_time_since_spawn(boss1_state.me);
+
+           -- Movement actions
+           if (current_t >= boss1_state.next_possible_move_action_t) then
+              boss1_state.next_possible_move_action_t = current_t + prng_ranged_float(2.5, 4.5);
+              local action_rng = prng_ranged_integer(0, 100);
+
+              -- 45% chance to move normally
+              if action_rng < 45 then
+                 Boss1_Schedule_Teleport_To(
+                    boss1_teleport_positions[prng_ranged_integer(0, #boss1_teleport_positions-1)]
+                 );
+                 print('Deciding movement');
+              else
+                 print('Deciding no movement');
+              end
+           end
+
+           if (current_t >= boss1_state.next_think_action_t) then
+              -- next think action depends on what attack was chosen
+              local action_rng = prng_ranged_integer(0, 100);
+
+              -- 75% of attack
+              if action_rng < 75 then
+                 action_rng = prng_ranged_integer(0, 12);
+
+                 -- Attack ID
+                 if action_rng == 0 or action_rng == 12 then
+                    if (Boss1_SelectRain_Attack()) then
+                       -- ?
+                    end
+                    boss1_state.next_think_action_t = current_t + prng_ranged_float(2.5, 3.5);
+                 end
+
+                 if action_rng == 1 or action_rng == 11 then
+                    Boss1_Sprout1(
+                       8,
+                       {PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_WARM_DISK},
+                       0, -15, prng_ranged_integer(10, 40),
+                       25, 75, 100, 0.5
+                    );
+                    boss1_state.next_think_action_t = current_t + prng_ranged_float(4.5, 6.5);
+                 end
+
+                 if action_rng == 2 or action_rng == 8 then
+                    Boss1_Sprout1(
+                        16,
+                        {PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_HOT_PINK_DISK, PROJECTILE_SPRITE_WARM_DISK},
+                        prng_ranged_integer(4, 9), -30, prng_ranged_integer(10, 120),
+                        25, 75, 150, 0.23
+                    );
+                    boss1_state.next_think_action_t = current_t + prng_ranged_float(3.5, 4.5);
+                 end
+
+                 if action_rng == 3 then
+                    if current_t >= boss1_state.next_grid_action_t  then
+                       Boss1_GridCrossBoxIn(5.0, 2, 4, PROJECTILE_SPRITE_GREEN, PROJECTILE_SPRITE_GREEN);
+                       boss1_state.next_grid_action_t = current_t + prng_ranged_float(10.0, 12.0);
+                    end
+                    boss1_state.next_think_action_t = current_t;
+                 end
+
+                 if action_rng == 4 then
+                    if current_t >= boss1_state.next_grid_action_t  then
+                       Boss1_GridCrossBoxIn(5.0, 3, 3, PROJECTILE_SPRITE_WRM_ELECTRIC, PROJECTILE_SPRITE_WRM_ELECTRIC);
+                       boss1_state.next_grid_action_t = current_t + prng_ranged_float(10.0, 12.0);
+                    end
+                    boss1_state.next_think_action_t = current_t;
+                 end
+
+                 if action_rng == 5 or action_rng == 9 then
+                    local sgn = 1;
+
+                    if player_position_y() < boss1_state.last_good_position[2] then
+                       sgn = -1;
+                    end
+
+                    Boss1_XCross_RainDown(
+                       6,
+                       PROJECTILE_SPRITE_WRM,
+                       PROJECTILE_SPRITE_WRM_DISK,
+                       55, -- present speed
+                       sgn * 100, -- fire speed
+                       sgn * 85,  -- acceleration
+                       5, -- trailcount
+                       1.0 -- time until chase
+                    );
+                    boss1_state.next_think_action_t = current_t + prng_ranged_float(2.5, 4.5);
+                 end
+
+                 if action_rng == 6 or action_rng == 10 then
+                    Boss1_XCross_Chasing(
+                        9,
+                        PROJECTILE_SPRITE_CAUSTIC,
+                        PROJECTILE_SPRITE_CAUSTIC_DISK,
+                        80, -- present speed
+                        125, -- fire speed
+                        25,  -- acceleration
+                        6, -- trailcount
+                        0.5, -- time until chase
+                        2.25 -- chase for
+                    )
+                    boss1_state.next_think_action_t = current_t + prng_ranged_float(4.5, 6.5);
+                 end
+
+                 if action_rng == 7 then
+                    Boss1_ExplosionChase(10);
+                    boss1_state.next_think_action_t = current_t + prng_ranged_float(5.0, 6.5);
+                 end
+              end
+           end
+
            -- default boss logic
            -- Boss1_ExplosionChase(10);
            -- t_wait(5);
@@ -489,13 +600,44 @@ end
 function Game_Spawn_Stage1_Boss()
    local e = enemy_new();
    local initial_boss_pos = v2(play_area_width()/2, 50);
-   enemy_set_hp(e, 555); -- TODO for now
+   enemy_set_hp(e, BOSS_HP); -- TODO for now
    enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
    enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
    enemy_show_boss_hp(e, "WITCH");
    async_task_lambda(_Stage1_Boss_Logic, e);
    boss1_state.me = e;
    boss1_state.starting_position = initial_boss_pos;
+
+   do
+      -- Some move positions, should make bullet shooting more interesting
+      local i = 0;
+      boss1_teleport_positions[i] = initial_boss_pos;
+      i=i+1;
+      boss1_teleport_positions[i] = initial_boss_pos;
+      i=i+1;
+      boss1_teleport_positions[i] = initial_boss_pos;
+      i=i+1;
+      boss1_teleport_positions[i] = v2(initial_boss_pos[1] + 70, initial_boss_pos[2] + 30);
+      i=i+1;
+      boss1_teleport_positions[i] = v2(initial_boss_pos[1] - 70, initial_boss_pos[2] + 30);
+      i=i+1;
+      boss1_teleport_positions[i] = v2(initial_boss_pos[1] + 180, initial_boss_pos[2] + 50);
+      i=i+1;
+      boss1_teleport_positions[i] = v2(initial_boss_pos[1] - 150, initial_boss_pos[2] + 80);
+      i=i+1;
+      boss1_teleport_positions[i] = v2(initial_boss_pos[1], play_area_height()/2);
+      i=i+1;
+      boss1_teleport_positions[i] = v2(initial_boss_pos[1] - 70, play_area_height()/2);
+      i=i+1;
+      boss1_teleport_positions[i] = v2(initial_boss_pos[1] + 70, play_area_height()/2);
+      i=i+1;
+      boss1_teleport_positions[i] = v2(initial_boss_pos[1], play_area_height()-30);
+      i=i+1;
+      boss1_teleport_positions[i] = v2(initial_boss_pos[1]-40, play_area_height()-30);
+      i=i+1;
+      boss1_teleport_positions[i] = v2(initial_boss_pos[1]+40, play_area_height()-30);
+      i=i+1;
+   end;
    return e;
 end
 
