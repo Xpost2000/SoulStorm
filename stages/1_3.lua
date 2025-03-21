@@ -188,6 +188,14 @@ function stage_task()
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.552, 90, 50);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/boss_0_light_streak.png", 0.150, 0, 125);
 
+   show_gameplay_alert("PLAYER HEXED!", 1, 5.5);
+   show_damage_player_will_take();
+   player_set_damage_per_hit(2);
+   t_wait(3.5);
+   hide_damage_player_will_take();
+   player_set_damage_per_hit(1);
+   show_gameplay_alert("JOKING!!", 1, 5.5);
+
    if enable_boss_prewave then
     t_wait(1.5);
     wave1();

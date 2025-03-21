@@ -1037,6 +1037,7 @@ void Game::reset_stage_simulation_state() {
         state->player.visible                          = true;
         state->player.hp                               = state->player.max_hp = 1;
         state->player.die                              = false;
+        state->player_damage_level_taken               = 1;
         state->paused_from_death                       = false;
         state->player.t_since_spawn                    = 0;
         state->player.trail_ghost_count                = 0;
@@ -1047,6 +1048,8 @@ void Game::reset_stage_simulation_state() {
         state->player.reset_burst_charge_status();
         state->player.time_spent_grazing               = 0.0f;
         state->player.under_focus                      = false;
+        state->show_damage_player_will_take            = false;
+        state->game_alert.enabled = false;
         state->focus_tint_fade_t                       = 0.0f;
         state->focus_hitbox_fade_t                     = 0.0f;
         {
@@ -3221,7 +3224,11 @@ bool Game::safely_resurrect_player() {
 
     if (worked) {
         state->gameplay_data.paused_from_death  = false;
-        state->gameplay_data.remove_life();
+
+        for (int index = 0; index < state->gameplay_data.player_damage_level_taken; ++index) {
+          state->gameplay_data.remove_life();
+        }
+
         state->gameplay_data.player.halt_burst_abilities();
         state->gameplay_data.player.halt_burst_charge_regeneration(
             calculate_amount_of_burst_depletion_flashes_for(1.485f)
@@ -4841,6 +4848,13 @@ GAME_SCREEN(update_and_render_game_ingame) {
             if ((index + 1) > state->max_tries) {
               modulation = color32f32(0.15f, 0.15f, 0.15f, 1);
             }
+            else {
+              if (state->show_damage_player_will_take) {
+                if ((index + 1) > state->player_damage_level_taken) {
+                  modulation = color32f32(0.85f, 0.05f, 0.18f, 1);
+                }
+              }
+            }
 
             auto image_buffer = graphics_assets_get_image_by_id(&resources->graphics_assets, image);
 
@@ -4947,6 +4961,35 @@ GAME_SCREEN(update_and_render_game_ingame) {
           state->boss_health_displays.update(this->state, dt);
           state->boss_health_displays.render(ui_render_commands, this->state);
         }
+        // UpdateRender_Gameplay_Alert
+        {
+          auto& alert = state->game_alert;
+
+          if (alert.enabled) {
+            if (alert.timer > 0.0f) {
+              const f32 default_alert_scale = 4.0f;
+              const f32 alpha = saturate<f32>(alert.timer/(alert.timer_max / 6.0f));
+              auto font = resources->get_font(alert.font_variation);
+
+              string text = string_from_cstring(alert.text);
+              f32 text_width = font_cache_text_width(font, text, default_alert_scale);
+              f32 text_height = font_cache_text_height(font) * default_alert_scale;
+
+              render_commands_push_text_wobbly(
+                ui_render_commands, font,
+                default_alert_scale,
+                V2(state->play_area.x + state->play_area.width/2 - text_width/2, state->play_area.height/2 - text_height/2),
+                text,
+                color32f32(1, 1, 1, alpha), BLEND_MODE_ALPHA
+              );
+
+              alert.timer -= dt;
+            }
+            else {
+              alert.enabled = false;
+            }
+          }
+        }
 
         // Replay_Demo_UI
         if (state->recording.in_playback && this->state->ui_state == UI_STATE_INACTIVE) {
@@ -5027,6 +5070,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
             }
           }
 #endif
+
           GameUI::end_frame();
           GameUI::update(dt);
         }

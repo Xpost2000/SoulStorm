@@ -480,6 +480,20 @@ struct Gameplay_Data_Particle_Spawn_Request {
         s32 data; // god knows what this means.
     };
 };
+
+struct Gameplay_Data_Gameplay_Alert {
+  // NOTE(jerry):
+  // always draw as center aligned, and only one alert
+  // at a time, no queuing.
+  u8 font_variation;
+  bool enabled;
+  f32 timer;
+  f32 timer_max;
+  //f32 time_per_blink;
+  //bool blinked;
+  char text[256];
+};
+
 struct Gameplay_Data {
     bool campaign_perfect_clear;
     bool stage_perfect_clear;
@@ -498,6 +512,8 @@ struct Gameplay_Data {
 
     s32  invalid_usage_flash_count = 0;
     f32  invalid_usage_flash_t = 0;
+
+    Gameplay_Data_Gameplay_Alert game_alert;
 
     bool allow_border_switch_flashing = true; // automatic border flashing behavior
     Border_Flash_Data border_flashes[4];
@@ -542,6 +558,7 @@ struct Gameplay_Data {
     Fixed_Array<Gameplay_UI_Score_Notification> score_notifications;
     Fixed_Array<Gameplay_UI_Hitmark_Score_Notification> hit_score_notifications;
     Player              player;
+    s32 player_damage_level_taken = 1;
     Cosmetic_Pet        pet;
 
     Boss_Healthbar_Displays boss_health_displays;
@@ -551,6 +568,7 @@ struct Gameplay_Data {
     bool disable_grazing = false;
     bool disable_bullet_to_points = false;
     bool disable_enemy_to_points = false;
+    bool show_damage_player_will_take = false;
 
     random_state prng;
 
@@ -747,6 +765,11 @@ local string dialogue_ui_animation_phase_strings[] = {
     string_literal("(bye)"),
 };
 
+// NOTE(jerry):
+// This hasn't been used in a real long time huh?
+//
+// Honestly, in the direction the game is running, I don't think it will be needed but
+// it's fine to keep *in-case*?
 #define DIALOGUE_MAX_LINE_LENGTH (128)
 struct Dialogue_State {
     uint8_t phase = DIALOGUE_UI_ANIMATION_PHASE_INTRODUCTION;
@@ -990,7 +1013,7 @@ struct Game_Resources {
     image_id title_screen_logo_masks[3];
 
     // NOTE(jerry): these assets are not shipped with the game at all!
-    // they're set up for the development repositor paths.
+    // they're set up for the development repository paths.
     image_id trailer_platform_logos[TRAILER_CUTAWAY_PLATFORM_LOGO_COUNT];
     image_id trailer_storefront_logos[TRAILER_CUTAWAY_STOREFRONT_LOGO_COUNT];
 

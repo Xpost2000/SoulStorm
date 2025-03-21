@@ -361,6 +361,10 @@ function _Stage1_Boss_Logic(eid)
               boss1_state.phase = boss1_state.phase + 1;
               enemy_hurt(boss1_state.me, BOSS_HP_LOSS_FROM_HEX_FINISH);
               play_sound(load_sound('res/snds/hitcrit.wav'))
+              explosion_hazard_new(
+                 boss1_state.last_good_position[1],
+                 boss1_state.last_good_position[2],
+                 95, 0.00, 0.00);
               enemy_end_invincibility(boss1_state.me);
            else
               -- invincible while hexbinders are active
@@ -666,6 +670,7 @@ function Game_Spawn_Stage1_Boss_HexBind0()
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
     enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
     enemy_show_boss_hp(e, "HEX BINDING");
+    enemy_begin_invincibility(e, true, 1.5);
     async_task_lambda(_Stage1_Boss_HexBind, e, hexbind0_state);
     return e;
  end
@@ -677,6 +682,7 @@ function Game_Spawn_Stage1_Boss_HexBind0()
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
     enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
     enemy_show_boss_hp(e, "HEX BINDING");
+    enemy_begin_invincibility(e, true, 1.5);
     async_task_lambda(_Stage1_Boss_HexBind, e, hexbind1_state);
     return e;
  end
@@ -688,6 +694,7 @@ function Game_Spawn_Stage1_Boss_HexBind2()
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
     enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
     enemy_show_boss_hp(e, "HEX BINDING");
+    enemy_begin_invincibility(e, true, 1.5);
     async_task_lambda(_Stage1_Boss_HexBind, e, hexbind2_state);
     return e;
  end
@@ -699,6 +706,7 @@ function Game_Spawn_Stage1_Boss_HexBind2()
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
     enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
     enemy_show_boss_hp(e, "HEX BINDING");
+    enemy_begin_invincibility(e, true, 1.5);
     async_task_lambda(_Stage1_Boss_HexBind, e, hexbind3_state);
     return e;
  end

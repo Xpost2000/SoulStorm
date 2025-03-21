@@ -418,6 +418,33 @@ int _lua_bind_game_difficulty_binding(lua_State* L) {
     return 1;
 }
 
+int _lua_bind_show_damage_player_will_take(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  state->gameplay_data.show_damage_player_will_take = true;
+  return 0;
+}
+
+int _lua_bind_hide_damage_player_will_take(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  state->gameplay_data.show_damage_player_will_take = false;
+  return 0;
+}
+
+int _lua_bind_show_game_alert(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  char* cstring = (char*) lua_tostring(L, 1);
+  int font_id = luaL_checkinteger(L, 2);
+  float duration = luaL_checknumber(L, 3);
+  auto& alert = state->gameplay_data.game_alert;
+  alert.enabled = true;
+  alert.timer = duration;
+  alert.timer_max = duration;
+  alert.font_variation = font_id;
+  // todo check safety?
+  strncpy(alert.text, cstring, sizeof(alert.text));
+  return 0;
+}
+
 lua_State* Game_State::alloc_lua_bindings() {
     lua_State* L = luaL_newstate();
     /*
@@ -514,6 +541,10 @@ lua_State* Game_State::alloc_lua_bindings() {
 
         lua_register(L, "enable_bullet_to_points", _lua_bind_enable_bullet_to_points);
         lua_register(L, "enable_enemy_to_points", _lua_bind_enable_enemy_to_points);
+
+        lua_register(L, "show_damage_player_will_take", _lua_bind_show_damage_player_will_take);
+        lua_register(L, "hide_damage_player_will_take", _lua_bind_hide_damage_player_will_take);
+        lua_register(L, "show_gameplay_alert", _lua_bind_show_game_alert);
 #endif
     }
     {lua_register(L, "get_difficulty_modifier", _lua_bind_game_difficulty_binding);}

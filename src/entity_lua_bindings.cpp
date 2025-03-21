@@ -945,12 +945,8 @@ int _lua_bind_player_to_ptr(lua_State* L) {
 }
 int _lua_bind_player_hp(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
-    auto e = &state->gameplay_data.player;
-    if (e) {
-        lua_pushnumber(L, e->hp);
-        return 1;
-    }
-    return 0;
+    lua_pushnumber(L, state->gameplay_data.tries);
+    return 1;
 }
 int _lua_bind_player_position_x(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
@@ -1059,6 +1055,30 @@ int _lua_bind_player_using_burst_power2(lua_State* L) {
   return 1;
 }
 
+int _lua_bind_player_add_life(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  state->gameplay_data.add_life();
+  return 0;
+}
+
+int _lua_bind_player_remove_life(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  state->gameplay_data.remove_life();
+  return 0;
+}
+
+int _lua_bind_player_set_damage_level(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  state->gameplay_data.player_damage_level_taken = luaL_checkinteger(L, 1);
+  return 0;
+}
+
+int _lua_bind_player_reset_damage_per_hit(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  state->gameplay_data.player_damage_level_taken = 1;
+  return 0;
+}
+
 void bind_entity_lualib(lua_State* L) {
     /*
         NOTE: the lib is only in scalar values which isn't very good, but it's
@@ -1163,6 +1183,12 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "player_velocity_x", _lua_bind_player_velocity_x);
         lua_register(L, "player_velocity_y", _lua_bind_player_velocity_y);
         lua_register(L, "player_hp", _lua_bind_player_hp);
+
+        lua_register(L, "player_add_life", _lua_bind_player_add_life);
+        lua_register(L, "player_remove_life", _lua_bind_player_remove_life);
+        lua_register(L, "player_set_damage_per_hit", _lua_bind_player_set_damage_level);
+        lua_register(L, "player_reset_damage_per_hit", _lua_bind_player_reset_damage_per_hit);
+
         lua_register(L, "player_using_burst_power1", _lua_bind_player_using_burst_power1);
         lua_register(L, "player_using_burst_power2", _lua_bind_player_using_burst_power2);
 
