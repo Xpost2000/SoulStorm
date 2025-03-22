@@ -407,7 +407,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
                 V2(0.5, 0.5),
                 facing_angle,
                 0,
-                BLEND_MODE_ALPHA
+                shadow_entity_draw_blend_mode
             );
         }
 
@@ -425,7 +425,7 @@ void Entity::draw(Game_State* const state, struct render_commands* render_comman
             V2(0.5, 0.5),
             facing_angle,
             0,
-            BLEND_MODE_ALPHA
+            entity_draw_blend_mode
         );
 
         // This would hurt in hardware because I'm not planning
@@ -1108,7 +1108,7 @@ void player_burst_fire_focus_tier2(Player* player, Game_State* state, u32 _unuse
     0.0f,
     BULLET_SOURCE_PLAYER,
     PROJECTILE_SPRITE_RED_DISK,
-    18
+    0
   );
   player->drain_speed = 100;
 }
@@ -1139,7 +1139,7 @@ void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unuse
     0.0f,
     BULLET_SOURCE_PLAYER,
     PROJECTILE_SPRITE_GREEN_DISK,
-    18
+    0
   );
   player->drain_speed = 170;
 }
@@ -1293,8 +1293,8 @@ void Player::fire_burst_ray_laser(Game_State* state) {
                 PROJECTILE_SPRITE_HOT_PINK_DISK, BULLET_SOURCE_PLAYER);
             bullet.flags |= BULLET_FLAGS_BREAKS_OTHER_BULLETS;
             bullet.trail_ghost_limit = 16;
-            bullet.trail_ghost_record_timer_max = 0.0100f;
-            bullet.trail_ghost_modulation = color32f32(0.9,0.9,0.9,0.85);
+            bullet.trail_ghost_record_timer_max = 0.0000f;
+            bullet.trail_ghost_modulation = color32f32(0.9,0.9,0.9,1.0);
             bullet.trail_ghost_max_alpha = 1.0f;
             state->gameplay_data.add_bullet(
                 bullet
@@ -1651,6 +1651,10 @@ void Bullet::update(Game_State* state, f32 dt) {
     if (!visible)
         return;
 
+    entity_draw_blend_mode = BLEND_MODE_ADDITIVE;
+    // shadow_entity_draw_blend_mode = BLEND_MODE_ADDITIVE;
+    sprite.modulation = color32f32(0.5,0.5,0.5,1.0f);
+
     handle_lifetime(dt);
     handle_movement(state, dt);
 
@@ -1976,7 +1980,8 @@ void Laser_Hazard::update(Game_State* state, f32 dt) {
                 emitter.sprite.scale            = V2(0.67f);
                 emitter.shape                   = particle_emit_shape_quad(V2(rectangle.x + rectangle.w/2, rectangle.y + rectangle.h/2), V2(rectangle.w/2, rectangle.h/2), true);
                 emitter.modulation              = color32f32(1, 1, 1, 1);
-                emitter.lifetime                = 1.20f;
+                emitter.lifetime                = 1.00f;
+                // emitter.lifetime                = 1.20f;
                 emitter.scale_variance          = V2(-0.25, 0.25f);
                 emitter.lifetime_variance       = V2(-0.25f, 0.2f);
                 emitter.emission_max_timer      = 0.030f;
@@ -1996,7 +2001,8 @@ void Laser_Hazard::update(Game_State* state, f32 dt) {
                 emitter.sprite.scale            = V2(0.255f, 0.255);
                 emitter.shape                   = particle_emit_shape_quad(V2(rectangle.x + rectangle.w/2, rectangle.y + rectangle.h/2), V2(rectangle.w/2, rectangle.h/2), true);
                 emitter.modulation              = color32f32(108/255.0f, 122/255.0f, 137/255.0f, 1.0f);
-                emitter.lifetime                = 2.0f;
+                emitter.lifetime                = 0.3f;
+                // emitter.lifetime                = 2.0f;
                 emitter.scale_variance          = V2(-0.055, 0.085);
                 emitter.angle_range             = V2(-360, 360);
                 emitter.velocity                = V2(40.0f);

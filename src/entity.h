@@ -147,6 +147,9 @@ struct Entity {
     V2 relative_position = V2(0, 0);
     V2 scale             = V2(0, 0); 
 
+    s32 entity_draw_blend_mode = BLEND_MODE_ALPHA;
+    s32 shadow_entity_draw_blend_mode = BLEND_MODE_ALPHA;
+
     V2 get_real_position(void);
     void set_position(V2 new_position);
     void set_position_x(f32 new_x);
