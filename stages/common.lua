@@ -889,11 +889,13 @@ end
 
 -- RAIN STORM ATTACK: try to dodge
 boss1_raining = false; -- NOTE(jerry): used to disable certain attacks that might be impossible to really dodge otherwise
-function MainBoss1_RainCloud_Attack1(phase_cycle, duration)
+function MainBoss1_RainCloud_Attack1(phase_cycle, duration, timebetweendroplets, cyclecount)
    local stop_task = 0;
 
    local spread = 40;
    local x_adv = play_area_width() / (spread - 5);
+   timebetweendroplets = timebetweendroplets or 0.354;
+   cyclecount = cyclecount or 30;
 
    async_task_lambda(
       function()
@@ -911,7 +913,7 @@ function MainBoss1_RainCloud_Attack1(phase_cycle, duration)
                   local gap_mid_x_range2 = normalized_sin(player_position_x() + phase_cycle/2 * ticks) * spread - 5;
                   local gap_mid_x_range3 = normalized_sin(player_position_x() + phase_cycle * ticks) * spread + 10;
                   local gap_mid_x_range4 = normalized_sin(player_position_x() + phase_cycle/4 * ticks) * spread - 3;
-                  for i=1, 40 do
+                  for i=1, cyclecount do
                      local variance_x = math.sin(i + phase_cycle*i + duration * i * ticks + player_position_x()) * 5;
                      local variance_y = math.sin(i + phase_cycle*i + duration * i * ticks + player_position_x()) * 5;
                      local variance_v = math.sin((i+4) + phase_cycle + duration/2 * i * ticks + player_position_x()) * 48;
@@ -934,7 +936,7 @@ function MainBoss1_RainCloud_Attack1(phase_cycle, duration)
                   end
                   cycle_point = cycle_point + phase_cycle / 2;
                   ticks = ticks + 1;
-                  t_wait(0.354);
+                  t_wait(timebetweendroplets);
                end
             end
          )
@@ -951,12 +953,14 @@ function MainBoss1_RainCloud_Attack1(phase_cycle, duration)
    )
 end
 
-function MainBoss1_RainCloud_Attack2(phase_cycle, duration)
+function MainBoss1_RainCloud_Attack2(phase_cycle, duration, timebetweendroplets, cyclecount)
    local stop_task = 0;
 
    local spread = 35;
    local x_adv = play_area_width() / (spread);
    start_black_fade(0.065);
+   timebetweendroplets = timebetweendroplets or 0.200;
+   cyclecount = cyclecount or 25;
 
    async_task_lambda(
       function()
@@ -973,7 +977,7 @@ function MainBoss1_RainCloud_Attack2(phase_cycle, duration)
                   local gap_mid_x_range2 = normalized_sin(player_position_x() + phase_cycle/2 * ticks) * spread - 5;
                   local gap_mid_x_range3 = normalized_sin(player_position_x() + phase_cycle * ticks) * spread + 10;
                   local gap_mid_x_range4 = normalized_sin(player_position_x() + phase_cycle/4 * ticks) * spread - 3;
-                  for i=1, 35 do
+                  for i=1, cyclecount do
                      local variance_x = math.sin(i + phase_cycle*i + duration * i * ticks + player_position_x()) * 5;
                      local variance_y = math.sin(i + phase_cycle*i + duration * i * ticks + player_position_x()) * 15;
                      local variance_v = normalized_sin((i+4) + phase_cycle + duration/2 * i * ticks + player_position_x()) * 50;
@@ -997,7 +1001,7 @@ function MainBoss1_RainCloud_Attack2(phase_cycle, duration)
                   end
                   cycle_point = cycle_point + phase_cycle / 2;
                   ticks = ticks + 1;
-                  t_wait(0.200);
+                  t_wait(timebetweendroplets);
                end
             end
          )

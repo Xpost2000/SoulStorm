@@ -430,6 +430,12 @@ int _lua_bind_hide_damage_player_will_take(lua_State* L) {
   return 0;
 }
 
+int _lua_bind_award_points(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  state->gameplay_data.notify_score(luaL_checkinteger(L, 1), true);
+  return 0;
+}
+
 int _lua_bind_show_game_alert(lua_State* L) {
   Game_State* state = lua_binding_get_gamestate(L);
   char* cstring = (char*) lua_tostring(L, 1);
@@ -532,6 +538,7 @@ lua_State* Game_State::alloc_lua_bindings() {
         lua_register(L, "convert_all_enemies_to_score", _lua_bind_convert_all_enemies_to_score);
         lua_register(L, "kill_all_bullets", _lua_bind_kill_all_bullets);
         lua_register(L, "kill_all_enemies", _lua_bind_kill_all_enemies);
+        lua_register(L, "award_points", _lua_bind_award_points);
 
         lua_register(L, "disable_grazing", _lua_bind_disable_grazing);
         lua_register(L, "enable_grazing", _lua_bind_enable_grazing);

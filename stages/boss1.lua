@@ -35,8 +35,8 @@
    -- show_gameplay_alert("JOKING!!", 1, 5.5);
 
 enable_boss_death_explosion = false;
-BOSS_HP = 650;
-MINI_BOSS_HP = 75;
+BOSS_HP = 600;
+MINI_BOSS_HP = 100;
 BOSS_HP_LOSS_FROM_HEX_FINISH = BOSS_HP/10;
 
 boss1_teleport_positions = {}; -- forward declaration
@@ -212,11 +212,11 @@ function Boss1_SelectRain_Attack()
     local seed = prng_ranged_integer(1000, 9999);
     if boss_health_percentage >= 0.5 then
         local atkduration = prng_ranged_float(5.5, 7,5);
-        MainBoss1_RainCloud_Attack1(seed, atkduration);
+        MainBoss1_RainCloud_Attack1(seed, atkduration, 0.4, 32);
         boss1_state.next_rain_attack_until = atk_t + atkduration + prng_ranged_float(3.5, 8.5);
     else
         local atkduration = prng_ranged_float(7.5, 8.5);
-        MainBoss1_RainCloud_Attack2(seed, atkduration);
+        MainBoss1_RainCloud_Attack2(seed, atkduration, 0.46, 34);
         boss1_state.next_rain_attack_until = atk_t + atkduration + prng_ranged_float(5.5, 7.5);
     end
 
@@ -669,6 +669,8 @@ function _Stage1_Boss_Maintain_Hexes_Logic(eid)
              enemy_end_invincibility(boss1_state.me);
              enemy_hurt(boss1_state.me, BOSS_HP_LOSS_FROM_HEX_FINISH);
              Boss1_End_Hex();
+             award_points(50000);
+             player_add_life();
              play_sound(load_sound('res/snds/hitcrit.wav'))
              explosion_hazard_new(
                 boss1_state.last_good_position[1],
@@ -764,7 +766,12 @@ function _Stage1_Boss_HexBind(eid, state)
       if current_t >= state.next_think_action_t then
          local action_rng = prng_ranged_integer(0, 100);
          -- 40% of attack
-         if action_rng < 40 then
+         local attack_chance = 40;
+         if boss1_state.phase == 5 then
+            attack_chance = 20;
+         end
+
+         if action_rng < attack_chance then
             action_rng = prng_ranged_integer(0, 2);
 
             if action_rng == 0  then
