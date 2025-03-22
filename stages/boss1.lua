@@ -121,6 +121,60 @@ function Boss1_End_Curse()
    player_set_damage_per_hit(1);
 end
 
+function Boss1_Enemy_HexShield(eid)
+   local particle_emitter_ptr = enemy_get_particle_emitter(eid, 0);
+   particle_emitter_set_active(particle_emitter_ptr, true);
+   particle_emitter_set_lifetime(particle_emitter_ptr, 1.0);
+   particle_emitter_set_scale(particle_emitter_ptr, 0.1);
+   particle_emitter_set_max_emissions(particle_emitter_ptr, -1);
+   particle_emitter_set_emit_per_emission(particle_emitter_ptr, 26);
+   particle_emitter_set_emission_max_timer(particle_emitter_ptr, 0.01);
+   particle_emitter_set_scale_variance(particle_emitter_ptr, 0.05, 0.2);
+   particle_emitter_set_use_angular(particle_emitter_ptr, true);
+   particle_emitter_set_angle_range(particle_emitter_ptr, -360, 360);
+   particle_emitter_set_velocity_y_variance(particle_emitter_ptr, 150, 250);
+   particle_emitter_set_velocity_x_variance(particle_emitter_ptr, -100, 100);
+   particle_emitter_set_acceleration(particle_emitter_ptr, 0, 98);
+   particle_emitter_set_velocity(particle_emitter_ptr, 10, 20);
+   particle_emitter_set_modulation(particle_emitter_ptr, 1, 1, 1, 0.25);
+   particle_emitter_set_use_flame_mode(particle_emitter_ptr, true);
+   local initial_boss_pos = enemy_final_position(eid);
+
+   particle_emitter_set_emit_shape_circle(particle_emitter_ptr, initial_boss_pos[1], initial_boss_pos[2], 30, false);
+   particle_emitter_set_sprite_projectile(particle_emitter_ptr, PROJECTILE_SPRITE_PURPLE_ELECTRIC);
+end
+
+function Boss1_Enemy_HexAttractor(eid, attract_to_eid)
+   local particle_emitter_ptr = enemy_get_particle_emitter(eid, 0);
+   particle_emitter_set_active(particle_emitter_ptr, true);
+   particle_emitter_set_lifetime(particle_emitter_ptr, 4);
+   particle_emitter_set_scale(particle_emitter_ptr, 0.05);
+   particle_emitter_set_max_emissions(particle_emitter_ptr, -1);
+   particle_emitter_set_emit_per_emission(particle_emitter_ptr, 8);
+   particle_emitter_set_emission_max_timer(particle_emitter_ptr, 0.01);
+   particle_emitter_set_scale_variance(particle_emitter_ptr, 0.02, 0.1);
+   
+   -- particle_emitter_set_use_angular(particle_emitter_ptr, true);
+   -- particle_emitter_set_angle_range(particle_emitter_ptr, -360, 360);
+   -- particle_emitter_set_velocity_y_variance(particle_emitter_ptr, 150, 250);
+   -- particle_emitter_set_velocity_x_variance(particle_emitter_ptr, -100, 100);
+   -- particle_emitter_set_acceleration(particle_emitter_ptr, 0, 98);
+   -- particle_emitter_set_velocity(particle_emitter_ptr, 10, 20);
+
+   particle_emitter_set_modulation(particle_emitter_ptr, 1, 1, 1, 0.25);
+   particle_emitter_set_use_flame_mode(particle_emitter_ptr, true);
+   particle_emitter_set_use_attraction_point(particle_emitter_ptr, true);
+   local initial_boss_pos = enemy_final_position(eid);
+   local attract_to_pos = enemy_final_position(attract_to_eid);
+
+   particle_emitter_set_attraction_force(particle_emitter_ptr, 500);
+   particle_emitter_set_attraction_point(particle_emitter_ptr, attract_to_pos[1], attract_to_pos[2]);
+
+   particle_emitter_set_emit_shape_circle(particle_emitter_ptr, initial_boss_pos[1], initial_boss_pos[2], 2, false);
+   particle_emitter_set_sprite_projectile(particle_emitter_ptr, PROJECTILE_SPRITE_BLUE_ELECTRIC);
+end
+
+
 function Boss1_Schedule_Teleport_To(position, force)
    force = force or false;
 
@@ -609,9 +663,14 @@ function _Stage1_Boss_Maintain_Hexes_Logic(eid)
                 boss1_state.last_good_position[1],
                 boss1_state.last_good_position[2],
                 95, 0.00, 0.00);
+            do
+               local particle_emitter_ptr = enemy_get_particle_emitter(boss1_state.me, 0);
+               particle_emitter_set_active(particle_emitter_ptr, false);
+            end
           else
              -- invincible while hexbinders are active
-             enemy_begin_invincibility(boss1_state.me, true, 99999);
+            Boss1_Enemy_HexShield(boss1_state.me);
+            enemy_begin_invincibility(boss1_state.me, true, 99999);
           end
        end
 
@@ -682,6 +741,13 @@ function _Stage1_Boss_HexBind(eid, state)
    if state.id == 3 then
       boss1_state.hexbind3 = eid;
    end
+
+   while enemy_valid(eid) do
+      if enemy_valid(boss1_state.me) then
+         Boss1_Enemy_HexAttractor(eid, boss1_state.me);
+      end
+      t_yield();
+   end
 end
 
 function Game_Spawn_Stage1_Boss()
@@ -732,50 +798,46 @@ function Game_Spawn_Stage1_Boss()
    return e;
 end
 
+function Game_Spawn_Stage_Boss_HexBinder(where, state)
+   local e = enemy_new();
+   local initial_boss_pos = where;
+   enemy_set_hp(e, MINI_BOSS_HP);
+   enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
+   enemy_set_visual(e, ENTITY_SPRITE_HEXBINDER);
+   enemy_show_boss_hp(e, "HEX BINDING");
+   enemy_begin_invincibility(e, true, 2.5);
+   async_task_lambda(_Stage1_Boss_HexBind, e, state);
+   return e;
+end
+
 function Game_Spawn_Stage1_Boss_HexBind0()
-    local e = enemy_new();
-    local initial_boss_pos = v2(play_area_width()/2 + 80, 70);
-    enemy_set_hp(e, MINI_BOSS_HP);
-    enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-    enemy_set_visual(e, ENTITY_SPRITE_HEXBINDER);
-    enemy_show_boss_hp(e, "HEX BINDING");
-    enemy_begin_invincibility(e, true, 2.5);
-    async_task_lambda(_Stage1_Boss_HexBind, e, hexbind0_state);
-    return e;
+   local initial_boss_pos = v2(play_area_width()/2 + 80, 70);
+   local e = Game_Spawn_Stage_Boss_HexBinder(
+      initial_boss_pos, hexbind0_state
+   );
+   return e;
  end
  
  function Game_Spawn_Stage1_Boss_HexBind1()
-    local e = enemy_new();
     local initial_boss_pos = v2(play_area_width()/2 - 80, 70);
-    enemy_set_hp(e, MINI_BOSS_HP);
-    enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-    enemy_set_visual(e, ENTITY_SPRITE_HEXBINDER);
-    enemy_show_boss_hp(e, "HEX BINDING");
-    enemy_begin_invincibility(e, true, 2.5);
-    async_task_lambda(_Stage1_Boss_HexBind, e, hexbind1_state);
+    local e = Game_Spawn_Stage_Boss_HexBinder(
+      initial_boss_pos, hexbind1_state
+    );
     return e;
  end
 
 function Game_Spawn_Stage1_Boss_HexBind2()
-    local e = enemy_new();
     local initial_boss_pos = v2(play_area_width()/2 + 80, 40);
-    enemy_set_hp(e, MINI_BOSS_HP);
-    enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-    enemy_set_visual(e, ENTITY_SPRITE_HEXBINDER);
-    enemy_show_boss_hp(e, "HEX BINDING");
-    enemy_begin_invincibility(e, true, 2.5);
-    async_task_lambda(_Stage1_Boss_HexBind, e, hexbind2_state);
+    local e = Game_Spawn_Stage_Boss_HexBinder(
+      initial_boss_pos, hexbind2_state
+    );
     return e;
  end
  
  function Game_Spawn_Stage1_Boss_HexBind3()
-    local e = enemy_new();
     local initial_boss_pos = v2(play_area_width()/2 - 80, 40);
-    enemy_set_hp(e, MINI_BOSS_HP);
-    enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-    enemy_set_visual(e, ENTITY_SPRITE_HEXBINDER);
-    enemy_show_boss_hp(e, "HEX BINDING");
-    enemy_begin_invincibility(e, true, 2.5);
-    async_task_lambda(_Stage1_Boss_HexBind, e, hexbind3_state);
+    local e = Game_Spawn_Stage_Boss_HexBinder(
+      initial_boss_pos, hexbind3_state
+    );
     return e;
  end
