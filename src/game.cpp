@@ -4854,7 +4854,9 @@ GAME_SCREEN(update_and_render_game_ingame) {
             }
             else {
               if (state->show_damage_player_will_take) {
-                if ((index + 1) > state->player_damage_level_taken) {
+                int start_of_damage_show = state->tries - state->player_damage_level_taken;
+                int adjusted_index = index + 1;
+                if (adjusted_index > start_of_damage_show && adjusted_index <= state->tries) {
                   modulation = color32f32(0.85f, 0.05f, 0.18f, 1);
                 }
               }
