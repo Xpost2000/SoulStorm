@@ -35,8 +35,8 @@
    -- show_gameplay_alert("JOKING!!", 1, 5.5);
 
 enable_boss_death_explosion = false;
-BOSS_HP = 700;
-MINI_BOSS_HP = 100;
+BOSS_HP = 650;
+MINI_BOSS_HP = 75;
 BOSS_HP_LOSS_FROM_HEX_FINISH = BOSS_HP/10;
 
 boss1_teleport_positions = {}; -- forward declaration
@@ -85,15 +85,19 @@ boss1_state = {
 
 hexbind0_state = {
    id=0,
+   next_think_action_t = -9999,
 };
 hexbind1_state = {
    id=1,
+   next_think_action_t = -9999,
 };
 hexbind2_state = {
    id=2,
+   next_think_action_t = -9999,
 };
 hexbind3_state = {
    id=3,
+   next_think_action_t = -9999,
 };
 
 BOSS1_ALERT_STAY_LENGTH = 3.76;
@@ -223,6 +227,7 @@ end
 
 -- A sort of weird 360 sprout
 function Boss1_Sprout1(
+    position,
     times,
     bloom_pattern_table,
     adjustment_to_i, angstep, angoffset,
@@ -238,7 +243,7 @@ function Boss1_Sprout1(
     for i=0,times do
         local adji = i+adjustment_to_i;
         Bullet_Pattern_Sprout_Outwards360(
-            boss1_state.last_good_position, 
+            position, 
             bloom_pattern_table[1 + i%#bloom_pattern_table], 
             max(bspeedmin + adji * 10, bspeedmax), 
             angstep,
@@ -314,6 +319,7 @@ function Boss1_XCross_Chasing(
 end
 
 function Boss1_XCross_RainDown(
+    position,
     times,
     presenting_visual,
     chasing_visual,
@@ -328,7 +334,6 @@ function Boss1_XCross_RainDown(
     for i=0, times do
         for j=0,4 do
             local bullet = bullet_new(BULLET_SOURCE_ENEMY);
-            local position = boss1_state.last_good_position;
             local angle = 90 * (j+1) + 45;
             bullet_set_position(bullet, position[1], position[2]);
             bullet_set_visual(bullet, presenting_visual)
@@ -409,6 +414,7 @@ function _Stage1_Boss_Logic(eid)
                -- param pattern 3
                for i=0,4 do
                   Boss1_Sprout1(
+                     boss1_state.last_good_position,
                      prng_ranged_integer(6, 7),
                      {PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK},
                      prng_ranged_integer(6, 9), 30, prng_ranged_integer(15, 120),
@@ -416,6 +422,7 @@ function _Stage1_Boss_Logic(eid)
                   );
                   t_wait(prng_ranged_float(0.125, 0.35));
                   Boss1_Sprout1(
+                     boss1_state.last_good_position,
                      prng_ranged_integer(6, 8),
                      {PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK},
                      prng_ranged_integer(5, 12), 50, prng_ranged_integer(50, 90),
@@ -460,7 +467,8 @@ function _Stage1_Boss_Logic(eid)
 
                  if action_rng == 1 or action_rng == 11 then
                     Boss1_Sprout1(
-                       8,
+                     boss1_state.last_good_position,
+                     8,
                        {PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_WARM_DISK},
                        0, -15, prng_ranged_integer(10, 40),
                        25, 75, 100, 0.5
@@ -470,7 +478,8 @@ function _Stage1_Boss_Logic(eid)
 
                  if action_rng == 2 or action_rng == 8 then
                     Boss1_Sprout1(
-                        16,
+                     boss1_state.last_good_position,
+                     16,
                         {PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_HOT_PINK_DISK, PROJECTILE_SPRITE_WARM_DISK},
                         prng_ranged_integer(4, 9), -30, prng_ranged_integer(10, 120),
                         25, 75, 150, 0.23
@@ -502,6 +511,7 @@ function _Stage1_Boss_Logic(eid)
                     end
 
                     Boss1_XCross_RainDown(
+                       boss1_state.last_good_position,
                        prng_ranged_integer(6, 15),
                        PROJECTILE_SPRITE_WRM,
                        PROJECTILE_SPRITE_WRM_DISK,
@@ -558,7 +568,8 @@ function _Stage1_Boss_Logic(eid)
 
     enable_grazing();
     Boss1_Sprout1(
-        45,
+      boss1_state.last_good_position,
+      45,
         death_pattern,
         0, 15, 5,
         5, 75, 200, 0.28
@@ -746,8 +757,66 @@ function _Stage1_Boss_HexBind(eid, state)
       if enemy_valid(boss1_state.me) then
          Boss1_Enemy_HexAttractor(eid, boss1_state.me);
       end
+
+      -- next think action depends on what attack was chosen
+      local current_t = enemy_time_since_spawn(eid);
+      local position = enemy_final_position(eid);
+      if current_t >= state.next_think_action_t then
+         local action_rng = prng_ranged_integer(0, 100);
+         -- 40% of attack
+         if action_rng < 40 then
+            action_rng = prng_ranged_integer(0, 2);
+
+            if action_rng == 0  then
+               Boss1_Sprout1(
+                  position,
+                  4,
+                  {PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_WARM_DISK},
+                  0, -15, prng_ranged_integer(10, 20),
+                  25, 35, 50, 0.5
+               );
+               state.next_think_action_t = current_t + prng_ranged_float(4.5, 6.5);
+            end
+
+            if action_rng == 1 then
+               Boss1_Sprout1(
+                  position,
+                  6,
+                  {PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_HOT_PINK_DISK, PROJECTILE_SPRITE_WARM_DISK},
+                  prng_ranged_integer(4, 6), -30, prng_ranged_integer(10, 50),
+                  25, 35, 50, 0.23
+               );
+               state.next_think_action_t = current_t + prng_ranged_float(3.5, 4.5);
+            end
+
+            if action_rng == 2 then
+               local sgn = 1;
+
+               if player_position_y() < boss1_state.last_good_position[2] then
+                  sgn = -1;
+               end
+
+               Boss1_XCross_RainDown(
+                  position,
+                  prng_ranged_integer(6, 15),
+                  PROJECTILE_SPRITE_WRM,
+                  PROJECTILE_SPRITE_WRM_DISK,
+                  55, -- present speed
+                  sgn * 50, -- fire speed
+                  sgn * 45,  -- acceleration
+                  3, -- trailcount
+                  1.0 -- time until chase
+               );
+               state.next_think_action_t = current_t + prng_ranged_float(2.5, 4.5);
+            end
+         else
+            state.next_think_action_t = current_t + prng_ranged_float(2.5, 4.5);
+         end
+      end
+
       t_yield();
    end
+   state.next_think_action_t = -9999;
 end
 
 function Game_Spawn_Stage1_Boss()
