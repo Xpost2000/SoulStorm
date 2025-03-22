@@ -26,10 +26,18 @@
 -- If I am slightly off, that's okay. I am doing better by actually
 -- doing things.
 --
+   -- show_gameplay_alert("PLAYER HEXED!", 1, 5.5);
+   -- show_damage_player_will_take();
+   -- player_set_damage_per_hit(2);
+   -- t_wait(3.5);
+   -- hide_damage_player_will_take();
+   -- player_set_damage_per_hit(1);
+   -- show_gameplay_alert("JOKING!!", 1, 5.5);
+
 enable_boss_death_explosion = false;
-BOSS_HP = 680;
+BOSS_HP = 700;
 MINI_BOSS_HP = 100;
-BOSS_HP_LOSS_FROM_HEX_FINISH = BOSS_HP/8;
+BOSS_HP_LOSS_FROM_HEX_FINISH = BOSS_HP/10;
 
 boss1_teleport_positions = {}; -- forward declaration
 boss1_state = {
@@ -87,6 +95,31 @@ hexbind2_state = {
 hexbind3_state = {
    id=3,
 };
+
+BOSS1_ALERT_STAY_LENGTH = 3.76;
+function Boss1_Begin_Hex()
+   show_gameplay_alert("PLAYER HEXED!", MENU_FONT_COLOR_ORANGE, BOSS1_ALERT_STAY_LENGTH);
+   show_damage_player_will_take();
+   player_set_damage_per_hit(2);
+end
+
+function Boss1_Begin_Curse()
+   show_gameplay_alert("PLAYER CURSED!", MENU_FONT_COLOR_ORANGE, BOSS1_ALERT_STAY_LENGTH);
+   show_damage_player_will_take();
+   player_set_damage_per_hit(player_hp());
+end
+
+function Boss1_End_Hex()
+   show_gameplay_alert("HEX ENDED!", MENU_FONT_COLOR_PURPLE, BOSS1_ALERT_STAY_LENGTH);
+   hide_damage_player_will_take();
+   player_set_damage_per_hit(1);
+end
+
+function Boss1_End_Curse()
+   show_gameplay_alert("CURSE ENDED!", MENU_FONT_COLOR_PURPLE, BOSS1_ALERT_STAY_LENGTH);
+   hide_damage_player_will_take();
+   player_set_damage_per_hit(1);
+end
 
 function Boss1_Schedule_Teleport_To(position, force)
    force = force or false;
@@ -307,98 +340,7 @@ function _Stage1_Boss_Logic(eid)
         local boss_health_percentage = enemy_hp_percent(boss1_state.me);
         boss1_state.last_good_position = enemy_final_position(eid);
 
-        if (player_using_burst_power1()) then
-           enemy_begin_invincibility(boss1_state.me, true, 99999);
-        else
-           -- there's a small window where the boss can get hit
-           -- but that's okay, since you're very vulnerable after burstpower1
-           -- anyway...
-           t_wait(0.65);
-           enemy_end_invincibility(boss1_state.me);
-        end
-
-        -- Handle Boss Movement
-        if boss1_state.wants_to_move then
-           if boss1_state.moving_to == false then
-              boss1_state.moving_to = true;
-
-              if boss1_state.move_method == 'teleport' then
-                 enemy_task_lambda(
-                    boss1_state.me,
-                    function(e)
-                       explosion_hazard_new(
-                          boss1_state.last_good_position[1],
-                          boss1_state.last_good_position[2],
-                          35, 0.01, 0.01);
-                       explosion_hazard_new(
-                          boss1_state.move_target[1],
-                          boss1_state.move_target[2],
-                          35, 0.01, 0.01);
-                       t_wait(1);
-                       if enemy_valid(eid) then
-                          enemy_set_position(
-                             e,
-                             boss1_state.move_target[1],
-                             boss1_state.move_target[2]
-                          );
-                          boss1_state.last_good_position = enemy_final_position(eid);
-                          boss1_state.wants_to_move = false;
-                          boss1_state.moving_to = false;
-                       end
-                    end
-                 );
-              end
-
-              -- ?
-              if boss1_state.move_method == 'slide' then
-              end
-           end
-        end
-
-        -- NOTE(jerry): needs to be put here due to frame latency reasons.
-        if boss1_state.phase == 1 or boss1_state.phase == 3 or boss1_state.phase == 5 then
-           if not remaining_hexbind_minions() then
-              boss1_state.phase = boss1_state.phase + 1;
-              enemy_hurt(boss1_state.me, BOSS_HP_LOSS_FROM_HEX_FINISH);
-              play_sound(load_sound('res/snds/hitcrit.wav'))
-              explosion_hazard_new(
-                 boss1_state.last_good_position[1],
-                 boss1_state.last_good_position[2],
-                 95, 0.00, 0.00);
-              enemy_end_invincibility(boss1_state.me);
-           else
-              -- invincible while hexbinders are active
-              enemy_begin_invincibility(boss1_state.me, true, 99999);
-           end
-        end
-
-        -- Spawn Hex Binders
-        -- Is there a more elegant way to write the code?
-        -- probably, right now that doesn't matter!
-        if boss_health_percentage <= 0.75 and boss1_state.phase == 0 then
-           boss1_state.phase = 1;
-           Game_Spawn_Stage1_Boss_HexBind0();
-           Game_Spawn_Stage1_Boss_HexBind1();
-           enemy_begin_invincibility(boss1_state.me, true, 99999);
-        end
-
-        if boss_health_percentage <= 0.50 and boss1_state.phase == 2 then
-           boss1_state.phase = 3;
-           Game_Spawn_Stage1_Boss_HexBind0();
-           Game_Spawn_Stage1_Boss_HexBind1();
-           enemy_begin_invincibility(boss1_state.me, true, 99999);
-        end
-
-        if boss_health_percentage <= 0.27 and boss1_state.phase == 4 then
-           boss1_state.phase = 5;
-           Game_Spawn_Stage1_Boss_HexBind0();
-           Game_Spawn_Stage1_Boss_HexBind1();
-           Game_Spawn_Stage1_Boss_HexBind2();
-           Game_Spawn_Stage1_Boss_HexBind3();
-           enemy_begin_invincibility(boss1_state.me, true, 99999);
-        end
-
-        if boss_health_percentage <= 0.12 then
+        if boss_health_percentage <= 0.10 then
             disable_grazing();
             start_black_fade(0.065);
             -- teleport back to center first then
@@ -440,9 +382,6 @@ function _Stage1_Boss_Logic(eid)
                  Boss1_Schedule_Teleport_To(
                     boss1_teleport_positions[prng_ranged_integer(0, #boss1_teleport_positions-1)]
                  );
-                 print('Deciding movement');
-              else
-                 print('Deciding no movement');
               end
            end
 
@@ -546,9 +485,6 @@ function _Stage1_Boss_Logic(eid)
                  end
               end
            end
-           -- default boss logic
-           -- Boss1_ExplosionChase(10);
-           -- t_wait(5);
         end
 
         if enemy_valid(eid) then
@@ -603,6 +539,135 @@ function _Stage1_Boss_Logic(eid)
     t_complete_stage();
 end
 
+-- Movement scheduler
+function _Stage1_Boss_Movement_Logic(eid)
+   t_wait(2.5); -- wait out invincibiility.
+   boss1_state.last_good_position = enemy_final_position(eid);
+   while enemy_valid(eid) do 
+       local boss_health_percentage = enemy_hp_percent(boss1_state.me);
+       boss1_state.last_good_position = enemy_final_position(eid);
+
+       -- Handle Boss Movement
+       if boss1_state.wants_to_move then
+          if boss1_state.moving_to == false then
+             boss1_state.moving_to = true;
+
+             if boss1_state.move_method == 'teleport' then
+                enemy_task_lambda(
+                   boss1_state.me,
+                   function(e)
+                      explosion_hazard_new(
+                         boss1_state.last_good_position[1],
+                         boss1_state.last_good_position[2],
+                         35, 0.01, 0.01);
+                      explosion_hazard_new(
+                         boss1_state.move_target[1],
+                         boss1_state.move_target[2],
+                         35, 0.01, 0.01);
+                      t_wait(1);
+                      if enemy_valid(eid) then
+                         enemy_set_position(
+                            e,
+                            boss1_state.move_target[1],
+                            boss1_state.move_target[2]
+                         );
+                         boss1_state.last_good_position = enemy_final_position(eid);
+                         boss1_state.wants_to_move = false;
+                         boss1_state.moving_to = false;
+                      end
+                   end
+                );
+             end
+
+             -- ?
+             if boss1_state.move_method == 'slide' then
+             end
+          end
+       end
+
+       t_yield();
+   end
+end
+
+-- Some sub logic related to boss's secondary tasks
+function _Stage1_Boss_Maintain_Hexes_Logic(eid)
+   t_wait(2.5); -- wait out invincibiility.
+   boss1_state.last_good_position = enemy_final_position(eid);
+   while enemy_valid(eid) do 
+       local boss_health_percentage = enemy_hp_percent(boss1_state.me);
+       boss1_state.last_good_position = enemy_final_position(eid);
+
+       -- NOTE(jerry): needs to be put here due to frame latency reasons.
+       if boss1_state.phase == 1 or boss1_state.phase == 3 or boss1_state.phase == 5 then
+          if not remaining_hexbind_minions() then
+             boss1_state.phase = boss1_state.phase + 1;
+             enemy_end_invincibility(boss1_state.me);
+             enemy_hurt(boss1_state.me, BOSS_HP_LOSS_FROM_HEX_FINISH);
+             Boss1_End_Hex();
+             play_sound(load_sound('res/snds/hitcrit.wav'))
+             explosion_hazard_new(
+                boss1_state.last_good_position[1],
+                boss1_state.last_good_position[2],
+                95, 0.00, 0.00);
+          else
+             -- invincible while hexbinders are active
+             enemy_begin_invincibility(boss1_state.me, true, 99999);
+          end
+       end
+
+       -- Spawn Hex Binders
+       -- Is there a more elegant way to write the code?
+       -- probably, right now that doesn't matter!
+       if boss_health_percentage <= 0.75 and boss1_state.phase == 0 then
+          boss1_state.phase = 1;
+          Boss1_Begin_Hex();
+          Game_Spawn_Stage1_Boss_HexBind0();
+          Game_Spawn_Stage1_Boss_HexBind1();
+          enemy_begin_invincibility(boss1_state.me, true, 99999);
+       end
+
+       if boss_health_percentage <= 0.50 and boss1_state.phase == 2 then
+          boss1_state.phase = 3;
+          Boss1_Begin_Hex();
+          Game_Spawn_Stage1_Boss_HexBind0();
+          Game_Spawn_Stage1_Boss_HexBind1();
+          enemy_begin_invincibility(boss1_state.me, true, 99999);
+       end
+
+       if boss_health_percentage <= 0.27 and boss1_state.phase == 4 then
+          boss1_state.phase = 5;
+          Boss1_Begin_Hex();
+          Game_Spawn_Stage1_Boss_HexBind0();
+          Game_Spawn_Stage1_Boss_HexBind1();
+          Game_Spawn_Stage1_Boss_HexBind2();
+          Game_Spawn_Stage1_Boss_HexBind3();
+          enemy_begin_invincibility(boss1_state.me, true, 99999);
+       end
+       t_yield();
+   end
+end
+
+-- Some sub logic related to boss's secondary tasks
+function _Stage1_Boss_ImmunityToBurstLaser_Logic(eid)
+   t_wait(2.5); -- wait out invincibiility.
+   boss1_state.last_good_position = enemy_final_position(eid);
+   while enemy_valid(eid) do 
+       local boss_health_percentage = enemy_hp_percent(boss1_state.me);
+       boss1_state.last_good_position = enemy_final_position(eid);
+
+       if (player_using_burst_power1()) then
+          enemy_begin_invincibility(boss1_state.me, true, 99999);
+       else
+          -- there's a small window where the boss can get hit
+          -- but that's okay, since you're very vulnerable after burstpower1
+          -- anyway...
+          t_wait(0.65);
+          enemy_end_invincibility(boss1_state.me);
+       end
+       t_yield();
+   end
+end
+
 function _Stage1_Boss_HexBind(eid, state)
    -- Tell the boss I exist.
    if state.id == 0 then
@@ -626,7 +691,11 @@ function Game_Spawn_Stage1_Boss()
    enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
    enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
    enemy_show_boss_hp(e, "WITCH");
+   -- The boss takes "three threads" of logic.
    async_task_lambda(_Stage1_Boss_Logic, e);
+   async_task_lambda(_Stage1_Boss_Movement_Logic, e);
+   async_task_lambda(_Stage1_Boss_Maintain_Hexes_Logic, e);
+   async_task_lambda(_Stage1_Boss_ImmunityToBurstLaser_Logic, e);
    boss1_state.me = e;
    boss1_state.starting_position = initial_boss_pos;
 
@@ -670,7 +739,7 @@ function Game_Spawn_Stage1_Boss_HexBind0()
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
     enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
     enemy_show_boss_hp(e, "HEX BINDING");
-    enemy_begin_invincibility(e, true, 1.5);
+    enemy_begin_invincibility(e, true, 2.5);
     async_task_lambda(_Stage1_Boss_HexBind, e, hexbind0_state);
     return e;
  end
@@ -682,7 +751,7 @@ function Game_Spawn_Stage1_Boss_HexBind0()
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
     enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
     enemy_show_boss_hp(e, "HEX BINDING");
-    enemy_begin_invincibility(e, true, 1.5);
+    enemy_begin_invincibility(e, true, 2.5);
     async_task_lambda(_Stage1_Boss_HexBind, e, hexbind1_state);
     return e;
  end
@@ -694,7 +763,7 @@ function Game_Spawn_Stage1_Boss_HexBind2()
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
     enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
     enemy_show_boss_hp(e, "HEX BINDING");
-    enemy_begin_invincibility(e, true, 1.5);
+    enemy_begin_invincibility(e, true, 2.5);
     async_task_lambda(_Stage1_Boss_HexBind, e, hexbind2_state);
     return e;
  end
@@ -706,7 +775,7 @@ function Game_Spawn_Stage1_Boss_HexBind2()
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
     enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
     enemy_show_boss_hp(e, "HEX BINDING");
-    enemy_begin_invincibility(e, true, 1.5);
+    enemy_begin_invincibility(e, true, 2.5);
     async_task_lambda(_Stage1_Boss_HexBind, e, hexbind3_state);
     return e;
  end
