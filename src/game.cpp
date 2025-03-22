@@ -4517,6 +4517,10 @@ GAME_SCREEN(update_and_render_game_ingame) {
             allow_pausing = false;
         }
 
+        if (this->state->deathanimation_data.phase != DEATH_ANIMATION_PHASE_INACTIVE) {
+            allow_pausing = false;
+        }
+
         if (this->state->gameplay_data.triggered_stage_completion_cutscene == true) {
           allow_pausing = false;
         }
