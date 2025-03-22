@@ -2303,11 +2303,11 @@ Simple_Scrollable_Background_Entities::Simple_Scrollable_Background_Entities(
 }
 
 void Simple_Scrollable_Background_Entities::clear(void) {
-    scroll_xs.clear();
-    scroll_ys.clear();
-    scroll_speed_xs.clear();
-    scroll_speed_ys.clear();
-    backgrounds.clear();
+    scroll_xs.zero();
+    scroll_ys.zero();
+    scroll_speed_xs.zero();
+    scroll_speed_ys.zero();
+    backgrounds.zero();
 
     foreground_start = nullptr;
     background_start = nullptr;
