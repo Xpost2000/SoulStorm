@@ -12,30 +12,13 @@
 -- frantic way (this might be a common design pattern I'll use
 -- as it is a low-effort way of affectting difficulty)
 --
--- TODO(jerry):
--- Boss movement (handle movement request as Teleport/Explode or Slide)
--- Random Attacks
--- playtest attacks
--- Incorporate HEX BINDERS + HEX MECHANIC IN-GAME
+-- TODO(jerry)
 --
--- 2x 2 HEX BINDERS at 75% hp and 45% HP
--- 1x 4 HEX BINDERS at 25% hp, supposed to lead into PANIC mode
---
--- Sprite Visuals
---
--- If I am slightly off, that's okay. I am doing better by actually
--- doing things.
---
-   -- show_gameplay_alert("PLAYER HEXED!", 1, 5.5);
-   -- show_damage_player_will_take();
-   -- player_set_damage_per_hit(2);
-   -- t_wait(3.5);
-   -- hide_damage_player_will_take();
-   -- player_set_damage_per_hit(1);
-   -- show_gameplay_alert("JOKING!!", 1, 5.5);
+-- I think the fight mechanics are fine, but I need to give the player more breathing room.
+-- 
 
 enable_boss_death_explosion = false;
-BOSS_HP = 600;
+BOSS_HP = 500;
 MINI_BOSS_HP = 100;
 BOSS_HP_LOSS_FROM_HEX_FINISH = BOSS_HP/10;
 
