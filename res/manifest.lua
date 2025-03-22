@@ -350,4 +350,10 @@ entities = {
          {"res/img/bats/enemy_bat21_3.png", nil,  0.0},
       }
    },
+   {
+      {
+         -- Hexbinders have no anim frames
+         {"res/img/skull/enemy_skull_hexbinder.png", nil, 0.0},
+      }
+   }
 };

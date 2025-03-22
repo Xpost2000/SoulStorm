@@ -737,7 +737,7 @@ function Game_Spawn_Stage1_Boss_HexBind0()
     local initial_boss_pos = v2(play_area_width()/2 + 80, 70);
     enemy_set_hp(e, MINI_BOSS_HP);
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-    enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
+    enemy_set_visual(e, ENTITY_SPRITE_HEXBINDER);
     enemy_show_boss_hp(e, "HEX BINDING");
     enemy_begin_invincibility(e, true, 2.5);
     async_task_lambda(_Stage1_Boss_HexBind, e, hexbind0_state);
@@ -749,7 +749,7 @@ function Game_Spawn_Stage1_Boss_HexBind0()
     local initial_boss_pos = v2(play_area_width()/2 - 80, 70);
     enemy_set_hp(e, MINI_BOSS_HP);
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-    enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
+    enemy_set_visual(e, ENTITY_SPRITE_HEXBINDER);
     enemy_show_boss_hp(e, "HEX BINDING");
     enemy_begin_invincibility(e, true, 2.5);
     async_task_lambda(_Stage1_Boss_HexBind, e, hexbind1_state);
@@ -761,7 +761,7 @@ function Game_Spawn_Stage1_Boss_HexBind2()
     local initial_boss_pos = v2(play_area_width()/2 + 80, 40);
     enemy_set_hp(e, MINI_BOSS_HP);
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-    enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
+    enemy_set_visual(e, ENTITY_SPRITE_HEXBINDER);
     enemy_show_boss_hp(e, "HEX BINDING");
     enemy_begin_invincibility(e, true, 2.5);
     async_task_lambda(_Stage1_Boss_HexBind, e, hexbind2_state);
@@ -773,7 +773,7 @@ function Game_Spawn_Stage1_Boss_HexBind2()
     local initial_boss_pos = v2(play_area_width()/2 - 80, 40);
     enemy_set_hp(e, MINI_BOSS_HP);
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-    enemy_set_visual(e, ENTITY_SPRITE_SKULL_B); -- for now...
+    enemy_set_visual(e, ENTITY_SPRITE_HEXBINDER);
     enemy_show_boss_hp(e, "HEX BINDING");
     enemy_begin_invincibility(e, true, 2.5);
     async_task_lambda(_Stage1_Boss_HexBind, e, hexbind3_state);

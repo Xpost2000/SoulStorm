@@ -1651,9 +1651,9 @@ void Bullet::update(Game_State* state, f32 dt) {
     if (!visible)
         return;
 
-    entity_draw_blend_mode = BLEND_MODE_ADDITIVE;
+    // entity_draw_blend_mode = BLEND_MODE_ADDITIVE;
     // shadow_entity_draw_blend_mode = BLEND_MODE_ADDITIVE;
-    sprite.modulation = color32f32(0.5,0.5,0.5,1.0f);
+    // sprite.modulation = color32f32(0.5,0.5,0.5,1.0f);
 
     handle_lifetime(dt);
     handle_movement(state, dt);
