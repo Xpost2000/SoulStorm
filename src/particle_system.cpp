@@ -191,6 +191,12 @@ void Particle_Pool::update(Game_State* state, f32 dt) {
         }
 
         particle.sprite.animate(&state->resources->graphics_assets, dt, 0.045);
+
+        if (V2_distance_sq(particle.position, particle.attraction_point) < 15 * 15) {
+          effective_acceleration = V2(0, 0);
+          particle.position = particle.attraction_point;
+        } 
+
         particle.velocity += effective_acceleration * dt;
         particle.position += particle.velocity *      dt;
         particle.lifetime -= dt;
