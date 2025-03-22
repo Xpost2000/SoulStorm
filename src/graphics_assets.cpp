@@ -553,6 +553,26 @@ Texture_Atlas graphics_assets_construct_texture_atlas_image(struct graphics_asse
     // I will try to tightly fit these, but otherwise just assemble the atlas in a "not so smart" way
     Texture_Atlas result;
 
+    // qsort these by height... too lazy to make my own sort right now.
+    {
+      static graphics_assets* assets_for_qsort;
+      assets_for_qsort = assets; // no I'm not using std::sort.
+      qsort(
+        images,
+        image_count,
+        sizeof(*images),
+        [](const void* a, const void* b) {
+          image_id* imga = (image_id*) a;
+          image_id* imgb = (image_id*) b;
+
+          image_buffer* imgabuffer = graphics_assets_get_image_by_id(assets_for_qsort, *imga);
+          image_buffer* imgbbuffer = graphics_assets_get_image_by_id(assets_for_qsort, *imgb);
+
+          return (s32)imgbbuffer->height - (s32)imgabuffer->height;
+        }
+      );
+    }
+
     result.atlas_image_id;
     result.subimage_count = image_count;
     result.subimages      = (Texture_Atlas_Sub_Image*)assets->arena->push_unaligned(sizeof(*result.subimages) * image_count);

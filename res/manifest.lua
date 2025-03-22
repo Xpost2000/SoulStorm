@@ -355,5 +355,10 @@ entities = {
          -- Hexbinders have no anim frames
          {"res/img/skull/enemy_skull_hexbinder.png", nil, 0.0},
       }
+   },
+   {
+      {
+         {"res/img/boss1/idle.png", nil, 0.0},
+      }
    }
 };
