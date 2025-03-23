@@ -894,8 +894,8 @@ function MainBoss1_RainCloud_Attack1(phase_cycle, duration, timebetweendroplets,
 
    local spread = 40;
    local x_adv = play_area_width() / (spread - 5);
-   timebetweendroplets = timebetweendroplets or 0.354;
-   cyclecount = cyclecount or 30;
+   timebetweendroplets = timebetweendroplets or 0.334;
+   cyclecount = cyclecount or 45;
 
    async_task_lambda(
       function()
@@ -959,8 +959,9 @@ function MainBoss1_RainCloud_Attack2(phase_cycle, duration, timebetweendroplets,
    local spread = 35;
    local x_adv = play_area_width() / (spread);
    start_black_fade(0.065);
-   timebetweendroplets = timebetweendroplets or 0.200;
-   cyclecount = cyclecount or 25;
+   timebetweendroplets = timebetweendroplets or 0.225;
+   cyclecount = cyclecount or 45;
+
 
    async_task_lambda(
       function()
