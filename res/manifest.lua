@@ -359,6 +359,12 @@ entities = {
    {
       {
          {"res/img/boss1/idle.png", nil, 0.0},
+         {"res/img/boss1/idle1.png", nil, 0.0},
+         {"res/img/boss1/idle2.png", nil, 0.0},
+         {"res/img/boss1/idle1.png", nil, 0.0},
+         {"res/img/boss1/idle2.png", nil, 0.0},
+         {"res/img/boss1/idle1.png", nil, 0.0},
+         {"res/img/boss1/idle.png", nil, 0.0},
       }
    }
 };

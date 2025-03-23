@@ -200,7 +200,7 @@ function Boss1_SelectRain_Attack()
     else
         local atkduration = prng_ranged_float(7.5, 8.5);
         MainBoss1_RainCloud_Attack2(seed, atkduration, 0.46, 34);
-        boss1_state.next_rain_attack_until = atk_t + atkduration + prng_ranged_float(5.5, 7.5);
+        boss1_state.next_rain_attack_until = atk_t + atkduration + prng_ranged_float(8.5, 12.5);
     end
 
     return true;
@@ -361,8 +361,9 @@ end
 function Boss1_ExplosionChase(explosion_count)
     async_task_lambda(
         function()
+            explosion_hazard_new(player_position_x(), player_position_y(), 32, 0.15, 0.02);
             for i=1,explosion_count do
-                explosion_hazard_new(player_position_x(), player_position_y(), 32, 0.015, 0.02);
+                explosion_hazard_new(player_position_x(), player_position_y(), 32, 0.045, 0.05);
                 t_wait(0.43);
             end
         end
@@ -454,7 +455,7 @@ function _Stage1_Boss_Logic(eid)
                      8,
                        {PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_WARM_DISK},
                        0, -15, prng_ranged_integer(10, 40),
-                       25, 75, 100, 0.5
+                       25, 75, 80, 0.5
                     );
                     boss1_state.next_think_action_t = current_t + prng_ranged_float(4.5, 6.5);
                  end
@@ -465,7 +466,7 @@ function _Stage1_Boss_Logic(eid)
                      16,
                         {PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_HOT_PINK_DISK, PROJECTILE_SPRITE_WARM_DISK},
                         prng_ranged_integer(4, 9), -30, prng_ranged_integer(10, 120),
-                        25, 75, 150, 0.23
+                        25, 75, 80, 0.23
                     );
                     boss1_state.next_think_action_t = current_t + prng_ranged_float(3.5, 4.5);
                  end
