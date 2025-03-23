@@ -430,8 +430,14 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
     resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
     resources->ui_marquee_bkrnd = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee1.png"));
-    resources->ui_marquee_bkrnd_neo[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee-left.png"));
-    resources->ui_marquee_bkrnd_neo[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee-right.png"));
+    resources->ui_marquee_bkrnd_neo[GAME_SIDE_MARQUEE_NEO_THEME_BLUE][0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee-left.png"));
+    resources->ui_marquee_bkrnd_neo[GAME_SIDE_MARQUEE_NEO_THEME_BLUE][1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee-right.png"));
+
+    resources->ui_marquee_bkrnd_neo[GAME_SIDE_MARQUEE_NEO_THEME_GREEN][0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee-left_theme0.png"));
+    resources->ui_marquee_bkrnd_neo[GAME_SIDE_MARQUEE_NEO_THEME_GREEN][1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee-right_theme0.png"));
+
+    resources->ui_marquee_bkrnd_neo[GAME_SIDE_MARQUEE_NEO_THEME_RED][0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee-left_theme1.png"));
+    resources->ui_marquee_bkrnd_neo[GAME_SIDE_MARQUEE_NEO_THEME_RED][1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee-right_theme1.png"));
 
     resources->ui_vignette_borders[0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_left.png"));
     resources->ui_vignette_borders[1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/border_vignette_bottom.png"));
@@ -4592,7 +4598,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
           bool is_flashing_invalid_usage = state->invalid_usage_flash_count > 0 && (state->invalid_usage_flash_count % 2) == 0;
           // left border
           {
-              auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[0]);
+              auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[this->state->mainmenu_data.stage_id_level_select][0]);
               render_commands_push_image(
                   ui_render_commands,
                   marquee_bkg,
@@ -4628,7 +4634,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
           }
           // right border
           {
-              auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[1]);
+              auto marquee_bkg = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_marquee_bkrnd_neo[this->state->mainmenu_data.stage_id_level_select][1]);
               render_commands_push_image(
                   ui_render_commands,
                   marquee_bkg,

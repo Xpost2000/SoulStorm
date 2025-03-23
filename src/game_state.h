@@ -961,6 +961,13 @@ enum UI_HP_Icon_Type {
     UI_HP_ICON_TYPE_LIVING = 1,
 };
 
+enum Game_Side_Marquee_Neo_Theme {
+  GAME_SIDE_MARQUEE_NEO_THEME_BLUE = 0,
+  GAME_SIDE_MARQUEE_NEO_THEME_GREEN = 1,
+  GAME_SIDE_MARQUEE_NEO_THEME_RED = 2,
+  GAME_SIDE_MARQUEE_NEO_THEME_COUNT = 3,
+};
+
 /*
  * NOTE: all of the "permenant" or otherwise code referenced assets are here
  *
@@ -1020,7 +1027,7 @@ struct Game_Resources {
     // end title screen
 
     image_id        ui_marquee_bkrnd;
-    image_id        ui_marquee_bkrnd_neo[2];
+    image_id        ui_marquee_bkrnd_neo[3][2];
 
     image_id        ui_vignette_borders[2];
     image_id        ui_rays_gradient;
