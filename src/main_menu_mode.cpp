@@ -265,6 +265,7 @@ void cutscene_introduction_firsttime_task(jdr_duffcoroutine_t* co) {
     camera_traumatize(&camera, 0.47f);
 
     main_menu_state->player.visible = true;
+    TASK_WAIT(1.5f);
     main_menu_state->screen_message_add(string_literal("Now the adventure begins..."));
 
     while (!main_menu_state->screen_messages_finished()) {
