@@ -1,8 +1,8 @@
 #ifndef TRAILER_CUTAWAY_MODE_H
 #define TRAILER_CUTAWAY_MODE_H
 
-#define COMPILE_IN_TRAILER_CLIPPING_CODE 1
-
+//#define COMPILE_IN_TRAILER_CLIPPING_CODE 1
+#define COMPILE_IN_TRAILER_CLIPPING_CODE 0
 /*
     NOTE(jerry):
      My character's puppet doesn't have any rigging setup for any
