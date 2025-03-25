@@ -299,7 +299,7 @@ GAME_SCREEN(update_and_render_game_trailer_cutaway_screen) {
     // DrawReleaseDate
     {
         auto font = resources->get_font(MENU_FONT_COLOR_GOLD);
-        string text = string_literal("RELEASING Q2 2025");
+        string text = string_literal("RELEASING Q2 2025\nWISHLIST ON STEAM!");
         f32 text_width = font_cache_text_width(font, text, 4.0f);
         render_commands_push_text(
             commands,
