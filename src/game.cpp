@@ -5080,6 +5080,12 @@ GAME_SCREEN(update_and_render_game_ingame) {
           ui_cursor_y += 25;
           render_commands_push_quad(
             ui_render_commands,
+            rectangle_f32(widget_x-1, ui_cursor_y-1, bar_max_width+2, 17),
+            color32u8(255,255,255,255),
+            BLEND_MODE_ALPHA
+          );
+          render_commands_push_quad(
+            ui_render_commands,
             rectangle_f32(widget_x, ui_cursor_y, bar_max_width, 15),
             color32u8(12,19,12,255),
             BLEND_MODE_ALPHA
@@ -5268,14 +5274,30 @@ GAME_SCREEN(update_and_render_game_ingame) {
           );
 
           auto& player = state->player;
-          if (!player.burst_charge_disabled && player.burst_charge_halt_regeneration) {
-            f32 alpha = player.burst_charge_recharge_t / player.burst_charge_recharge_max_t;
-            render_commands_push_quad(
+          render_commands_push_quad(
               ui_render_commands,
-              rectangle_f32(widget_x, ui_cursor_y, bar_max_width * alpha, 4),
-              color32u8(255, 20, 40, 255),
+              rectangle_f32(widget_x-1, ui_cursor_y-1, bar_max_width+2, 6),
+              color32u8(255,255,255,255),
               BLEND_MODE_ALPHA
-            );
+          );
+
+          {
+              f32 alpha = 0;
+              if (!player.burst_charge_disabled && player.burst_charge_halt_regeneration) {
+                  alpha = player.burst_charge_recharge_t / player.burst_charge_recharge_max_t;
+              }
+              render_commands_push_quad(
+                  ui_render_commands,
+                  rectangle_f32(widget_x, ui_cursor_y, bar_max_width, 4),
+                  color32u8(25, 20, 40, 255),
+                  BLEND_MODE_ALPHA
+              );
+              render_commands_push_quad(
+                  ui_render_commands,
+                  rectangle_f32(widget_x, ui_cursor_y, bar_max_width * alpha, 4),
+                  color32u8(255, 20, 40, 255),
+                  BLEND_MODE_ALPHA
+              );
           }
           
           widest_prompt_width = 65;
