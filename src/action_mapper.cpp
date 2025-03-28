@@ -7,6 +7,8 @@ extern "C" {
 #include "action_mapper.h"
 
 local Action_Data action_map[ACTION_COUNT] = {};
+local s32 g_last_action_type_reported = 0;
+
 namespace Action {
     void copy_action_map(Action_Data* source, Action_Data* dest) {
         for (s32 index = 0; index < ACTION_COUNT; ++index) {
@@ -104,6 +106,16 @@ namespace Action {
 #endif
 
         return controller_response || keyboard_response;
+    }
+
+    void set_last_action_type(s32 id) {
+      if (id < 0) id = 0;
+      if (id > 1) id = 1;
+      g_last_action_type_reported = id;
+    }
+
+    s32 get_last_action_type(void) {
+      return g_last_action_type_reported;
     }
 
     Action_Find_Keybinding_Result get_action_data_with_key_binding(s32 keyid) {

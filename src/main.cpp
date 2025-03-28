@@ -482,6 +482,7 @@ void handle_sdl_events(void) {
                     bool is_keydown = (current_event.type == SDL_KEYDOWN);
                     if (is_keydown) {
                         Input::register_key_down(translate_sdl_scancode(current_event.key.keysym.scancode));
+                        Action::set_last_action_type(LAST_ACTION_TYPE_KEYBOARD);
                     } else {
                         Input::register_key_up(translate_sdl_scancode(current_event.key.keysym.scancode));
                     }
@@ -524,7 +525,8 @@ void handle_sdl_events(void) {
                     u8  button_state   = current_event.cbutton.state;
 
                     if (button_state == SDL_PRESSED) {
-                        register_controller_down(controller_id, button_pressed);
+                      Action::set_last_action_type(LAST_ACTION_TYPE_GAMEPAD);
+                      register_controller_down(controller_id, button_pressed);
                     }
                 } break;
 

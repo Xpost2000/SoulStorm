@@ -40,6 +40,24 @@ enum Action_ID {
     ACTION_COUNT,
 };
 
+enum Last_Action_Type {
+  LAST_ACTION_TYPE_KEYBOARD,
+  LAST_ACTION_TYPE_GAMEPAD,
+  LAST_ACTION_TYPE_COUNT,
+};
+
+local const char* last_action_type_string(s32 last_action_type) {
+  switch (last_action_type) {
+  case LAST_ACTION_TYPE_KEYBOARD: {
+    return "(last-action-type-keyboard)";
+  } break;
+  case LAST_ACTION_TYPE_GAMEPAD: {
+    return "(last-action-type-gamepad)";
+  } break;
+  }
+  return "(none)";
+}
+
 local const char* action_id_string_readable_name(s32 action_id) {
     switch (action_id) {
         case ACTION_MOVE_UP:
@@ -112,6 +130,9 @@ namespace Action {
 
     bool is_down(s32 action_id);
     bool is_pressed(s32 action_id); // might be a bit harder to "judge" with joysticks...
+
+    s32 get_last_action_type(void);
+    void set_last_action_type(s32 id);
 
     int luaL_open_game_actionlib(lua_State* L);
 

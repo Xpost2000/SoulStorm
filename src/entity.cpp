@@ -874,6 +874,8 @@ void Player::halt_burst_charge_regeneration(s32 flash_count_required) {
     burst_charge = 0.0f;
     burst_charge_halt_regeneration = true;
     burst_charge_flash_count = flash_count_required;
+    burst_charge_recharge_t = 0;
+    burst_charge_recharge_max_t = (flash_count_required-1) * PLAYER_BURST_FLASH_T * 2;
 }
 
 s32 Player::get_burst_rank(void) {
@@ -1391,6 +1393,7 @@ void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
         // would artificially extend your inability to act with focus.
         if (burst_charge_halt_regeneration) {
             if (burst_charge_flash_count) {
+                burst_charge_recharge_t += dt;
                 if (burst_charge_halt_flash_t < PLAYER_BURST_FLASH_T) {
                     burst_charge_halt_flash_t += dt;
                 } else {

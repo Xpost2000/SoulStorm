@@ -5086,6 +5086,135 @@ GAME_SCREEN(update_and_render_game_ingame) {
           GameUI::end_frame();
           GameUI::update(dt);
         }
+        else {
+          // Remainder of the Game UI, which is mostly reminder prompts.
+          // This UI is not needed when watching a replay, and far more important while actually playing.
+          auto font = resources->get_font(MENU_FONT_COLOR_WHITE);
+          auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
+
+          f32 widget_x = ui_cursor_x_left + 20;
+          f32 widest_prompt_width = 0.0f;
+          f32 bar_max_width = 165;
+
+          render_commands_push_quad(
+            ui_render_commands,
+            rectangle_f32(widget_x, ui_cursor_y, bar_max_width, 4),
+            color32u8(12, 19, 12, 255),
+            BLEND_MODE_ALPHA
+          );
+
+          auto& player = state->player;
+          if (!player.burst_charge_disabled && player.burst_charge_halt_regeneration) {
+            f32 alpha = player.burst_charge_recharge_t / player.burst_charge_recharge_max_t;
+            render_commands_push_quad(
+              ui_render_commands,
+              rectangle_f32(widget_x, ui_cursor_y, bar_max_width * alpha, 4),
+              color32u8(255, 20, 40, 255),
+              BLEND_MODE_ALPHA
+            );
+          }
+          
+          bool use_controller_prompt = Action::get_last_action_type() == LAST_ACTION_TYPE_GAMEPAD;
+
+          widest_prompt_width = 65;
+
+          ui_cursor_y += 25;
+          {
+            auto action_data = Action::get_action_data_for(ACTION_FOCUS);
+            
+            // TODO: make icons
+            if (use_controller_prompt) {
+              render_commands_push_text(
+                ui_render_commands, font1,
+                2.00f,
+                V2(widget_x, ui_cursor_y),
+                string_from_cstring((char*)controller_button_strings_readable(action_data->button_id)),
+                color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+              );
+            }
+            else {
+              render_commands_push_text(
+                ui_render_commands, font1,
+                2.00f,
+                V2(widget_x, ui_cursor_y),
+                string_from_cstring((char*)keyboard_key_strings_readable(action_data->key_id[0])),
+                color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+              );
+            }
+          }
+          render_commands_push_text(
+            ui_render_commands, font,
+            1.50f,
+            V2(widget_x + widest_prompt_width, ui_cursor_y),
+            string_literal("BURST/FOCUS"),
+            color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+          );
+          ui_cursor_y += 25;
+          
+          {
+            auto action_data = Action::get_action_data_for(ACTION_USE_BOMB);
+
+            // TODO: make icons
+            if (use_controller_prompt) {
+              render_commands_push_text(
+                ui_render_commands, font1,
+                2.0f,
+                V2(widget_x, ui_cursor_y),
+                string_from_cstring((char*)controller_button_strings_readable(action_data->button_id)),
+                color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+              );
+            }
+            else {
+              render_commands_push_text(
+                ui_render_commands, font1,
+                2.0f,
+                V2(widget_x, ui_cursor_y),
+                string_from_cstring((char*)keyboard_key_strings_readable(action_data->key_id[0])),
+                color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+              );
+            }
+          }
+          render_commands_push_text(
+            ui_render_commands, font,
+            1.50f,
+            V2(widget_x + widest_prompt_width, ui_cursor_y),
+            string_literal("BURST SPECIAL"),
+            color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+          );
+
+          ui_cursor_y += 25;
+
+          {
+            auto action_data = Action::get_action_data_for(ACTION_ACTION);
+
+            // TODO: make icons
+            if (use_controller_prompt) {
+              render_commands_push_text(
+                ui_render_commands, font1,
+                2.0f,
+                V2(widget_x, ui_cursor_y),
+                string_from_cstring((char*)controller_button_strings_readable(action_data->button_id)),
+                color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+              );
+            }
+            else {
+              render_commands_push_text(
+                ui_render_commands, font1,
+                2.0f,
+                V2(widget_x, ui_cursor_y),
+                string_from_cstring((char*)keyboard_key_strings_readable(action_data->key_id[0])),
+                color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+              );
+            }
+          }
+          render_commands_push_text(
+            ui_render_commands, font,
+            1.50f,
+            V2(widget_x + widest_prompt_width, ui_cursor_y),
+            string_literal("ATTACK"),
+            color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+          );
+        }
       }
     }
     {

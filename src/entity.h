@@ -431,6 +431,11 @@ struct Player : public Entity {
     s32  burst_charge_flash_count  = 0;
     f32  burst_charge_halt_flash_t = 0.0f;
 
+    // This timer is... technically updated separately from the other one
+    // since this one is easier to use for viewing in a meter.
+    f32  burst_charge_recharge_max_t = 0.0f;
+    f32  burst_charge_recharge_t = 0.0f;
+
     f32  burst_absorption_shield_ability_timer = 0.0f;
     f32  burst_ray_attack_ability_timer = 0.0f;
 
