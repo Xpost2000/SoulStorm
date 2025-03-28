@@ -28,7 +28,7 @@ Memory_Arena bigarena;
 static void add_files(string* files, int* write, string pathname) {
     if (is_path_directory(pathname)) {
         auto listing = directory_listing_list_all_files_in(&bigarena, pathname);
-        for (int i = 2; i < listing.count; ++i) {
+        for (int i = 0; i < listing.count; ++i) {
             string clone = string_clone(&bigarena, string_from_cstring(format_temp("%s/%s", listing.basename, listing.files[i].name)));
             add_files(files, write, clone);
         }

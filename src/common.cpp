@@ -297,9 +297,16 @@ Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, strin
     result.files = (Directory_File*)arena->push_unaligned(sizeof(*result.files));
 
     do {
-        Directory_File* current_file = &result.files[result.count++];
+        {
+            string entry_name = string_from_cstring(find_data.cFileName);
+            if (string_equal(entry_name, string_literal(".")) ||
+                string_equal(entry_name, string_literal(".."))) 
+                continue;
+        }
 
+        Directory_File* current_file = &result.files[result.count++];
         current_file->is_directory = (find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+
         cstring_copy(find_data.cFileName, current_file->name, array_count(current_file->name));
         current_file->filesize = (find_data.nFileSizeHigh * (MAXDWORD+1)) + find_data.nFileSizeLow;
 
