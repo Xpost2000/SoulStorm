@@ -1034,6 +1034,8 @@ struct Game_Resources {
     image_id        ui_border_effect[BORDER_FLASH_ID_TYPE_COUNT-1];
     image_id        explosion_image[3];
 
+    image_id        ui_controller_button_icons[16]; // no input.h inclusion
+
     // Technically I'm using this for a cheap "glow" effect
     image_id        ui_border_vignette;
 

@@ -136,6 +136,141 @@ string prefqpath(string path)
   return full_pref_path;
 }
 
+// NOTE(jerry): affected by UI alpha
+local f32 draw_input_prompt(
+    struct render_commands* ui_render_commands,
+    Game_Resources* resources,
+    V2 where,
+    s32 action_id,
+    string label,
+    s32 keyboard_input_font_id,
+    s32 label_font_id
+) {
+    // How do I align these to be too big.
+    bool use_controller_prompt = Action::get_last_action_type() == LAST_ACTION_TYPE_GAMEPAD;
+    f32 alpha = GameUI::get_visual_alpha();
+    f32 text_scale = 2.0f;
+    f32 input_scale = 2.0f;
+    f32 height_contribution_of_prompt_icon = 0;
+    f32 widest_prompt_width = 64; // This is hard-coded, I normally wouldn't like this,
+                                  // but precedent there is no formal UI framework and there's
+                                  // little point to adding all the code for that.
+
+    auto font = resources->get_font(label_font_id);
+    auto font1 = resources->get_font(keyboard_input_font_id);
+
+    {
+        auto action_data = Action::get_action_data_for(action_id);
+
+        if (use_controller_prompt) {
+            // TODO: make icons
+            if (resources->ui_controller_button_icons[action_data->button_id].index) {
+                auto source_rect = resources->ui_texture_atlas.get_subrect(resources->ui_controller_button_icons[action_data->button_id]);
+                auto image       = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_texture_atlas.atlas_image_id);
+                render_commands_push_image(
+                    ui_render_commands,
+                    image,
+                    rectangle_f32(where.x, where.y-8, 32, 32), // all of them are 32x32
+                    source_rect,
+                    color32f32(1,1,1,1), NO_FLAGS, BLEND_MODE_ALPHA);
+                height_contribution_of_prompt_icon = 34;
+            } else {
+                render_commands_push_text(
+                    ui_render_commands, font1,
+                    input_scale,
+                    where,
+                    string_from_cstring(
+                        (char*)(controller_button_strings_readable(action_data->button_id) + sizeof("Gamepad"))
+                    ),
+                    color32f32(1, 1, 1, alpha), BLEND_MODE_ALPHA
+                );
+            }
+            widest_prompt_width = 42;
+        }
+        else {
+            text_scale = 1.6f;
+            input_scale = 1.6f;
+            render_commands_push_text(
+                ui_render_commands, font1,
+                input_scale,
+                where,
+                string_from_cstring((char*)keyboard_key_strings_readable(action_data->key_id[0])),
+                color32f32(1, 1, 1, alpha), BLEND_MODE_ALPHA
+            );
+        }
+    }
+
+    where.x += widest_prompt_width;
+
+    render_commands_push_text(
+        ui_render_commands, font,
+        text_scale,
+        where,
+        label,
+        color32f32(1, 1, 1, alpha), BLEND_MODE_ALPHA
+    );
+
+    return max(
+        max(
+            font_cache_text_height(font) * text_scale,
+            font_cache_text_height(font1) * input_scale
+        ),
+        height_contribution_of_prompt_icon
+    );
+}
+
+/*
+  NOTE(jerry):
+  it's weird to get a good layout...
+*/
+local void draw_input_nav_controls(
+    struct render_commands* ui_render_commands,
+    Game_Resources* resources,
+    V2 where
+) {
+    bool use_controller_prompt = Action::get_last_action_type() == LAST_ACTION_TYPE_GAMEPAD;
+
+    if (!use_controller_prompt) {
+        // It would be too much clutter to show the UI
+        // if you were using the keyboard controls since they're
+        // obvious in my opinion.
+        //
+        // However, it's kind of more important for controllers.
+        // return;
+    }
+
+    where.y +=
+        draw_input_prompt(
+            ui_render_commands,
+            resources,
+            where,
+            ACTION_MOVE_UP,
+            string_literal("UP"),
+            MENU_FONT_COLOR_SKYBLUE,
+            MENU_FONT_COLOR_WHITE
+        );
+    where.y +=
+        draw_input_prompt(
+            ui_render_commands,
+            resources,
+            where,
+            ACTION_MOVE_DOWN,
+            string_literal("DOWN"),
+            MENU_FONT_COLOR_SKYBLUE,
+            MENU_FONT_COLOR_WHITE
+        );
+    where.y +=
+        draw_input_prompt(
+            ui_render_commands,
+            resources,
+            where,
+            ACTION_CANCEL,
+            string_literal("CANCEL"),
+            MENU_FONT_COLOR_SKYBLUE,
+            MENU_FONT_COLOR_WHITE
+        );
+}
+
 local bool game_will_be_new_high_score(s32 stage_index, s32 level_index, s32 new_score) {
     auto& level = stage_list[stage_index].levels[level_index];
     return (new_score > level.best_score);
@@ -722,6 +857,28 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             resources->trophies_unlocked[i] = graphics_assets_load_image(&resources->graphics_assets, unlocked_trophy_paths[i]);
         }
 
+        string ui_controller_button_icon_paths[] = {
+            string_literal("(null)"),
+            string_literal("res/img/ui/input/xboxa.png"),
+            string_literal("res/img/ui/input/xboxb.png"),
+            string_literal("res/img/ui/input/xboxx.png"),
+            string_literal("res/img/ui/input/xboxy.png"),
+            string_literal("res/img/ui/input/xboxrs.png"),
+            string_literal("res/img/ui/input/xboxls.png"),
+            string_literal("res/img/ui/input/xboxrb.png"),
+            string_literal("res/img/ui/input/xboxlb.png"),
+            string_literal("res/img/ui/input/xboxstart.png"),
+            string_literal("res/img/ui/input/xboxback.png"),
+            string_literal("res/img/ui/input/xboxup.png"),
+            string_literal("res/img/ui/input/xboxdown.png"),
+            string_literal("res/img/ui/input/xboxleft.png"),
+            string_literal("res/img/ui/input/xboxright.png"),
+        };
+
+        for (int i = 1; i < array_count(ui_controller_button_icon_paths); ++i) {
+            resources->ui_controller_button_icons[i] = graphics_assets_load_image(&resources->graphics_assets, ui_controller_button_icon_paths[i]);
+        }
+
         // all main assets loaded, now try to build atlas.
         {
             int i = 0;
@@ -746,6 +903,13 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             images[i++] = resources->ui_chunky_outline.bottom;
             images[i++] = resources->ui_chunky_outline.top;
             images[i++] = resources->ui_chunky_outline.center;
+
+            for (int j = 0; j < BUTTON_COUNT; ++j) {
+                if (resources->ui_controller_button_icons[j].index) {
+                    images[i++] = resources->ui_controller_button_icons[j];
+                }
+            }
+
             for (int j = 0; j < TROPHY_ICON_COUNT; ++j) {
                 images[i++] = resources->trophies_locked[j];
             }
@@ -5114,106 +5278,39 @@ GAME_SCREEN(update_and_render_game_ingame) {
             );
           }
           
-          bool use_controller_prompt = Action::get_last_action_type() == LAST_ACTION_TYPE_GAMEPAD;
-
           widest_prompt_width = 65;
 
           ui_cursor_y += 25;
-          {
-            auto action_data = Action::get_action_data_for(ACTION_FOCUS);
-            
-            // TODO: make icons
-            if (use_controller_prompt) {
-              render_commands_push_text(
-                ui_render_commands, font1,
-                2.00f,
-                V2(widget_x, ui_cursor_y),
-                string_from_cstring((char*)controller_button_strings_readable(action_data->button_id)),
-                color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+          ui_cursor_y +=
+              draw_input_prompt(
+                  ui_render_commands,
+                  resources,
+                  V2(widget_x, ui_cursor_y),
+                  ACTION_FOCUS,
+                  string_literal("BURST/FOCUS"),
+                  MENU_FONT_COLOR_SKYBLUE,
+                  MENU_FONT_COLOR_WHITE
               );
-            }
-            else {
-              render_commands_push_text(
-                ui_render_commands, font1,
-                2.00f,
-                V2(widget_x, ui_cursor_y),
-                string_from_cstring((char*)keyboard_key_strings_readable(action_data->key_id[0])),
-                color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+          ui_cursor_y +=
+              draw_input_prompt(
+                  ui_render_commands,
+                  resources,
+                  V2(widget_x, ui_cursor_y),
+                  ACTION_USE_BOMB,
+                  string_literal("BURST SPECIAL"),
+                  MENU_FONT_COLOR_SKYBLUE,
+                  MENU_FONT_COLOR_WHITE
               );
-            }
-          }
-          render_commands_push_text(
-            ui_render_commands, font,
-            1.50f,
-            V2(widget_x + widest_prompt_width, ui_cursor_y),
-            string_literal("BURST/FOCUS"),
-            color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
-          );
-          ui_cursor_y += 25;
-          
-          {
-            auto action_data = Action::get_action_data_for(ACTION_USE_BOMB);
-
-            // TODO: make icons
-            if (use_controller_prompt) {
-              render_commands_push_text(
-                ui_render_commands, font1,
-                2.0f,
-                V2(widget_x, ui_cursor_y),
-                string_from_cstring((char*)controller_button_strings_readable(action_data->button_id)),
-                color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
+          ui_cursor_y +=
+              draw_input_prompt(
+                  ui_render_commands,
+                  resources,
+                  V2(widget_x, ui_cursor_y),
+                  ACTION_ACTION,
+                  string_literal("ATTACK"),
+                  MENU_FONT_COLOR_SKYBLUE,
+                  MENU_FONT_COLOR_WHITE
               );
-            }
-            else {
-              render_commands_push_text(
-                ui_render_commands, font1,
-                2.0f,
-                V2(widget_x, ui_cursor_y),
-                string_from_cstring((char*)keyboard_key_strings_readable(action_data->key_id[0])),
-                color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
-              );
-            }
-          }
-          render_commands_push_text(
-            ui_render_commands, font,
-            1.50f,
-            V2(widget_x + widest_prompt_width, ui_cursor_y),
-            string_literal("BURST SPECIAL"),
-            color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
-          );
-
-          ui_cursor_y += 25;
-
-          {
-            auto action_data = Action::get_action_data_for(ACTION_ACTION);
-
-            // TODO: make icons
-            if (use_controller_prompt) {
-              render_commands_push_text(
-                ui_render_commands, font1,
-                2.0f,
-                V2(widget_x, ui_cursor_y),
-                string_from_cstring((char*)controller_button_strings_readable(action_data->button_id)),
-                color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
-              );
-            }
-            else {
-              render_commands_push_text(
-                ui_render_commands, font1,
-                2.0f,
-                V2(widget_x, ui_cursor_y),
-                string_from_cstring((char*)keyboard_key_strings_readable(action_data->key_id[0])),
-                color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
-              );
-            }
-          }
-          render_commands_push_text(
-            ui_render_commands, font,
-            1.50f,
-            V2(widget_x + widest_prompt_width, ui_cursor_y),
-            string_literal("ATTACK"),
-            color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA
-          );
         }
       }
     }
