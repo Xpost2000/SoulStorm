@@ -319,7 +319,7 @@ struct Gameplay_Stage_Complete_Stage_Sequence {
 // NOTE: you can achieve this through various different things
 // like maximizing your score.
 #define MAX_TRIES_ALLOWED (15)
-#define MAX_BASE_TRIES (4)
+#define MAX_BASE_TRIES (5)
 
 // will do a small jump before dying.
 // NOTE: not the same as the hit marker score notifications
