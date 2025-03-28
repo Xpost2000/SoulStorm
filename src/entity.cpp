@@ -863,6 +863,7 @@ void Player::draw(Game_State* const state, struct render_commands* render_comman
 }
 
 void Player::disable_burst_charge_regeneration(void) {
+    just_burned_out = true;
     burst_charge_disabled = true;
 }
 
@@ -871,6 +872,7 @@ void Player::enable_burst_charge_regeneration(void) {
 }
 
 void Player::halt_burst_charge_regeneration(s32 flash_count_required) {
+    just_burned_out = true;
     burst_charge = 0.0f;
     burst_charge_halt_regeneration = true;
     burst_charge_flash_count = flash_count_required;
@@ -1447,6 +1449,18 @@ void Player::update(Game_State* state, f32 dt) {
     bool focusing = input_packet.actions & BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT);
     bool use_bomb = input_packet.actions & BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT);
 
+    // NOTE(jerry):
+    // This is to protect the player from an infinite burn out loop
+    // because players did not seem to understand the resource management
+    // early on, and this was probably far too punishing.
+    if (just_burned_out) {
+        if (focusing) {
+            focusing = false;
+        } else {
+            just_burned_out = false;
+        }
+    }
+
     // NOTE(jerry): You cannot focus if you're attempting to
     //              recover.
     if (!burst_charge_halt_regeneration) {
@@ -1622,7 +1636,7 @@ void Player::update(Game_State* state, f32 dt) {
             _debugprintf("burn out!");
             halt_burst_charge_regeneration(
                 calculate_amount_of_burst_depletion_flashes_for(
-                    4.5f
+                    3.0f
                 )
             );
         }

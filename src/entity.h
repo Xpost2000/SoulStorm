@@ -421,6 +421,7 @@ struct Player : public Entity {
     f32 grazing_delay       = PLAYER_DEFAULT_GRAZING_DELAY;
     f32 time_spent_grazing  = 0.0f;
     f32 burst_charge = 0.0f;
+    bool just_burned_out = false;
 
     // NOTE(jerry):
     // while I appreciate "timing" based things, it doesn't
