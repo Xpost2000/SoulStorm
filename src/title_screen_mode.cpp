@@ -411,6 +411,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
         {
             auto& titlescreen_data = state->titlescreen_data;
             const f32 max_zoom = 2.5f;
+            const f32 min_zoom = 1.15f;
             switch (titlescreen_data.phase) {
                 case TITLE_SCREEN_ANIMATION_PHASE_CLOSE_UP_OF_FACE: {
                     const f32 phase_max_t = 2.55f;
@@ -436,7 +437,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
                     const f32 effective_t = clamp<f32>(titlescreen_data.anim_timer/phase_max_t, 0.0f, 1.0f);
 
                     GameUI::set_all_visual_alpha(0.0f);
-                    titlescreen_data.main_camera.zoom     = ease_out_back_f32(max_zoom, 1.0f, effective_t);
+                    titlescreen_data.main_camera.zoom     = ease_out_back_f32(max_zoom, min_zoom, effective_t);
                     titlescreen_data.main_camera.xy       = V2(-new_screen_width/2 * titlescreen_data.main_camera.zoom, -new_screen_height/2 * titlescreen_data.main_camera.zoom);
 
                     if (titlescreen_data.anim_timer < phase_max_t) {
@@ -451,7 +452,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
                     const f32 effective_t2 = clamp<f32>(titlescreen_data.anim_timer/(phase_max_t/2), 0.0f, 1.0f);
                     const f32 effective_t = clamp<f32>(titlescreen_data.anim_timer/phase_max_t, 0.0f, 1.0f);
 
-                    titlescreen_data.main_camera.zoom     = 1.0f;
+                    titlescreen_data.main_camera.zoom     = min_zoom;
                     titlescreen_data.main_camera.xy       = V2(-new_screen_width/2 * titlescreen_data.main_camera.zoom, -new_screen_height/2 * titlescreen_data.main_camera.zoom);
                     GameUI::set_all_visual_alpha(effective_t);
 
