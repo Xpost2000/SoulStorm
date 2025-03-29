@@ -1387,6 +1387,7 @@ void Game::init(Graphics_Driver* driver) {
         Action::register_action_button(ACTION_USE_BOMB, BUTTON_Y, 1.0f);
 
         Action::register_action_keys(ACTION_SCREENSHOT, KEY_F9, KEY_UNKNOWN, 1.0f);
+        Action::register_action_button(ACTION_SCREENSHOT, BUTTON_BACK, 1.0f);
     }
 
     if (!Action::load(string_literal("controls.lua"))) {
@@ -2336,12 +2337,53 @@ GAME_UI_SCREEN(update_and_render_controls_menu) {
                 x += 150;
                 {
                     string binding_string_name = string_from_cstring((cstring)controller_button_strings_readable(action_data->button_id));
-                    if (GameUI::button(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && bindable) == WIDGET_ACTION_ACTIVATE) {
+
+                    bool overlay_with_controller_button_icon = false;
+                    if (resources->ui_controller_button_icons[action_data->button_id].index) {
+                      binding_string_name = string_literal(" P ");
+                      overlay_with_controller_button_icon = true;
+                    }
+
+                    int button_status;
+                    if ((button_status=GameUI::button(V2(x, y), binding_string_name, color32f32_WHITE, 2, !Transitions::fading() && bindable)) == WIDGET_ACTION_ACTIVATE) {
                         if (control_menu_temp_data.trying_to_bind_controls == 0) {
                             control_menu_temp_data.action_id_to_bind       = action_id;
                             control_menu_temp_data.action_id_to_bind_slot  = CONTROLS_MENU_DATA_BINDING_SLOT_GAMEPAD;
                             control_menu_temp_data.trying_to_bind_controls = 2;
                         }
+                    }
+
+                    /*
+                      HACKME(jerry):
+                        The IMGUI for the game's UI does not have button image support, and I don't
+                        think it's worth putting it in, since this is the *one* time I need it.
+                    */
+                    if (overlay_with_controller_button_icon) {
+                      auto source_rect = resources->ui_texture_atlas.get_subrect(resources->ui_controller_button_icons[action_data->button_id]);
+                      auto image = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_texture_atlas.atlas_image_id);
+                      f32 alpha = GameUI::get_visual_alpha();
+                      color32f32 color_selection = color32f32(1,1,1,1);
+
+                      if (!bindable) {
+                        color_selection.r = 0.5;
+                        color_selection.g = 0.5;
+                        color_selection.b = 0.5;
+                      }
+                      else {
+                        if (button_status) {
+                          color_selection.r = 0.75;
+                          color_selection.g = 0.15;
+                          color_selection.b = 0.15;
+                        }
+                      }
+
+                      color_selection.a = alpha;
+                      render_commands_push_image(
+                        commands,
+                        image,
+                        rectangle_f32(x, y - 8, 30, 30), // all of them are 32x32
+                        source_rect,
+                        color_selection, NO_FLAGS, BLEND_MODE_ALPHA);
                     }
                 }
 
@@ -3945,7 +3987,7 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
 
     if (show_nav_menu) {
       draw_input_nav_controls(commands, resources,
-        V2(commands->screen_width - 150, commands->screen_height - 100));
+        V2(commands->screen_width - 150, commands->screen_height - 85));
     }
 
     DebugUI::render(commands, resources->get_font(MENU_FONT_COLOR_WHITE));
