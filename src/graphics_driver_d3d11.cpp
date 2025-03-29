@@ -119,6 +119,7 @@ D3D11_Image d3d11_image_from_image_buffer(ID3D11Device* device, ID3D11DeviceCont
     // Upload orphaned texture for auto-generated mipmaps.
     {
       D3D11_BOX destbox;
+      zero_memory(&destbox, sizeof(destbox));
       destbox.left = destbox.top = 0;
       destbox.back = 1;
       destbox.right = image_buffer->width;
@@ -129,7 +130,7 @@ D3D11_Image d3d11_image_from_image_buffer(ID3D11Device* device, ID3D11DeviceCont
     }
 
     {
-        D3D11_SHADER_RESOURCE_VIEW_DESC texture_shader_resource_view_description;
+        D3D11_SHADER_RESOURCE_VIEW_DESC texture_shader_resource_view_description = {};
         zero_memory(&texture_shader_resource_view_description, sizeof(texture_shader_resource_view_description));
         texture_shader_resource_view_description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         texture_shader_resource_view_description.Texture2D.MipLevels = -1;

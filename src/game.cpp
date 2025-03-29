@@ -236,7 +236,7 @@ local void draw_input_nav_controls(
         // obvious in my opinion.
         //
         // However, it's kind of more important for controllers.
-        // return;
+         return;
     }
 
     where.y +=
@@ -244,18 +244,8 @@ local void draw_input_nav_controls(
             ui_render_commands,
             resources,
             where,
-            ACTION_MOVE_UP,
-            string_literal("UP"),
-            MENU_FONT_COLOR_SKYBLUE,
-            MENU_FONT_COLOR_WHITE
-        );
-    where.y +=
-        draw_input_prompt(
-            ui_render_commands,
-            resources,
-            where,
-            ACTION_MOVE_DOWN,
-            string_literal("DOWN"),
+            ACTION_ACTION,
+            string_literal("CONFIRM"),
             MENU_FONT_COLOR_SKYBLUE,
             MENU_FONT_COLOR_WHITE
         );

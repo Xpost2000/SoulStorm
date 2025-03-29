@@ -645,6 +645,8 @@ GAME_SCREEN(update_and_render_game_title_screen) {
             }
         }
         GameUI::end_frame();
+        draw_input_nav_controls(ui_render_commands, resources,
+          V2(ui_render_commands->screen_width - 120, ui_render_commands->screen_height - 100));
     }
 
     Transitions::update_and_render(ui_render_commands, dt);
@@ -904,6 +906,8 @@ GAME_SCREEN(update_and_render_game_title_screen) {
             // GameUI::ninepatch(&resources->ui_texture_atlas, resources->ui_chunky, V2(100, 100), 3, 3, color32f32(0,0,1,1), 3);
         }
         GameUI::end_frame();
+        draw_input_nav_controls(ui_render_commands, resources,
+          V2(ui_render_commands->screen_width - 150, ui_render_commands->screen_height - 100));
     }
 
     Transitions::update_and_render(ui_render_commands, dt);
