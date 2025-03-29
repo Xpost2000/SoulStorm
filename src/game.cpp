@@ -4275,6 +4275,12 @@ draw_completion_score_list(
   }
 }
 
+/*
+  NOTE(jerry):
+    if I want this animated much more... There's gonna be a lot of code to
+    animate all this stuff in a fancy way. Ugh... For the demo (and final release if I never get to it LOL),
+    I might just keep it like this.
+*/
 void Game::ingame_update_complete_stage_sequence(struct render_commands* commands, Game_Resources* resources, f32 dt) {
     auto& complete_stage_state = state->gameplay_data.complete_stage;
     auto& timer                = complete_stage_state.stage_timer;
@@ -4404,6 +4410,8 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                 complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT;
                 Audio::stop_music();
             }
+            draw_input_nav_controls(commands, resources,
+              V2(commands->screen_width - 150, commands->screen_height - 85));
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_FADE_OUT: {
             f32 alpha = saturate((1.0f - timer_percentage));
@@ -4467,7 +4475,6 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
         } break;
         case GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_NONE: {} break;
     }
-
     timer.update(dt);
 }
 
