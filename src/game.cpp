@@ -172,7 +172,7 @@ local f32 draw_input_prompt(
                     image,
                     rectangle_f32(where.x, where.y-8, 32, 32), // all of them are 32x32
                     source_rect,
-                    color32f32(1,1,1,1), NO_FLAGS, BLEND_MODE_ALPHA);
+                    color32f32(1,1,1,alpha), NO_FLAGS, BLEND_MODE_ALPHA);
                 height_contribution_of_prompt_icon = 34;
             } else {
                 render_commands_push_text(
@@ -190,11 +190,19 @@ local f32 draw_input_prompt(
         else {
             text_scale = 1.6f;
             input_scale = 1.6f;
+
+            string keyboard_string = string_from_cstring((char*)keyboard_key_strings_readable(action_data->key_id[0]));
+
+            // Too big, scale down. Kinda looks bad, but bad layout not worth it!
+            if (keyboard_string.length >= 5) {
+              input_scale = 1.35;
+            }
+
             render_commands_push_text(
                 ui_render_commands, font1,
                 input_scale,
                 where,
-                string_from_cstring((char*)keyboard_key_strings_readable(action_data->key_id[0])),
+                keyboard_string,
                 color32f32(1, 1, 1, alpha), BLEND_MODE_ALPHA
             );
         }
@@ -230,6 +238,7 @@ local void draw_input_nav_controls(
 ) {
     bool use_controller_prompt = Action::get_last_action_type() == LAST_ACTION_TYPE_GAMEPAD;
 
+#if 0
     if (!use_controller_prompt) {
         // It would be too much clutter to show the UI
         // if you were using the keyboard controls since they're
@@ -238,6 +247,7 @@ local void draw_input_nav_controls(
         // However, it's kind of more important for controllers.
          return;
     }
+#endif
 
     where.y +=
         draw_input_prompt(
