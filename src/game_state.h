@@ -1035,6 +1035,7 @@ struct Game_Resources {
     image_id        explosion_image[3];
 
     image_id        ui_controller_button_icons[16]; // no input.h inclusion
+    image_id        ui_burst_meter_action_icons[4]; // If I were to have more burst features, should be differently sized, but one character is already enough work!
 
     // Technically I'm using this for a cheap "glow" effect
     image_id        ui_border_vignette;

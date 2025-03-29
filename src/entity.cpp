@@ -1172,6 +1172,7 @@ bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, 
         calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_RAY_ABILITY_MAX_T*1.85)
     );
     player->burst_ray_attack_ability_timer = PLAYER_BURST_RAY_ABILITY_MAX_T;
+    player->current_burst_ability_max_t = PLAYER_BURST_RAY_ABILITY_MAX_T;
     state->gameplay_data.current_score -= SCORE_COST;
     return true;
 }
@@ -1190,6 +1191,7 @@ bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u3
     controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
     camera_traumatize(&state->gameplay_data.main_camera, 0.5f);
     player->burst_absorption_shield_ability_timer = PLAYER_BURST_SHIELD_ABILITY_MAX_T;
+    player->current_burst_ability_max_t = PLAYER_BURST_SHIELD_ABILITY_MAX_T;
     return true;
 }
 

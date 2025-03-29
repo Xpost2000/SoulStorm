@@ -439,6 +439,7 @@ struct Player : public Entity {
 
     f32  burst_absorption_shield_ability_timer = 0.0f;
     f32  burst_ray_attack_ability_timer = 0.0f;
+    f32  current_burst_ability_max_t = 0.0f;
 
     s32  get_burst_ability_usage(s32 id);
     void add_burst_ability_usage(s32 id);

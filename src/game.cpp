@@ -879,6 +879,17 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             resources->ui_controller_button_icons[i] = graphics_assets_load_image(&resources->graphics_assets, ui_controller_button_icon_paths[i]);
         }
 
+        string ui_burst_meter_icon_paths[] = {
+          string_literal("(null)"),
+          string_literal("res/img/ui/bursttier1.png"),
+          string_literal("res/img/ui/bursttier2.png"),
+          string_literal("res/img/ui/bursttier3.png"),
+        };
+
+        for (int i = 1; i < array_count(ui_burst_meter_icon_paths); ++i) {
+          resources->ui_burst_meter_action_icons[i] = graphics_assets_load_image(&resources->graphics_assets, ui_burst_meter_icon_paths[i]);
+        }
+
         // all main assets loaded, now try to build atlas.
         {
             int i = 0;
@@ -908,6 +919,12 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
                 if (resources->ui_controller_button_icons[j].index) {
                     images[i++] = resources->ui_controller_button_icons[j];
                 }
+            }
+
+            for (int j = 0; j < 4; ++j) {
+              if (resources->ui_burst_meter_action_icons[j].index) {
+                images[i++] = resources->ui_burst_meter_action_icons[j];
+              }
             }
 
             for (int j = 0; j < TROPHY_ICON_COUNT; ++j) {
@@ -5126,17 +5143,24 @@ GAME_SCREEN(update_and_render_game_ingame) {
         {
           auto font = resources->get_font(MENU_FONT_COLOR_SKYBLUE);
           f32 widget_x = ui_cursor_x_left + 20;
-          f32 bar_max_width = 165;
+          f32 bar_max_width = 160;
           f32 player_charge_percentage = state->player.get_burst_charge_percent();
           s32 tier_count = get_burst_mode_rank_count();
           auto current_tier = state->player.get_burst_rank();
           f32 percent_per_tier = 1.0f / tier_count;
           // pick better colors.
           local color32u8 bar_portion_colors[] = {
+#if 0
             color32u8(200, 200, 222, 255),
             color32u8(225, 200, 200, 255),
             color32u8(235, 140, 140, 255),
             color32u8(255, 0, 0, 255),
+#else
+            color32u8(200, 200, 222, 255),
+            color32u8(137, 207, 240, 255),
+            color32u8(102, 153, 204, 255),
+            color32u8(0, 127, 255, 255),
+#endif
           };
 
           render_commands_push_text(
@@ -5191,6 +5215,21 @@ GAME_SCREEN(update_and_render_game_ingame) {
                       bar_portion_colors[tier_index],
                       BLEND_MODE_ALPHA
                   );
+                  
+                  // DrawBurstActionIcon
+                  {
+                    if (resources->ui_burst_meter_action_icons[tier_index].index) {
+                      auto source_rect = resources->ui_texture_atlas.get_subrect(resources->ui_burst_meter_action_icons[tier_index]);
+                      auto image = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_texture_atlas.atlas_image_id);
+                      render_commands_push_image(
+                        ui_render_commands,
+                        image,
+                        rectangle_f32(x_cursor + slice_width/2 - 8, ui_cursor_y, 16, 16), // all of them are 32x32
+                        source_rect,
+                        color32f32(1, 1, 1, 1), NO_FLAGS, BLEND_MODE_ALPHA);
+                    }
+                  }
+
                   x_cursor += slice_width;
               }
 
@@ -5335,7 +5374,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
           f32 widget_x = ui_cursor_x_left + 20;
           f32 widest_prompt_width = 0.0f;
-          f32 bar_max_width = 165;
+          f32 bar_max_width = 160;
 
           render_commands_push_quad(
             ui_render_commands,
@@ -5345,14 +5384,16 @@ GAME_SCREEN(update_and_render_game_ingame) {
           );
 
           auto& player = state->player;
-          render_commands_push_quad(
-              ui_render_commands,
-              rectangle_f32(widget_x-1, ui_cursor_y-1, bar_max_width+2, 6),
-              color32u8(255,255,255,255),
-              BLEND_MODE_ALPHA
-          );
 
+          // BurstCooldownTimer
           {
+              render_commands_push_quad(
+                ui_render_commands,
+                rectangle_f32(widget_x - 1, ui_cursor_y - 1, bar_max_width + 2, 6),
+                color32u8(255, 255, 255, 255),
+                BLEND_MODE_ALPHA
+              );
+
               f32 alpha = 0;
               if (!player.burst_charge_disabled && player.burst_charge_halt_regeneration) {
                   alpha = player.burst_charge_recharge_t / player.burst_charge_recharge_max_t;
@@ -5370,10 +5411,40 @@ GAME_SCREEN(update_and_render_game_ingame) {
                   BLEND_MODE_ALPHA
               );
           }
+          ui_cursor_y += 8;
+          // BurstAbilityCooldownTimer (depends on last used ability)
+          {
+            render_commands_push_quad(
+              ui_render_commands,
+              rectangle_f32(widget_x - 1, ui_cursor_y - 1, bar_max_width + 2, 6),
+              color32u8(255, 255, 255, 255),
+              BLEND_MODE_ALPHA
+            );
+            
+            f32 alpha = 0;
+
+            if (player.burst_absorption_shield_ability_timer > 0.0f || player.burst_ray_attack_ability_timer > 0.0f) {
+              alpha = max(player.burst_absorption_shield_ability_timer, player.burst_ray_attack_ability_timer);
+              alpha = saturate(alpha / player.current_burst_ability_max_t);
+            }
+
+            render_commands_push_quad(
+              ui_render_commands,
+              rectangle_f32(widget_x, ui_cursor_y, bar_max_width, 4),
+              color32u8(25, 20, 40, 255),
+              BLEND_MODE_ALPHA
+            );
+            render_commands_push_quad(
+              ui_render_commands,
+              rectangle_f32(widget_x, ui_cursor_y, bar_max_width * alpha, 4),
+              color32u8(40, 255, 60, 255),
+              BLEND_MODE_ALPHA
+            );
+          }
+          ui_cursor_y += 25;
           
           widest_prompt_width = 65;
 
-          ui_cursor_y += 25;
           ui_cursor_y +=
               draw_input_prompt(
                   ui_render_commands,
