@@ -2903,6 +2903,13 @@ GAME_UI_SCREEN(update_and_render_replay_collection_menu) {
             state->gameplay_data.demo_collection_ui.current_page -= 1;
         }
         y += 30;
+        {
+          string stored_at =
+            unixify_pathname(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("Stored at: %s", replay_files.basename)));
+          // I would like to open the file explorer, but this doesn't seem to be a common/okay thing to do?
+          GameUI::label(V2(100, y), stored_at, color32f32(1, 1, 1, 1), 1);
+        }
+        y += 15;
 
         if (state->gameplay_data.demo_collection_ui.current_page < 0) {
             state->gameplay_data.demo_collection_ui.current_page = page_count-1;
@@ -2925,9 +2932,11 @@ GAME_UI_SCREEN(update_and_render_replay_collection_menu) {
                 }
 
                 string fullname =
-                    unixify_pathname(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("%s%s", replay_files.basename, file.name)));
+                  unixify_pathname(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("%s%s", replay_files.basename, file.name)));
+                string displayname = 
+                  unixify_pathname(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("%s", file.name)));
                     
-                if (GameUI::button(V2(130, y), fullname, color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                if (GameUI::button(V2(130, y), displayname, color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
                     {
                         auto serializer = open_read_file_serializer(fullname);
                         serializer.expected_endianess = ENDIANESS_LITTLE;
