@@ -3307,7 +3307,7 @@ void Game::update_and_render_stage_pet_select_menu(struct render_commands* comma
             y += 150;
 
             {
-                f32 y_data_show = y;
+                f32 y_data_show = y-50;
                 GameUI::label(V2(commands->screen_width - 300, y_data_show),
                               string_from_cstring(format_temp("Max Lives: %d", pet_data->maximum_lives)), color32f32(1, 1, 1, 1), 2);
                 y_data_show += 22;
@@ -3862,6 +3862,8 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
         }
     }
 
+    bool show_nav_menu = false;
+
     switch (state->ui_state) {
         case UI_STATE_INACTIVE: {
             bool should_empty_ui_id = state->screen_mode != GAME_SCREEN_CREDITS &&
@@ -3874,49 +3876,67 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
         } break;
         case UI_STATE_REPLAY_ASK_TO_SAVE: {
             update_and_render_replay_save_menu(commands, dt);
+            show_nav_menu = true;
         } break;
         case UI_STATE_REPLAY_COLLECTION: {
             update_and_render_replay_collection_menu(commands, dt);
+            show_nav_menu = true;
         } break;
         case UI_STATE_PAUSED: {
             update_and_render_pause_menu(commands, dt);
+            show_nav_menu = true;
         } break;
         case UI_STATE_CONFIRM_BACK_TO_MAIN_MENU: {
             update_and_render_confirm_back_to_main_menu(commands, dt);
+            show_nav_menu = true;
         } break;
         case UI_STATE_CONFIRM_EXIT_TO_WINDOWS: {
             update_and_render_confirm_exit_to_windows(commands, dt);
+            show_nav_menu = true;
         } break;
         case UI_STATE_SHOW_RENDERER_DISCLAIMER: {
             update_and_render_renderer_change_disclaimer(commands, dt);
+            show_nav_menu = true;
         } break;
         case UI_STATE_OPTIONS: {
             update_and_render_options_menu(commands, dt); 
+            show_nav_menu = true;
         } break;
         case UI_STATE_CONTROLS: {
             update_and_render_controls_menu(commands, dt);
+            show_nav_menu = true;
         } break;
         case UI_STATE_REVIEW_SCRIPT_ERROR: {
             update_and_render_review_script_error_menu(commands, dt);
         } break;
         case UI_STATE_STAGE_SELECT: {
             update_and_render_stage_select_menu(commands, dt); 
+            show_nav_menu = true;
         } break;
         case UI_STATE_PET_SELECT: {
             update_and_render_stage_pet_select_menu(commands, dt);
+            show_nav_menu = true;
         } break;
         case UI_STATE_DEAD_MAYBE_RETRY: {
             update_and_render_game_death_maybe_retry_menu(commands, dt);
+            show_nav_menu = true;
         } break;
         case UI_STATE_ACHIEVEMENTS: {
             update_and_render_achievements_menu(commands, dt);
+            show_nav_menu = true;
         } break;
         case UI_STATE_REPLAY_NOT_SUPPORTED: {
             update_and_render_replay_not_supported_menu(commands, dt);
+            show_nav_menu = true;
         } break;
         default: {
             unimplemented("Unknown ui state type");
         } break;
+    }
+
+    if (show_nav_menu) {
+      draw_input_nav_controls(commands, resources,
+        V2(commands->screen_width - 150, commands->screen_height - 100));
     }
 
     DebugUI::render(commands, resources->get_font(MENU_FONT_COLOR_WHITE));
