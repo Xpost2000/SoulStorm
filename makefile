@@ -32,7 +32,7 @@ ifeq ($(TARGET), win64)
 		   -ld3d11 -ld3dcompiler -ldxguid -lOpenGL32 -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse4 -m64
 else
 	# TODO: compile using the version of lua that's in the repository.
-	CLIBS:=-I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -L./. -lGL -lGLEW\
+	CLIBS:=-I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -L./. -ldl -lGL -lGLEW\
 		   -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse4 -m64
 endif
 
