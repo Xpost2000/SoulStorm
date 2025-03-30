@@ -620,7 +620,6 @@ function stage_task()
    play_area_set_edge_behavior(PLAY_AREA_EDGE_BOTTOM, PLAY_AREA_EDGE_BLOCKING);
    play_area_set_edge_behavior(PLAY_AREA_EDGE_LEFT, PLAY_AREA_EDGE_BLOCKING);
    play_area_set_edge_behavior(PLAY_AREA_EDGE_RIGHT, PLAY_AREA_EDGE_BLOCKING);
-   play_music(track);
 
    -- setup stage background
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_0.png", 0.45, 0, 0);
@@ -638,6 +637,8 @@ function stage_task()
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_1_2.png", 0.150, 0, 125);
    play_area_notify_current_border_status();
    -- end stage setup background
+   print("TRACK", track);
+   play_music(track);
 
    t_wait(2);
    -- print("wave 1");

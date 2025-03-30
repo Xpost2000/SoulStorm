@@ -16,6 +16,7 @@
 --
 -- I think the fight mechanics are fine, but I need to give the player more breathing room.
 -- 
+local track1 = load_music("res/snds/music_1_3_bossloop.ogg");
 
 enable_boss_death_explosion = false;
 BOSS_HP = 500;
@@ -224,6 +225,8 @@ function Boss1_Sprout1(
     end
 
     for i=0,times do
+      play_sound(random_attack_sound());
+
         local adji = i+adjustment_to_i;
         Bullet_Pattern_Sprout_Outwards360(
             position, 
@@ -257,7 +260,8 @@ function Boss1_XCross_Chasing(
     -- Draw X pattern (this is a partial spoke pattern which might be useful to keep)
     scalewaitfactor = scalewaitfactor or 0.45;
     for i=0, times do
-        for j=0,4 do
+         play_sound(random_attack_sound());
+         for j=0,4 do
             local bullet = bullet_new(BULLET_SOURCE_ENEMY);
             local position = boss1_state.last_good_position;
             local angle = 90 * (j+1) + 45;
@@ -810,6 +814,15 @@ function _Stage1_Boss_HexBind(eid, state)
    state.next_think_action_t = -9999;
 end
 
+function _Stage1_Boss_MusicPlayer(e)
+   while enemy_valid(e) do
+      if (music_playing() == false) then
+         play_music(track1);
+      end
+      t_yield();
+   end
+end
+
 function Game_Spawn_Stage1_Boss()
    local e = enemy_new();
    local initial_boss_pos = v2(play_area_width()/2, 50);
@@ -822,6 +835,7 @@ function Game_Spawn_Stage1_Boss()
    async_task_lambda(_Stage1_Boss_Movement_Logic, e);
    async_task_lambda(_Stage1_Boss_Maintain_Hexes_Logic, e);
    async_task_lambda(_Stage1_Boss_ImmunityToBurstLaser_Logic, e);
+   async_task_lambda(_Stage1_Boss_MusicPlayer, e);
    boss1_state.me = e;
    boss1_state.starting_position = initial_boss_pos;
 
