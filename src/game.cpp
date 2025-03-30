@@ -323,21 +323,21 @@ local int game_complete_stage_level(s32 stage_id, s32 level_id, bool practicing_
                 stage.unlocked_levels += 1;
 
                 result = GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL;
+
+                // Check for all stages completed.
+                if (stage.unlocked_levels > MAX_LEVELS_PER_STAGE) {
+                  assertion(ACHIEVEMENT_ID_STAGE1 + stage_id <= ACHIEVEMENT_ID_STAGE3 && "Invalid achievement for stage id.");
+                  auto achievement = Achievements::get(ACHIEVEMENT_ID_STAGE1 + stage_id);
+                  achievement->report();
+
+                  result = GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE;
+                }
             } else {
                 _debugprintf("Completed stage (%d-%d) another time!", stage_id+1, level_id+1);
                 result = GAME_COMPLETE_STAGE_CONTINUE_TO_NEXT_LEVEL; 
                 // result = GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY; 
             }
         }
-    }
-
-    // Check for all stages completed.
-    if (stage.unlocked_levels > MAX_LEVELS_PER_STAGE) {
-        assertion(ACHIEVEMENT_ID_STAGE1 + stage_id <= ACHIEVEMENT_ID_STAGE3 && "Invalid achievement for stage id.");
-        auto achievement = Achievements::get(ACHIEVEMENT_ID_STAGE1 + stage_id);
-        achievement->report();
-
-        result = GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE;
     }
 
     return result;
@@ -2839,15 +2839,27 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
                 Transitions::register_on_finish(
                     [&](void*) mutable {
                         switch_ui(UI_STATE_INACTIVE);
-                        _debugprintf("Hi, booting you to the next level.");
-
                         state->mainmenu_data.stage_id_level_in_stage_select += 1;
-                        setup_stage_start();
-                        Transitions::do_color_transition_out(
+                        if (state->mainmenu_data.stage_id_level_in_stage_select >= array_count(stage_list->levels)) {
+                          _debugprintf("Your next level does not exist. This happens if you are replaying a campaign.");
+                          _debugprintf("Sending back to main menu.");
+                          switch_ui(UI_STATE_STAGE_SELECT);
+                          switch_screen(GAME_SCREEN_MAIN_MENU);
+                          Transitions::do_shuteye_out(
                             color32f32(0, 0, 0, 1),
                             0.15f,
                             0.3f
-                        );
+                          );
+                        }
+                        else {
+                          _debugprintf("Hi, booting you to the next level.");
+                          setup_stage_start();
+                          Transitions::do_color_transition_out(
+                            color32f32(0, 0, 0, 1),
+                            0.15f,
+                            0.3f
+                          );
+                        }
                     }
                 );
             } break;
