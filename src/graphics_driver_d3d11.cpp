@@ -527,6 +527,18 @@ void Direct3D11_Graphics_Driver::initialize_backbuffer(V2 resolution) {
             &context
         );
 
+        // NOTE(jerry): Disable ALT-ENTER
+        // which is not something the game likes because it desyncs with
+        // the settings (I know it's not difficult to do so, but it's more crufty code since
+        // I'm using SDL2 + OpenGL in the same application compiled in all platforms!)
+        {
+          IDXGIFactory* factory = nullptr;
+          swapchain->GetParent(IID_IDXGIFactory, (void**) & factory);
+          assertion(factory && "Failed to obtain DXGI factory?");
+
+          factory->MakeWindowAssociation(swapchain_description.OutputWindow, DXGI_MWA_NO_PRINT_SCREEN | DXGI_MWA_NO_ALT_ENTER);
+        }
+
         // Fullscreen quad
         {
           int i = 0;
