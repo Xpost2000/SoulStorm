@@ -131,13 +131,15 @@ f32 get_average_frametime(void) {
 // Globals
 #define TARGET_TICKS_PER_SECOND (1000.0f / 60.0f)
 
-// NOTE(jerry): after vsync
+// NOTE(jerry): these are not *that* accurate,
+// it's a close enough frame limiter. VSync is suggested.
 const f32 target_frame_rate_ticks[] = {
     1000.0f / 30.0f,
     1000.0f / 45.0f,
     1000.0f / 60.0f,
     1000.0f / 120.0f,
     1000.0f / 144.0f,
+    0,
     0, // no limiter
 };
 
@@ -147,6 +149,7 @@ string target_frame_rate_tick_strings[] = {
   string_literal("60 FPS"),
   string_literal("120 FPS"),
   string_literal("144 FPS"),
+  string_literal("VSync"),
   string_literal("Uncapped FPS"),
 };
 
@@ -571,7 +574,8 @@ void initialize() {
         preferences.renderer_type = GRAPHICS_DEVICE_D3D11;
         preferences.fullscreen   = SCREEN_IS_FULLSCREEN;
         preferences.controller_vibration = true;
-        preferences.frame_limiter = 2; // 60 fps default
+        //preferences.frame_limiter = 2; // 60 fps default
+        preferences.frame_limiter = 5; // vsync default
     }
 
     // load preferences file primarily.
@@ -983,10 +987,13 @@ int main(int argc, char** argv) {
         u32 start_frame_time = SDL_GetTicks();
         engine_main_loop();
 
-        {
+        if (game.preferences.frame_limiter == 5) {
+          global_graphics_driver->set_vsync(true);
+        } else {
+          global_graphics_driver->set_vsync(false);
           const f32 target_ticks_per_second = target_frame_rate_ticks[game.preferences.frame_limiter];
           if (SDL_GetTicks() - start_frame_time < target_ticks_per_second) {
-            int sleep_time = target_ticks_per_second - (SDL_GetTicks() - start_frame_time);
+            int sleep_time = ceilf(target_ticks_per_second) - (SDL_GetTicks() - start_frame_time);
             SDL_Delay(sleep_time);
           }
         }

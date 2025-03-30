@@ -694,7 +694,7 @@ void Direct3D11_Graphics_Driver::swap_and_present() {
     }
     context->Draw(6, 0);
   }
-  swapchain->Present(1, 0);
+  swapchain->Present(vsync_enabled, 0);
 
   // NOTE(jerry): unbind current sprite batcher data
   {

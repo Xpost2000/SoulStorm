@@ -84,12 +84,16 @@ public:
     //                     if it is an enumerable display mode.
     virtual void screenshot(char* where) = 0;
 
+    void set_vsync(bool v);
+    bool get_vsync(void) const;
+
     virtual const char* get_name(void);
 
     bool is_initialized() { return initialized; }
 protected:
     SDL_Window* game_window = nullptr;
     bool        initialized = false;
+    bool        vsync_enabled = false;
 private:
     static bool already_have_resolution(s32 w, s32 h);
     /*

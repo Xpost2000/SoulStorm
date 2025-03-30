@@ -16,6 +16,14 @@ s32 Graphics_Driver::find_index_of_resolution(s32 w, s32 h) {
     return -1;
 }
 
+void Graphics_Driver::set_vsync(bool v) {
+  vsync_enabled = v;
+}
+
+bool Graphics_Driver::get_vsync(void) const {
+  return vsync_enabled;
+}
+
 bool Graphics_Driver::already_have_resolution(s32 w, s32 h) {
     return find_index_of_resolution(w, h) != -1;
 }

@@ -346,7 +346,7 @@ void OpenGL_Graphics_Driver::swap_and_present() {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-    SDL_GL_SetSwapInterval(0);
+    SDL_GL_SetSwapInterval(vsync_enabled);
     SDL_GL_SwapWindow(game_window);
 }
 
