@@ -4380,7 +4380,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
           if (Input::any_input_activity()) {
             timer.trigger_immediate();
           }
-
+          
           if (timer.triggered()) {
             timer = Timer(4.5f);
             timer.reset();

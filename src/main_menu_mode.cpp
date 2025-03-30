@@ -1583,6 +1583,8 @@ GAME_SCREEN(update_and_render_game_main_menu) {
                     } break;
                     case MAIN_MENU_SCREEN_MESSAGE_WAIT_FOR_CONTINUE: {
                         render_commands_push_text(ui_render_commands, font, text_scale, message_position, message.text, color32f32(1,1,1,1), BLEND_MODE_ALPHA);
+                        draw_input_nav_controls(ui_render_commands, resources,
+                          V2(ui_render_commands->screen_width - 150, ui_render_commands->screen_height - 85));
                         if (Input::any_key_down() || Input::controller_any_button_down(Input::get_gamepad(0))) {
                             message.phase = MAIN_MENU_SCREEN_MESSAGE_DISAPPEAR;
                         }
