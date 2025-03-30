@@ -155,8 +155,13 @@ local SDL_GameController*  global_controller_devices[4] = {};
 local Game                 game                         = {};
 static SDL_Haptic*         global_haptic_devices[4]     = {};
 
+#if 0
 local bool SCREEN_IS_FULLSCREEN = false;
 local bool LAST_SCREEN_IS_FULLSCREEN = false;
+#else
+local bool SCREEN_IS_FULLSCREEN = true;
+local bool LAST_SCREEN_IS_FULLSCREEN = true;
+#endif
 
 local u32 SCREEN_WIDTH                    = 0;
 local u32 SCREEN_HEIGHT                   = 0;
