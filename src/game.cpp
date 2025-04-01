@@ -4377,7 +4377,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
             draw_completion_score_list(score_categories, array_count(score_categories), rect_y, commands, resources, alpha);
 
             if (timer.triggered()) {
-                timer = Timer(0.85); // TODO: animation.
+                timer = Timer(1.00); // TODO: animation.
                 timer.reset();
                 complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_TALLY_TOTAL_SCORE;
             }
@@ -4396,13 +4396,13 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
           }
           
           if (timer.triggered()) {
-            timer = Timer(4.5f);
+            timer = Timer(12.0f);
             timer.reset();
             state->gameplay_data.total_score =
               state->gameplay_data.current_score - death_count_deducation_score +
               perfect_clear_score_addition + campaign_clear_perfect_score_addition +
               burst_usage_count_score_addition + remaining_lives_score_addition;
-            Audio::stop_music();
+            Audio::stop_music_fadeout(1000);
             complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT;
           }
         } break;
