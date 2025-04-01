@@ -1191,6 +1191,7 @@ void Game::reset_stage_simulation_state() {
     }
 
     this->state->dialogue_state.in_conversation = false;
+    this->state->gameplay_data.manual_menu_quit_out = false;
     // NOTE: need to save this to the savefile data.
     s32 pet_id   = state->selected_pet;
 
@@ -2719,7 +2720,7 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
     };
     int action = REPLAY_SAVE_MENU_ACTION_PENDING;
 
-    if (state->gameplay_data.recording.in_playback) {
+    if (state->gameplay_data.recording.in_playback || state->gameplay_data.manual_menu_quit_out) {
         if (!Transitions::fading()) {
             action = REPLAY_SAVE_MENU_ACTION_DO_NOT_SAVE_RECORDING; // just skip the prompt and don't do anything.
         }
@@ -3128,7 +3129,8 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
                         }
                     );
                 } else {
-                    switch_ui(UI_STATE_CONFIRM_BACK_TO_MAIN_MENU);
+                  state->gameplay_data.manual_menu_quit_out = true;
+                  switch_ui(UI_STATE_CONFIRM_BACK_TO_MAIN_MENU);
                 }
             }
             y += 30;

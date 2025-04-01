@@ -499,6 +499,7 @@ struct Gameplay_Data {
     bool stage_perfect_clear;
     bool stage_completed;
     bool playing_practice_mode;
+    bool manual_menu_quit_out;
     int  score_awarded_points = 0;
     int  extra_life_awarded_count = 0;
     
