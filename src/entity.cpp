@@ -1238,36 +1238,33 @@ Player_Burst_Action* get_player_burst_action_set(Player* player) {
 
 
 void Player::handle_bomb_usage(Game_State* state, u32 bomb_pattern_id) {
-    if (under_focus) {
-        auto& gameplay_data = state->gameplay_data;
-        auto  resources     = state->resources;
-        auto action_set = get_player_burst_action_set(this);
+    auto& gameplay_data = state->gameplay_data;
+    auto  resources = state->resources;
+    auto action_set = get_player_burst_action_set(this);
 
-        bool successful = false;
-        switch (bomb_pattern_id) {
-            case BOMB_PATTERN_DEFAULT: {
-                successful = action_set->bomb(this, state, bomb_pattern_id);
-            } break;
-            case BOMB_PATTERN_EXTRA1: {
-                unimplemented("BOMB_PATTERN_EXTRA1");
-            } break;
-            case BOMB_PATTERN_EXTRA2: {
-                unimplemented("BOMB_PATTERN_EXTRA2");
-            } break;
-            case BOMB_PATTERN_EXTRA3: {
-                unimplemented("BOMB_PATTERN_EXTRA3");
-            } break;
-        }
+    bool successful = false;
+    switch (bomb_pattern_id) {
+    case BOMB_PATTERN_DEFAULT: {
+      successful = action_set->bomb(this, state, bomb_pattern_id);
+    } break;
+    case BOMB_PATTERN_EXTRA1: {
+      unimplemented("BOMB_PATTERN_EXTRA1");
+    } break;
+    case BOMB_PATTERN_EXTRA2: {
+      unimplemented("BOMB_PATTERN_EXTRA2");
+    } break;
+    case BOMB_PATTERN_EXTRA3: {
+      unimplemented("BOMB_PATTERN_EXTRA3");
+    } break;
+    }
 
-        if (successful) {
-            burst_charge = 0.0f;
-        } else {
-            if (state->gameplay_data.invalid_usage_flash_count <= 0) {
-                state->gameplay_data.invalid_usage_flash_count = 16;
-            }
-        }
-    } else {
-        // it is no longer to use the bomb when not under focus.
+    if (successful) {
+      burst_charge = 0.0f;
+    }
+    else {
+      if (state->gameplay_data.invalid_usage_flash_count <= 0) {
+        state->gameplay_data.invalid_usage_flash_count = 16;
+      }
     }
 }
 
