@@ -980,6 +980,7 @@ struct Game_Resources {
     struct graphics_assets graphics_assets;
     font_id         menu_fonts[MENU_FONT_COUNT];
     image_id        circle;
+    image_id        bubbleshield_circle;
     image_id        circle16;
 
     // These are currently not animated because I don't have the budget to

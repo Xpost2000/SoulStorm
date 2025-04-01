@@ -833,7 +833,7 @@ void Player::draw(Game_State* const state, struct render_commands* render_comman
 
     if (burst_absorption_shield_ability_timer > 0.0f) {
         Texture_Atlas&       texture_atlas    = resources->gameplay_texture_atlas;
-        struct rectangle_f32 source_rectangle = texture_atlas.get_subrect(resources->circle);
+        struct rectangle_f32 source_rectangle = texture_atlas.get_subrect(resources->bubbleshield_circle);
         struct image_buffer* image            = graphics_assets_get_image_by_id(&resources->graphics_assets, texture_atlas.atlas_image_id);
 
         rectangle_f32 r;
@@ -1527,7 +1527,7 @@ void Player::update(Game_State* state, f32 dt) {
         emitter.acceleration_x_variance = V2(0, 10);
         emitter.acceleration_y_variance = V2(0, 20);
         emitter.lifetime_variance   = V2(-0.1f, 0.7f);
-        emitter.emission_max_timer = 0.045f;
+        emitter.emission_max_timer = 0.085f;
         emitter.shape = particle_emit_shape_line(V2(left, bottom), V2(left + r.w*2, bottom));
     }
 
@@ -1537,8 +1537,8 @@ void Player::update(Game_State* state, f32 dt) {
         if (burst_absorption_shield_ability_timer > 0) {
             emitter.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE | PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
             emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_SPARKLING_STAR]);
-            emitter.scale  = 1.0f;
-            emitter.emit_per_emission = 18;
+            emitter.scale  = 0.75f;
+            emitter.emit_per_emission = 6;
             emitter.lifetime = 0.65f;
             emitter.velocity_x_variance = V2(-10, 50);
             emitter.velocity_y_variance = V2(-10, 50);

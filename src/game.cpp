@@ -417,7 +417,7 @@ Particle_Emitter& spawn_game_entity_death_particle_emitter(Fixed_Array<Particle_
     emitter.lifetime_variance = V2(-0.25f, 1.0f);
     emitter.emission_max_timer = 0.035f;
     emitter.max_emissions = 1;
-    emitter.emit_per_emission = 125;
+    emitter.emit_per_emission = 24;
     emitter.flags = PARTICLE_EMITTER_FLAGS_ACTIVE | PARTICLE_EMITTER_FLAGS_USE_ANGULAR | PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
     emitter.scale = 1;
 
@@ -564,6 +564,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
     }
 
     resources->circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/circle256.png"));
+    resources->bubbleshield_circle = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/shieldbubblecircle64.png"));
     resources->ui_marquee_bkrnd = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee1.png"));
     resources->ui_marquee_bkrnd_neo[GAME_SIDE_MARQUEE_NEO_THEME_BLUE][0] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee-left.png"));
     resources->ui_marquee_bkrnd_neo[GAME_SIDE_MARQUEE_NEO_THEME_BLUE][1] = graphics_assets_load_image(&resources->graphics_assets, string_literal("res/img/ui/bkgmarquee-right.png"));
@@ -1038,7 +1039,8 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
         {
             s32 cursor = 0;
             {
-                images[cursor++] = resources->circle; // lol
+              images[cursor++] = resources->circle; // lol
+              images[cursor++] = resources->bubbleshield_circle; // lol
                 
                 auto sprite_object = graphics_get_sprite_by_id(
                     &resources->graphics_assets,
@@ -6075,6 +6077,8 @@ void Game_State::kill_all_enemies() {
 void Game_State::convert_bullets_to_score_pickups(float radius, float value) {
     auto state = &gameplay_data;
 
+    int particleemitters_spawned = 0;
+
     for (s32 bullet_index = 0; bullet_index < state->bullets.size; ++bullet_index) {
         auto& b = state->bullets[bullet_index];
 
@@ -6088,8 +6092,11 @@ void Game_State::convert_bullets_to_score_pickups(float radius, float value) {
             continue;
 
         b.kill();
-        // This will overflow, but the effect is pretty minor that I don't think it matters tbh...
-        // spawn_game_entity_death_particle_emitter(state->particle_emitters, b.position, resources);
+        // This *could* overflow, but the effect is pretty minor that I don't think it matters tbh...
+        if (particleemitters_spawned < 8000) {
+          spawn_game_entity_death_particle_emitter(state->particle_emitters, b.position, resources, 1);
+          particleemitters_spawned += 1;
+        }
 
         if (state->disable_bullet_to_points) {
             continue;
@@ -6569,6 +6576,7 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                     b.die = true;
                     ob.die = true;
                     state->notify_score_with_hitmarker(15, b.position);
+                    spawn_game_entity_death_particle_emitter(state->particle_emitters, b.position, resources, 1);
                     break;
                 }
             }
