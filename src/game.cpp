@@ -1845,7 +1845,7 @@ void Gameplay_Data::notify_score(s32 amount, bool interesting) {
 
     s32 score_delta = current_score - score_awarded_points;
     
-    // First 3 extra lives are generally pretty easy to obtain,
+    // First 3 extra lives are generally pretty easy to obtain,a
     // everything else is a bit harder.
     local s32 extra_life_score_table[] = {
       POINTS_TO_AWARD_EXTRA_LIFE,

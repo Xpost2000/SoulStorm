@@ -1158,6 +1158,9 @@ bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unuse
 bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, u32 _unused) {
     player->add_burst_ability_usage(1);
     s32 usage_count = player->get_burst_ability_usage(1);
+
+    // bad design.
+#if 0
     const s32 SCORE_COST = 25000;
     // NOTE(jerry):
     // This is the only burst ability that will not use lives, so it
@@ -1165,15 +1168,16 @@ bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, 
     if (state->gameplay_data.current_score < SCORE_COST) { // Maybe have it vary based on score?
         return false;
     }
+    state->gameplay_data.current_score -= SCORE_COST;
+#endif
 
     player->halt_burst_charge_regeneration(
         // NOTE(jerry):
         // this to discourage it's spamming since otherwise it builds up too fast.
-        calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_RAY_ABILITY_MAX_T*1.85)
+        calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_RAY_ABILITY_MAX_T*1.4)
     );
     player->burst_ray_attack_ability_timer = PLAYER_BURST_RAY_ABILITY_MAX_T;
     player->current_burst_ability_max_t = PLAYER_BURST_RAY_ABILITY_MAX_T;
-    state->gameplay_data.current_score -= SCORE_COST;
     return true;
 }
 
@@ -1184,7 +1188,7 @@ bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u3
     player->add_burst_ability_usage(2);
     s32 usage_count = player->get_burst_ability_usage(2);
     player->halt_burst_charge_regeneration(
-        calculate_amount_of_burst_depletion_flashes_for(1.25)
+        calculate_amount_of_burst_depletion_flashes_for(2.35)
     );
     state->gameplay_data.notify_score(2500, true);
     Audio::play(state->resources->random_explosion_sound(&state->gameplay_data.prng_unessential));
@@ -1635,7 +1639,7 @@ void Player::update(Game_State* state, f32 dt) {
             _debugprintf("burn out!");
             halt_burst_charge_regeneration(
                 calculate_amount_of_burst_depletion_flashes_for(
-                    3.0f
+                    2.5f
                 )
             );
         }
