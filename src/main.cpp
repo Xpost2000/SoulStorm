@@ -744,6 +744,7 @@ bool save_preferences_to_disk(Game_Preferences* preferences, string path) {
         fprintf(f, "fullscreen = %s\n",    ((s32)preferences->fullscreen) ? "true" : "false");
         fprintf(f, "controller_vibration = %s\n",    ((s32)preferences->controller_vibration) ? "true" : "false");
         fprintf(f, "framelimiter_option = %d\n", preferences->frame_limiter);
+        fprintf(f, "cheats_enabled = %s\n", (preferences->cheats_enabled) ? "true" : "false");
         // controls are separate.
     } fclose(f);
     return true;
@@ -805,6 +806,12 @@ bool load_preferences_from_disk(Game_Preferences* preferences, string path) {
       int t = lua_getglobal(L, "framelimiter_option");
       if (t != LUA_TNONE && t != LUA_TNIL) {
         preferences->frame_limiter = lua_tointeger(L, -1);
+      }
+    }
+    {
+      int t = lua_getglobal(L, "cheats_enabled");
+      if (t != LUA_TNONE && t != LUA_TNIL) {
+        preferences->cheats_enabled = lua_toboolean(L, -1);
       }
     }
 
@@ -971,7 +978,7 @@ string get_preference_directory(string org, string path) {
 #endif
 }
 
-
+bool g_cheats_enabled = false; // hackme
 int main(int argc, char** argv) {
 #ifdef _WIN32
     SetProcessDPIAware();
@@ -1005,6 +1012,7 @@ int main(int argc, char** argv) {
             &game.preferences,
             game.resources
         );
+        g_cheats_enabled = game.preferences.cheats_enabled;
         Discord_Integration::per_frame_update(Global_Engine()->last_elapsed_delta_time);
     }
     deinitialize();

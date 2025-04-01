@@ -20,6 +20,8 @@ struct Game_Preferences {
     f32 music_volume = 0.5;
     f32 sound_volume = 0.5;
 
+    bool cheats_enabled=false;
+
     bool fullscreen = false;
     bool controller_vibration = true;
 };

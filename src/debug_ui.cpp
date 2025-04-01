@@ -20,26 +20,31 @@ local int show = 0;
 local bool godmode = false;
 local int  burstmode_forced = -1;
 
+extern bool g_cheats_enabled;
+
 namespace DebugUI {
-    void cheat_controls() {
-        show += Input::is_key_pressed(KEY_F1);
-        if (Input::is_key_pressed(KEY_F2)) {
-            godmode ^= 1;
-        }
+  void cheat_controls() {
+    if (g_cheats_enabled) {
+      show += Input::is_key_pressed(KEY_F1);
+      if (Input::is_key_pressed(KEY_F2)) {
+        godmode ^= 1;
+      }
 
-        if (Input::is_key_pressed(KEY_F3)) {
-            if (burstmode_forced == -1) {
-                burstmode_forced = 0;
-            } else {
-                burstmode_forced++;
-                if (burstmode_forced > 3) {
-                    burstmode_forced = -1;
-                }
-            }
+      if (Input::is_key_pressed(KEY_F3)) {
+        if (burstmode_forced == -1) {
+          burstmode_forced = 0;
         }
+        else {
+          burstmode_forced++;
+          if (burstmode_forced > 3) {
+            burstmode_forced = -1;
+          }
+        }
+      }
 
-        if (show > 2) show = 0;
+      if (show > 2) show = 0;
     }
+  }
 }
 
 #ifndef RELEASE
