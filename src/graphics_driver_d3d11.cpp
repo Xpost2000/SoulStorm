@@ -1155,8 +1155,8 @@ void Direct3D11_Graphics_Driver::consume_render_commands(struct render_commands*
             } break;
         }
     }
-
     flush_and_render_quads();
+    commands->command_count = 0;
 }
 
 V2 Direct3D11_Graphics_Driver::resolution() {

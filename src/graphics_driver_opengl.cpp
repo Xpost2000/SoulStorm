@@ -749,6 +749,7 @@ void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* com
     }
 
     flush_and_render_quads();
+    commands->command_count = 0;
     glUseProgram(0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
