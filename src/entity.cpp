@@ -2226,6 +2226,7 @@ void Pickup_Entity::draw(Game_State* const state, struct render_commands* render
         BLEND_MODE_ADDITIVE
     );
 #endif
+    sprite.modulation.a = 1.0f - lifetime.percentage();
     Entity::draw(
         state,
         render_commands,
