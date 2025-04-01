@@ -1856,9 +1856,10 @@ void Gameplay_Data::notify_score(s32 amount, bool interesting) {
       POINTS_TO_AWARD_EXTRA_LIFE * 2.0,
     };
 
-    if (score_delta >= extra_life_score_table[extra_life_awarded_count++]) {
+    if (score_delta >= extra_life_score_table[extra_life_awarded_count]) {
         add_life();
         score_awarded_points = current_score;
+        extra_life_awarded_count++;
     }
 
     if (extra_life_awarded_count >= array_count(extra_life_score_table)) {
@@ -2885,7 +2886,7 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
             default: {
                 Transitions::register_on_finish(
                     [&](void*) mutable {
-                        switch_ui(UI_STATE_INACTIVE);
+                        switch_ui(UI_STATE_STAGE_SELECT);
                         switch_screen(GAME_SCREEN_MAIN_MENU);
                         _debugprintf("Switched to main menu");
 

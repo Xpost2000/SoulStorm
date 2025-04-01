@@ -468,7 +468,7 @@ struct Border_Flash_Data {
     f32  per_flash_length; // NOTE(jerry): maybe not tuning anything?
 };
 
-#define POINTS_TO_AWARD_EXTRA_LIFE (100000)
+#define POINTS_TO_AWARD_EXTRA_LIFE (125000)
 enum Gameplay_Data_Particle_Spawn_Request_Type {
     GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_NONE,
     GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_LOST_LIFE,
