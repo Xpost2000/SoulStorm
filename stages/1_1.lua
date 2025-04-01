@@ -1302,14 +1302,14 @@ function wave_2()
    -- t_wait_for_no_danger();
    -- the change in behavior makes this wrong!
    t_wait(9.5);
-
-   -- spawn 3 enemies that will start blanketing
-   wave_2_sub5();
-   t_wait(11.0);
    play_area_set_edge_behavior(PLAY_AREA_EDGE_TOP, PLAY_AREA_EDGE_BLOCKING);
    play_area_set_edge_behavior(PLAY_AREA_EDGE_BOTTOM, PLAY_AREA_EDGE_BLOCKING);
    play_area_set_edge_behavior(PLAY_AREA_EDGE_LEFT, PLAY_AREA_EDGE_BLOCKING);
    play_area_set_edge_behavior(PLAY_AREA_EDGE_RIGHT, PLAY_AREA_EDGE_BLOCKING);
+
+   -- spawn 3 enemies that will start blanketing
+   wave_2_sub5();
+   t_wait(11.0);
    -- here are some standard shmup waves.
    wave_2_sub2();
    Make_BrainDead_Enemy_Popcorn1(

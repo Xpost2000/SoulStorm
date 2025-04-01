@@ -459,8 +459,8 @@ local string border_flash_id_strings[] = {
     string_literal("(count)"),
 };
 
-#define BORDER_NOTIFY_FLASH_COUNT (12)
-#define BORDER_NOTIFY_PER_FLASH_LENGTH (0.155f)
+#define BORDER_NOTIFY_FLASH_COUNT (16)
+#define BORDER_NOTIFY_PER_FLASH_LENGTH (0.175f)
 struct Border_Flash_Data {
     s32  flash_id_type;
     bool delay_between_flash;
@@ -468,7 +468,7 @@ struct Border_Flash_Data {
     f32  per_flash_length; // NOTE(jerry): maybe not tuning anything?
 };
 
-#define POINTS_TO_AWARD_EXTRA_LIFE (125000)
+#define POINTS_TO_AWARD_EXTRA_LIFE (165000)
 enum Gameplay_Data_Particle_Spawn_Request_Type {
     GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_NONE,
     GAMEPLAY_DATA_PARTICLE_SPAWN_REQUEST_TYPE_LOST_LIFE,
