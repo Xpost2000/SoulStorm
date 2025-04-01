@@ -343,6 +343,7 @@ function wave1_sub3()
          
          PROJECTILE_SPRITE_HOT_PINK_ELECTRIC
       );
+      enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
 
       t_wait(0.5);
       local e1 = Make_Enemy_Burst360_1_1_2(
@@ -362,6 +363,7 @@ function wave1_sub3()
          
          PROJECTILE_SPRITE_GREEN_DISK
       );
+      enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A);
 
       local e2 = Make_Enemy_Burst360_1_1_2(
          35, v2(play_area_width()-10, play_area_height() + 40), v2(play_area_width()/2 + 40, 80), 0.5,
@@ -381,8 +383,6 @@ function wave1_sub3()
          PROJECTILE_SPRITE_BLUE_DISK
       );
 
-      enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
-      enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A);
       enemy_set_visual(e2, ENTITY_SPRITE_SKULL_A);
 
       t_wait(1);

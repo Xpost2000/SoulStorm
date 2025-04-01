@@ -24,6 +24,10 @@ extern bool g_cheats_enabled;
 
 namespace DebugUI {
   void cheat_controls() {
+#ifndef RELEASE
+    g_cheats_enabled = true; // override.
+#endif
+
     if (g_cheats_enabled) {
       show += Input::is_key_pressed(KEY_F1);
       if (Input::is_key_pressed(KEY_F2)) {
