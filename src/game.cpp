@@ -3279,7 +3279,7 @@ GAME_UI_SCREEN(update_and_render_stage_select_menu) {
 
                 s32 button_status = (GameUI::button(V2(100, y), string_from_cstring(s), color32f32(1, 1, 1, 1), 2, is_unlocked && !Transitions::fading()));
                 y += 30;
-
+                
                 if (button_status == WIDGET_ACTION_ACTIVATE) {
                     enter_level = i;
                     state->gameplay_data.playing_practice_mode = true;
@@ -3288,15 +3288,16 @@ GAME_UI_SCREEN(update_and_render_stage_select_menu) {
                 }
             }
 
+            y += 30;
             if (GameUI::button(V2(100, y), string_literal("Play Stage"), color32f32(1, 1, 1, 1), 2, !Transitions::fading() && met_all_prerequisites) == WIDGET_ACTION_ACTIVATE) {
-                enter_level = 0;
-                state->gameplay_data.playing_practice_mode  = false;
-                state->gameplay_data.campaign_perfect_clear = true;
-                state->gameplay_data.stage_perfect_clear    = true;
+              enter_level = 0;
+              state->gameplay_data.playing_practice_mode = false;
+              state->gameplay_data.campaign_perfect_clear = true;
+              state->gameplay_data.stage_perfect_clear = true;
             }
             y += 30;
             if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-                cancel = true;
+              cancel = true;
             }
             y += 30;
 
