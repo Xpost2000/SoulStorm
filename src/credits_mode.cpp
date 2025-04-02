@@ -12,12 +12,14 @@
   Although I like drawing stuff.
 */
 
+#define ALLOW_ATTRIBUTION_LINKS (0)
+
 local void open_web_browser(const char* url) {
     // yes I know this is unsafe.
 #ifdef _WIN32
     system(format_temp("explorer.exe %s", url));
 #else
-    unimplemented("no url command");
+    system(format_temp("xdg-open %s", url));
 #endif
 }
 
@@ -50,19 +52,27 @@ GAME_SCREEN(update_and_render_game_credits) {
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         {
             if (GameUI::button(V2(100, y), string_literal("gnsh fonts - https://opengameart.org/content/bitmap-font-0"), color32f32(1, 1, 1, 1), 1) == WIDGET_ACTION_ACTIVATE) {
+#if ALLOW_ATTRIBUTION_LINKS
                 open_web_browser("https://opengameart.org/content/bitmap-font-0");
+#endif
             }
             y += 30/2;
             if (GameUI::button(V2(100, y), string_literal("stb_image, stb_image_write - http://nothings.org/"), color32f32(1, 1, 1, 1), 1) == WIDGET_ACTION_ACTIVATE) {
+#if ALLOW_ATTRIBUTION_LINKS
                 open_web_browser("http://nothings.org/");
+#endif
             }
             y += 30/2;
             if (GameUI::button(V2(100, y), string_literal("SDL2, SDL2_mixer - https://www.libsdl.org/"), color32f32(1, 1, 1, 1), 1) == WIDGET_ACTION_ACTIVATE) {
+#if ALLOW_ATTRIBUTION_LINKS
                 open_web_browser("https://www.libsdl.org/");
+#endif
             }
             y += 30/2;
             if (GameUI::button(V2(100, y), string_literal("lua - https://www.lua.org/"), color32f32(1, 1, 1, 1), 1) == WIDGET_ACTION_ACTIVATE) {
+#if ALLOW_ATTRIBUTION_LINKS
                 open_web_browser("https://www.lua.org/");
+#endif
             }
             y += 30/2;
         }
@@ -74,7 +84,9 @@ GAME_SCREEN(update_and_render_game_credits) {
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         {
             if (GameUI::button(V2(100, y), string_literal("(engine & gameplay programmer, design) jerry zhu / xpost2000"), color32f32(1, 1, 1, 1), 1) == WIDGET_ACTION_ACTIVATE) {
+#if ALLOW_ATTRIBUTION_LINKS
                 open_web_browser("https://xpost2000.itch.io/");
+#endif
             }
             y += 30/2;
         }
