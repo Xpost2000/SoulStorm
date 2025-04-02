@@ -1507,8 +1507,10 @@ void Game::init(Graphics_Driver* driver) {
 }
 
 void Game::deinit() {
-    graphics_assets_finish(&resources->graphics_assets);
-    VFS_finish();
+  _debugprintf("Deinit + autosave on game exit");
+  save_game();
+  graphics_assets_finish(&resources->graphics_assets);
+  VFS_finish();
 }
 
 // Scriptable_Render_Object 
@@ -6704,6 +6706,7 @@ void Game::switch_screen(s32 screen) {
             }
         } break;
         case GAME_SCREEN_INGAME: {
+          save_game();
         } break;
     }
 }
