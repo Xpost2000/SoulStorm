@@ -4070,6 +4070,7 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
                 auto   text_width = font_cache_text_width(title_font, title, 4);
                 render_commands_push_text(commands, title_font, 4, V2(commands->screen_width/2 - text_width/2, rect_y), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
             }
+
             // TODO: not typing in yet.
             if (timer.triggered()) {
                 timer = Timer(0.25f);
@@ -4089,6 +4090,14 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
                 string title = stage.subtitle;
                 auto   text_width = font_cache_text_width(title_font, title, 2);
                 render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y + 40), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
+            }
+            rect_y += 32+40;
+            {
+              if (state->gameplay_data.playing_practice_mode) {
+                string title = string_literal("PRACTICE");
+                auto   text_width = font_cache_text_width(title_font, title, 4);
+                render_commands_push_text(commands, subtitle_font, 4, V2(commands->screen_width / 2 - text_width / 2, rect_y), title, color32f32(1, 1, 1, timer_percentage), BLEND_MODE_ALPHA);
+              }
             }
             // TODO: not typing in yet.
             if (timer.triggered()) {
@@ -4110,7 +4119,14 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
                 auto   text_width = font_cache_text_width(title_font, title, 2);
                 render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y + 40), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
-
+            rect_y += 32+40;
+            {
+              if (state->gameplay_data.playing_practice_mode) {
+                string title = string_literal("PRACTICE");
+                auto   text_width = font_cache_text_width(title_font, title, 4);
+                render_commands_push_text(commands, subtitle_font, 4, V2(commands->screen_width / 2 - text_width / 2, rect_y), title, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+              }
+            }
             if (timer.triggered()) {
                 timer = Timer(0.45f);
                 timer.reset();
@@ -4131,7 +4147,14 @@ void Game::ingame_update_introduction_sequence(struct render_commands* commands,
                 auto   text_width = font_cache_text_width(title_font, title, 2);
                 render_commands_push_text(commands, subtitle_font, 2, V2(commands->screen_width/2 - text_width/2, rect_y + 40), title, color32f32(1, 1, 1, effective_t), BLEND_MODE_ALPHA);
             }
-
+            rect_y += 32+40;
+            {
+              if (state->gameplay_data.playing_practice_mode) {
+                string title = string_literal("PRACTICE");
+                auto   text_width = font_cache_text_width(title_font, title, 4);
+                render_commands_push_text(commands, subtitle_font, 4, V2(commands->screen_width / 2 - text_width / 2, rect_y), title, color32f32(1, 1, 1, effective_t), BLEND_MODE_ALPHA);
+              }
+            }
             if (timer.triggered())  {
                 // allow gameplay to happen.
                 intro_state.stage = GAMEPLAY_STAGE_INTRODUCTION_SEQUENCE_STAGE_NONE;
