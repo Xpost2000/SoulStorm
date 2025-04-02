@@ -53,6 +53,7 @@ struct UI_State {
     // break things...
     bool picked_first_index = false;
     s32 selected_index = 0;
+    s32 preferred_first_index = -1;
 
     char* last_ui_id = nullptr;
     char* ui_id      = nullptr;
@@ -67,6 +68,14 @@ UI_State* global_ui_state = nullptr;
   NOTE: this is sort of like a stateful IMGUI, which is an oxymoron!
  */
 namespace GameUI {
+    int get_current_ui_index(void) {
+      return global_ui_state->selected_index;
+    }
+    
+    void set_preferred_ui_first_index(int i) {
+      global_ui_state->preferred_first_index = i;
+    }
+
     local bool is_selectable_widget_type(s32 type) {
         switch (type) {
             case WIDGET_TYPE_UNKNOWN:
@@ -88,9 +97,18 @@ namespace GameUI {
         widget->scale      = scale;
 
         if (!global_ui_state->picked_first_index && is_selectable_widget_type(widget->type)) {
-            global_ui_state->selected_index     = widget->id-1;
-            global_ui_state->picked_first_index = true;
-            _debugprintf("I picked my first widget. (%d)", global_ui_state->selected_index);
+            bool allow_selection = global_ui_state->preferred_first_index == -1;
+          
+            if (global_ui_state->preferred_first_index != -1 && global_ui_state->preferred_first_index == widget->id - 1) {
+              allow_selection = true;
+              _debugprintf("KELLY!");
+            }
+
+            if (allow_selection) {
+              global_ui_state->selected_index = widget->id - 1;
+              global_ui_state->picked_first_index = true;
+              _debugprintf("I picked my first widget. (%d)", global_ui_state->selected_index);
+            }
         }
     }
 
@@ -670,6 +688,7 @@ namespace GameUI {
         global_ui_state->ate_any_mouse_lefts = false;
         global_ui_state->assets = assets;
         global_ui_state->wobble_contribution = 0.0f;
+        global_ui_state->preferred_first_index = -1;
     }
 
     void end_frame() {

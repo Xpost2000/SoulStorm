@@ -61,6 +61,9 @@ namespace GameUI {
     void reset_alpha(void);
     f32  get_visual_alpha(void);
 
+    int get_current_ui_index(void);
+    void set_preferred_ui_first_index(int i);
+
     void set_wobbly_contribution(f32 amount);
     void reset_wobbly_contribution(void);
     f32 get_wobbly_contribution(void);

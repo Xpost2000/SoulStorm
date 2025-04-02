@@ -3239,6 +3239,7 @@ GAME_UI_SCREEN(update_and_render_stage_select_menu) {
     GameUI::set_ui_id((char*)"ui_stage_select_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
     GameUI::set_wobbly_contribution(1.0f);
+    GameUI::set_preferred_ui_first_index(state->mainmenu_data.last_stage_select_widget_id);
     {
         s32   stage_id = state->mainmenu_data.stage_id_level_select;
         auto& stage    = stage_list[stage_id];
@@ -3285,6 +3286,7 @@ GAME_UI_SCREEN(update_and_render_stage_select_menu) {
                 if (button_status == WIDGET_ACTION_ACTIVATE) {
                     enter_level = i;
                     state->gameplay_data.playing_practice_mode = true;
+                    state->mainmenu_data.last_stage_select_widget_id = GameUI::get_current_ui_index();
                 } else if (button_status == WIDGET_ACTION_HOT) {
                     display_level_icon = i;
                 }
@@ -3296,10 +3298,12 @@ GAME_UI_SCREEN(update_and_render_stage_select_menu) {
               state->gameplay_data.playing_practice_mode = false;
               state->gameplay_data.campaign_perfect_clear = true;
               state->gameplay_data.stage_perfect_clear = true;
+              state->mainmenu_data.last_stage_select_widget_id = GameUI::get_current_ui_index();
             }
             y += 30;
             if (GameUI::button(V2(100, y), string_literal("Cancel"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
               cancel = true;
+              state->mainmenu_data.last_stage_select_widget_id = -1;
             }
             y += 30;
 
@@ -5056,6 +5060,20 @@ GAME_SCREEN(update_and_render_game_ingame) {
         {
           auto font = resources->get_font(MENU_FONT_COLOR_WHITE);
           auto font1 = resources->get_font(MENU_FONT_COLOR_GOLD);
+          
+          // NOTE(jerry):
+          // better way to deal with it?
+#if 0
+          {
+            auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("SCORE: %d", state->current_score)));
+            render_commands_push_text(ui_render_commands,
+              font1,
+              2,
+              V2(ui_cursor_x_left, 30),
+              string_literal("PRACTICE"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
+          }
+#endif
+          
           auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("SCORE: %d", state->current_score)));
 
           // show scoring notifications (for interesting scoring reasons like picking up points or killing an enemy)

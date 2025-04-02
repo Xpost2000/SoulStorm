@@ -1507,6 +1507,7 @@ GAME_SCREEN(update_and_render_game_main_menu) {
                 focus_portal->emitter_vortex.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE;
 
                 main_menu_state.stage_id_level_select = focus_portal->stage_id;
+                main_menu_state.last_stage_select_widget_id = -1;
                 switch_ui(UI_STATE_STAGE_SELECT);
 
                 auto position = focus_portal->position;

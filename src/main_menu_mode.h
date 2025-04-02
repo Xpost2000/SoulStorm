@@ -234,6 +234,7 @@ struct MainMenu_Data {
     s32 stage_id_level_select = -1;
     s32 stage_id_level_in_stage_select = -1;
     s32 stage_pet_selection = 0;
+    s32 last_stage_select_widget_id = -1;
 
     Fixed_Array<MainMenu_Stage_Portal> portals;
 
