@@ -6755,9 +6755,10 @@ bool Game::save_game() {
 
     auto serializer = open_write_file_serializer(full_save_path);
     serializer.expected_endianess = ENDIANESS_LITTLE;
-    serialize_game_state(&serializer);
+    auto saved_data = serialize_game_state(&serializer);
     serializer_finish(&serializer);
 
+    update_from_save_data(&saved_data);
     return true;
 }
 
@@ -6792,8 +6793,8 @@ Save_File Game::construct_save_data() {
                     auto& level = stage_list[stage_index].levels[level_index];
                     save_data.stage_last_scores[stage_index][level_index] = level.last_score;
                     save_data.stage_best_scores[stage_index][level_index] = level.best_score;
-                    save_data.stage_completions[stage_index][level_index] = level.attempts;
-                    save_data.stage_attempts[stage_index][level_index]    = level.completions;
+                    save_data.stage_completions[stage_index][level_index] = level.completions;
+                    save_data.stage_attempts[stage_index][level_index]    = level.attempts;
                 }
             }
         }
