@@ -1235,8 +1235,7 @@ Player_Burst_Action* get_player_burst_action_set(Player* player) {
   int rank_count = get_burst_mode_rank_count();
   int per_rank = ((int)PLAYER_BURST_CHARGE_CAPACITY / rank_count);
   int tier_rank = (int)floorf(player->burst_charge / per_rank);
-  tier_rank = clamp<int>(tier_rank, 0, rank_count);
-  if (tier_rank < 0) tier_rank = 0;
+  tier_rank = clamp<int>(tier_rank, 0, rank_count-1);
   return g_player_burst_actions + tier_rank;
 }
 
