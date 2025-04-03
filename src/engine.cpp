@@ -9,7 +9,7 @@ Engine* Global_Engine() {
         global_engine_object.global_elapsed_time     = 0;
         global_engine_object.last_elapsed_delta_time = 0;
         global_engine_object.main_arena              = Memory_Arena((char*)"Main Arena", Megabyte(128));
-        global_engine_object.scratch_arena           = Memory_Arena((char*)"Scratch Arena", Megabyte(64));
+        global_engine_object.scratch_arena           = Memory_Arena((char*)"Scratch Arena", Megabyte(128));
         // global_engine_object.scratch_arena           = global_engine_object.main_arena.sub_arena(Megabyte(2));
         global_engine_object.running                 = true;
         global_engine_object.global_timescale        = 1.0f;
