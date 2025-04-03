@@ -1383,7 +1383,7 @@ function stage_task()
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_1.png", 0.55, 0, 30);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_2.png", 0.287, 0, 120);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_2.png", 0.187, 250, 350);
-   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_2.png", 0.187, 250, 350);
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_2.png", 0.187, 250, 350);
 
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star0.png", 0.487, 225, 85);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star1.png", 0.287, -120, 175);
