@@ -1039,7 +1039,7 @@ void player_burst_fire_focus_tier0(Player* player, Game_State* state, u32 _unuse
     );
     Audio::play(
         resources->random_attack_sound(
-            &state->gameplay_data.prng
+            &state->gameplay_data.prng_unessential
         )
     );
     controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
@@ -1069,7 +1069,7 @@ void player_burst_fire_focus_tier1(Player* player, Game_State* state, u32 _unuse
     );
     Audio::play(
         resources->random_attack_sound(
-            &state->gameplay_data.prng
+            &state->gameplay_data.prng_unessential
         )
     );
     controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
@@ -1099,7 +1099,7 @@ void player_burst_fire_focus_tier2(Player* player, Game_State* state, u32 _unuse
   );
   Audio::play(
     resources->random_attack_sound(
-      &state->gameplay_data.prng
+      &state->gameplay_data.prng_unessential
     )
   );
   controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 85);
@@ -1130,7 +1130,7 @@ void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unuse
   );
   Audio::play(
     resources->random_attack_sound(
-      &state->gameplay_data.prng
+      &state->gameplay_data.prng_unessential
     )
   );
   controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 85);
@@ -1291,7 +1291,7 @@ void Player::fire_burst_ray_laser(Game_State* state) {
         s32 bullet_count = 1;
         Audio::play(
             resources->random_attack_sound(
-                &state->gameplay_data.prng
+                &state->gameplay_data.prng_unessential
             )
         );
         for (s32 bullet_index = 0; bullet_index < bullet_count; ++bullet_index) {
@@ -1330,7 +1330,7 @@ void Player::fire_weapon(Game_State* state, u32 attack_pattern_id) {
                 );
                 Audio::play(
                     resources->random_attack_sound(
-                        &state->gameplay_data.prng
+                        &state->gameplay_data.prng_unessential
                     )
                 );
 

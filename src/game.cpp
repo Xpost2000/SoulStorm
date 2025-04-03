@@ -2994,10 +2994,10 @@ GAME_UI_SCREEN(update_and_render_replay_collection_menu) {
             state->gameplay_data.demo_collection_ui.current_page = 0;
         }
 
-        if (replay_files.count <= 2) {
+        if (replay_files.count == 0) {
             GameUI::label(V2(130, y), string_literal("No recordings. Go make some memories!"), color32f32(1, 1, 1, 1), 2);
         } else {
-            s32 start_index = MAX_REPLAYS_PER_PAGE * state->gameplay_data.demo_collection_ui.current_page + 2; // skip ./ and ../
+            s32 start_index = MAX_REPLAYS_PER_PAGE * state->gameplay_data.demo_collection_ui.current_page; // skip ./ and ../
             s32 end_index   = min<s32>(MAX_REPLAYS_PER_PAGE * (state->gameplay_data.demo_collection_ui.current_page+1) + 2, replay_files.count);
 
             _debugprintf("%d, %d (%d)", start_index, end_index, replay_files.count);
@@ -4709,7 +4709,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
 #endif
         // Update all particle emitters
         // while we wait.
-        update_particle_emitters(state->particle_emitters, &state->particle_pool, &state->prng, dt);
+        update_particle_emitters(state->particle_emitters, &state->particle_pool, &state->prng_unessential, dt);
         update_particle_emitters(state->ui_particle_emitters, &state->ui_particle_pool, &state->prng_unessential, dt);
         state->particle_pool.update(this->state, dt);
         state->ui_particle_pool.update(this->state, dt);
@@ -6652,7 +6652,7 @@ void Game::handle_all_bullet_collisions(f32 dt) {
 
         if (b.die && hit_death) {
             auto resources = this->state->resources;
-            Audio::play(resources->random_hit_sound(&state->prng));
+            Audio::play(resources->random_hit_sound(&state->prng_unessential));
         }
     }
 }
