@@ -5666,7 +5666,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
                     state->stage_completed                     = false;
 
                     Audio::play_music_transition_into(resources->title_reprisal_music, 500, 500);
-                    state->complete_stage.begin_sequence();
+                    state->complete_stage.begin_sequence(state->recording.in_playback);
                     state->player.reset_movement();
                 }
 
