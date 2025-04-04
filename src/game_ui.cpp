@@ -101,7 +101,6 @@ namespace GameUI {
           
             if (global_ui_state->preferred_first_index != -1 && global_ui_state->preferred_first_index == widget->id - 1) {
               allow_selection = true;
-              _debugprintf("KELLY!");
             }
 
             if (allow_selection) {
