@@ -4550,6 +4550,7 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
         if (state->recording.in_playback) {
             if (gameplay_recording_file_has_more_frames(&state->recording)) {
                 // NOTE: 
+                state->triggered_stage_completion_cutscene = false;
                 state->current_input_packet = gameplay_recording_file_next_frame(&state->recording);
             } else {
                 state->triggered_stage_completion_cutscene = true;
