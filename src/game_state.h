@@ -820,7 +820,7 @@ enum DeathScreen_Phase {
 */
 
 // TODO: make like a 3 second death track.
-#define MAX_DEATH_BLACK_FADE_T (0.45f)
+#define MAX_DEATH_BLACK_FADE_T (0.75f)
 #define MAX_DEATH_TEXT_FADE_T  (0.75f)
 #define MAX_DEATH_TEXT_HOLD_T  (0.85f)
 #define MAX_DEATH_TEXT_PHASE_LENGTH_T (MAX_DEATH_TEXT_FADE_T + MAX_DEATH_TEXT_HOLD_T)

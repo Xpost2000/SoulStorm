@@ -3895,62 +3895,57 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
     // framerate timed...
     {
         if (state->screen_mode == GAME_SCREEN_INGAME) {
+          if (state->gameplay_data.tries <= 0) // uh okay.
+          {
             // Death Screen Horizontal Fade
             {
-                f32 effective_t = clamp<f32>(
-                    state->deathscreen_data.black_fade_t / MAX_DEATH_BLACK_FADE_T,
-                    0.0f,
-                    1.0f
-                );
+              f32 effective_t = clamp<f32>(
+                state->deathscreen_data.black_fade_t / MAX_DEATH_BLACK_FADE_T,
+                0.0f,
+                1.0f
+              );
 
-                union color32f32 render_color = color32f32(0.0f, 0.0f, 0.0f, 1.0f);
-                f32 position_to_draw          = lerp_f32(-(s32)commands->screen_width, 0, effective_t);
-                render_commands_push_quad(commands,
-                                          rectangle_f32(
-                                              position_to_draw,
-                                              0,
-                                              commands->screen_width,
-                                              commands->screen_height),
-                                          color32f32_to_color32u8(render_color),
-                                          BLEND_MODE_ALPHA
-                );
+              union color32f32 render_color = color32f32(0.0f, 0.0f, 0.0f, 1.0f);
 
-                // I want to have a neat slice effect to make it less
-                // boring than a standard screen slide.
-                {
-                    u32 slices_to_draw = commands->screen_height * 0.9;
-                    u32 slice_height   = commands->screen_height / slices_to_draw;
-                    for (unsigned slice = 0; slice < commands->screen_height; ++slice) {
-                        f32 slice_width_variance = 40 % (slice+1);
-                        render_commands_push_quad(commands,
-                                                  rectangle_f32(
-                                                      position_to_draw,
-                                                      0,
-                                                      commands->screen_width + slice_width_variance,
-                                                      slice_height),
-                                                  color32f32_to_color32u8(render_color),
-                                                  BLEND_MODE_ALPHA
-                        );
-                    }
+              // I want to have a neat slice effect to make it less
+              // boring than a standard screen slide.
+              {
+                u32 slices_to_draw = 480;
+                u32 slice_height = 480 / slices_to_draw;
+                for (unsigned slice = 0; slice < slices_to_draw; ++slice) {
+                  f32 slice_width_variance = normalized_sinf(slice * slice + state->gameplay_data.prng_unessential.seed) * 260;
+                  f32 position_to_draw = lerp_f32(-(s32)commands->screen_width - slice_width_variance, 0, effective_t);
+
+                  render_commands_push_quad(commands,
+                    rectangle_f32(
+                      position_to_draw,
+                      slice * slice_height,
+                      commands->screen_width + slice_width_variance,
+                      slice_height),
+                    color32f32_to_color32u8(render_color),
+                    BLEND_MODE_ALPHA
+                  );
                 }
+              }
             }
 
             // death animation flashing
             {
-                auto& deathanimation_data = this->state->deathanimation_data;
-                if (deathanimation_data.flashing) {
-                    union color32f32 render_color = color32f32(1.0f, 1.0f, 1.0f, 1.0f);
-                    render_commands_push_quad(commands,
-                                              rectangle_f32(
-                                                  0,
-                                                  0,
-                                                  commands->screen_width,
-                                                  commands->screen_height),
-                                              color32f32_to_color32u8(render_color),
-                                              BLEND_MODE_ALPHA
-                    );
-                }
+              auto& deathanimation_data = this->state->deathanimation_data;
+              if (deathanimation_data.flashing) {
+                union color32f32 render_color = color32f32(1.0f, 1.0f, 1.0f, 1.0f);
+                render_commands_push_quad(commands,
+                  rectangle_f32(
+                    0,
+                    0,
+                    commands->screen_width,
+                    commands->screen_height),
+                  color32f32_to_color32u8(render_color),
+                  BLEND_MODE_ALPHA
+                );
+              }
             }
+          }
         }
     }
 
@@ -5649,7 +5644,6 @@ GAME_SCREEN(update_and_render_game_ingame) {
             } break;
         }
     }
-
     update_and_render_dialogue_ui(ui_render_commands, dt);
     handle_ui_update_and_render(ui_render_commands, dt);
 
