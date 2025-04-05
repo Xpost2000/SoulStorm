@@ -916,6 +916,9 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
             images[i++] = resources->ui_chunky_outline.top;
             images[i++] = resources->ui_chunky_outline.center;
 
+            images[i++] = resources->ui_hp_icons[0];
+            images[i++] = resources->ui_hp_icons[1];
+
             for (int j = 0; j < BUTTON_COUNT; ++j) {
                 if (resources->ui_controller_button_icons[j].index) {
                     images[i++] = resources->ui_controller_button_icons[j];
@@ -5184,20 +5187,26 @@ GAME_SCREEN(update_and_render_game_ingame) {
               }
             }
 
-            auto image_buffer = graphics_assets_get_image_by_id(&resources->graphics_assets, image);
+            {
+              auto& texture_atlas = resources->ui_texture_atlas;
+              auto image_buffer = graphics_assets_get_image_by_id(&resources->graphics_assets, texture_atlas.atlas_image_id);
 
-            render_commands_push_image_ext2(
-              ui_render_commands,
-              image_buffer,
-              destination_rect,
-              RECTANGLE_F32_NULL,
-              modulation,
-              V2(0, 0),
-              0,
-              0,
-              NO_FLAGS,
-              BLEND_MODE_ALPHA
-            );
+              auto subrect = texture_atlas.get_subrect(image);
+
+              render_commands_push_image_ext2(
+                ui_render_commands,
+                image_buffer,
+                destination_rect,
+                subrect,
+                modulation,
+                V2(0, 0),
+                0,
+                0,
+                NO_FLAGS,
+                BLEND_MODE_ALPHA
+              );
+            }
+
             lives_widget_position.x += 35;
           }
           ui_cursor_y = lives_widget_position.y + 36 + 15;
