@@ -1174,7 +1174,7 @@ bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, 
     player->halt_burst_charge_regeneration(
         // NOTE(jerry):
         // this to discourage it's spamming since otherwise it builds up too fast.
-        calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_RAY_ABILITY_MAX_T*1.4)
+        calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_RAY_ABILITY_MAX_T*1.30)
     );
     player->burst_ray_attack_ability_timer = PLAYER_BURST_RAY_ABILITY_MAX_T;
     player->current_burst_ability_max_t = PLAYER_BURST_RAY_ABILITY_MAX_T;
@@ -1188,7 +1188,7 @@ bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u3
     player->add_burst_ability_usage(2);
     s32 usage_count = player->get_burst_ability_usage(2);
     player->halt_burst_charge_regeneration(
-        calculate_amount_of_burst_depletion_flashes_for(2.35)
+        calculate_amount_of_burst_depletion_flashes_for(2.65)
     );
     state->gameplay_data.notify_score(2500, true);
     Audio::play(state->resources->random_explosion_sound(&state->gameplay_data.prng_unessential));
