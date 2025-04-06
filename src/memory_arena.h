@@ -37,6 +37,8 @@ struct Memory_Arena {
     u64     used = 0;
     u64     used_top = 0;
 
+    u64     committed = 0;
+    u64     committed_top = 0;
 
     // private usage information
     u8      flags = 0;

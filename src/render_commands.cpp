@@ -73,7 +73,7 @@ void render_command_iterator_advance(struct render_command_iterator* iterator) {
         iterator->chunk = iterator->chunk->next;
     }
 
-    iterator->it = &iterator->chunk->commands[++iterator->count];
+    iterator->it = &iterator->chunk->commands[iterator->count++];
 }
 
 void render_commands_set_shader(struct render_commands* commands, s32 shader_id, void* context) {

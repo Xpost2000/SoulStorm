@@ -805,13 +805,13 @@ GAME_SCREEN(update_and_render_game_title_screen) {
 
             // TitleBlackScreen 
             {
-                render_commands_push_quad(
-                    game_render_commands,
-                    rectangle_f32(0, 0, 9999, 9999),
-                    color32u8(0, 0, 0, 
-                              saturate<f32>((1.0 - state->titlescreen_data.demo_black_screen_alpha)) * 255),
-                    BLEND_MODE_ALPHA
-                );
+              render_commands_push_quad(
+                game_render_commands,
+                rectangle_f32(0, 0, 9999, 9999),
+                color32u8(0, 0, 0,
+                  saturate<f32>((1.0 - state->titlescreen_data.demo_black_screen_alpha)) * 255),
+                BLEND_MODE_ALPHA
+              );
             }
 
             y += 45;

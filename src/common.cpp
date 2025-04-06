@@ -363,3 +363,54 @@ Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, strin
 
     return result;
 }
+
+#if _WIN32
+void* virtual_memory_reserve(size_t sz)
+{
+  return VirtualAlloc(0, sz, MEM_RESERVE, PAGE_READWRITE);
+}
+
+void* virtual_memory_commit(void* ptr, size_t sz)
+{
+  if (sz == 0) {
+    return 0;
+  }
+  return VirtualAlloc(ptr, sz, MEM_COMMIT, PAGE_READWRITE);
+}
+
+void virtual_memory_uncommit(void* ptr, size_t sz)
+{
+  if (sz == 0) {
+    return;
+  }
+  VirtualFree(ptr, sz, MEM_DECOMMIT);
+}
+
+// eh.
+void virtual_memory_free(void* ptr, size_t sz)
+{
+  VirtualFree(ptr, sz, MEM_RELEASE);
+}
+#else
+// mmap/munmap does not have reserve/unreserve style behavior.
+void* virtual_memory_reserve(size_t sz)
+{
+  return mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+}
+
+// NO-OP on posix.
+void* virtual_memory_commit(void* ptr, size_t sz)
+{
+  return 0;
+}
+
+void virtual_memory_uncommit(void* ptr, size_t sz)
+{
+  return;
+}
+
+void virtual_memory_free(void* ptr, size_t sz)
+{
+  munmap(ptr, sz);
+}
+#endif

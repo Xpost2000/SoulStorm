@@ -1160,6 +1160,7 @@ void Direct3D11_Graphics_Driver::consume_render_commands(struct render_commands*
         }
     }
     flush_and_render_quads();
+    render_commands_clear(commands);
 }
 
 V2 Direct3D11_Graphics_Driver::resolution() {

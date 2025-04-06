@@ -649,6 +649,13 @@ bool is_path_directory(string location);
 Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, string location); 
 string get_preference_directory(string org, string path);
 
+// NOTE(jerry): *should* be page aligned, but I don't
+// try to do any rounding for this or anything.
+void* virtual_memory_reserve(size_t sz);
+void* virtual_memory_commit(void* ptr, size_t sz);
+void  virtual_memory_uncommit(void* ptr, size_t sz);
+void  virtual_memory_free(void* ptr, size_t sz);
+
 #include "debug_ui.h"
 #include "duffcoroutine.h"
 
