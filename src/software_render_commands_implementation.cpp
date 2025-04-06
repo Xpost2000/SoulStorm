@@ -29,8 +29,13 @@ shader_fn software_framebuffer_get_shader_function_for(s32 shader_id) {
 }
 
 void software_framebuffer_render_commands_tiled(struct software_framebuffer* framebuffer, struct render_commands* commands, struct rectangle_f32 clip_rect) {
-    for (unsigned index = 0; index < commands->command_count; ++index) {
-        struct render_command* command = &commands->commands[index];
+    // for (unsigned index = 0; index < commands->command_count; ++index) {
+    //     struct render_command* command = &commands->commands[index];
+    for (struct render_command_iterator it = render_command_iterator(commands);
+         !render_command_iterator_finished(&it);
+         render_command_iterator_advance(&it))
+    {
+        auto& command = it.it;
 
         shader_fn shader_to_select = software_framebuffer_get_shader_function_for(command->shader_id_type);
 
@@ -154,8 +159,11 @@ void software_framebuffer_render_commands(struct software_framebuffer* framebuff
     // V2 displacement      = camera_displacement_from_trauma(&commands->camera);
     V2 displacement      = commands->camera.trauma_displacement;
 
-    for (unsigned index = 0; index < commands->command_count; ++index) {
-        struct render_command* command = &commands->commands[index];
+    for (struct render_command_iterator it = render_command_iterator(commands);
+      !render_command_iterator_finished(&it);
+      render_command_iterator_advance(&it))
+    {
+      auto& command = it.it;
         transform_command_into_clip_space(V2(framebuffer->width, framebuffer->height), command, &commands->camera, displacement);
     }
 
@@ -192,5 +200,4 @@ void software_framebuffer_render_commands(struct software_framebuffer* framebuff
     Thread_Pool::synchronize_tasks();
 #endif
     commands->should_clear_buffer = 0;
-    commands->command_count       = 0;
 }

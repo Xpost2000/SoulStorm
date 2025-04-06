@@ -77,28 +77,48 @@ struct render_command {
     u8  blend_mode;
 };
 
+#define RENDER_COMMAND_CHUNK_COUNT (256)
+struct render_command_chunk {
+    struct render_command commands[RENDER_COMMAND_CHUNK_COUNT];
+    u16 count;
+    struct render_command_chunk* next;
+};
+
 struct render_commands {
     render_commands() {
         clear_buffer_color = color32u8_BLACK;
-        should_clear_buffer = command_count = command_capacity = 0;
+        should_clear_buffer = 0;
         screen_width = screen_height = 0;
-        commands = nullptr;
+        chunks_first = chunks_last = 0;
     }
+
+    Memory_Arena* allocating_arena;
+
     struct camera          camera;
     u8                     should_clear_buffer;
     union color32u8        clear_buffer_color;
-    struct render_command* commands;
-    s32                    command_count;
-    s32                    command_capacity;
 
     //                     This is not ideal,
     //                     but it is simplest to cache
     //                     the screen dimensions here.
     s32                    screen_width;
     s32                    screen_height;
+
+    struct render_command_chunk* chunks_first;
+    struct render_command_chunk* chunks_last;
 };
 
-struct render_commands render_commands(Memory_Arena* arena, s32 capacity, struct camera camera);
+struct render_command_iterator {
+    render_command_chunk* chunk;
+    render_command* it;
+    int count;
+};
+
+struct render_command_iterator render_command_iterator(struct render_commands* commands);
+bool render_command_iterator_finished(struct render_command_iterator* iterator);
+void render_command_iterator_advance(struct render_command_iterator* iterator);
+
+struct render_commands render_commands(Memory_Arena* arena, struct camera camera);
 
 void render_commands_push_quad(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, u8 blend_mode);
 void render_commands_push_quad_ext(struct render_commands* commands, struct rectangle_f32 destination, union color32u8 rgba, V2 rotation_origin, s32 angle, u8 blend_mode);

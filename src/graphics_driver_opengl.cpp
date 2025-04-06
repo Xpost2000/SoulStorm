@@ -720,8 +720,13 @@ void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* com
     }
 
     set_blend_mode(BLEND_MODE_ALPHA); // good default.
-    for (unsigned command_index = 0; command_index < commands->command_count; ++command_index) {
-        auto& command = commands->commands[command_index];
+    // for (unsigned command_index = 0; command_index < commands->command_count; ++command_index) {
+    //     auto& command = commands->commands[command_index];
+    for (struct render_command_iterator it = render_command_iterator(commands);
+         !render_command_iterator_finished(&it);
+         render_command_iterator_advance(&it))
+    {
+        auto& command = *it.it;
 
         switch (command.type) {
             case RENDER_COMMAND_DRAW_QUAD: {
@@ -749,7 +754,6 @@ void OpenGL_Graphics_Driver::consume_render_commands(struct render_commands* com
     }
 
     flush_and_render_quads();
-    commands->command_count = 0;
     glUseProgram(0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

@@ -1,6 +1,6 @@
 #include "render_commands.h"
 
-struct render_commands render_commands(Memory_Arena* arena, s32 capacity, struct camera camera) {
+struct render_commands render_commands(Memory_Arena* arena, struct camera camera) {
     struct render_commands result = {};
     result.should_clear_buffer = 0;
     result.clear_buffer_color.r = 0;
@@ -8,21 +8,76 @@ struct render_commands render_commands(Memory_Arena* arena, s32 capacity, struct
     result.clear_buffer_color.b = 0;
     result.clear_buffer_color.a = 0;
     result.camera = camera;
-    result.command_capacity = capacity;
-    result.command_count = 0;
-    result.commands         = (render_command*)arena->push_unaligned(capacity * sizeof(*result.commands));
+    result.chunks_first = result.chunks_last = 0;
+    result.allocating_arena = arena;
     return result;
 }
 
 struct render_command* render_commands_new_command(struct render_commands* commands, s16 type) {
-    assert(commands->command_count < commands->command_capacity && "Overrun command buffer?");
-    struct render_command* command = &commands->commands[commands->command_count++];
+  // with chunk allocation, the error is a memory arena related error.  
+  //assert(commands->command_count < commands->command_capacity && "Overrun command buffer?");
+    struct render_command_chunk* current_chunk = 0;
+    struct render_command* command = 0;
+
+    if (commands->chunks_first) {
+        if (commands->chunks_last->count >= RENDER_COMMAND_CHUNK_COUNT) {
+            current_chunk = (struct render_command_chunk*)
+                commands->allocating_arena->push_unaligned(
+                    sizeof(struct render_command_chunk)
+                );
+            current_chunk->next = 0;
+            current_chunk->count = 0;
+
+            commands->chunks_last->next = current_chunk;
+            commands->chunks_last = current_chunk;
+        }
+
+        current_chunk = commands->chunks_last;
+    } else {
+        current_chunk = (struct render_command_chunk*)
+            commands->allocating_arena->push_unaligned(
+                sizeof(struct render_command_chunk)
+            );
+
+        current_chunk->next = 0;
+        current_chunk->count = 0;
+
+        commands->chunks_first = commands->chunks_last = current_chunk;
+    }
+
+    command = &current_chunk->commands[current_chunk->count++];
     command->type = type;
+
     return command;
 }
 
+struct render_command_iterator render_command_iterator(struct render_commands* commands) {
+    struct render_command_iterator result;
+    {
+        result.chunk = commands->chunks_first;
+        if (result.chunk) {
+            result.it = &result.chunk->commands[0];
+        }
+        result.count = 0;
+    }
+    return result;
+}
+
+bool render_command_iterator_finished(struct render_command_iterator* iterator) {
+    return (iterator->chunk == 0);
+}
+
+void render_command_iterator_advance(struct render_command_iterator* iterator) {
+    if (iterator->count >= iterator->chunk->count) {
+        iterator->count = 0;
+        iterator->chunk = iterator->chunk->next;
+    }
+
+    iterator->it = &iterator->chunk->commands[++iterator->count];
+}
+
 void render_commands_set_shader(struct render_commands* commands, s32 shader_id, void* context) {
-    struct render_command* last_command = &commands->commands[commands->command_count - 1];
+    struct render_command* last_command = &commands->chunks_last->commands[commands->chunks_last->count - 1];
     last_command->shader_id_type = shader_id;
     last_command->shader_context = context;
 }
@@ -114,7 +169,10 @@ void render_commands_push_clear_scissor(struct render_commands* commands) {
 }
 
 void render_commands_clear(struct render_commands* commands) {
-    commands->command_count = 0;
+    //commands->command_count = 0;
+  // Leak them, this is fine, they're allocated from a scratch buffer (so I'm not really losing them anyway.
+  commands->chunks_first = 0;
+  commands->chunks_last = 0;
 }
 
 void transform_command_into_clip_space(V2 resolution, struct render_command* command, struct camera* camera, V2 trauma_displacement) {

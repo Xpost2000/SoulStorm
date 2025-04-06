@@ -1128,8 +1128,12 @@ void Direct3D11_Graphics_Driver::consume_render_commands(struct render_commands*
 
     context->VSSetShader(vertex_shader, 0, 0);
     context->PSSetShader(pixel_shader, 0, 0);
-    for (unsigned command_index = 0; command_index < commands->command_count; ++command_index) {
-        auto& command = commands->commands[command_index];
+    // for (unsigned command_index = 0; command_index < commands->command_count; ++command_index) {
+    for (struct render_command_iterator it = render_command_iterator(commands);
+         !render_command_iterator_finished(&it);
+         render_command_iterator_advance(&it))
+    {
+        auto& command = *it.it;
 
         switch (command.type) {
             case RENDER_COMMAND_DRAW_QUAD: {
@@ -1156,7 +1160,6 @@ void Direct3D11_Graphics_Driver::consume_render_commands(struct render_commands*
         }
     }
     flush_and_render_quads();
-    commands->command_count = 0;
 }
 
 V2 Direct3D11_Graphics_Driver::resolution() {
