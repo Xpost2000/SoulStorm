@@ -128,16 +128,10 @@ void Gameplay_Data::build_current_input_packet() {
         V2 axes = V2(Action::value(ACTION_MOVE_LEFT) + Action::value(ACTION_MOVE_RIGHT), Action::value(ACTION_MOVE_UP) + Action::value(ACTION_MOVE_DOWN));
         if (axes.magnitude_sq() > 1.0f) axes = axes.normalized();
 
-        // (special case for building input packet on button press)
-        // this is primarily because I should only record the "pressed" status
-        // once, but this is not really possible to do since my input happens at a higher framerate
-        // than the game logic...
-        bool previous_bomb_press = (current_input_packet.actions & (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT)));
-
         current_input_packet.actions=
             (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT))  *Action::is_down(ACTION_ACTION) |
             (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_FOCUS_BIT))   *Action::is_down(ACTION_FOCUS)  |
-            (BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))*Action::is_pressed(ACTION_USE_BOMB) * (!previous_bomb_press)
+            ((BIT(GAMEPLAY_FRAME_INPUT_PACKET_ACTION_USE_BOMB_BIT))* (Action::is_down(ACTION_USE_BOMB) && !just_used_bomb))
             ;
 
         apply_vector_quantization_deadzone_adjustment(axes);

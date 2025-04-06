@@ -1263,6 +1263,7 @@ void Player::handle_bomb_usage(Game_State* state, u32 bomb_pattern_id) {
 
     if (successful) {
       burst_charge = 0.0f;
+      state->gameplay_data.just_used_bomb = true;
     }
     else {
       if (state->gameplay_data.invalid_usage_flash_count <= 0) {

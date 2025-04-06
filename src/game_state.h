@@ -582,6 +582,7 @@ struct Gameplay_Data {
     bool paused_from_death = false;
     bool triggered_stage_completion_cutscene = false;
     bool queue_bomb_use = false;
+    bool just_used_bomb = false;
 
     f32 fixed_tickrate_timer     = 0.0f;
     f32 fixed_tickrate_remainder = 0.0f;

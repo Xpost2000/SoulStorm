@@ -1215,6 +1215,7 @@ void Game::reset_stage_simulation_state() {
     }
 
     state->queue_bomb_use = false;
+    state->just_used_bomb = false;
 
     // reset UID to 0.
     UID::reset();
@@ -4542,6 +4543,10 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     auto state = &this->state->gameplay_data;
     f32 dt = update_packet_data->dt;
     bool in_conversation = this->state->dialogue_state.in_conversation;
+
+    if (!Action::is_down(ACTION_USE_BOMB)) {
+      state->just_used_bomb = false;
+    }
 
     // conversations are not recorded into playback. This is fine. I hope.
     if (!in_conversation) {
