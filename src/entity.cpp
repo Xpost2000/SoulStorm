@@ -1301,10 +1301,12 @@ void Player::fire_burst_ray_laser(Game_State* state) {
                 state, position, V2(0, -1), 500.0f,
                 PROJECTILE_SPRITE_HOT_PINK_DISK, BULLET_SOURCE_PLAYER);
             bullet.flags |= BULLET_FLAGS_BREAKS_OTHER_BULLETS;
-            bullet.trail_ghost_limit = 16;
+            bullet.trail_ghost_limit = 32;
             bullet.trail_ghost_record_timer_max = 0.0000f;
-            bullet.trail_ghost_modulation = color32f32(0.9,0.9,0.9,1.0);
-            bullet.trail_ghost_max_alpha = 1.0f;
+            bullet.trail_ghost_modulation = color32f32(1.0,1.0,1.0,1.0);
+            bullet.trail_ghost_max_alpha = 0.15f;
+            bullet.entity_draw_blend_mode = BLEND_MODE_ADDITIVE;
+            bullet.shadow_entity_draw_blend_mode = BLEND_MODE_ADDITIVE;
             state->gameplay_data.add_bullet(
                 bullet
             );
@@ -1531,7 +1533,7 @@ void Player::update(Game_State* state, f32 dt) {
         emitter.shape = particle_emit_shape_line(V2(left, bottom), V2(left + r.w*2, bottom));
     }
 
-    // Handle Particle Emitter - Shield
+    // Handle Particle Emitter - Shield/Laser
     {
         auto& emitter = emitters[1];
         if (burst_absorption_shield_ability_timer > 0) {
@@ -1558,8 +1560,34 @@ void Player::update(Game_State* state, f32 dt) {
                 emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
             }
 
-        } else {
+        } else if (burst_ray_attack_ability_timer > 0) {
+          emitter.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE | PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
+          emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
+          emitter.scale = 0.12f;
+          emitter.emit_per_emission = 5;
+          emitter.lifetime = 0.75f;
+          emitter.scale_variance = V2(-0.25, 0.35);
+          emitter.velocity_x_variance = V2(-160, 160);
+          emitter.velocity_y_variance = V2(-20, 40);
+          emitter.acceleration_x_variance = V2(0, 0);
+          emitter.acceleration_y_variance = V2(98, 120);
+          emitter.lifetime_variance = V2(-0.1f, 0.7f);
+          emitter.emission_max_timer = 0.020f;
+          auto center = get_real_position();
+          center.y -= 20.0f;
+          emitter.shape = particle_emit_shape_circle(
+           center, 
+            6.0f,
+            true
+          );
+          emitter.modulation = color32f32(1, 1, 1, 1);
+          // turn off original emitter for now.
+          {
+            auto& emitter = emitters[0];
             emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
+          }
+        } else {
+          emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
         }
         burst_absorption_shield_ability_timer -= dt;
     }
