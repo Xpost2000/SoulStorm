@@ -16,6 +16,7 @@
 #include "achievements.h"
 #include "serializer.h"
 
+#include "game_rules.h"
 #include "game_preferences.h"
 
 // TODO(jerry): This should be a flag
@@ -25,8 +26,6 @@
 #define PREF_PATH (get_preference_directory(string_literal("xpostgames"), string_literal("solstorm")))
 #endif
 
-#define TICKRATE       (60)
-#define FIXED_TICKTIME (1.0f / TICKRATE)
 #ifdef _WIN32
 #define DEFAULT_REPLAY_LOCATION (string_literal("\\replays\\"))
 #else

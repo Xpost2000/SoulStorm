@@ -7,7 +7,14 @@ enum Gameplay_Recording_File_Version {
 
     // Pets added to recording file
     GAMEPLAY_RECORDING_FILE_VERSION_2 = 1,
-    GAMEPLAY_RECORDING_FILE_CURRENT_VERSION = GAMEPLAY_RECORDING_FILE_VERSION_2
+
+    // Game_Rules change + camera->prng = unessentialprng
+    //                     (used to use same prng source as game)
+    //
+    // This is not backwards compatible at all :(
+    GAMEPLAY_RECORDING_FILE_VERSION_3 = 2,
+
+    GAMEPLAY_RECORDING_FILE_CURRENT_VERSION = GAMEPLAY_RECORDING_FILE_VERSION_3
 };
 
 #define GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT   (0)

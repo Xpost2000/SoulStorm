@@ -72,6 +72,7 @@ bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memor
     }
 
     switch (recording->version) {
+        case GAMEPLAY_RECORDING_FILE_VERSION_3: 
         case GAMEPLAY_RECORDING_FILE_VERSION_2: 
         case GAMEPLAY_RECORDING_FILE_VERSION_1: 
         {

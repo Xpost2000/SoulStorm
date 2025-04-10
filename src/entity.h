@@ -14,36 +14,7 @@
 #include "particle_system.h"
 #include <functional>
 
-#define DEFAULT_SHOW_FLASH_WARNING_TIMER (0.125)
-#define DEFAULT_SHOW_FLASH_WARNING_TIMES (5)
-#define PLAYER_INVINICIBILITY_TIME   (1.35)
-#define PLAYER_GRAZE_RADIUS          (45.0f)
-// this needs to be applied in order to avoid abusing
-// grazing to rapidly gain score.
-#define GRAZING_SCORE_FIRE_RADIUS        (150.0f)  
-#define GRAZING_SCORE_AWARD_PICKUP_DELAY (0.100f)
-#define PICKUP_ENTITY_AUTO_ATTRACT_DELAY (0.15f)
-#define PLAYER_DEFAULT_GRAZING_DELAY (0.075f)
-#define GRAZING_SCORE_AWARD_DELAY    (0.050f)
-#define GRAZING_DEFAULT_SCORE_AWARD  (100)
-#define PICKUP_ENTITY_DEFAULT_LIFETIME (7.4f)
-#define PLAYER_BURST_CHARGE_CAPACITY   (100.0f)
-#define PLAYER_BURST_FLASH_T           (0.0555f)
-
-#define PLAYER_BURST_SHIELD_ABILITY_RADIUS (60)
-#define PLAYER_BURST_SHIELD_ABILITY_MAX_T (4.5f)
-#define PLAYER_BURST_RAY_ABILITY_MAX_T    (4.25f)
-#define PLAYER_BURST_BOMB_INVINCIBILITY_T (PLAYER_INVINICIBILITY_TIME * 5)
-
-#define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
-#define DAMAGE_FLASH_TIME_PERIOD        (0.05)
-#define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.5f)
-#define DEFAULT_FIRING_COOLDOWN (0.125)
-#define DEFAULT_ENTITY_SCORE_VALUE_PER_HIT (30)
-#define DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER (5)
-#define MAX_PREVIOUS_POSITIONS_FOR_TRAIL (40)
-#define PICKUP_ENTITY_ANIMATION_T_LENGTH (0.75f)
-#define PICKUP_ENTITY_FADE_T_LENGTH      (0.10f)
+#include "game_rules.h"
 
 // This is a basic timer intended to do native timing related
 // things. Although the "game-plan" is to use Lua Coroutines to do

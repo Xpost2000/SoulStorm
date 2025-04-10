@@ -709,6 +709,8 @@ void Cosmetic_Pet::update(Game_State* state, f32 dt) {
      * But TL;DR pet will hover around the player and switch sides depending on where
      * the player is. This might ship tbh, since making this look nicer is a lot of work.
      *
+     * TODO:
+     * Looks a little janky...
      */
     f32 radius_hover = 85;
 
@@ -1055,7 +1057,7 @@ void player_burst_fire_focus_tier0(Player* player, Game_State* state, u32 _unuse
         PROJECTILE_SPRITE_BLUE_STROBING
     );
 
-    player->drain_speed = 28;
+    player->drain_speed = PLAYER_BURST_TIER0_ATTACK_DRAIN_SPEED;
 }
 
 void player_burst_fire_focus_tier1(Player* player, Game_State* state, u32 _unused) {
@@ -1085,7 +1087,7 @@ spawn_bullet_arc_pattern1(
     PROJECTILE_SPRITE_BLUE_DISK
   );
 
-  player->drain_speed = 35;
+  player->drain_speed = PLAYER_BURST_TIER1_ATTACK_DRAIN_SPEED;
 }
 
 void player_burst_fire_focus_tier2(Player* player, Game_State* state, u32 _unused) {
@@ -1116,7 +1118,7 @@ void player_burst_fire_focus_tier2(Player* player, Game_State* state, u32 _unuse
     PROJECTILE_SPRITE_RED_DISK,
     0
   );
-  player->drain_speed = 100;
+  player->drain_speed = PLAYER_BURST_TIER2_ATTACK_DRAIN_SPEED;
 }
 
 void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unused) {
@@ -1147,7 +1149,7 @@ void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unuse
     PROJECTILE_SPRITE_GREEN_DISK,
     0
   );
-  player->drain_speed = 170;
+  player->drain_speed = PLAYER_BURST_TIER3_ATTACK_DRAIN_SPEED;
 }
 
 bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unused) {
@@ -1174,7 +1176,7 @@ bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, 
     player->halt_burst_charge_regeneration(
         // NOTE(jerry):
         // this to discourage it's spamming since otherwise it builds up too fast.
-        calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_RAY_ABILITY_MAX_T*1.30)
+        calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_RAY_COOLDOWN_DEPLETION_APPROX)
     );
     player->burst_ray_attack_ability_timer = PLAYER_BURST_RAY_ABILITY_MAX_T;
     player->current_burst_ability_max_t = PLAYER_BURST_RAY_ABILITY_MAX_T;
@@ -1182,15 +1184,16 @@ bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, 
 }
 
 bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u32 _unused) {
-    if (state->gameplay_data.tries < 1) {
+    if (PLAYER_BURST_SHIELD_REQUIRES_AT_LEAST_ONE_LIFE && state->gameplay_data.tries < 1) {
         return false;
     }
+
     player->add_burst_ability_usage(2);
     s32 usage_count = player->get_burst_ability_usage(2);
     player->halt_burst_charge_regeneration(
-        calculate_amount_of_burst_depletion_flashes_for(2.65)
+        calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_SHIELD_COOLDOWN_DEPLETION_APPROX)
     );
-    state->gameplay_data.notify_score(2500, true);
+    state->gameplay_data.notify_score(PLAYER_BURST_SHIELD_USE_SCORE_AWARD, true);
     Audio::play(state->resources->random_explosion_sound(&state->gameplay_data.prng_unessential));
     controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
     camera_traumatize(&state->gameplay_data.main_camera, 0.5f);
@@ -1200,7 +1203,7 @@ bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u3
 }
 
 bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _unused) {
-    if (state->gameplay_data.tries < 1) {
+    if (PLAYER_BURST_BOMB_REQUIRES_AT_LEAST_ONE_LIFE && state->gameplay_data.tries < 1) {
         return false;
     }
     player->add_burst_ability_usage(3);
@@ -1216,7 +1219,7 @@ bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _u
     state->convert_enemies_to_score_pickups();
 #endif
     state->convert_bullets_to_score_pickups();
-    state->gameplay_data.notify_score(7500, true);
+    state->gameplay_data.notify_score(PLAYER_BURST_BOMB_USE_SCORE_AWARD, true);
     state->set_led_target_color_anim_force(color32u8(255, 165, 0, 255), 0.08, false, true);
     Audio::play(resources->random_hit_sound(&state->gameplay_data.prng_unessential));
     controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
@@ -1224,7 +1227,7 @@ bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _u
 
     state->gameplay_data.remove_life();
     player->halt_burst_charge_regeneration(
-        calculate_amount_of_burst_depletion_flashes_for(2.75)
+        calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_BOMB_COOLDOWN_DEPLETION_APPROX)
     );
 
     player->begin_invincibility(true, PLAYER_BURST_BOMB_INVINCIBILITY_T);
@@ -1366,15 +1369,18 @@ void Player::fire_weapon(Game_State* state, u32 attack_pattern_id) {
 
 local f32 burst_charge_decay_rate(s32 rank) {
     switch (rank) {
-        case 0:
+        case 0: {
+            return PLAYER_BURST_TIER0_PASSIVE_DECAY_SPEED;
+        } break;
         case 1: {
-            return 18;
+            return PLAYER_BURST_TIER1_PASSIVE_DECAY_SPEED;
         } break;
         case 2: {
-            return 10;
+            return PLAYER_BURST_TIER2_PASSIVE_DECAY_SPEED;
         } break;
         case 3: {
-            return 2; // At higher burst level, it's harder to drain because any attack will drain it massively.
+            // At higher burst level, it's harder to drain because any attack will drain it massively.
+            return PLAYER_BURST_TIER3_PASSIVE_DECAY_SPEED;
         } break;
     }
     return 100;
@@ -1418,7 +1424,7 @@ void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
             burst_charge = 0.0f;
         } else {
             if (!burst_charge_halt_regeneration) {
-                f32 charge_speed = 15; // make charging harder
+                f32 charge_speed = PLAYER_DEFAULT_BURST_CHARGE_SPEED; // make charging harder
 
                 if (under_focus) {
                     burst_charge -= dt * drain_speed;
