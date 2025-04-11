@@ -69,6 +69,7 @@ HEADER_FILES= src/achievement_list.h \
 		src/fixed_array.h \
 		src/font_cache.h \
 		src/game.h \
+		src/game_rules.h \
 		src/game_preferences.h \
 		src/game_state.h \
 		src/game_task_scheduler.h \
@@ -118,6 +119,7 @@ OBJECT_FILES=./build_intermediaries/achievements.o \
 	     ./build_intermediaries/entity_prototypes.o \
 	     ./build_intermediaries/fade_transition.o \
 	     ./build_intermediaries/game.o \
+	     ./build_intermediaries/game_rules.o \
 	     ./build_intermediaries/bigfile.o \
 	     ./build_intermediaries/glad.o \
 	     ./build_intermediaries/game_task_scheduler.o \
@@ -161,6 +163,7 @@ DOBJECT_FILES=./build_intermediaries/achievements_debug.o \
 	      ./build_intermediaries/entity_prototypes_debug.o \
 	      ./build_intermediaries/fade_transition_debug.o \
 	      ./build_intermediaries/game_debug.o \
+	      ./build_intermediaries/game_rules_debug.o \
 	      ./build_intermediaries/bigfile_debug.o \
 	      ./build_intermediaries/glad_debug.o \
 	      ./build_intermediaries/game_task_scheduler_debug.o \
@@ -204,6 +207,7 @@ DROBJECT_FILES=./build_intermediaries/achievements.o \
 	      ./build_intermediaries/entity_prototypes.o \
 	      ./build_intermediaries/fade_transition.o \
 	      ./build_intermediaries/game_debug.o \
+	      ./build_intermediaries/game_rules_debug.o \
 	      ./build_intermediaries/bigfile.o \
 	      ./build_intermediaries/glad.o \
 	      ./build_intermediaries/game_task_scheduler.o \
@@ -275,6 +279,8 @@ endif
 	$(CC) -o $@ -c src/fade_transition.cpp $(CFLAGS) $(CLIBS) 
 ./build_intermediaries/game.o: src/game.cpp src/ending_mode.cpp src/credits_mode.cpp src/demo_recording.cpp src/main_menu_mode.cpp src/opening_mode.cpp src/title_screen_mode.cpp $(HEADER_FILES)
 	$(CC) -o $@ -c src/game.cpp $(CFLAGS) $(CLIBS) 
+./build_intermediaries/game_rules.o: src/game_rules.cpp $(HEADER_FILES)
+	$(CC) -o $@ -c src/game_rules.cpp $(CFLAGS) $(CLIBS) 
 ./build_intermediaries/bigfile.o: Bigfilepacker/bigfile.cpp $(HEADER_FILES)
 	$(CC) -o $@ -c Bigfilepacker/bigfile.cpp $(CFLAGS) $(CLIBS) 
 ./build_intermediaries/glad.o: glad/src/glad.c $(HEADER_FILES)
@@ -363,6 +369,8 @@ endif
 	$(CC) -o $@ -c src/fade_transition.cpp -g $(CFLAGS) $(CLIBS) 
 ./build_intermediaries/game_debug.o: src/game.cpp src/ending_mode.cpp src/credits_mode.cpp src/demo_recording.cpp src/main_menu_mode.cpp src/opening_mode.cpp src/title_screen_mode.cpp $(HEADER_FILES)
 	$(CC) -o $@ -c src/game.cpp -g $(CFLAGS) $(CLIBS) 
+./build_intermediaries/game_rules_debug.o: src/game_rules.cpp $(HEADER_FILES)
+	$(CC) -o $@ -c src/game_rules.cpp -g $(CFLAGS) $(CLIBS) 
 ./build_intermediaries/bigfile_debug.o: Bigfilepacker/bigfile.cpp $(HEADER_FILES)
 	$(CC) -o $@ -c Bigfilepacker/bigfile.cpp -g $(CFLAGS) $(CLIBS) 
 ./build_intermediaries/glad_debug.o: glad/src/glad.c $(HEADER_FILES)

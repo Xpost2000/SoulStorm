@@ -40,6 +40,7 @@ struct Gameplay_Recording_File {
     u8                           stage_id;
     u8                           level_id;
     s8                           selected_pet;
+    Game_Rules                   applied_rules;
 
     /*
       NOTE:

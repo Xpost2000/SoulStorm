@@ -490,6 +490,7 @@
     <ClCompile Include="..\src\fade_transition.cpp" />
     <ClCompile Include="..\src\game.cpp" />
     <ClCompile Include="..\src\game_lua_bindings.cpp" />
+    <ClCompile Include="..\src\game_rules.cpp" />
     <ClCompile Include="..\src\game_task_scheduler.cpp" />
     <ClCompile Include="..\src\game_ui.cpp" />
     <ClCompile Include="..\src\graphics_driver.cpp">
@@ -566,6 +567,7 @@
     <ClInclude Include="..\src\font_cache.h" />
     <ClInclude Include="..\src\game.h" />
     <ClInclude Include="..\src\game_preferences.h" />
+    <ClInclude Include="..\src\game_rules.h" />
     <ClInclude Include="..\src\game_state.h" />
     <ClInclude Include="..\src\game_task_scheduler.h" />
     <ClInclude Include="..\src\game_ui.h" />

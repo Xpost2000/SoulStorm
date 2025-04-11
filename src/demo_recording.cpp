@@ -66,15 +66,22 @@ bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memor
         recording->prng.constant, recording->prng.multiplier, recording->prng.state, recording->prng.seed, recording->prng.modulus
     );
 
+    if (recording->version >= GAMEPLAY_RECORDING_FILE_VERSION_3) {
+        recording->applied_rules = serialize_game_rules(serializer);
+    } else {
+        recording->applied_rules = g_default_game_rules;
+    }
+
+#if 0 
     if (recording->version != GAMEPLAY_RECORDING_FILE_CURRENT_VERSION) {
         _debugprintf("Version mismatch");
         return false;
     }
+#endif
 
     switch (recording->version) {
         case GAMEPLAY_RECORDING_FILE_VERSION_3: 
         case GAMEPLAY_RECORDING_FILE_VERSION_2: 
-        case GAMEPLAY_RECORDING_FILE_VERSION_1: 
         {
             if (arena) {
                 recording->memory_arena = arena;
@@ -91,6 +98,7 @@ bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memor
 
             return true;
         } break;
+        case GAMEPLAY_RECORDING_FILE_VERSION_1: 
         default: {
             // TODO: should make this error more pleasantly in the future.
             // Although the game has little to no UI to speak of.

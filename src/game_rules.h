@@ -1,6 +1,9 @@
 #ifndef GAME_RULES_H
 #define GAME_RULES_H
 
+#include "common.h"
+#include "serializer.h"
+
 /*
  * Used tuning timing/score values for the game so that
  * replays across versions are "stable" as replays can freeze
@@ -22,6 +25,7 @@
  * organize these rules
  */
 
+// NOTE(jerry): tickrate is not a rule that needs to be stored.
 #define TICKRATE       (60)
 #define FIXED_TICKTIME (1.0f / TICKRATE)
 
@@ -80,5 +84,23 @@
 #define MAX_PREVIOUS_POSITIONS_FOR_TRAIL (40)
 #define PICKUP_ENTITY_ANIMATION_T_LENGTH (0.75f)
 #define PICKUP_ENTITY_FADE_T_LENGTH      (0.10f)
+
+/*
+ * NOTE(jerry):
+ *
+ * Gameplay *should* not really change so I am not supposed to need
+ * more rules, but just in-case...
+ */
+#define GAME_RULES_VERSION_0       (0)
+#define GAME_RULES_VERSION_CURRENT (GAME_RULES_VERSION_0)
+struct Game_Rules {
+    s32 version = GAME_RULES_VERSION_CURRENT;
+};
+
+extern Game_Rules g_game_rules;
+extern Game_Rules g_default_game_rules;
+
+Game_Rules serialize_game_rules(struct binary_serializer* serializer);
+void       reset_game_rules(void);
 
 #endif

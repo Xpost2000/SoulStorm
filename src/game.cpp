@@ -1333,6 +1333,7 @@ void Game::cleanup_game_simulation() {
         );
         state->gameplay_data.recording.in_playback = false;
         state->gameplay_data.prng                  = state->gameplay_data.recording.old_prng;
+        reset_game_rules();
         _debugprintf(
             "Set State->PRNG to (%d, %d, %d, %d, %d)",
             state->gameplay_data.prng.constant,
@@ -1478,6 +1479,8 @@ void Game::init(Graphics_Driver* driver) {
         state->simple_scrollable_backgrounds = Simple_Scrollable_Background_Entities(arena, MAX_BACKGROUND_ENTITIES);
         state->script_loaded_images          = Fixed_Array<image_id>(arena, MAX_TRACKED_SCRIPT_LOADABLE_IMAGES);
         state->script_loaded_sounds          = Fixed_Array<Audio::Sound_ID>(arena, MAX_TRACKED_SCRIPT_LOADABLE_SOUNDS);
+
+        reset_game_rules();
     }
 
 
