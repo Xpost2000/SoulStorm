@@ -186,6 +186,7 @@ struct Entity {
 
     bool attack();
     void stop_attack();
+    void post_init_apply_current_game_rules(void);
 
     // I normally don't like using these... I still don't!
     virtual void reset_movement(void);

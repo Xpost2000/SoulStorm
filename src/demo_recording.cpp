@@ -113,6 +113,7 @@ void gameplay_recording_file_start_playback(Gameplay_Recording_File* recording) 
     recording->frames_run           = 0;
     recording->in_playback          = true;
     recording->playback_frame_index = 0;
+    g_game_rules                    = recording->applied_rules;
 }
 
 bool gameplay_recording_file_has_more_frames(Gameplay_Recording_File* recording) {

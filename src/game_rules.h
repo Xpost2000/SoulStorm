@@ -29,59 +29,65 @@
 #define TICKRATE       (60)
 #define FIXED_TICKTIME (1.0f / TICKRATE)
 
-#define DEFAULT_SHOW_FLASH_WARNING_TIMER (0.125)
-#define DEFAULT_SHOW_FLASH_WARNING_TIMES (5)
-#define PLAYER_INVINICIBILITY_TIME   (1.35)
-#define PLAYER_GRAZE_RADIUS          (45.0f)
+///////////////////////////////////////// SUBSTITUTION MACROS
+///////////////////////////////////////// TO REDUCE CODE REWRITING....
+
+#define PLAYER_INVINICIBILITY_TIME   (g_game_rules.player_invincibility_time_after_damage)
+#define PLAYER_GRAZE_RADIUS          (g_game_rules.player_graze_projectile_radius)
 
 // this needs to be applied in order to avoid abusing
 // grazing to rapidly gain score.
-#define GRAZING_SCORE_FIRE_RADIUS        (150.0f)  
-#define GRAZING_SCORE_AWARD_PICKUP_DELAY (0.100f)
-#define PICKUP_ENTITY_AUTO_ATTRACT_DELAY (0.15f)
-#define PLAYER_DEFAULT_GRAZING_DELAY (0.075f)
-#define GRAZING_SCORE_AWARD_DELAY    (0.050f)
-#define GRAZING_DEFAULT_SCORE_AWARD  (100)
-#define PICKUP_ENTITY_DEFAULT_LIFETIME (7.4f)
-#define PLAYER_BURST_CHARGE_CAPACITY   (100.0f)
-#define PLAYER_BURST_FLASH_T           (0.0555f)
+#define GRAZING_SCORE_FIRE_RADIUS        (g_game_rules.grazing_score_fire_radius)  
+#define GRAZING_SCORE_AWARD_PICKUP_DELAY (g_game_rules.grazing_score_award_pickup_delay)
+#define PICKUP_ENTITY_AUTO_ATTRACT_DELAY (g_game_rules.pickup_entity_auto_attract_delay)
+#define PLAYER_DEFAULT_GRAZING_DELAY     (g_game_rules.player_default_grazing_delay)
+#define GRAZING_SCORE_AWARD_DELAY        (g_game_rules.grazing_score_award_delay)
+#define GRAZING_DEFAULT_SCORE_AWARD      (g_game_rules.grazing_default_score_award)
+#define PICKUP_ENTITY_DEFAULT_LIFETIME   (g_game_rules.pickup_entity_default_lifetime)
+#define PLAYER_BURST_CHARGE_CAPACITY     (g_game_rules.player_burst_charge_capacity)
+#define PLAYER_BURST_FLASH_T             (g_game_rules.player_burst_flash_t)
 
 /// seconds
-#define PLAYER_BURST_SHIELD_ABILITY_RADIUS (60)
-#define PLAYER_BURST_SHIELD_ABILITY_MAX_T (4.5f)
-#define PLAYER_BURST_SHIELD_COOLDOWN_DEPLETION_APPROX (2.65)
-#define PLAYER_BURST_SHIELD_USE_SCORE_AWARD (2500)
-#define PLAYER_BURST_SHIELD_REQUIRES_AT_LEAST_ONE_LIFE (true)
+#define PLAYER_BURST_SHIELD_ABILITY_RADIUS             (g_game_rules.player_burst_shield_ability_radius)
+#define PLAYER_BURST_SHIELD_ABILITY_MAX_T              (g_game_rules.player_burst_shield_ability_max_t)
+#define PLAYER_BURST_SHIELD_COOLDOWN_DEPLETION_APPROX  (g_game_rules.player_burst_shield_cooldown_depletion_approx)
+#define PLAYER_BURST_SHIELD_USE_SCORE_AWARD            (g_game_rules.player_burst_shield_use_score_award)
+#define PLAYER_BURST_SHIELD_REQUIRES_AT_LEAST_ONE_LIFE (g_game_rules.player_burst_shield_requires_at_least_one_life)
 
 /// seconds
-#define PLAYER_BURST_RAY_ABILITY_MAX_T    (4.25f)
-#define PLAYER_BURST_RAY_COOLDOWN_DEPLETION_APPROX (PLAYER_BURST_RAY_ABILITY_MAX_T*1.30)
+#define PLAYER_BURST_RAY_ABILITY_MAX_T             (g_game_rules.player_burst_ray_ability_max_t)
+#define PLAYER_BURST_RAY_COOLDOWN_DEPLETION_APPROX (g_game_rules.player_burst_ray_cooldown_depletion_approx)
 
 /// seconds
-#define PLAYER_BURST_BOMB_COOLDOWN_DEPLETION_APPROX (2.75)
-#define PLAYER_BURST_BOMB_USE_SCORE_AWARD (7500)
-#define PLAYER_BURST_BOMB_REQUIRES_AT_LEAST_ONE_LIFE (true)
-#define PLAYER_BURST_BOMB_INVINCIBILITY_T (PLAYER_INVINICIBILITY_TIME * 5)
+#define PLAYER_BURST_BOMB_COOLDOWN_DEPLETION_APPROX  (g_game_rules.player_burst_bomb_cooldown_depletion_approx)
+#define PLAYER_BURST_BOMB_USE_SCORE_AWARD            (g_game_rules.player_burst_bomb_use_score_award)
+#define PLAYER_BURST_BOMB_REQUIRES_AT_LEAST_ONE_LIFE (g_game_rules.player_burst_bomb_requires_at_least_one_life)
+#define PLAYER_BURST_BOMB_INVINCIBILITY_T            (g_game_rules.player_burst_bomb_invincibility_t)
 
-#define PLAYER_BURST_TIER0_ATTACK_DRAIN_SPEED (28)
-#define PLAYER_BURST_TIER1_ATTACK_DRAIN_SPEED (35)
-#define PLAYER_BURST_TIER2_ATTACK_DRAIN_SPEED (100)
-#define PLAYER_BURST_TIER3_ATTACK_DRAIN_SPEED (170)
+#define PLAYER_BURST_TIER0_ATTACK_DRAIN_SPEED (g_game_rules.player_burst_tier0_attack_drain_speed)
+#define PLAYER_BURST_TIER1_ATTACK_DRAIN_SPEED (g_game_rules.player_burst_tier1_attack_drain_speed)
+#define PLAYER_BURST_TIER2_ATTACK_DRAIN_SPEED (g_game_rules.player_burst_tier2_attack_drain_speed)
+#define PLAYER_BURST_TIER3_ATTACK_DRAIN_SPEED (g_game_rules.player_burst_tier3_attack_drain_speed)
 
-#define PLAYER_BURST_TIER0_PASSIVE_DECAY_SPEED (18)
-#define PLAYER_BURST_TIER1_PASSIVE_DECAY_SPEED (18)
-#define PLAYER_BURST_TIER2_PASSIVE_DECAY_SPEED (10)
-#define PLAYER_BURST_TIER3_PASSIVE_DECAY_SPEED (2)
+#define PLAYER_BURST_TIER0_PASSIVE_DECAY_SPEED (g_game_rules.player_burst_tier0_passive_decay_speed)
+#define PLAYER_BURST_TIER1_PASSIVE_DECAY_SPEED (g_game_rules.player_burst_tier1_passive_decay_speed)
+#define PLAYER_BURST_TIER2_PASSIVE_DECAY_SPEED (g_game_rules.player_burst_tier2_passive_decay_speed)
+#define PLAYER_BURST_TIER3_PASSIVE_DECAY_SPEED (g_game_rules.player_burst_tier3_passive_decay_speed)
 
-#define PLAYER_DEFAULT_BURST_CHARGE_SPEED (15)
+#define PLAYER_DEFAULT_BURST_CHARGE_SPEED          (g_game_rules.player_default_burst_charge_speed)
+#define DEFAULT_FIRING_COOLDOWN                    (g_game_rules.default_firing_cooldown)
+#define DEFAULT_ENTITY_SCORE_VALUE_PER_HIT         (g_game_rules.default_entity_score_value_per_hit)
+#define DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER (g_game_rules.default_entity_score_kill_value_multiplier)
 
+// These aren't really rules that matter much, as these are purely visual.
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
 #define DAMAGE_FLASH_TIME_PERIOD        (0.05)
-#define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.5f)
-#define DEFAULT_FIRING_COOLDOWN (0.125)
-#define DEFAULT_ENTITY_SCORE_VALUE_PER_HIT (30)
-#define DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER (5)
+#define ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION (5.5f) // this will never change.
+// visual only
 #define MAX_PREVIOUS_POSITIONS_FOR_TRAIL (40)
+#define DEFAULT_SHOW_FLASH_WARNING_TIMER (0.125)
+#define DEFAULT_SHOW_FLASH_WARNING_TIMES (5)
+// not changing.
 #define PICKUP_ENTITY_ANIMATION_T_LENGTH (0.75f)
 #define PICKUP_ENTITY_FADE_T_LENGTH      (0.10f)
 
@@ -95,10 +101,53 @@
 #define GAME_RULES_VERSION_CURRENT (GAME_RULES_VERSION_0)
 struct Game_Rules {
     s32 version = GAME_RULES_VERSION_CURRENT;
+
+    f32 player_invincibility_time_after_damage = 1.35f;
+    f32 player_graze_projectile_radius         = 45.0f; // pixels
+
+    f32 grazing_score_fire_radius              = 150.0f;
+    f32 grazing_score_award_pickup_delay       = 0.100f;
+    f32 pickup_entity_auto_attract_delay       = 0.15f;
+    f32 player_default_grazing_delay           = 0.075f;
+    f32 grazing_score_award_delay              = 0.050f;
+    s32 grazing_default_score_award            = 100;
+    f32 pickup_entity_default_lifetime         = 7.4f;
+    f32 player_burst_charge_capacity           = 100.0f; //... why is this a float?
+    f32 player_burst_flash_t                   = 0.0555f;
+
+    f32 player_burst_shield_ability_radius             = 60.0f;
+    f32 player_burst_shield_ability_max_t              = 4.5f;
+    f32 player_burst_shield_cooldown_depletion_approx  = 2.65f;
+    s32 player_burst_shield_use_score_award            = 2500;
+    s32 player_burst_shield_requires_at_least_one_life = 1;
+
+    f32 player_burst_ray_ability_max_t             = 4.25f;
+    f32 player_burst_ray_cooldown_depletion_approx = 4.25f * 1.30f;
+
+    f32 player_burst_bomb_cooldown_depletion_approx  = 2.75f;
+    s32 player_burst_bomb_use_score_award            = 7500;
+    s32 player_burst_bomb_requires_at_least_one_life = 1;
+    f32 player_burst_bomb_invincibility_t            = 1.35f * 5.0f;
+
+    s32 player_burst_tier0_attack_drain_speed        = 28;
+    s32 player_burst_tier1_attack_drain_speed        = 35;
+    s32 player_burst_tier2_attack_drain_speed        = 100;
+    s32 player_burst_tier3_attack_drain_speed        = 170;
+
+    s32 player_burst_tier0_passive_decay_speed        = 18;
+    s32 player_burst_tier1_passive_decay_speed        = 18;
+    s32 player_burst_tier2_passive_decay_speed        = 10;
+    s32 player_burst_tier3_passive_decay_speed        = 2;
+    s32 player_default_burst_charge_speed             = 15;
+
+    f32 default_firing_cooldown = 0.125f;
+    s32 default_entity_score_value_per_hit = 30;
+    s32 default_entity_score_kill_value_multiplier = 5;
+
 };
 
 extern Game_Rules g_game_rules;
-extern Game_Rules g_default_game_rules;
+extern const Game_Rules g_default_game_rules;
 
 Game_Rules serialize_game_rules(struct binary_serializer* serializer);
 void       reset_game_rules(void);

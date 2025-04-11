@@ -66,6 +66,29 @@ void Entity::reset_movement(void) {
     acceleration = V2(0,0);
 }
 
+void Entity::post_init_apply_current_game_rules(void) {
+  /*
+    NOTE(jerry):
+      I was unaware that the C++ compiler was able to figure out
+      my g_game_rules struct started with a constant value even though
+      it's a variable... This is confusing as I thought constructors only
+      worked with explicitly constant values (like literals...)
+
+      So while this causes my code to compile straight away, it doesn't
+      actually do what I want...
+
+      So this method will reinitialize fields that technically depend on
+      a dynamically chaning variable.
+  */
+  score_value = DEFAULT_ENTITY_SCORE_VALUE_PER_HIT;
+  death_multiplier = DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER;
+  hit_flash_timer = Timer(DAMAGE_FLASH_TIME_PERIOD);
+  firing_cooldown = DEFAULT_FIRING_COOLDOWN;
+  cleanup_time = Timer(ENTITY_TIME_BEFORE_OUT_OF_BOUNDS_DELETION);
+  invincibility_time_flash_period = Timer(INVINCIBILITY_FLASH_TIME_PERIOD);
+  invincibility_time = Timer(PLAYER_INVINICIBILITY_TIME);
+}
+
 void Entity::set_sprite_frame_region(s32 a, s32 b) {
     sprite_frame_begin = a;
     sprite_frame_end   = b;

@@ -1242,6 +1242,7 @@ void Game::reset_stage_simulation_state() {
         state->player.reset_burst_charge_status();
         state->player.time_spent_grazing               = 0.0f;
         state->player.under_focus                      = false;
+        state->player.post_init_apply_current_game_rules();
         state->show_damage_player_will_take            = false;
         state->game_alert.enabled = false;
         state->focus_tint_fade_t                       = 0.0f;
@@ -1682,6 +1683,7 @@ void Gameplay_Data::unload_all_script_loaded_resources(Game_State* game_state, G
 }
 
 void Gameplay_Data::add_bullet(Bullet b) {
+    b.post_init_apply_current_game_rules();
     switch (b.source_type) {
         case BULLET_SOURCE_PLAYER: {
             to_create_player_bullets.push(b);
@@ -1701,10 +1703,12 @@ void Gameplay_Data::add_explosion_hazard(Explosion_Hazard h) {
 }
 
 void Gameplay_Data::add_enemy_entity(Enemy_Entity e) {
+    e.post_init_apply_current_game_rules();
     to_create_enemies.push(e);
 }
 
 void Gameplay_Data::add_pickup_entity(Pickup_Entity s) {
+    s.post_init_apply_current_game_rules();
     to_create_pickups.push(s);
 }
 
