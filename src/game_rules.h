@@ -144,6 +144,21 @@ struct Game_Rules {
     s32 default_entity_score_value_per_hit = 30;
     s32 default_entity_score_kill_value_multiplier = 5;
 
+    s32    pet_data_none_lives          = 5; // MAX_BASE_TRIES
+    f32    pet_data_none_score_modifier = 1.0f;
+    f32    pet_data_none_speed_modifier = 1.0f;
+
+    s32    pet_data_cat_lives          = 9;
+    f32    pet_data_cat_score_modifier = 0.35f;
+    f32    pet_data_cat_speed_modifier = 1.0f;
+
+    s32    pet_data_dog_lives          = 3;
+    f32    pet_data_dog_score_modifier = 1.5f;
+    f32    pet_data_dog_speed_modifier = 1.25f;
+
+    s32    pet_data_fish_lives          = 1;
+    f32    pet_data_fish_score_modifier = 4.00f;
+    f32    pet_data_fish_speed_modifier = 0.875f;
 };
 
 extern Game_Rules g_game_rules;

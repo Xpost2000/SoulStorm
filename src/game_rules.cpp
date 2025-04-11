@@ -58,6 +58,22 @@ static void debug_show_game_rules(Game_Rules& rules)
     DisplayRule(rules, default_firing_cooldown);
     DisplayRule(rules, default_entity_score_value_per_hit);
     DisplayRule(rules, default_entity_score_kill_value_multiplier);
+
+    DisplayRule(rules, pet_data_none_lives);
+    DisplayRule(rules, pet_data_none_score_modifier);
+    DisplayRule(rules, pet_data_none_speed_modifier);
+
+    DisplayRule(rules, pet_data_cat_lives);
+    DisplayRule(rules, pet_data_cat_score_modifier);
+    DisplayRule(rules, pet_data_cat_speed_modifier);
+
+    DisplayRule(rules, pet_data_dog_lives);
+    DisplayRule(rules, pet_data_dog_score_modifier);
+    DisplayRule(rules, pet_data_dog_speed_modifier);
+
+    DisplayRule(rules, pet_data_fish_lives);
+    DisplayRule(rules, pet_data_fish_score_modifier);
+    DisplayRule(rules, pet_data_fish_speed_modifier);
 }
 
 Game_Rules serialize_game_rules(struct binary_serializer* serializer)
@@ -106,6 +122,23 @@ Game_Rules serialize_game_rules(struct binary_serializer* serializer)
             serialize_f32(serializer, &result.default_firing_cooldown);
             serialize_s32(serializer, &result.default_entity_score_value_per_hit);
             serialize_s32(serializer, &result.default_entity_score_kill_value_multiplier);
+
+            serialize_s32(serializer, &result.pet_data_none_lives);
+            serialize_s32(serializer, &result.pet_data_cat_lives);
+            serialize_s32(serializer, &result.pet_data_dog_lives);
+            serialize_s32(serializer, &result.pet_data_fish_lives);
+
+            serialize_f32(serializer, &result.pet_data_none_score_modifier);
+            serialize_f32(serializer, &result.pet_data_none_speed_modifier);
+
+            serialize_f32(serializer, &result.pet_data_cat_score_modifier);
+            serialize_f32(serializer, &result.pet_data_cat_speed_modifier);
+
+            serialize_f32(serializer, &result.pet_data_dog_score_modifier);
+            serialize_f32(serializer, &result.pet_data_dog_speed_modifier);
+
+            serialize_f32(serializer, &result.pet_data_fish_score_modifier);
+            serialize_f32(serializer, &result.pet_data_fish_speed_modifier);
         } break;
         default: {
             _debugprintf("Unknown game rules structure version. Using default game rules.");

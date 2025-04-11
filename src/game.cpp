@@ -67,6 +67,24 @@ local Gameplay_Data_Pet_Information pets_data[] = {
 };
 
 Gameplay_Data_Pet_Information* game_get_pet_data(s32 id) {
+    // ReevaluateBasedOnCurrentGameRules()
+    {
+        pets_data[0].maximum_lives = g_game_rules.pet_data_none_lives;
+        pets_data[1].maximum_lives = g_game_rules.pet_data_cat_lives;
+        pets_data[2].maximum_lives = g_game_rules.pet_data_dog_lives;
+        pets_data[3].maximum_lives = g_game_rules.pet_data_fish_lives;
+
+        pets_data[0].score_modifier = g_game_rules.pet_data_none_score_modifier;
+        pets_data[1].score_modifier = g_game_rules.pet_data_cat_score_modifier;
+        pets_data[2].score_modifier = g_game_rules.pet_data_dog_score_modifier;
+        pets_data[3].score_modifier = g_game_rules.pet_data_fish_score_modifier;
+
+        pets_data[0].speed_modifier = g_game_rules.pet_data_none_speed_modifier;
+        pets_data[1].speed_modifier = g_game_rules.pet_data_cat_speed_modifier;
+        pets_data[2].speed_modifier = g_game_rules.pet_data_dog_speed_modifier;
+        pets_data[3].speed_modifier = g_game_rules.pet_data_fish_speed_modifier;
+    }
+
     switch (id) {
         case GAME_PET_ID_NONE:
             return &pets_data[0];
