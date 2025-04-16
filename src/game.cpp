@@ -360,6 +360,7 @@ local int game_complete_stage_level(s32 stage_id, s32 level_id, bool practicing_
             _debugprintf("Practice stage complete");
             result = GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY; 
         } else {
+          _debugprintf("(level_id+1)=%d vs stage.unlocked_levels=%d", level_id + 1, stage.unlocked_levels);
             if ((level_id+1) >= stage.unlocked_levels) {
                 /*
                  * NOTE:
@@ -2871,9 +2872,25 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
             0.5f
         );
 
-        save_game(); // redundantly save the game, so that it does not rely on the transition to actually save.
+        /*
+        * Since the save_game also reloads the save to guarantee the save actually "works",
+        * the cutscene flags are implicitly reset based on the game state, so I have to restore
+        * them from what they actually are right now...
+        * 
+        * Kinda stupid, but eh.
+        */
+        {
+          auto& main_menu_state = state->mainmenu_data;
+          bool cutscene_status0 = main_menu_state.cutscene1.triggered;
+          bool cutscene_status3 = main_menu_state.cutscene4.triggered;
+          save_game(); // redundantly save the game, so that it does not rely on the transition to actually save.
+          main_menu_state.cutscene1.triggered = cutscene_status0;
+          main_menu_state.cutscene4.triggered = cutscene_status3;
+        }
+
         switch (state->last_completion_state) {
             case GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE: {
+              _debugprintf("Unlock next stage...");
                 Transitions::register_on_finish(
                     [&](void*) mutable {
                         switch_ui(UI_STATE_INACTIVE);
@@ -2885,8 +2902,8 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
 #ifndef BUILD_DEMO
                             if (!main_menu_state.cutscene1.triggered && can_access_stage(3)) {
                                 _debugprintf("Switched to ending");
-                                switch_screen(GAME_SCREEN_ENDING);
                                 main_menu_state.start_completed_maingame_cutscene(state);
+                                switch_screen(GAME_SCREEN_ENDING);
                             } else {
                                 _debugprintf("Switched to main menu");
                                 switch_screen(GAME_SCREEN_MAIN_MENU);
@@ -2894,8 +2911,8 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
 #else 
                           if (!main_menu_state.cutscene4.triggered && can_access_stage(1)) {
                             _debugprintf("demo ending!"); // no special ending state
-                            switch_screen(GAME_SCREEN_MAIN_MENU);
                             main_menu_state.start_completed_demo_cutscene(state);
+                            switch_screen(GAME_SCREEN_MAIN_MENU);
                           }
 #endif
                         }
@@ -4560,7 +4577,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                     game_update_stage_score(stage_id, level_id, state->gameplay_data.total_score);
                     game_register_stage_completion(stage_id, level_id);
                     completion_type = game_complete_stage_level(stage_id, level_id, state->gameplay_data.playing_practice_mode);
-
+                    _debugprintf("completion type = %d", completion_type);
                     switch (completion_type) {
                         case GAME_COMPLETE_STAGE_UNLOCK_NEXT_STAGE: {
                             if (state->gameplay_data.unlocked_pets < 3) {
@@ -6993,6 +7010,7 @@ void Game::update_from_save_data(Save_File* save_data) {
         }
         {
             state->cutscene4.triggered = likely_completed_demo;
+            _debugprintf("demo likely finished? (%d)\n", likely_completed_demo);
         }
 #if 0
         // Enable postgame portal if we're in the postgame
