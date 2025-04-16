@@ -1290,6 +1290,7 @@ void Game::reset_stage_simulation_state() {
         state->player.grazing_award_score_pickup_timer = 0.0f;
         state->player.reset_burst_charge_status();
         state->player.time_spent_grazing               = 0.0f;
+        state->player.hit_flash_count                  = 0;
         state->player.under_focus                      = false;
         state->player.post_init_apply_current_game_rules();
         state->show_damage_player_will_take            = false;
