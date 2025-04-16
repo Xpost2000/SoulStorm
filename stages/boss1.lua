@@ -754,8 +754,8 @@ function _Stage1_Boss_HexBind(eid, state)
       local position = enemy_final_position(eid);
       if current_t >= state.next_think_action_t then
          local action_rng = prng_ranged_integer(0, 100);
-         -- 40% of attack
-         local attack_chance = 40;
+         -- 35% of attack
+         local attack_chance = 35;
          if boss1_state.phase == 5 then
             attack_chance = 20;
          end
