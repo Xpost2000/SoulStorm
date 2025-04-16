@@ -126,7 +126,7 @@ struct Game_Rules {
 
     f32 player_burst_bomb_cooldown_depletion_approx  = 2.75f;
     s32 player_burst_bomb_use_score_award            = 7500;
-    s32 player_burst_bomb_requires_at_least_one_life = 1;
+    s32 player_burst_bomb_requires_at_least_one_life = 0;
     f32 player_burst_bomb_invincibility_t            = 1.35f * 5.0f;
 
     s32 player_burst_tier0_attack_drain_speed        = 28;
