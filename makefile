@@ -29,11 +29,11 @@ endif
 ifeq ($(TARGET), win64)
 	CLIBS:=-lmingw32 -L./dependencies/x86-64/lib/ -L./dependencies/x86-64/bin/ -L./. -I./glad/include/\
 		   -I./dependencies/ -I./dependencies/x86-64/include -I./dependencies/x86-64/include/SDL2\
-		   -ld3d11 -ld3dcompiler -ldxguid -lOpenGL32 -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse4 -m64
+		   -ld3d11 -ld3dcompiler -ldxguid -lOpenGL32 -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse2 -m64
 else
 	# TODO: compile using the version of lua that's in the repository.
 	CLIBS:=-I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -L./. -ldl -lGL -lGLEW\
-		   -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse4 -m64
+		   -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse2 -m64
 endif
 
 ifeq ($(DISCORD_INTEGRATION), YES)
