@@ -649,6 +649,8 @@ bool is_path_directory(string location);
 Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, string location); 
 string get_preference_directory(string org, string path);
 
+void open_web_browser(const char* url);
+
 // NOTE(jerry): *should* be page aligned, but I don't
 // try to do any rounding for this or anything.
 void* virtual_memory_reserve(size_t sz);

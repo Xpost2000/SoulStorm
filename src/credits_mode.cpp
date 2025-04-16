@@ -12,16 +12,7 @@
   Although I like drawing stuff.
 */
 
-#define ALLOW_ATTRIBUTION_LINKS (0)
-
-local void open_web_browser(const char* url) {
-    // yes I know this is unsafe.
-#ifdef _WIN32
-    system(format_temp("explorer.exe %s", url));
-#else
-    system(format_temp("xdg-open %s", url));
-#endif
-}
+#define ALLOW_ATTRIBUTION_LINKS (1)
 
 GAME_SCREEN(update_and_render_game_credits) {
     GameUI::set_ui_id((char*)"ui_game_credits");
@@ -85,7 +76,9 @@ GAME_SCREEN(update_and_render_game_credits) {
         {
             if (GameUI::button(V2(100, y), string_literal("(engine & gameplay programmer, design) jerry zhu / xpost2000"), color32f32(1, 1, 1, 1), 1) == WIDGET_ACTION_ACTIVATE) {
 #if ALLOW_ATTRIBUTION_LINKS
+#if 0
                 open_web_browser("https://xpost2000.itch.io/");
+#endif
 #endif
             }
             y += 30/2;

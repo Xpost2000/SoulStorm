@@ -904,6 +904,22 @@ GAME_SCREEN(update_and_render_game_title_screen) {
                                ,color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(UI_STATE_CONFIRM_EXIT_TO_WINDOWS);
             }
+#if BUILD_DEMO
+            {
+              y += 36;
+              float ui_y = y;
+
+              // GameUI::label(V2(ui_x_title, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
+              GameUI::set_wobbly_contribution(0.0f);
+              GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+              GameUI::label(V2(ui_x, ui_y), string_literal("STAY CONNECTED!"), color32f32(1, 1, 1, 1), 2.0f);
+              ui_y += 23;
+              GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+              GameUI::label(V2(ui_x, ui_y), string_literal("If you liked the demo, and want to support development please stay in touch\nyou can also e-mail me, if you'd like / have feedback! :)"), color32f32(1, 1, 1, 1), 1.0f);
+              ui_y += 30;
+              demo_build_call_to_action_connection_links(ui_x, ui_y, ui_active);
+            }
+#endif
             // GameUI::ninepatch(&resources->ui_texture_atlas, resources->ui_chunky, V2(100, 100), 3, 3, color32f32(0,0,1,1), 3);
         }
         GameUI::end_frame();

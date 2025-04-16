@@ -279,6 +279,15 @@ bool is_path_directory(string location) {
     return false;
 }
 
+void open_web_browser(const char* url) {
+  // yes I know this is unsafe.
+#ifdef _WIN32
+  system(format_temp("explorer.exe %s", url));
+#else
+  system(format_temp("xdg-open %s", url));
+#endif
+}
+
 Directory_Listing directory_listing_list_all_files_in(Memory_Arena* arena, string location) {
     Directory_Listing result = {};
     cstring_copy(location.data, result.basename, 260);

@@ -178,11 +178,11 @@ void cutscene_completed_demo_task(jdr_duffcoroutine_t* co) {
 
   *trauma_timer = 0;
 
-  main_menu_state->screen_message_add(string_literal("Thank you for completing the demo."));
+  main_menu_state->screen_message_add(string_literal("Thank you for completing the demo!"));
   while (!main_menu_state->screen_messages_finished()) { JDR_Coroutine_YieldNR(); }
-  main_menu_state->screen_message_add(string_literal("Keep an eye out for the full-release!"));
+  main_menu_state->screen_message_add(string_literal("Keep an eye out for the full-release,\nyif you liked please wishlist!"));
   while (!main_menu_state->screen_messages_finished()) { JDR_Coroutine_YieldNR(); }
-  main_menu_state->screen_message_add(string_literal("Your save data will carry over!"));
+  main_menu_state->screen_message_add(string_literal("Feel free to keep playing,\nyour save data will carry over!"));
   while (!main_menu_state->screen_messages_finished()) { JDR_Coroutine_YieldNR(); }
 
   TASK_WAIT(0.5f);
@@ -266,7 +266,11 @@ void cutscene_introduction_firsttime_task(jdr_duffcoroutine_t* co) {
 
     main_menu_state->player.visible = true;
     TASK_WAIT(1.5f);
+#if BUILD_DEMO
+    main_menu_state->screen_message_add(string_literal("Welcome to SOLSTORM!\nThis demo features stage 1 and the first boss fight!\n"));
+#else
     main_menu_state->screen_message_add(string_literal("Now the adventure begins..."));
+#endif
 
     while (!main_menu_state->screen_messages_finished()) {
         JDR_Coroutine_YieldNR();

@@ -29,6 +29,36 @@ local int projectile_sprites_requiring_rotation_count = 0;
 local int projectile_sprites_requiring_rotation[PROJECTILE_SPRITE_TYPES] = {
 };
 
+struct Demo_Call_To_Action
+{
+  string title;
+  string link;
+};
+
+Demo_Call_To_Action g_demo_call_to_action_links[] = {
+  { string_literal("Steam Wishlist!"), string_literal("https://store.steampowered.com/app/3572660/SOLSTORM/") },
+  { string_literal("E-mail me!"), string_literal("mailto:xpostgames@gmail.com") }, // This is, fortunately not my main e-mail!
+  { string_literal("Bluesky!"), string_literal("https://bsky.app/profile/xpostgames.bsky.social/") },
+  { string_literal("X/Twitter"), string_literal("https://x.com/xpost2000games") },
+};
+
+void demo_build_call_to_action_connection_links(float ui_x, float ui_y, bool ui_active=true)
+{
+  for (int i = 0; i < array_count(g_demo_call_to_action_links); ++i) {
+    auto& cta = g_demo_call_to_action_links[i];
+    if (GameUI::button(
+      V2(ui_x, ui_y),
+      cta.title,
+      color32f32(1, 1, 1, 1),
+      2.0f,
+      ui_active
+    ) == WIDGET_ACTION_ACTIVATE) {
+      open_web_browser(cta.link.data);
+    }
+    ui_y += 26;
+  }
+}
+
 static void apply_vector_quantization_deadzone_adjustment(V2& vector) {
   // NOTE(jerry):
   //
@@ -2198,7 +2228,7 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
         GameUI::f32_slider(V2(100, y), string_literal("Music Volume: "), color32f32(1, 1, 1, 1), 2, &temp_preferences.music_volume, 0, 1.0, 100);
         y += 30;
         GameUI::f32_slider(V2(100, y), string_literal("Sound Volume: "), color32f32(1, 1, 1, 1), 2, &temp_preferences.sound_volume, 0, 1.0, 100);
-        y += 30;
+        y += 40;
         // also NOTE:
         /*
          * This is always going to be a weird problem because the game doesn't letter
@@ -2219,8 +2249,8 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
             update_preferences(&preferences, &temp_preferences);
             confirm_preferences(&preferences, resources);
         }
-        y += 30;
-        if (GameUI::button(V2(100, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+        //y += 30;
+        if (GameUI::button(V2(100 + 4*16, y), string_literal("Confirm"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             if (temp_preferences.renderer_type != preferences.renderer_type) {
                 if (!state->viewed_renderer_change_disclaimer) {
                     state->ui_state = UI_STATE_SHOW_RENDERER_DISCLAIMER;
@@ -2235,8 +2265,8 @@ GAME_UI_SCREEN(update_and_render_options_menu) {
             confirm_preferences(&preferences, resources);
             save_preferences_to_disk(&preferences, string_literal("preferences.lua"));
         }
-        y += 30;
-        if (GameUI::button(V2(100, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+        //y += 30;
+        if (GameUI::button(V2(100 + 4*16*2+16, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             temp_preferences = preferences;
             state->viewed_renderer_change_disclaimer = false;
             switch_ui(state->last_ui_state);
@@ -2706,7 +2736,12 @@ GAME_UI_SCREEN(update_and_render_confirm_exit_to_windows) {
         if (state->screen_mode == GAME_SCREEN_INGAME) {
             GameUI::label(V2(50, y), string_literal("Are you sure? You will lose your current stage progress."), color32f32(1, 1, 1, 1), 2);
         } else {
-            GameUI::label(V2(50, y), string_literal("Are you sure? I thought we were having so much fun!"), color32f32(1, 1, 1, 1), 2);
+#if BUILD_DEMO
+          GameUI::label(V2(50, y), string_literal("Are you sure? I thought we were having so much fun!\nIn any case, wishlist if you like the demo!"), color32f32(1, 1, 1, 1), 2);
+          y += 30;
+#else
+          GameUI::label(V2(50, y), string_literal("Are you sure? I thought we were having so much fun!"), color32f32(1, 1, 1, 1), 2);
+#endif
         }
         y += 30;
 
@@ -3249,6 +3284,23 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
                            ,color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(UI_STATE_CONFIRM_EXIT_TO_WINDOWS);
         }
+#if BUILD_DEMO
+        {
+          y += 36;
+          float ui_y = 35;
+          float ui_x = commands->screen_width - 280;
+
+          // GameUI::label(V2(ui_x_title, y), string_literal("SOULSTORM"), color32f32(1, 1, 1, 1), 4);
+          GameUI::set_wobbly_contribution(0.0f);
+          GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+          GameUI::label(V2(ui_x, ui_y), string_literal("STAY CONNECTED!"), color32f32(1, 1, 1, 1), 2.0f);
+          ui_y += 23;
+          GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+          GameUI::label(V2(ui_x, ui_y), string_literal("If you liked the demo, and want to support development\nplease stay in touch you can also e-mail me,\nif you'd like / have feedback! :)"), color32f32(1, 1, 1, 1), 1.0f);
+          ui_y += 45;
+          demo_build_call_to_action_connection_links(ui_x, ui_y, !Transitions::fading());
+        }
+#endif
 
         // NOTE:
         // all the UI is the same with both interfaces, and fortunately because

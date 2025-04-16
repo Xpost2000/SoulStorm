@@ -666,6 +666,7 @@ void initialize() {
     set_window_transparency(0);
 #endif
     SDL_ShowWindow(global_game_window);
+    SDL_RaiseWindow(global_game_window);
     game.init(global_graphics_driver);
     Input::initialize();
     Discord_Integration::initialize();
