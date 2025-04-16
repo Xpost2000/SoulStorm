@@ -444,13 +444,14 @@ function _Stage1_Boss_Logic(eid)
               -- 75% of attack
               if action_rng < 75 then
                  action_rng = prng_ranged_integer(0, 13);
+                 -- action_rng =3;
 
                  -- Attack ID
                  if action_rng == 0 or action_rng == 12 or action_rng == 13 then
                     if (Boss1_SelectRain_Attack()) then
                        -- ?
                     end
-                    boss1_state.next_think_action_t = current_t + prng_ranged_float(2.5, 3.5);
+                    boss1_state.next_think_action_t = current_t + prng_ranged_float(3.5, 4.5);
                  end
 
                  if action_rng == 1 or action_rng == 11 then
@@ -470,9 +471,9 @@ function _Stage1_Boss_Logic(eid)
                      16,
                         {PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_HOT_PINK_DISK, PROJECTILE_SPRITE_WARM_DISK},
                         prng_ranged_integer(4, 9), -30, prng_ranged_integer(10, 120),
-                        25, 75, 80, 0.23
+                        10, 65, 70, 0.23
                     );
-                    boss1_state.next_think_action_t = current_t + prng_ranged_float(3.5, 4.5);
+                    boss1_state.next_think_action_t = current_t + prng_ranged_float(4.0, 4.5);
                  end
 
                  if action_rng == 3 then
@@ -480,7 +481,7 @@ function _Stage1_Boss_Logic(eid)
                        Boss1_GridCrossBoxIn(3.0, 2, 4, PROJECTILE_SPRITE_GREEN, PROJECTILE_SPRITE_GREEN);
                        boss1_state.next_grid_action_t = current_t + prng_ranged_float(10.0, 12.0);
                     end
-                    boss1_state.next_think_action_t = current_t;
+                    boss1_state.next_think_action_t = current_t + prng_ranged_float(1.5, 3.0);
                  end
 
                  if action_rng == 4 then
@@ -488,7 +489,7 @@ function _Stage1_Boss_Logic(eid)
                        Boss1_GridCrossBoxIn(3.0, 3, 3, PROJECTILE_SPRITE_WRM_ELECTRIC, PROJECTILE_SPRITE_WRM_ELECTRIC);
                        boss1_state.next_grid_action_t = current_t + prng_ranged_float(10.0, 12.0);
                     end
-                    boss1_state.next_think_action_t = current_t;
+                    boss1_state.next_think_action_t = current_t + prng_ranged_float(1.5, 3.0);
                  end
 
                  if action_rng == 5 or action_rng == 9 then
@@ -768,9 +769,9 @@ function _Stage1_Boss_HexBind(eid, state)
                   4,
                   {PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_PURPLE_DISK, PROJECTILE_SPRITE_BLUE_DISK, PROJECTILE_SPRITE_RED_DISK, PROJECTILE_SPRITE_WARM_DISK},
                   0, -15, prng_ranged_integer(10, 20),
-                  25, 35, 50, 0.5
+                  25, 35, 40, 0.5
                );
-               state.next_think_action_t = current_t + prng_ranged_float(4.5, 6.5);
+               state.next_think_action_t = current_t + prng_ranged_float(4.5, 7.5);
             end
 
             if action_rng == 1 then
@@ -779,9 +780,9 @@ function _Stage1_Boss_HexBind(eid, state)
                   6,
                   {PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_CAUSTIC_DISK, PROJECTILE_SPRITE_GREEN_DISK, PROJECTILE_SPRITE_HOT_PINK_DISK, PROJECTILE_SPRITE_WARM_DISK},
                   prng_ranged_integer(4, 6), -30, prng_ranged_integer(10, 50),
-                  25, 35, 50, 0.23
+                  25, 35, 40, 0.23
                );
-               state.next_think_action_t = current_t + prng_ranged_float(3.5, 4.5);
+               state.next_think_action_t = current_t + prng_ranged_float(3.5, 5.5);
             end
 
             if action_rng == 2 then
