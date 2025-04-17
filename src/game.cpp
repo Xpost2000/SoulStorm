@@ -3341,7 +3341,7 @@ GAME_UI_SCREEN(update_and_render_stage_select_menu) {
 
     GameUI::set_ui_id((char*)"ui_stage_select_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
-    GameUI::set_wobbly_contribution(1.0f);
+    GameUI::set_wobbly_contribution(0.5f);
     GameUI::set_preferred_ui_first_index(state->mainmenu_data.last_stage_select_widget_id);
     {
         s32   stage_id = state->mainmenu_data.stage_id_level_select;
@@ -3355,7 +3355,9 @@ GAME_UI_SCREEN(update_and_render_stage_select_menu) {
         y += 45;
         GameUI::label(V2(70, y), stage.subtitle, color32f32(1, 1, 1, 1), 2);
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
-        y += 55;
+        y += 35;
+        GameUI::label(V2(80, y), string_literal("Select \'Play Stage\' to progress through the campaign,\nor select any stage level to practice without stage progression."), color32f32(1, 1, 1, 1), 1.5);
+        y += 40;
 
         // the level selection UI main parts
         {
@@ -4442,6 +4444,9 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
 
     // TODO(jerry): make this look nicer
     string level_complete_text = string_literal("LEVEL COMPLETE");
+    if (state->gameplay_data.playing_practice_mode) {
+      level_complete_text = string_literal("PRACTICE COMPLETE");
+    }
     if (state->gameplay_data.recording.in_playback) {
         level_complete_text = string_literal("RECORDING COMPLETE");
     }
@@ -5151,11 +5156,21 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
           render_commands_push_quad(
             ui_render_commands,
-            rectangle_f32(border_left + box_x, 30, box_w, 480-25),
+            rectangle_f32(border_left + box_x, 30, box_w, 480-40),
             color32u8(45 / 2, 50 / 2, 100 / 2, 230),
             BLEND_MODE_ALPHA
           );
 
+          if (state->playing_practice_mode) {
+            render_commands_push_text(
+              ui_render_commands,
+              resources->get_font(MENU_FONT_COLOR_WHITE),
+              2.5f,
+              V2(border_left + box_x + 15, 480 - 30),
+              string_literal("PRACTICE MODE"),
+              color32f32(1, 1, 1, 1),
+              BLEND_MODE_ALPHA);
+          }
           ui_cursor_x_left = box_x + border_left;
         }
         // Render_Score
