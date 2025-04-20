@@ -6502,18 +6502,19 @@ void Game::handle_all_dead_entities(f32 dt) {
             // system would need to be written just for this transition.
             if (state->paused_from_death == false) {
                 state->paused_from_death = true;
-                Transitions::do_color_transition_in(color32f32(1, 1, 1, 1), 0.10f, 0.05f);
+                Transitions::do_color_transition_in(color32f32(1, 1, 1, 0), 0.05f, 0.05f);
 
                 Transitions::register_on_finish(
                     [&](void*) {
                         Transitions::do_color_transition_out(
-                            color32f32(1, 1, 1, 1),
-                            0.1f,
-                            0.025f
+                            color32f32(1, 1, 1, 0),
+                            0.05f,
+                            0.05f
                         );
 
                         Transitions::register_on_finish(
                             [&](void*) {
+                                this->state->gameplay_data.invalid_usage_flash_count = 16;
                                 on_player_death();
                                 cleanup_dead_entities();
                             }

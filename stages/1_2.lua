@@ -312,8 +312,8 @@ function wave1_sub3()
             for i=1, 2 do
                local rx = 50 - i*10;
                local ry = 25 + i*10;
-               local e0 = Make_Enemy_Spinner_1_1_2(25, v2(-45, radius), v2(1, 0), 120, 1.0, 1.00, 30, rx, ry, PROJECTILE_SPRITE_SPARKLING_STAR);
-               local e1 = Make_Enemy_Spinner_1_1_2(25, v2(-45, play_area_height() - radius), v2(1, 0), 120, 1.0, 1.00, 30, rx, ry, PROJECTILE_SPRITE_SPARKLING_STAR);
+               local e0 = Make_Enemy_Spinner_1_1_2(25, v2(-45, radius), v2(1, 0), 120, 1.0, 1.00, 30, rx, ry, PROJECTILE_SPRITE_PURPLE_ELECTRIC);
+               local e1 = Make_Enemy_Spinner_1_1_2(25, v2(-45, play_area_height() - radius), v2(1, 0), 120, 1.0, 1.00, 30, rx, ry, PROJECTILE_SPRITE_PURPLE_ELECTRIC);
                enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
                enemy_set_visual(e1, ENTITY_SPRITE_SKULL_B);
                t_wait(4.0);
@@ -607,7 +607,24 @@ function preboss_wave()
    MainBoss1_RainCloud_Attack2(1997, 3.5)
    t_wait(6.0);
    convert_all_bullets_to_score()
-   t_wait(6.0);
+   for i=1,8 do
+      local e = Make_Enemy_Spinner_1_1_2(
+         15, 
+         v2(-15 - i*15, 20 + i * 45),
+         v2(1, 0),
+         80,
+         2.0,
+         0.0,
+         45,
+         5,
+         5,
+         PROJECTILE_SPRITE_GREEN_DISK,
+         4
+         );
+      -- NOTE(jerry): make new bat sprites for these things
+      enemy_set_visual(e, ENTITY_SPRITE_SKULL_B);
+   end
+   t_wait(4.0);
    Stage1_Batflood();
    t_wait(12.0); -- TODO check if they're actually off the screen.
    kill_all_enemies();
@@ -627,12 +644,12 @@ function stage_task()
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_nebule.png", 0.187, 450, 350);
 
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star0.png", 0.357, 225, 125);
-   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star1.png", 0.147, -150, 245);
-   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star0.png", 0.287, 305, 300);
+   -- Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star1.png", 0.147, -150, 245);
+   -- Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star0.png", 0.287, 305, 300);
    Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star1.png", 0.207, -100, 225);
 
-   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star0.png", 0.127, 100, 15);
-   Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star1.png", 0.257, -350, 255);
+   -- Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star0.png", 0.127, 100, 15);
+   -- Generic_Infinite_Stage_ScrollV_FG("res/img/stagebkg/stage1bkg1_star1.png", 0.257, -350, 255);
 
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg2_1_2.png", 0.150, 0, 125);
    play_area_notify_current_border_status();
@@ -748,7 +765,7 @@ function stage_task()
    LaserChaser_Horizontal_1_2(8, 1.5);
    LaserChaser_Horizontal_1_2(4, 0.75);
    LaserChaser_Vertical_1_2(4, 2.5);
-   LaserChaser_Vertical_1_2(4, 0.75);
+   LaserChaser_Vertical_1_2(4, 0.85);
 
    wait_no_danger();
    t_complete_stage();
