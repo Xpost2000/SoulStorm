@@ -3602,6 +3602,7 @@ bool Game::safely_resurrect_player() {
         );
         state->gameplay_data.player.begin_invincibility();
         state->gameplay_data.player.heal(1);
+        state->gameplay_data.focus_hitbox_fade_t = 2.15f;
 
         {
             // check nearby bullets and clear them.
