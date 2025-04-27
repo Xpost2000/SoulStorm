@@ -2432,7 +2432,8 @@ GAME_UI_SCREEN(update_and_render_help_menu) {
     }
     y += 30;
     GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
-    if (GameUI::button(V2(50, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+    if (GameUI::button(V2(50, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE ||
+        Action::is_pressed(ACTION_CANCEL)) {
       if (state->help_menu_data.page == HELP_MENU_PAGE_TOC) {
         switch_ui(state->last_ui_state);
       } else {
