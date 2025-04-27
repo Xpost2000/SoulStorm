@@ -4038,7 +4038,9 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
             {
               auto& deathanimation_data = this->state->deathanimation_data;
               if (deathanimation_data.flashing) {
-                union color32f32 render_color = color32f32(1.0f, 1.0f, 1.0f, 1.0f);
+#if 0
+                union color32f32 render_color = color32f32(0.5,0.0,0.0, 0.25f);
+                //union color32f32 render_color = color32f32(0.7f, 0.1f, 0.15f, 0.5f);
                 render_commands_push_quad(commands,
                   rectangle_f32(
                     0,
@@ -4046,8 +4048,9 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
                     commands->screen_width,
                     commands->screen_height),
                   color32f32_to_color32u8(render_color),
-                  BLEND_MODE_ALPHA
+                  BLEND_MODE_ADDITIVE
                 );
+#endif
               }
             }
           }
@@ -6367,6 +6370,7 @@ void Game::on_player_death() {
               Audio::stop_music();
               auto& deathanimation_data                           = this->state->deathanimation_data;
                 deathanimation_data.phase                           = DEATH_ANIMATION_PHASE_FLASH;
+                this->state->gameplay_data.invalid_usage_flash_count = 32;
                 deathanimation_data.t                               = 0.0f;
                 deathanimation_data.flash_t                         = 0.0f;
                 deathanimation_data.flash_count                     = DEATH_ANIMATION_FLASH_AMOUNT;
