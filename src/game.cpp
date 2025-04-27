@@ -2783,6 +2783,7 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
 
     GameUI::set_ui_id((char*)"ui_replay_save_menu");
     GameUI::begin_frame(commands, &resources->graphics_assets);
+    GameUI::set_preferred_ui_first_index(2);
     GameUI::set_wobbly_contribution(1.0f);
 
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
