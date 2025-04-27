@@ -2174,6 +2174,275 @@ GAME_UI_SCREEN(update_and_render_renderer_change_disclaimer) {
     GameUI::end_frame();
 }
 
+GAME_UI_SCREEN(update_and_render_help_menu) {
+  render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
+  GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
+  GameUI::set_font_selected(resources->get_font(MENU_FONT_COLOR_GOLD));
+  GameUI::set_ui_id((char*)"ui_help_menu");
+  GameUI::begin_frame(commands, &resources->graphics_assets);
+  GameUI::set_wobbly_contribution(0.0f);
+  {
+    f32 y = 50;
+    GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+    GameUI::label(V2(50, y), string_literal("HELP / WIKI"), color32f32(1, 1, 1, 1), 4);
+    y += 45;
+
+    switch (state->help_menu_data.page) {
+      case HELP_MENU_PAGE_TOC: {
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        GameUI::label(V2(50, y), string_literal("Select any of the links below to learn about the systems of the game."), color32f32(1, 1, 1, 1), 1);
+        y += 20;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_SKYBLUE));
+
+        // Wiki Links
+        {
+          if (GameUI::button(V2(50, y), string_literal("Focus Mode"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            state->help_menu_data.page = HELP_MENU_PAGE_FOCUS_MODE;
+          }
+          y += 30;
+        }
+        {
+          if (GameUI::button(V2(50, y), string_literal("Play Area"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            state->help_menu_data.page = HELP_MENU_PAGE_PLAY_AREA;
+          }
+          y += 30;
+        }
+        {
+          if (GameUI::button(V2(50, y), string_literal("Scoring System"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            state->help_menu_data.page = HELP_MENU_PAGE_SCORING;
+          }
+          y += 30;
+        }
+        {
+          if (GameUI::button(V2(50, y), string_literal("Pets"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            state->help_menu_data.page = HELP_MENU_PAGE_PETS;
+          }
+          y += 30;
+        }
+        {
+          if (GameUI::button(V2(50, y), string_literal("Burst Meter - General"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            state->help_menu_data.page = HELP_MENU_PAGE_BURST_METER_GENERAL;
+          }
+          y += 30;
+        }
+        {
+          if (GameUI::button(V2(50, y), string_literal("Burst Meter - Laser"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            state->help_menu_data.page = HELP_MENU_PAGE_BURST_METER_LASER;
+          }
+          y += 30;
+        }
+        {
+          if (GameUI::button(V2(50, y), string_literal("Burst Meter - Shield"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            state->help_menu_data.page = HELP_MENU_PAGE_BURST_METER_SHIELD;
+          }
+          y += 30;
+        }
+        {
+          if (GameUI::button(V2(50, y), string_literal("Burst Meter - Bomb"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+            state->help_menu_data.page = HELP_MENU_PAGE_BURST_METER_BOMB;
+          }
+          y += 30;
+        }
+      } break;
+      case HELP_MENU_PAGE_FOCUS_MODE: {
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        GameUI::label(V2(50, y), string_literal(
+          "Focus mode acts as a way for you to slow down the player\nspecifically for dodging. Hitboxes are also exposed for this reason.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAdditionally, the player attack pattern will change based on the BURST meter, try them out!\n\nIn focus mode players will also gain grazing score points and extract coins for additional score\nbased on proximity to a projectile."), 
+          color32f32(1, 1, 1, 1), 1);
+        {
+          auto img_id = graphics_assets_load_image(
+            &resources->graphics_assets,
+            string_literal("./res/img/helpfig/help_focus0.png")
+          );
+          auto image = graphics_assets_get_image_by_id(&resources->graphics_assets, img_id);
+          render_commands_push_image(
+            commands,
+            image,
+            rectangle_f32(50, 128, 159, 159), // all of them are 32x32
+            RECTANGLE_F32_NULL,
+            color32f32_WHITE, 
+            NO_FLAGS, BLEND_MODE_ALPHA);
+        }
+        draw_input_prompt(
+          commands,
+          resources,
+          V2(240, 150),
+          ACTION_FOCUS,
+          string_literal("FOCUS/BURST ACTIVATION"),
+          MENU_FONT_COLOR_SKYBLUE,
+          MENU_FONT_COLOR_WHITE
+        );
+        //ui_cursor_y +=
+        //  draw_input_prompt(
+        //    ui_render_commands,
+        //    resources,
+        //    V2(widget_x, ui_cursor_y),
+        //    ACTION_USE_BOMB,
+        //    string_literal("BURST SPECIAL"),
+        //    MENU_FONT_COLOR_SKYBLUE,
+        //    MENU_FONT_COLOR_WHITE
+        //  );
+        //ui_cursor_y +=
+        //  draw_input_prompt(
+        //    ui_render_commands,
+        //    resources,
+        //    V2(widget_x, ui_cursor_y),
+        //    ACTION_ACTION,
+        //    string_literal("ATTACK"),
+        //    MENU_FONT_COLOR_SKYBLUE,
+        //    MENU_FONT_COLOR_WHITE
+        //  );
+        y += 240;
+      } break;
+      case HELP_MENU_PAGE_PLAY_AREA: {
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        GameUI::label(V2(50, y), string_literal(
+          "SOLSTORM is a vertical shooter, and depending on the stage the edges of the play area may change behavior.\nThe game will notify the player of the border status on proximity, or when it changes.\n\n"),
+          color32f32(1, 1, 1, 1), 1);
+        y += 40;
+
+        // Passthrough should not be used.
+
+        // Blocking
+        {
+          auto image = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_border_effect[0]);
+          render_commands_push_image(
+            commands,
+            image,
+            rectangle_f32(50, y, 32, 32), // all of them are 32x32
+            RECTANGLE_F32_NULL,
+            color32f32_WHITE,
+            NO_FLAGS, BLEND_MODE_ALPHA);
+          GameUI::label(V2(100, y+16), string_literal(
+            "BLOCKING - The play area border will stop movement."),
+            color32f32(1, 1, 1, 1), 1);
+        }
+        y += 64;
+        // Deadly
+        {
+          auto image = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_border_effect[1]);
+          render_commands_push_image(
+            commands,
+            image,
+            rectangle_f32(50, y, 32, 32), // all of them are 32x32
+            RECTANGLE_F32_NULL,
+            color32f32_WHITE,
+            NO_FLAGS, BLEND_MODE_ALPHA);
+          GameUI::label(V2(100, y+16), string_literal(
+            "DEADLY - The play area border will hurt the player,\nand reset them to their initial position."),
+            color32f32(1, 1, 1, 1), 1);
+        }
+        y += 64;
+        // Wrapping
+        {
+          auto image = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->ui_border_effect[2]);
+          render_commands_push_image(
+            commands,
+            image,
+            rectangle_f32(50, y, 32, 32), // all of them are 32x32
+            RECTANGLE_F32_NULL,
+            color32f32_WHITE,
+            NO_FLAGS, BLEND_MODE_ALPHA);
+          GameUI::label(V2(100, y+16), string_literal(
+            "WRAPPING - The play area border will wrap the player\naround to the opposite position."),
+            color32f32(1, 1, 1, 1), 1);
+        }
+        y += 64;
+      } break;
+      case HELP_MENU_PAGE_SCORING: {
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        GameUI::label(V2(50, y), string_literal(
+          "SOLSTORM has a very simple scoring system that rewards you based on survival, dodging, coin collection\nand enemy elimination. As well as usage of the BURST meter.\n\nYou are penalized for any life loss, however for certain point thresholds you can regain a life."),
+          color32f32(1, 1, 1, 1), 1);
+        y += 40;
+      } break;
+      case HELP_MENU_PAGE_PETS: {
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        GameUI::label(V2(50, y), string_literal(
+          "SOLSTORM's difficulty selection comes in the forms of PET characters.\nThey are rescued after each stage completion, the demo only features one pet upon demo completion.\n\nSelection is done before playing a stage, and they affect scoring / lives / movement speed.\nThe final game will feature one pet per stage."),
+          color32f32(1, 1, 1, 1), 1);
+        y += 80;
+      } break;
+      case HELP_MENU_PAGE_BURST_METER_GENERAL: {
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        GameUI::label(V2(50, y), string_literal(
+          "The BURST meter is the power meter for SOLSTORM, although it is more akin to a\nstamina bar than a traditional power meter.\n\nIt recharges relatively quickly, and can be expended for special abilities or FOCUS mode.\n\nIt is important to manage the bar as depletion results in a long cooldown, leaving you vulnerable\nagainst projectiles and an inability to FOCUS.\n\nThere are four tiers, with three special abilities.\n"),
+          color32f32(1, 1, 1, 1), 1);
+        y += 120;
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_SKYBLUE));
+        {
+          if (GameUI::button(V2(50, y), string_literal("Burst Meter - Laser"), color32f32(1, 1, 1, 1), 1) == WIDGET_ACTION_ACTIVATE) {
+            state->help_menu_data.page = HELP_MENU_PAGE_BURST_METER_LASER;
+          }
+          y += 15;
+        }
+        {
+          if (GameUI::button(V2(50, y), string_literal("Burst Meter - Shield"), color32f32(1, 1, 1, 1), 1) == WIDGET_ACTION_ACTIVATE) {
+            state->help_menu_data.page = HELP_MENU_PAGE_BURST_METER_SHIELD;
+          }
+          y += 15;
+        }
+        {
+          if (GameUI::button(V2(50, y), string_literal("Burst Meter - Bomb"), color32f32(1, 1, 1, 1), 1) == WIDGET_ACTION_ACTIVATE) {
+            state->help_menu_data.page = HELP_MENU_PAGE_BURST_METER_BOMB;
+          }
+          y += 15;
+        }
+        draw_input_prompt(
+          commands,
+          resources,
+          V2(240, 220),
+          ACTION_FOCUS,
+          string_literal("FOCUS/BURST ACTIVATION"),
+          MENU_FONT_COLOR_SKYBLUE,
+          MENU_FONT_COLOR_WHITE
+        );
+        draw_input_prompt(
+            commands,
+            resources,
+            V2(240, 260),
+            ACTION_USE_BOMB,
+            string_literal("BURST SPECIAL"),
+            MENU_FONT_COLOR_SKYBLUE,
+            MENU_FONT_COLOR_WHITE
+          );
+        y += 40;
+      } break;
+      case HELP_MENU_PAGE_BURST_METER_LASER: {
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        GameUI::label(V2(50, y), string_literal(
+          "The laser is the second tier BURST ability, and it fires a laser beam that shreds enemies, and projectiles alike.\nThe player has heavily restricted mobility and a heavy cooldown after usage.\n\nThe player is NOT invulnerable while the laser is active."),
+          color32f32(1, 1, 1, 1), 1);
+        y += 80;
+      } break;
+      case HELP_MENU_PAGE_BURST_METER_SHIELD: {
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        GameUI::label(V2(50, y), string_literal(
+          "The laser is the third tier BURST ability, and it will produce a bubble shield that\nprotects the player from projectiles.\n\nThe player cannot attack for most of the shields duration, but is otherwise invulnerable\nto all projectiles exempting lasers or explosions."),
+          color32f32(1, 1, 1, 1), 1);
+        y += 80;
+      } break;
+      case HELP_MENU_PAGE_BURST_METER_BOMB: {
+        GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+        GameUI::label(V2(50, y), string_literal(
+          "The laser is the fourth tier BURST ability, and it will screen clear all projectiles\nturning them into score coins that the player absorbs.\n\nThe bomb USES and requires at least one life, and provides additional invincibility after it's usage."),
+          color32f32(1, 1, 1, 1), 1);
+        y += 80;
+      } break;
+    }
+    y += 30;
+    GameUI::set_font(resources->get_font(MENU_FONT_COLOR_GOLD));
+    if (GameUI::button(V2(50, y), string_literal("Back"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+      if (state->help_menu_data.page == HELP_MENU_PAGE_TOC) {
+        switch_ui(state->last_ui_state);
+      } else {
+        state->help_menu_data.page = HELP_MENU_PAGE_TOC;
+      }
+    }
+  }
+  GameUI::end_frame();
+}
+
 GAME_UI_SCREEN(update_and_render_options_menu) {
     render_commands_push_quad(commands, rectangle_f32(0, 0, commands->screen_width, commands->screen_height), color32u8(0, 0, 0, 128), BLEND_MODE_ALPHA);
     GameUI::set_font_active(resources->get_font(MENU_FONT_COLOR_BLOODRED));
@@ -3232,7 +3501,10 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
             switch_ui(UI_STATE_CONTROLS);
         }
         y += 30;
-
+        if (GameUI::button(V2(100, y), string_literal("Help"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+          switch_ui(UI_STATE_HELP_MENU);
+        }
+        y += 30;
         if (GameUI::button(V2(100, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             _debugprintf("Open the options menu I guess");
             // I'd personally like to animate these, but it requires some more dirty code if
@@ -3240,7 +3512,6 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
             switch_ui(UI_STATE_OPTIONS);
         }
         y += 30;
-
 #ifndef BUILD_DEMO
         if (GameUI::button(V2(100, y), string_literal("Achievements"), color32f32(1, 1, 1, 1), 2, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(UI_STATE_ACHIEVEMENTS);
@@ -4097,6 +4368,10 @@ void Game::handle_ui_update_and_render(struct render_commands* commands, f32 dt)
         } break;
         case UI_STATE_OPTIONS: {
             update_and_render_options_menu(commands, dt); 
+            show_nav_menu = true;
+        } break;
+        case UI_STATE_HELP_MENU: {
+            update_and_render_help_menu(commands, dt);
             show_nav_menu = true;
         } break;
         case UI_STATE_CONTROLS: {

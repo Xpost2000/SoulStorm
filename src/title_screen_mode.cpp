@@ -374,7 +374,7 @@ GAME_SCREEN(update_and_render_game_title_screen) {
         auto& state = this->state->titlescreen_data;
         if (state.phase == TITLE_SCREEN_ANIMATION_PHASE_IDLE) {
             state.attract_mode_timer += dt;
-            if (Input::any_input_activity()) {
+            if (Input::any_input_activity() || this->state->ui_state != UI_STATE_INACTIVE) {
                 state.attract_mode_timer = 0.0f;
             } else {
                 if (state.attract_mode_timer >= ATTRACT_MODE_TIMER_MAX && !Transitions::fading()) {
@@ -595,7 +595,10 @@ GAME_SCREEN(update_and_render_game_title_screen) {
                 switch_ui(UI_STATE_CONTROLS);
             }
             y += 30;
-
+            if (GameUI::button(V2(ui_x, y), string_literal("Help"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
+              switch_ui(UI_STATE_HELP_MENU);
+            }
+            y += 30;
             if (GameUI::button(V2(ui_x, y), string_literal("Options"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(UI_STATE_OPTIONS);
             }
@@ -853,6 +856,10 @@ GAME_SCREEN(update_and_render_game_title_screen) {
 
             if (GameUI::button(V2(ui_x, y), string_literal("Controls"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
                 switch_ui(UI_STATE_CONTROLS);
+            }
+            y += 30;
+            if (GameUI::button(V2(ui_x, y), string_literal("Help"), color32f32(1, 1, 1, 1), 2, ui_active) == WIDGET_ACTION_ACTIVATE) {
+              switch_ui(UI_STATE_HELP_MENU);
             }
             y += 30;
 

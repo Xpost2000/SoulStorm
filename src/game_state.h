@@ -666,6 +666,7 @@ enum UI_State_Mode {
     UI_STATE_CONFIRM_BACK_TO_MAIN_MENU,
     UI_STATE_CONFIRM_EXIT_TO_WINDOWS,
     UI_STATE_SHOW_RENDERER_DISCLAIMER,
+    UI_STATE_HELP_MENU,
     UI_STATE_COUNT,
 };
 
@@ -874,6 +875,23 @@ struct DeathAnimation_Data {
     bool             flashing    = false;
 };
 
+enum Help_Menu_Page {
+  HELP_MENU_PAGE_TOC,
+  HELP_MENU_PAGE_FOCUS_MODE,
+  HELP_MENU_PAGE_PLAY_AREA,
+  HELP_MENU_PAGE_SCORING,
+  HELP_MENU_PAGE_PETS,
+  HELP_MENU_PAGE_BURST_METER_GENERAL,
+  HELP_MENU_PAGE_BURST_METER_LASER,
+  HELP_MENU_PAGE_BURST_METER_SHIELD,
+  HELP_MENU_PAGE_BURST_METER_BOMB,
+  HELP_MENU_PAGE_COUNT,
+};
+
+struct Help_Menu_Data {
+  int page;
+};
+
 struct Game_State {
     s32 screen_mode      = GAME_SCREEN_DEFAULT_MODE;
     s32 last_screen_mode = GAME_SCREEN_DEFAULT_MODE;
@@ -896,6 +914,7 @@ struct Game_State {
     EndingMode_Data  ending_data;
     Achievement_Menu_Data achievement_menu;
 
+    Help_Menu_Data help_menu_data;
     Dialogue_State dialogue_state;
 
     Game_Task_Scheduler coroutine_tasks;
