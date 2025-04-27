@@ -1676,7 +1676,7 @@ void Player::update(Game_State* state, f32 dt) {
             default: {} break;
         }
 
-        sprite.offset.y = sinf(t_since_spawn * 0.775) * 4.5 + 8; // NOTE: +7 is to adjust visual location to make the hit box look less "unintuitive"
+        sprite.offset.y = sinf(t_since_spawn * 2.5) * 0.5 + 8; // NOTE: +7 is to adjust visual location to make the hit box look less "unintuitive"
         sprite.animate(
             &state->resources->graphics_assets,
             dt,
