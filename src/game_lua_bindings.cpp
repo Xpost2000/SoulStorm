@@ -293,7 +293,7 @@ int _lua_bind_play_area_edge_behavior(lua_State* L) {
 
     play_area.edge_behaviors[edge_id] = edge_flag;
     if (state->gameplay_data.allow_border_switch_flashing) {
-        state->gameplay_data.border_notify(edge_id, edge_flag+1, true);
+        state->gameplay_data.border_notify(edge_id, edge_flag+1, BORDER_NOTIFY_FLASH_COUNT, true);
     }
     return 0;
 }

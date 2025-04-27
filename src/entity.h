@@ -388,6 +388,9 @@ struct Player : public Entity {
     void halt_burst_abilities(void);
     void halt_burst_charge_regeneration(s32 flash_count_required); // flashes are at fixed times, so this
                                                                    // allows more precise gaging of time.
+
+    void show_border_status_when_close(Game_State* state);
+
     f32 grazing_award_timer = 0.0f;
     f32 grazing_award_score_pickup_timer = 0.0f;
     f32 grazing_delay       = PLAYER_DEFAULT_GRAZING_DELAY;

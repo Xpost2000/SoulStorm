@@ -518,7 +518,7 @@ struct Gameplay_Data {
 
     bool allow_border_switch_flashing = true; // automatic border flashing behavior
     Border_Flash_Data border_flashes[4];
-    void border_notify(s32 id, s32 type, bool override=false);
+    void border_notify(s32 id, s32 type, int flash_count=BORDER_NOTIFY_FLASH_COUNT,  bool override=false);
     void border_stop_notify(s32 id);
     void border_stop_all_notifications(void);
     void border_notify_current_status(void);

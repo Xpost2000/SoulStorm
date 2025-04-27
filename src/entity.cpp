@@ -1467,6 +1467,33 @@ void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
     }
 }
 
+void Player::show_border_status_when_close(Game_State* state) {
+  // This is not a real game rule, so I can just hardcode this here...
+  const auto& play_area = state->gameplay_data.play_area;
+  const f32 BORDER_SHOW_BEHAVIOR_THRESHOLD_PX = 32;
+
+  f32 distance_to_left_border = fabs(0 - position.x);
+  f32 distance_to_right_border = fabs(play_area.width - position.x);
+  f32 distance_to_top_border = fabs(0 - position.y);
+  f32 distance_to_bottom_border = fabs(play_area.height - position.y);
+
+  if (distance_to_left_border <= BORDER_SHOW_BEHAVIOR_THRESHOLD_PX) {
+    state->gameplay_data.border_notify(PLAY_AREA_EDGE_ID_LEFT, state->gameplay_data.play_area.edge_behavior_left + 1, 1, true);
+  }
+
+  if (distance_to_right_border <= BORDER_SHOW_BEHAVIOR_THRESHOLD_PX) {
+    state->gameplay_data.border_notify(PLAY_AREA_EDGE_ID_RIGHT, state->gameplay_data.play_area.edge_behavior_right + 1, 1, true);
+  }
+
+  if (distance_to_top_border <= BORDER_SHOW_BEHAVIOR_THRESHOLD_PX) {
+    state->gameplay_data.border_notify(PLAY_AREA_EDGE_ID_TOP, state->gameplay_data.play_area.edge_behavior_top + 1, 1, true);
+  }
+
+  if (distance_to_bottom_border <= BORDER_SHOW_BEHAVIOR_THRESHOLD_PX) {
+    state->gameplay_data.border_notify(PLAY_AREA_EDGE_ID_BOTTOM, state->gameplay_data.play_area.edge_behavior_bottom + 1, 1, true);
+  }
+}
+
 void Player::update(Game_State* state, f32 dt) {
     if (!visible) {
         disable_all_particle_emitters();
@@ -1660,6 +1687,7 @@ void Player::update(Game_State* state, f32 dt) {
     }
 
     handle_burst_charging_behavior(state, dt);
+    show_border_status_when_close(state);
 
     if (burst_ray_attack_ability_timer > 0.0f) {
         fire_burst_ray_laser(state);

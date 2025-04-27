@@ -1610,7 +1610,7 @@ void Scriptable_Render_Object::render(Game_Resources* resources, struct render_c
 }
 
 // Gameplay_Data
-void Gameplay_Data::border_notify(s32 id, s32 type, bool override) {
+void Gameplay_Data::border_notify(s32 id, s32 type, int flash_count, bool override) {
     if (id < 0 || id >= PLAY_AREA_EDGE_ID_COUNT) {
         return;
     }
@@ -1623,7 +1623,7 @@ void Gameplay_Data::border_notify(s32 id, s32 type, bool override) {
 
     border_flash.flash_id_type       = type;
     border_flash.delay_between_flash = false;
-    border_flash.flash_count         = BORDER_NOTIFY_FLASH_COUNT;
+    border_flash.flash_count         = flash_count;
     border_flash.per_flash_length    = BORDER_NOTIFY_PER_FLASH_LENGTH; // seconds
 }
 
@@ -1646,7 +1646,7 @@ void Gameplay_Data::border_stop_all_notifications(void) {
 // never called automatically.
 void Gameplay_Data::border_notify_current_status(void) {
     for (s32 border_index = 0; border_index < PLAY_AREA_EDGE_ID_COUNT; ++border_index) {
-        border_notify(border_index, play_area.edge_behaviors[border_index]+1, true);
+        border_notify(border_index, play_area.edge_behaviors[border_index]+1, BORDER_NOTIFY_FLASH_COUNT, true);
     }
 }
 
