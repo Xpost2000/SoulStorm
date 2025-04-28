@@ -1010,8 +1010,14 @@ typedef bool (*Burst_Bomb)(Player* player, Game_State* state, u32 _unused);
 
 struct Player_Burst_Action {
     Burst_Fire firing;
+    Burst_Fire firing_wide;
     Burst_Bomb bomb;
 };
+
+void player_burst_fire_wide_focus_tier0(Player* player, Game_State* state, u32 _unused);
+void player_burst_fire_wide_focus_tier1(Player* player, Game_State* state, u32 _unused);
+void player_burst_fire_wide_focus_tier2(Player* player, Game_State* state, u32 _unused);
+void player_burst_fire_wide_focus_tier3(Player* player, Game_State* state, u32 _unused);
 
 void player_burst_fire_focus_tier0(Player* player, Game_State* state, u32 _unused);
 void player_burst_fire_focus_tier1(Player* player, Game_State* state, u32 _unused);
@@ -1033,18 +1039,22 @@ s32 calculate_amount_of_burst_depletion_flashes_for(f32 seconds)
 local Player_Burst_Action g_player_burst_actions[] = {
     {
         player_burst_fire_focus_tier0,
+        player_burst_fire_wide_focus_tier0,
         player_burst_bomb_focus_tier0,
     }, // TIER 0, no bomb, default focus attack.
     {
         player_burst_fire_focus_tier1,
+        player_burst_fire_wide_focus_tier1,
         player_burst_bomb_focus_neutralizer_ray,
     },
     {
         player_burst_fire_focus_tier2,
+        player_burst_fire_wide_focus_tier2,
         player_burst_bomb_focus_bullet_shield,
     },
     {
         player_burst_fire_focus_tier3,
+        player_burst_fire_wide_focus_tier3,
         player_burst_bomb_focus_bkg_clear,
     },
 };
@@ -1098,11 +1108,22 @@ void player_burst_fire_focus_tier1(Player* player, Game_State* state, u32 _unuse
         )
     );
     controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
-spawn_bullet_arc_pattern1(
+  spawn_bullet_arc_pattern1(
     state,
     player->position,
     3,
     35/2.0f,
+    V2(5, 5),
+    V2(0, -1),
+    800.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_BLUE_DISK
+  );
+  spawn_bullet_arc_pattern1(
+    state,
+    player->position,
+    3,
+    35 / 4.0f,
     V2(5, 5),
     V2(0, -1),
     800.0f,
@@ -1133,6 +1154,19 @@ void player_burst_fire_focus_tier2(Player* player, Game_State* state, u32 _unuse
     player->position,
     3,
     35/2.0f,
+    V2(5, 5),
+    V2(0, -1),
+    850.0f,
+    0.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_RED_DISK,
+    0
+  );
+  spawn_bullet_arc_pattern2_trailed(
+    state,
+    player->position,
+    3,
+    35 / 4.0f,
     V2(5, 5),
     V2(0, -1),
     850.0f,
@@ -1172,7 +1206,163 @@ void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unuse
     PROJECTILE_SPRITE_GREEN_DISK,
     0
   );
+  spawn_bullet_arc_pattern2_trailed(
+    state,
+    player->position,
+    4,
+    35 / 6.0f,
+    V2(5, 5),
+    V2(0, -1),
+    890.0f,
+    0.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_GREEN_DISK,
+    0
+  );
   player->drain_speed = PLAYER_BURST_TIER3_ATTACK_DRAIN_SPEED;
+}
+
+void player_burst_fire_wide_focus_tier0(Player* player, Game_State* state, u32 _unused) {
+  auto resources = state->resources;
+  player->firing_cooldown = DEFAULT_FIRING_COOLDOWN;
+
+  state->set_led_target_color_anim(
+    color32u8(255, 0, 0, 255),
+    DEFAULT_FIRING_COOLDOWN / 4,
+    false,
+    true
+  );
+  Audio::play(
+    resources->random_attack_sound(
+      &state->gameplay_data.prng_unessential
+    )
+  );
+
+  controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
+  // spawn_bullet_line_pattern1(state, position, 1, 20.0f, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
+  spawn_bullet_arc_pattern1(
+    state,
+    player->position,
+    3,
+    45,
+    V2(5, 5),
+    V2(0, -1),
+    650.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_BLUE_ELECTRIC
+  );
+}
+
+void player_burst_fire_wide_focus_tier1(Player* player, Game_State* state, u32 _unused) {
+  auto resources = state->resources;
+  player->firing_cooldown = (DEFAULT_FIRING_COOLDOWN / 1.5);
+  state->set_led_target_color_anim(
+    color32u8(255, 0, 0, 255),
+    DEFAULT_FIRING_COOLDOWN / 4,
+    false,
+    true
+  );
+  Audio::play(
+    resources->random_attack_sound(
+      &state->gameplay_data.prng_unessential
+    )
+  );
+  controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
+  spawn_bullet_arc_pattern1(
+    state,
+    player->position,
+    4,
+    50,
+    V2(5, 5),
+    V2(0, -1),
+    800.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_BLUE_ELECTRIC
+  );
+}
+
+void player_burst_fire_wide_focus_tier2(Player* player, Game_State* state, u32 _unused) {
+  auto resources = state->resources;
+  player->firing_cooldown = (DEFAULT_FIRING_COOLDOWN / 1.5);
+  state->set_led_target_color_anim(
+    color32u8(255, 0, 0, 255),
+    DEFAULT_FIRING_COOLDOWN / 4,
+    false,
+    true
+  );
+  Audio::play(
+    resources->random_attack_sound(
+      &state->gameplay_data.prng_unessential
+    )
+  );
+  controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 85);
+  spawn_bullet_arc_pattern2_trailed(
+    state,
+    player->position,
+    4,
+    45,
+    V2(5, 5),
+    V2(0, -1),
+    850.0f,
+    0.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_RED_ELECTRIC,
+    0
+  );
+  spawn_bullet_arc_pattern1(
+    state,
+    player->position,
+    3,
+    30,
+    V2(5, 5),
+    V2(0, -1),
+    800.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_BLUE_ELECTRIC
+  );
+}
+
+void player_burst_fire_wide_focus_tier3(Player* player, Game_State* state, u32 _unused) {
+  auto resources = state->resources;
+  player->firing_cooldown = (DEFAULT_FIRING_COOLDOWN / 2);
+  state->set_led_target_color_anim(
+    color32u8(255, 0, 0, 255),
+    DEFAULT_FIRING_COOLDOWN / 4,
+    false,
+    true
+  );
+  Audio::play(
+    resources->random_attack_sound(
+      &state->gameplay_data.prng_unessential
+    )
+  );
+  controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 85);
+  spawn_bullet_arc_pattern2_trailed(
+    state,
+    player->position,
+    2,
+    35 / 4.0f,
+    V2(2.5, 2.5),
+    V2(0, -1),
+    900.0f,
+    0.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_GREEN_DISK,
+    0
+  );
+  spawn_bullet_arc_pattern2_trailed(
+    state,
+    player->position,
+    4,
+    45,
+    V2(2.5, 2.5),
+    V2(0, -1),
+    850.0f,
+    0.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_BLUE_ELECTRIC,
+    0
+  );
 }
 
 bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unused) {
@@ -1349,33 +1539,7 @@ void Player::fire_weapon(Game_State* state, u32 attack_pattern_id) {
             if (under_focus) {
                 action_set->firing(this, state, attack_pattern_id);
             } else {
-                firing_cooldown = (under_focus) ? (DEFAULT_FIRING_COOLDOWN/2) : DEFAULT_FIRING_COOLDOWN;
-
-                state->set_led_target_color_anim(
-                    color32u8(255, 0, 0, 255),
-                    DEFAULT_FIRING_COOLDOWN/4,
-                    false,
-                    true
-                );
-                Audio::play(
-                    resources->random_attack_sound(
-                        &state->gameplay_data.prng_unessential
-                    )
-                );
-
-                controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 100);
-                // spawn_bullet_line_pattern1(state, position, 1, 20.0f, V2(5, 5), V2(0, -1), 1550.0f, BULLET_SOURCE_PLAYER);
-                spawn_bullet_arc_pattern1(
-                    state,
-                    position,
-                    3,
-                    45,
-                    V2(5, 5),
-                    V2(0, -1),
-                    650.0f,
-                    BULLET_SOURCE_PLAYER,
-                    PROJECTILE_SPRITE_BLUE_ELECTRIC
-                );
+                action_set->firing_wide(this, state, attack_pattern_id);
             }
         } break;
         case ATTACK_PATTERN_EXTRA1: {
@@ -1391,6 +1555,7 @@ void Player::fire_weapon(Game_State* state, u32 attack_pattern_id) {
 }
 
 local f32 burst_charge_decay_rate(s32 rank) {
+#if 0
     switch (rank) {
         case 0: {
             return PLAYER_BURST_TIER0_PASSIVE_DECAY_SPEED;
@@ -1407,6 +1572,9 @@ local f32 burst_charge_decay_rate(s32 rank) {
         } break;
     }
     return 100;
+#else
+  return 0;
+#endif
 }
 
 void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
@@ -1514,6 +1682,7 @@ void Player::update(Game_State* state, f32 dt) {
     // This is to protect the player from an infinite burn out loop
     // because players did not seem to understand the resource management
     // early on, and this was probably far too punishing.
+#if 0
     if (just_burned_out) {
         if (focusing) {
             focusing = false;
@@ -1521,7 +1690,10 @@ void Player::update(Game_State* state, f32 dt) {
             just_burned_out = false;
         }
     }
+#endif
 
+    under_focus = focusing;
+#if 0
     // NOTE(jerry): You cannot focus if you're attempting to
     //              recover.
     if (!burst_charge_halt_regeneration) {
@@ -1534,6 +1706,7 @@ void Player::update(Game_State* state, f32 dt) {
         }
         under_focus = false;
     }
+#endif
 
     V2 axes = gameplay_frame_input_packet_quantify_axes(input_packet);
     float UNIT_SPEED = ((under_focus) ? 150 : 235) * pet_data->speed_modifier;

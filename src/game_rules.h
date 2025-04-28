@@ -129,7 +129,7 @@ struct Game_Rules {
     s32 player_burst_bomb_requires_at_least_one_life = 1;
     f32 player_burst_bomb_invincibility_t            = 1.35f * 5.0f;
 
-    s32 player_burst_tier0_attack_drain_speed        = 28;
+    s32 player_burst_tier0_attack_drain_speed        = 35;
     s32 player_burst_tier1_attack_drain_speed        = 35;
     s32 player_burst_tier2_attack_drain_speed        = 100;
     s32 player_burst_tier3_attack_drain_speed        = 170;
