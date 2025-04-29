@@ -1304,7 +1304,7 @@ function wave_2()
    t_wait(0.5);
    async_task_lambda(
       function()
-         for i=1, 5 do
+         for i=1, 8 do
             E0_1_1S(
                v2(0, -10),
                v2(150, 205),
@@ -1320,7 +1320,7 @@ function wave_2()
    t_wait(1.35);
    async_task_lambda(
       function()
-         for i=1, 4 do
+         for i=1, 8 do
             E0_1_1S(
                v2(play_area_width(), -10),
                v2(-150, 205),

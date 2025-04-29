@@ -638,7 +638,7 @@ function preboss_wave()
       t_wait(1.5);
       async_task_lambda(
          function()
-            for i=1, 12 do
+            for i=1, 9 do
                E0_1_1S(
                   v2(0, play_area_height()+20),
                   v2(100, -150),
@@ -654,7 +654,7 @@ function preboss_wave()
       t_wait(2.0);
       async_task_lambda(
          function()
-            for i=1, 13 do
+            for i=1, 9 do
                E0_1_1S(
                   v2(10, -10),
                   v2(20, 105),
@@ -915,7 +915,7 @@ function stage_task()
       function()
       async_task_lambda(
          function()
-            for i=1, 30 do
+            for i=1, 20 do
                E0_1_1S(
                   v2(0, -10),
                   v2(150, 205),
@@ -924,14 +924,14 @@ function stage_task()
                   0.90, -- TIME UNTIL ACCEL
                   v2(400, 170) -- ACCEL WHERE
                );
-               t_wait(0.13)
+               t_wait(0.20)
             end
          end
       )
       t_wait(1.5);
       async_task_lambda(
          function()
-            for i=1, 30 do
+            for i=1, 15 do
                E0_1_1S(
                   v2(play_area_width(), -10),
                   v2(-150, 205),
@@ -946,8 +946,8 @@ function stage_task()
       )
       end
    )
-   LaserChaser_Horizontal_1_2(3, 1.5);
-   LaserChaser_Horizontal_1_2(3, 0.75);
+   LaserChaser_Horizontal_1_2(2, 1.5);
+   LaserChaser_Horizontal_1_2(2, 1.55);
    async_task_lambda(
       function()
       async_task_lambda(
@@ -961,7 +961,7 @@ function stage_task()
                   0.90, -- TIME UNTIL ACCEL
                   v2(400, 100) -- ACCEL WHERE
                );
-               t_wait(0.13)
+               t_wait(0.20)
             end
          end
       )
@@ -983,8 +983,8 @@ function stage_task()
       )
       end
    )
-   LaserChaser_Vertical_1_2(3, 2.5);
-   LaserChaser_Vertical_1_2(3, 0.85);
+   LaserChaser_Vertical_1_2(2, 2.5);
+   LaserChaser_Vertical_1_2(2, 1.55);
 
    wait_no_danger();
    t_complete_stage();
