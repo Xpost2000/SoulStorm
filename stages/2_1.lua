@@ -452,7 +452,7 @@ function wave3()
 
    async_task_lambda(
       function()
-         for i=1, 50 do
+         for i=1, 30 do
             E0_1_1S(
                v2(0, -10),
                v2(150, 205),
@@ -468,7 +468,7 @@ function wave3()
    t_wait(1.35);
    async_task_lambda(
       function()
-         for i=1, 50 do
+         for i=1, 30 do
             E0_1_1S(
                v2(play_area_width(), -10),
                v2(-150, 205),

@@ -199,6 +199,38 @@ function stage_task()
     convert_all_bullets_to_score()
     t_wait(3.5);
     LaserChaser_Horizontal_1_2(4, 1.25);
+    t_wait(4);
+    async_task_lambda(
+       function()
+          for i=1, 50 do
+             E0_1_1S(
+                v2(0, -10),
+                v2(150, 205),
+                dir_to_player(v2(0, -10)), -- SHOT DIR
+                0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+                0.90, -- TIME UNTIL ACCEL
+                v2(400, 170) -- ACCEL WHERE
+             );
+             t_wait(0.13)
+          end
+       end
+    )
+    t_wait(1.35);
+    async_task_lambda(
+       function()
+          for i=1, 50 do
+             E0_1_1S(
+                v2(play_area_width(), -10),
+                v2(-150, 205),
+                dir_to_player(v2(play_area_width(), -10)), -- SHOT DIR
+                0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+                1.00, -- TIME UNTIL ACCEL
+                v2(400, 100) -- ACCEL WHERE
+             );
+             t_wait(0.17)
+          end
+       end
+    )
     t_wait(1.0);
    end
 
