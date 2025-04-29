@@ -99,10 +99,10 @@ function wave1_sub1()
             20, 25,
 
             35,
-            100,
+            40,
 
             v2(1, 1),
-            45,
+            25,
             45,
             
             PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
@@ -115,10 +115,10 @@ function wave1_sub1()
             20, 25,
 
             35,
-            100,
+            40,
 
             v2(-1, 1),
-            45,
+            25,
             45,
             
             PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
@@ -131,10 +131,10 @@ function wave1_sub1()
             20, 25,
 
             35,
-            100,
+            70,
 
             v2(1, -1),
-            45,
+            25,
             45,
             
             PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
@@ -147,10 +147,10 @@ function wave1_sub1()
             20, 25,
 
             35,
-            100,
+            70,
 
             v2(-1, -1),
-            45,
+            25,
             45,
             
             PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
@@ -590,7 +590,7 @@ function preboss_wave()
       function()
       async_task_lambda(
          function()
-            for i=1, 20 do
+            for i=1, 10 do
                E0_1_1S(
                   v2(50, -10),
                   v2(150, 165),
@@ -606,7 +606,7 @@ function preboss_wave()
       t_wait(1.5);
       async_task_lambda(
          function()
-            for i=1, 20 do
+            for i=1, 12 do
                E0_1_1S(
                   v2(play_area_width(), -10),
                   v2(-100, 165),
@@ -622,7 +622,7 @@ function preboss_wave()
       t_wait(3);
       async_task_lambda(
          function()
-            for i=1, 26 do
+            for i=1, 13 do
                E0_1_1S(
                   v2(play_area_width()/2, -10),
                   v2(100, 77),
@@ -631,7 +631,7 @@ function preboss_wave()
                   1.25, -- TIME UNTIL ACCEL
                   v2(-100, 0) -- ACCEL WHERE
                );
-               t_wait(0.18)
+               t_wait(0.28)
             end
          end
       )
@@ -691,7 +691,7 @@ function preboss_wave()
    MainBoss1_RainCloud_Attack2(1997, 3.5)
    t_wait(6.0);
    convert_all_bullets_to_score()
-   for i=1,8 do
+   for i=1,6 do
       local e = Make_Enemy_Spinner_1_1_2(
          15, 
          v2(-15 - i*15, 20 + i * 45),
@@ -807,9 +807,9 @@ function stage_task()
    play_music(track);
 
    t_wait(2);
-   -- print("wave 1");
+   -- -- print("wave 1");
    wave_1();
-   -- print("wave 2");
+   -- -- print("wave 2");
    wave_2();
    preboss_wave();
    for i=1,5 do
@@ -915,7 +915,7 @@ function stage_task()
       function()
       async_task_lambda(
          function()
-            for i=1, 20 do
+            for i=1, 9 do
                E0_1_1S(
                   v2(0, -10),
                   v2(150, 205),
@@ -931,7 +931,7 @@ function stage_task()
       t_wait(1.5);
       async_task_lambda(
          function()
-            for i=1, 15 do
+            for i=1, 5 do
                E0_1_1S(
                   v2(play_area_width(), -10),
                   v2(-150, 205),
@@ -946,17 +946,17 @@ function stage_task()
       )
       end
    )
-   LaserChaser_Horizontal_1_2(2, 1.5);
-   LaserChaser_Horizontal_1_2(2, 1.55);
+   LaserChaser_Horizontal_1_2(1, 1.8);
+   LaserChaser_Horizontal_1_2(1, 1.55);
    async_task_lambda(
       function()
       async_task_lambda(
          function()
-            for i=1, 20 do
+            for i=1, 11 do
                E0_1_1S(
                   v2(50, -10),
                   v2(150, 165),
-                  dir_to_player(v2(0, -10)), -- SHOT DIR
+                  dir_to_player(v2(50, -10)), -- SHOT DIR
                   0.35, 0.57, -- FIRE SPEED, FIRE DELAY
                   0.90, -- TIME UNTIL ACCEL
                   v2(400, 100) -- ACCEL WHERE
@@ -965,10 +965,10 @@ function stage_task()
             end
          end
       )
-      t_wait(1.5);
+      t_wait(2);
       async_task_lambda(
          function()
-            for i=1, 20 do
+            for i=1, 9 do
                E0_1_1S(
                   v2(play_area_width(), -10),
                   v2(-100, 165),
@@ -983,9 +983,10 @@ function stage_task()
       )
       end
    )
-   LaserChaser_Vertical_1_2(2, 2.5);
+   LaserChaser_Vertical_1_2(1, 2.5);
    LaserChaser_Vertical_1_2(2, 1.55);
 
+   t_wait(5);
    wait_no_danger();
    t_complete_stage();
 end
