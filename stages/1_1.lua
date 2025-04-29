@@ -1015,8 +1015,8 @@ function _wave2_sub5_goon_initial(e, goon_number)
       t_wait(0.5);
       for i=1,bcount_per_wave do
          bullet_set_velocity(new_bullets3[i],
-                             arcs3[i][1] * 35,
-                             arcs3[i][2] * 35 
+                             arcs3[i][1] * 85,
+                             arcs3[i][2] * 85 
          );
       end
       t_wait(0.470)
@@ -1031,7 +1031,7 @@ function _wave2_sub5_goon_initial(e, goon_number)
             35,
             100-i,
             v2(0, 1),
-            45,
+            125,
             0,
             BULLET_SOURCE_ENEMY
          );
@@ -1063,7 +1063,7 @@ function wave_2_sub5()
       goon[1] = enemy_new();
       enemy_set_visual(goon[1], ENTITY_SPRITE_SKULL_A);
       enemy_set_scale(goon[1], 10, 10);
-      enemy_set_hp(goon[1], 450);
+      enemy_set_hp(goon[1], 750);
       enemy_set_position(goon[1], 50, 80);
       t_wait(1.0);
       goon[2] = enemy_new();
@@ -1075,7 +1075,7 @@ function wave_2_sub5()
       goon[3] = enemy_new();
       enemy_set_scale(goon[3], 10, 10);
       enemy_set_visual(goon[3], ENTITY_SPRITE_SKULL_A);
-      enemy_set_hp(goon[3], 450);
+      enemy_set_hp(goon[3], 750);
       enemy_set_position(goon[3], play_area_width() - 50, 80);
       t_wait(1.0);
 
@@ -1373,11 +1373,11 @@ function wave_2()
          for i=1, 10 do
             E0_1_1S(
                v2(play_area_width(), -10),
-               v2(0, 205),
-               dir_to_player(v2(0, -10)), -- SHOT DIR
+               v2(-40, 205),
+               dir_to_player(v2(play_area_width(), -10)), -- SHOT DIR
                0.23, 0.50, -- FIRE SPEED, FIRE DELAY
                1.00, -- TIME UNTIL ACCEL
-               v2(400, 100) -- ACCEL WHERE
+               v2(-400, 100) -- ACCEL WHERE
             );
             t_wait(0.17)
          end
@@ -1495,7 +1495,7 @@ function stage_task()
                dir_to_player(v2(play_area_width(), -10)), -- SHOT DIR
                0.23, 0.50, -- FIRE SPEED, FIRE DELAY
                1.00, -- TIME UNTIL ACCEL
-               v2(400, 100) -- ACCEL WHERE
+               v2(-400, 100) -- ACCEL WHERE
             );
             t_wait(0.17)
          end
@@ -1574,7 +1574,7 @@ function stage_task()
                dir_to_player(v2(play_area_width(), -10)), -- SHOT DIR
                0.23, 0.50, -- FIRE SPEED, FIRE DELAY
                1.00, -- TIME UNTIL ACCEL
-               v2(400, 100) -- ACCEL WHERE
+               v2(-400, 100) -- ACCEL WHERE
             );
             t_wait(0.17)
          end
