@@ -830,7 +830,7 @@ function Game_Spawn_Stage1_Boss()
    enemy_set_hp(e, BOSS_HP); -- TODO for now
    enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
    enemy_set_visual(e, ENTITY_SPRITE_BOSS1);
-   enemy_set_burst_gain_value(e, 0.75);
+   enemy_set_burst_gain_value(e, 0.55);
    enemy_show_boss_hp(e, "WITCH");
    -- The boss takes "three threads" of logic.
    async_task_lambda(_Stage1_Boss_Logic, e);
