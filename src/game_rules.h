@@ -144,7 +144,7 @@ struct Game_Rules {
     s32 default_entity_score_value_per_hit = 30;
     s32 default_entity_score_kill_value_multiplier = 5;
 
-    s32    pet_data_none_lives          = 4; // MAX_BASE_TRIES
+    s32    pet_data_none_lives          = 5; // MAX_BASE_TRIES
     f32    pet_data_none_score_modifier = 1.0f;
     f32    pet_data_none_speed_modifier = 1.0f;
 

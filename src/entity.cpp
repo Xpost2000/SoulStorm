@@ -1340,7 +1340,7 @@ void player_burst_fire_wide_focus_tier3(Player* player, Game_State* state, u32 _
   spawn_bullet_arc_pattern2_trailed(
     state,
     player->position,
-    3,
+    2,
     45,
     V2(5, 5),
     V2(0, -1),

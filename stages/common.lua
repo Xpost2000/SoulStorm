@@ -1169,3 +1169,207 @@ end
 function end_black_fade()
    g_fade_direction = 1;
 end
+
+-- These archetypes should help speed up the overhaul
+-- of the levels significantly...
+--
+-- Some special per level enemies are required
+
+-- SIMPLE BAT TYPE ENEMIES
+--
+-- These guys always go forward, might vary direction
+-- a bit but generally simple movements.
+--
+-- Single Shot, Sloppy       [OK]
+-- Small Spread Shot, Sloppy [TODO]
+--
+--
+
+-- Single Shot
+function E0_1_1(
+   position,
+   velocity,
+   fire_dir,
+   fire_speed, delay_per_burst,
+   time_until_accel,
+   accel
+)
+   local e = enemy_new();
+   enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
+   enemy_set_position(e, position[1], position[2]);
+   enemy_set_hp(e, 3);
+   enemy_set_velocity(e, velocity[1], velocity[2]);
+   enemy_task_lambda(
+      e,
+      function (e)
+         for b=1,3 do
+         for i=1,4 do
+            local eposition = enemy_final_position(e);
+            local bullet = bullet_new(BULLET_SOURCE_ENEMY);
+            bullet_set_position(bullet, eposition[1], eposition[2]);
+            bullet_set_visual(bullet, PROJECTILE_SPRITE_RED);
+            bullet_set_lifetime(bullet, 15);
+            bullet_set_scale(bullet, 5, 5);
+            bullet_set_visual_scale(bullet, 0.5, 0.5);
+            bullet_set_velocity(bullet, fire_dir[1] * 135, fire_dir[2] * 135);
+            t_wait(fire_speed);
+         end
+         t_wait(delay_per_burst);
+         end
+      end
+   );
+   enemy_task_lambda(
+      e,
+      function (e)
+         t_wait(time_until_accel)
+         enemy_set_acceleration(e, accel[1], accel[2])
+      end
+   );
+end
+
+-- Single Shot, Sloppy (affected by RNG)
+function E0_1_1S(
+   position,
+   velocity,
+   fire_dir,
+   fire_speed, delay_per_burst,
+   time_until_accel,
+   accel
+)
+   local e = enemy_new();
+   enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
+   enemy_set_position(e, position[1], position[2]);
+   enemy_set_hp(e, 2);
+   enemy_set_velocity(e, velocity[1], velocity[2]);
+
+   local seed = prng_ranged_integer(0, 100);
+   if seed < 23 then
+      enemy_set_burst_score_value(e, 6);
+   end
+
+   local angle = dir_to_angle(fire_dir);
+   angle = angle + prng_ranged_integer(-25, 25);
+
+   fire_dir = v2_direction_from_degree(angle);
+
+   enemy_task_lambda(
+      e,
+      function (e)
+         for b=1,3 do
+         for i=1,4 do
+            local eposition = enemy_final_position(e);
+            local bullet = bullet_new(BULLET_SOURCE_ENEMY);
+            bullet_set_position(bullet, eposition[1], eposition[2]);
+            bullet_set_visual(bullet, PROJECTILE_SPRITE_RED);
+            bullet_set_lifetime(bullet, 15);
+            bullet_set_scale(bullet, 5, 5);
+            bullet_set_visual_scale(bullet, 0.5, 0.5);
+            bullet_set_velocity(bullet, fire_dir[1] * 115, fire_dir[2] * 115);
+            t_wait(fire_speed);
+         end
+         t_wait(delay_per_burst);
+         end
+      end
+   );
+   enemy_task_lambda(
+      e,
+      function (e)
+         t_wait(time_until_accel)
+         enemy_set_acceleration(e, accel[1], accel[2])
+      end
+   );
+end
+
+-- ATTACK (CYCLOPUS) BAT TYPE ENEMIES
+-- 
+-- circle spin flower (CW)
+-- circle spin flower (CCW)
+--
+-- more spread shot, sloppy
+--
+-- whip (CW)
+-- whip (CCW)
+--
+-- straight line
+--
+
+-- CSF
+function E1_1_1_CSF_CW(
+   position,
+   velocity,
+   delay_per_burst,
+   time_until_accel,
+   accel
+)
+   local e = enemy_new();
+   enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+   enemy_set_position(e, position[1], position[2]);
+   enemy_set_hp(e, 12);
+   enemy_set_velocity(e, velocity[1], velocity[2]);
+
+   local seed = prng_ranged_integer(0, 100);
+   if seed < 23 then
+      enemy_set_burst_score_value(e, 6);
+   end
+
+   enemy_task_lambda(
+      e,
+      function (e)
+         for b=1,4 do
+         for i=1,360,36 do
+            local fire_dir = v2_direction_from_degree(i);
+            local eposition = enemy_final_position(e);
+            local bullet = bullet_new(BULLET_SOURCE_ENEMY);
+            bullet_set_position(bullet, eposition[1], eposition[2]);
+            bullet_set_visual(bullet, PROJECTILE_SPRITE_PURPLE_DISK);
+            bullet_set_lifetime(bullet, 15);
+            bullet_set_scale(bullet, 5, 5);
+            bullet_start_trail(bullet, 3);
+            bullet_set_visual_scale(bullet, 0.5, 0.5);
+            bullet_set_velocity(bullet, fire_dir[1] * 200, fire_dir[2] * 200);
+         end
+         t_wait(delay_per_burst);
+         end
+      end
+   );
+   enemy_task_lambda(
+      e,
+      function (e)
+         t_wait(time_until_accel)
+         enemy_set_acceleration(e, accel[1], accel[2])
+      end
+   );
+end
+
+-- ATTACK SKULL
+--
+-- Same as the bats generally, no real complaints,
+-- give them circle spin as well
+
+-- GOLDEN SKULL
+--
+-- More attacking stuff, also use as turret for the wrap around section
+-- they teleport, and then move slowly (they are tougher turret enemies)
+function E2_1_1_SPINTRIP_1(
+   x,
+   y,
+   spoke_per_frame_angular_velocity, duration, bullet_visual, exit_direction)
+   local enemy_position = v2(x, y);
+   explosion_hazard_new(enemy_position[1], enemy_position[2], 15, 0.05, 0.15);
+   t_wait(1.25);
+   local e = Make_Enemy_SpinTrip_2_1_1(
+   32,
+   enemy_position,
+   60,
+   spoke_per_frame_angular_velocity,
+   exit_direction,
+   50,
+   30,
+   duration,
+   bullet_visual,
+   2);
+
+   enemy_set_visual(e, ENTITY_SPRITE_SKULL_B);
+   enemy_set_visual_scale(e, 1.3, 1.3);
+   return e;
+end

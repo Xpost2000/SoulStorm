@@ -450,6 +450,38 @@ function wave3()
       t_wait(0.325);
    end
 
+   async_task_lambda(
+      function()
+         for i=1, 50 do
+            E0_1_1S(
+               v2(0, -10),
+               v2(150, 205),
+               dir_to_player(v2(0, -10)), -- SHOT DIR
+               0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+               0.90, -- TIME UNTIL ACCEL
+               v2(400, 170) -- ACCEL WHERE
+            );
+            t_wait(0.13)
+         end
+      end
+   )
+   t_wait(1.35);
+   async_task_lambda(
+      function()
+         for i=1, 50 do
+            E0_1_1S(
+               v2(play_area_width(), -10),
+               v2(-150, 205),
+               dir_to_player(v2(play_area_width(), -10)), -- SHOT DIR
+               0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+               1.00, -- TIME UNTIL ACCEL
+               v2(400, 100) -- ACCEL WHERE
+            );
+            t_wait(0.17)
+         end
+      end
+   )
+
    -- This might be pretty hard.
    t_wait(3.5);
    explosion_hazard_new(player_position_x(), player_position_y(), 50, 1, 1);
