@@ -122,7 +122,7 @@ struct Game_Rules {
     s32 player_burst_shield_requires_at_least_one_life = 0;
 
     f32 player_burst_ray_ability_max_t             = 4.25f;
-    f32 player_burst_ray_cooldown_depletion_approx = 4.25f * 1.30f;
+    f32 player_burst_ray_cooldown_depletion_approx = 3.00f;
 
     f32 player_burst_bomb_cooldown_depletion_approx  = 2.75f;
     s32 player_burst_bomb_use_score_award            = 7500;
@@ -138,7 +138,7 @@ struct Game_Rules {
     s32 player_burst_tier1_passive_decay_speed        = 18;
     s32 player_burst_tier2_passive_decay_speed        = 10;
     s32 player_burst_tier3_passive_decay_speed        = 2;
-    s32 player_default_burst_charge_speed             = 15;
+    s32 player_default_burst_charge_speed             = 1;
 
     f32 default_firing_cooldown = 0.125f;
     s32 default_entity_score_value_per_hit = 30;

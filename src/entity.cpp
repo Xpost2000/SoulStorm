@@ -925,7 +925,7 @@ void Player::handle_grazing_behavior(Game_State* state, f32 dt) {
     if (grazing) {
         if (grazing_delay <= 0.0f) {
             f32 score_modifier = get_grazing_score_modifier(grazing);
-
+            burst_charge += 0.050;
             if (grazing_award_timer <= 0.0f) {
                 // award score to the game
                 state->gameplay_data.notify_score(
@@ -1513,19 +1513,21 @@ void Player::fire_burst_ray_laser(Game_State* state) {
         );
         for (s32 bullet_index = 0; bullet_index < bullet_count; ++bullet_index) {
             auto position = get_real_position();
-            auto bullet = bullet_upwards_linear(
+            {
+              auto bullet = bullet_upwards_linear(
                 state, position, V2(0, -1), 500.0f,
                 PROJECTILE_SPRITE_HOT_PINK_DISK, BULLET_SOURCE_PLAYER);
-            bullet.flags |= BULLET_FLAGS_BREAKS_OTHER_BULLETS;
-            bullet.trail_ghost_limit = 32;
-            bullet.trail_ghost_record_timer_max = 0.0000f;
-            bullet.trail_ghost_modulation = color32f32(1.0,1.0,1.0,1.0);
-            bullet.trail_ghost_max_alpha = 0.15f;
-            bullet.entity_draw_blend_mode = BLEND_MODE_ADDITIVE;
-            bullet.shadow_entity_draw_blend_mode = BLEND_MODE_ADDITIVE;
-            state->gameplay_data.add_bullet(
+              bullet.flags |= BULLET_FLAGS_BREAKS_OTHER_BULLETS;
+              bullet.trail_ghost_limit = 16;
+              bullet.trail_ghost_record_timer_max = 0.0000f;
+              bullet.trail_ghost_modulation = color32f32(1.0, 1.0, 1.0, 1.0);
+              bullet.trail_ghost_max_alpha = 0.15f;
+              bullet.entity_draw_blend_mode = BLEND_MODE_ADDITIVE;
+              bullet.shadow_entity_draw_blend_mode = BLEND_MODE_ADDITIVE;
+              state->gameplay_data.add_bullet(
                 bullet
-            );
+              );
+            }
         }
     }
 }
@@ -1617,7 +1619,7 @@ void Player::handle_burst_charging_behavior(Game_State* state, f32 dt) {
             if (!burst_charge_halt_regeneration) {
                 f32 charge_speed = PLAYER_DEFAULT_BURST_CHARGE_SPEED; // make charging harder
 
-                if (under_focus) {
+                if (under_focus && firing) {
                     burst_charge -= dt * drain_speed;
                 } else {
                     burst_charge += dt * charge_speed;
@@ -1716,7 +1718,7 @@ void Player::update(Game_State* state, f32 dt) {
     }
 
     if (burst_ray_attack_ability_timer > 0.0f) {
-        UNIT_SPEED *= 0.22f;
+        UNIT_SPEED *= 0.675f;
     }
 
     if (!state->gameplay_data.triggered_stage_completion_cutscene) {
@@ -1766,6 +1768,11 @@ void Player::update(Game_State* state, f32 dt) {
     {
         auto& emitter = emitters[1];
         if (burst_absorption_shield_ability_timer > 0) {
+            firing = true;
+            // hackme
+            burst_charge = 2;
+
+            firing_cooldown = DEFAULT_FIRING_COOLDOWN * 1.15;
             emitter.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE | PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
             emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_SPARKLING_STAR]);
             emitter.scale  = 0.75f;
@@ -1788,8 +1795,38 @@ void Player::update(Game_State* state, f32 dt) {
                 auto& emitter = emitters[0];
                 emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
             }
-
+            if (attack()) {
+              auto resources = state->resources;
+              state->set_led_target_color_anim(
+                color32u8(255, 0, 0, 255),
+                DEFAULT_FIRING_COOLDOWN / 2,
+                false,
+                true
+              );
+              Audio::play(
+                resources->random_attack_sound(
+                  &state->gameplay_data.prng_unessential
+                )
+              );
+              controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 85);
+            
+              // NOTE(jerry) (4/28/2025): 
+              // Dirty code, I'm tired today and just want to get stuff in quick
+              //
+              // Game overhaul will take a few days to adjust things, but it is for the better.
+              for (int i = 0; i < 360; i += 18) {
+                f32 angle = i + burst_absorption_shield_ability_timer*30;
+                V2 current_arc_direction = V2_direction_from_degree(angle);
+                V2 position = position + current_arc_direction;
+                auto b = bullet_upwards_linear(state, position, current_arc_direction, 650.0f, PROJECTILE_SPRITE_GREEN_ELECTRIC, BULLET_SOURCE_PLAYER);
+                b.flags |= BULLET_FLAGS_BREAKS_OTHER_BULLETS;
+                state->gameplay_data.add_bullet(
+                  b
+                );
+              }
+            }
         } else if (burst_ray_attack_ability_timer > 0) {
+          burst_charge = 2;
           emitter.flags |= PARTICLE_EMITTER_FLAGS_ACTIVE | PARTICLE_EMITTER_FLAGS_USE_FLAME_MODE;
           emitter.sprite = sprite_instance(state->resources->projectile_sprites[PROJECTILE_SPRITE_RED_ELECTRIC]);
           emitter.scale = 0.12f;

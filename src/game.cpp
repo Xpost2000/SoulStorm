@@ -6969,6 +6969,11 @@ void Game::handle_all_bullet_collisions(f32 dt) {
 
                 if (rectangle_f32_intersect(enemy_rect, bullet_rect)) {
                     e.damage(1);
+
+                    // TODO(jerry): save to replay!
+                    {
+                      state->player.burst_charge += 0.175;
+                    }
                     spawn_game_entity_hit_particle_emitter(state->particle_emitters, e.position, resources);
 
                     if (e.die) {
