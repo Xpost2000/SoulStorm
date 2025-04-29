@@ -408,7 +408,7 @@ function _Stage1_Boss_Logic(eid)
                      prng_ranged_integer(6, 9), 30, prng_ranged_integer(15, 120),
                      5, 60, 110, 0.21
                   );
-                  t_wait(prng_ranged_float(0.125, 0.35));
+                  t_wait(prng_ranged_float(0.35, 0.45));
                   Boss1_Sprout1(
                      boss1_state.last_good_position,
                      prng_ranged_integer(6, 8),
