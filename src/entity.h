@@ -180,6 +180,8 @@ struct Entity {
 
     s32   score_value      = DEFAULT_ENTITY_SCORE_VALUE_PER_HIT;
     s16   death_multiplier = DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER;
+    
+    s32   burst_pickup_value = 0;
 
     s32 hit_flash_count = 0;
     Timer hit_flash_timer = Timer(DAMAGE_FLASH_TIME_PERIOD);

@@ -1079,6 +1079,26 @@ int _lua_bind_player_reset_damage_per_hit(lua_State* L) {
   return 0;
 }
 
+int _lua_bind_enemy_set_score_value(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  u64 uid = luaL_checkinteger(L, 1);
+  auto e = state->gameplay_data.lookup_enemy(uid);
+  if (e) {
+    e->score_value = luaL_checkinteger(L, 2);
+  }
+  return 0;
+}
+
+int _lua_bind_enemy_set_burst_score_value(lua_State* L) {
+  Game_State* state = lua_binding_get_gamestate(L);
+  u64 uid = luaL_checkinteger(L, 1);
+  auto e = state->gameplay_data.lookup_enemy(uid);
+  if (e) {
+    e->burst_pickup_value = luaL_checkinteger(L, 2);
+  }
+  return 0;
+}
+
 void bind_entity_lualib(lua_State* L) {
     /*
         NOTE: the lib is only in scalar values which isn't very good, but it's
@@ -1104,6 +1124,8 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "enemy_set_visual", _lua_bind_enemy_set_visual);
         lua_register(L, "enemy_set_scale", _lua_bind_enemy_set_scale);
         lua_register(L, "enemy_set_velocity", _lua_bind_enemy_set_velocity);
+        lua_register(L, "enemy_set_score_value", _lua_bind_enemy_set_score_value);
+        lua_register(L, "enemy_set_burst_score_value", _lua_bind_enemy_set_burst_score_value);
         lua_register(L, "enemy_set_acceleration", _lua_bind_enemy_set_acceleration);
         lua_register(L, "enemy_set_animation_frame", _lua_bind_enemy_set_animation_frame);
         lua_register(L, "enemy_set_hp", _lua_bind_enemy_set_hp);

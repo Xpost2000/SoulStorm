@@ -2425,7 +2425,9 @@ Pickup_Entity pickup_score_entity(Game_State* state, V2 start, V2 end, s32 value
 
 Pickup_Entity pickup_attack_power_entity(Game_State* state, V2 start, V2 end, s32 value) {
     Pickup_Entity attack_power_entity = pickup_entity_generic(state, PICKUP_ATTACKPOWER, start, end, value);
-    unimplemented("pick_attack_power_entity not needed yet?");
+    attack_power_entity.sprite = sprite_instance(state->resources->point_pickup_sprite);
+    attack_power_entity.sprite.scale = V2(1, 1);
+    attack_power_entity.sprite.modulation = color32f32(1.0f, 1.0f, 1.0f, 1.0f);
     return attack_power_entity;
 }
 
@@ -2472,7 +2474,7 @@ void Pickup_Entity::default_behavior_update(Game_State* state, f32 dt) {
         // don't have a concept of "visual and logical separation" outside of their
         // sprite, which I'm not rendering right now b/c I don't have sprites for these yet.
         // I'll draw them later!
-        position.y = animation_end_position.y + sinf(t_since_spawn) * (scale.y);
+        position.y = animation_start_position.y + (t_since_spawn-PICKUP_ENTITY_ANIMATION_T_LENGTH) * 100; /*+ sinf(t_since_spawn) * (scale.y);*/
         lifetime.update(dt);
     }
 }
@@ -2569,7 +2571,8 @@ void Pickup_Entity::on_picked_up(Game_State* state) {
             state->gameplay_data.notify_score(value, true);
         } break;
         case PICKUP_ATTACKPOWER: {
-            unimplemented("pick_attack_power_entity not needed yet?");
+            /*unimplemented("pick_attack_power_entity not needed yet?");*/
+            state->gameplay_data.player.burst_charge += value;
         } break;
         case PICKUP_LIFE: {
             unimplemented("pick_life_entity not needed yet?");
