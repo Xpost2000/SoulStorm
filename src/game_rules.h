@@ -138,13 +138,13 @@ struct Game_Rules {
     s32 player_burst_tier1_passive_decay_speed        = 18;
     s32 player_burst_tier2_passive_decay_speed        = 10;
     s32 player_burst_tier3_passive_decay_speed        = 2;
-    s32 player_default_burst_charge_speed             = 1;
+    s32 player_default_burst_charge_speed             = 2;
 
     f32 default_firing_cooldown = 0.125f;
     s32 default_entity_score_value_per_hit = 30;
     s32 default_entity_score_kill_value_multiplier = 5;
 
-    s32    pet_data_none_lives          = 5; // MAX_BASE_TRIES
+    s32    pet_data_none_lives          = 4; // MAX_BASE_TRIES
     f32    pet_data_none_score_modifier = 1.0f;
     f32    pet_data_none_speed_modifier = 1.0f;
 

@@ -1299,7 +1299,7 @@ void player_burst_fire_wide_focus_tier2(Player* player, Game_State* state, u32 _
   spawn_bullet_arc_pattern2_trailed(
     state,
     player->position,
-    4,
+    2,
     45,
     V2(5, 5),
     V2(0, -1),
@@ -1340,28 +1340,26 @@ void player_burst_fire_wide_focus_tier3(Player* player, Game_State* state, u32 _
   spawn_bullet_arc_pattern2_trailed(
     state,
     player->position,
-    2,
-    35 / 4.0f,
-    V2(2.5, 2.5),
-    V2(0, -1),
-    900.0f,
-    0.0f,
-    BULLET_SOURCE_PLAYER,
-    PROJECTILE_SPRITE_GREEN_DISK,
-    0
-  );
-  spawn_bullet_arc_pattern2_trailed(
-    state,
-    player->position,
-    4,
+    3,
     45,
-    V2(2.5, 2.5),
+    V2(5, 5),
     V2(0, -1),
     850.0f,
     0.0f,
     BULLET_SOURCE_PLAYER,
-    PROJECTILE_SPRITE_BLUE_ELECTRIC,
+    PROJECTILE_SPRITE_RED_ELECTRIC,
     0
+  );
+  spawn_bullet_arc_pattern1(
+    state,
+    player->position,
+    3,
+    30,
+    V2(5, 5),
+    V2(0, -1),
+    800.0f,
+    BULLET_SOURCE_PLAYER,
+    PROJECTILE_SPRITE_BLUE_ELECTRIC
   );
 }
 
@@ -1994,7 +1992,12 @@ void Bullet::update(Game_State* state, f32 dt) {
     Entity::update(state, dt);
 
     // Projectiles outside of the play area should stop existing.
-    if (!state->gameplay_data.play_area.is_inside_logical(get_rect())) {
+    auto r = get_rect();
+    r.w = 300;
+    r.h = 300;
+    r.x -= r.w / 2;
+    r.y -= r.h / 2;
+    if (!state->gameplay_data.play_area.is_inside_logical(r)) {
       die = true;
     }
 }

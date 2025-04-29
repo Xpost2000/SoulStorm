@@ -1044,7 +1044,7 @@ function Stage1_Batflood()
    for i=1,wave_count do
       for j=1,per_wave do
          local e = enemy_new();
-         enemy_set_hp(e, 5);
+         enemy_set_hp(e, 3);
          enemy_set_position(e, j * (play_area_width() / (per_wave)) - 20, -30);
          enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
          enemy_task_lambda(

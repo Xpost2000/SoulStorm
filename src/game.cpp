@@ -3871,7 +3871,7 @@ bool Game::safely_resurrect_player() {
 
         state->gameplay_data.player.halt_burst_abilities();
         state->gameplay_data.player.halt_burst_charge_regeneration(
-            calculate_amount_of_burst_depletion_flashes_for(1.485f)
+            6
         );
         state->gameplay_data.player.begin_invincibility();
         state->gameplay_data.player.heal(1);
@@ -6984,7 +6984,7 @@ void Game::handle_all_bullet_collisions(f32 dt) {
 
                     // TODO(jerry): save to replay!
                     {
-                      state->player.burst_charge += 0.175;
+                      state->player.burst_charge += 0.355;
                     }
                     spawn_game_entity_hit_particle_emitter(state->particle_emitters, e.position, resources);
 
