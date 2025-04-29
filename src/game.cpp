@@ -1284,7 +1284,7 @@ void Game::reset_stage_simulation_state() {
         state->paused_from_death                       = false;
         state->player.t_since_spawn                    = 0;
         state->player.trail_ghost_count                = 0;
-        state->player.scale                            = V2(2, 2);
+        state->player.scale                            = V2(1.5, 1.5);
         state->player.end_invincibility();
         state->player.grazing_award_timer              = 0.0f;
         state->player.grazing_award_score_pickup_timer = 0.0f;
@@ -2120,7 +2120,14 @@ void Gameplay_Data::update_and_render_focus_mode_hitboxes(Game_State* state, str
         {
             auto player_rectangle = player.get_rect();
             auto r = player_rectangle;
-            draw_outlined_box(render_commands, r, color, BOX_THICKNESS); 
+            render_commands_push_quad_ext(
+              render_commands,
+              rectangle_f32(r.x, r.y, r.w, r.h),
+              color,
+              V2(0.5, 0.5), 0,
+              BLEND_MODE_ALPHA
+            );
+            //draw_outlined_box(render_commands, r, color, BOX_THICKNESS); 
         }
     }
 }
@@ -2238,7 +2245,7 @@ GAME_UI_SCREEN(update_and_render_help_menu) {
           y += 30;
         }
         {
-          if (GameUI::button(V2(50, y), string_literal("Burst Meter - Bomb"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
+          if (GameUI::button(V2(50, y), string_literal("Burst Meter - Shield Hyper"), color32f32(1, 1, 1, 1), 2) == WIDGET_ACTION_ACTIVATE) {
             state->help_menu_data.page = HELP_MENU_PAGE_BURST_METER_BOMB;
           }
           y += 30;
@@ -2366,7 +2373,7 @@ GAME_UI_SCREEN(update_and_render_help_menu) {
       case HELP_MENU_PAGE_BURST_METER_GENERAL: {
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         GameUI::label(V2(50, y), string_literal(
-          "The BURST meter is the power meter for SOLSTORM, although it is more akin to a\nstamina bar than a traditional power meter.\n\nIt recharges relatively quickly, and can be expended for special abilities or FOCUS mode.\n\nIt is important to manage the bar as depletion results in a long cooldown, leaving you vulnerable\nagainst projectiles and an inability to FOCUS.\n\nThere are four tiers, with three special abilities.\n"),
+          "The BURST meter is the power meter for SOLSTORM\n\nIt recharges when a player projectile hits an enemy, and can be expended for special abilities or FOCUS mode shots.\n\nIt is important to manage the bar as depletion results in a long cooldown, leaving you vulnerable\nagainst projectiles without an ability to retaliate.\n\nThere are four tiers, with three special abilities.\n"),
           color32f32(1, 1, 1, 1), 1);
         y += 120;
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_SKYBLUE));
@@ -2383,7 +2390,7 @@ GAME_UI_SCREEN(update_and_render_help_menu) {
           y += 15;
         }
         {
-          if (GameUI::button(V2(50, y), string_literal("Burst Meter - Bomb"), color32f32(1, 1, 1, 1), 1) == WIDGET_ACTION_ACTIVATE) {
+          if (GameUI::button(V2(50, y), string_literal("Burst Meter - Shield Hyper"), color32f32(1, 1, 1, 1), 1) == WIDGET_ACTION_ACTIVATE) {
             state->help_menu_data.page = HELP_MENU_PAGE_BURST_METER_BOMB;
           }
           y += 15;
@@ -2411,21 +2418,21 @@ GAME_UI_SCREEN(update_and_render_help_menu) {
       case HELP_MENU_PAGE_BURST_METER_LASER: {
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         GameUI::label(V2(50, y), string_literal(
-          "The laser is the second tier BURST ability, and it fires a laser beam that shreds enemies, and projectiles alike.\nThe player has heavily restricted mobility and a heavy cooldown after usage.\n\nThe player is NOT invulnerable while the laser is active."),
+          "The laser is the second tier BURST ability, and it fires a laser beam that shreds enemies, and projectiles alike.\nThe player has slightly restricted mobility.\n\nThe player is NOT invulnerable while the laser is active."),
           color32f32(1, 1, 1, 1), 1);
         y += 80;
       } break;
       case HELP_MENU_PAGE_BURST_METER_SHIELD: {
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         GameUI::label(V2(50, y), string_literal(
-          "The laser is the third tier BURST ability, and it will produce a bubble shield that\nprotects the player from projectiles.\n\nThe player cannot attack for most of the shields duration, but is otherwise invulnerable\nto all projectiles exempting lasers or explosions."),
+          "The shield is the third tier BURST ability, and it will produce a bubble shield that\nprotects the player from projectiles.\n\nThe player cannot attack for most of the shields duration, but is otherwise invulnerable\nto all projectiles exempting lasers or explosions."),
           color32f32(1, 1, 1, 1), 1);
         y += 80;
       } break;
       case HELP_MENU_PAGE_BURST_METER_BOMB: {
         GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
         GameUI::label(V2(50, y), string_literal(
-          "The laser is the fourth tier BURST ability, and it will screen clear all projectiles\nturning them into score coins that the player absorbs.\n\nThe bomb USES and requires at least one life, and provides additional invincibility after it's usage."),
+          "The shield hyper is the last tier BURST ability, and it will produce a bubble shield that\nprotects the player from projectiles and also fires bullet clearing projectiles.\n\nThe player will auto shoot for the entire duration and is invulnerable\nto all projectiles exempting lasers or explosions."),
           color32f32(1, 1, 1, 1), 1);
         y += 80;
       } break;
@@ -5257,7 +5264,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
     // HandleInvalidUsageFlash
     {
         if (state->invalid_usage_flash_count > 0) {
-            if (state->invalid_usage_flash_t < 0.05f) {
+            if (state->invalid_usage_flash_t < 0.00f) {
                 state->invalid_usage_flash_t += dt;
             } else {
                 state->invalid_usage_flash_t = 0;
@@ -5289,7 +5296,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
           int bkg_image_height = 480;
 
           auto focus_mod_color = color32u8(25, 0, 50, 175 * state->focus_tint_fade_t);
-          auto invalid_usage_color = color32u8(200, 15, 35, 175);
+          auto invalid_usage_color = color32u8(200, 15, 35, 120);
           bool is_flashing_invalid_usage = state->invalid_usage_flash_count > 0 && (state->invalid_usage_flash_count % 2) == 0;
           // left border
           {

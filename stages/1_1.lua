@@ -162,7 +162,7 @@ function _wave1_enemy_sweep_spinster(e, x_down, y_down, t_mv_speed, side)
          local dy = d[2];
          local b = bullet_new(BULLET_SOURCE_ENEMY);
 
-         bullet_set_visual(b, PROJECTILE_SPRITE_NEGATIVE_ELECTRIC);
+         bullet_set_visual(b, PROJECTILE_SPRITE_PURPLE_ELECTRIC);
          bullet_set_visual_scale(b, 0.5, 0.5);
          bullet_set_scale(b, 5, 5);
          bullet_set_position(b, enemy_position_x(e), enemy_position_y(e));
@@ -177,7 +177,7 @@ function _wave1_enemy_sweep_spinster(e, x_down, y_down, t_mv_speed, side)
          local dx = d[1];
          local dy = d[2];
          local b = bullet_new(BULLET_SOURCE_ENEMY);
-         bullet_set_visual(b, PROJECTILE_SPRITE_NEGATIVE_ELECTRIC);
+         bullet_set_visual(b, PROJECTILE_SPRITE_PURPLE_ELECTRIC);
          bullet_set_visual_scale(b, 0.5, 0.5);
          bullet_set_scale(b, 5, 5);
          bullet_set_position(b, enemy_position_x(e), enemy_position_y(e));
@@ -219,7 +219,7 @@ function _wave1_enemy_shotgun_spread(e, x_down, y_down, t_mv_speed, side, shot_t
             local b = bullet_set[bi];
 
             if (bi % 2) == 0 then
-               bullet_set_visual(b, PROJECTILE_SPRITE_NEGATIVE_ELECTRIC);
+               bullet_set_visual(b, PROJECTILE_SPRITE_PURPLE_ELECTRIC);
             else
                bullet_set_visual(b, PROJECTILE_SPRITE_RED_ELECTRIC);
             end
@@ -229,7 +229,7 @@ function _wave1_enemy_shotgun_spread(e, x_down, y_down, t_mv_speed, side, shot_t
       else 
          for bi=1, #bullet_set do
             local b = bullet_set[bi];
-            bullet_set_visual(b, PROJECTILE_SPRITE_NEGATIVE_ELECTRIC);
+            bullet_set_visual(b, PROJECTILE_SPRITE_PURPLE_ELECTRIC);
             bullet_set_scale(b, 5, 5);
             bullet_set_visual_scale(b, 0.5, 0.5);
          end
@@ -508,7 +508,7 @@ function wave_2_sub1()
 
                bullet_list_set_visuals(
                   bullets,
-                  PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
+                  PROJECTILE_SPRITE_PURPLE_ELECTRIC
                );
 
                for i,b in ipairs(bullets) do
@@ -628,7 +628,7 @@ function wave_2_sub2()
 
                   bullet_list_set_visuals(
                      bullets,
-                     PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
+                     PROJECTILE_SPRITE_PURPLE_ELECTRIC
                   );
 
                   for i,b in ipairs(bullets) do
@@ -651,7 +651,7 @@ function wave_2_sub2()
 
                   bullet_list_set_visuals(
                      bullets,
-                     PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
+                     PROJECTILE_SPRITE_PURPLE_ELECTRIC
                   );
 
                   for i,b in ipairs(bullets) do
@@ -736,7 +736,7 @@ function _wave2_enemy_firework(e, accel, wait_t, wait_t2, shot_spreads, delay_be
          bullet_set_position(nb, ex, ey);
          bullet_set_scale(nb, 5, 5);
          if not (variation == "_wave2_bullet_firework1") then
-            bullet_set_visual(nb, PROJECTILE_SPRITE_NEGATIVE_ELECTRIC);
+            bullet_set_visual(nb, PROJECTILE_SPRITE_PURPLE_ELECTRIC);
          else
             bullet_set_visual(nb, PROJECTILE_SPRITE_RED_ELECTRIC);
          end
@@ -1029,9 +1029,9 @@ function _wave2_sub5_goon_initial(e, goon_number)
          local bullets = spawn_bullet_arc_pattern2(
             ep,
             35,
-            100-i,
+            120-i,
             v2(0, 1),
-            125,
+            130,
             0,
             BULLET_SOURCE_ENEMY
          );
@@ -1039,7 +1039,7 @@ function _wave2_sub5_goon_initial(e, goon_number)
 
          bullet_list_set_visuals(
             bullets,
-            PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
+            PROJECTILE_SPRITE_PURPLE_ELECTRIC
          );
 
          for i,b in ipairs(bullets) do
@@ -1047,7 +1047,7 @@ function _wave2_sub5_goon_initial(e, goon_number)
             bullet_set_scale(b, 1.5, 1.5);
          end
 
-         t_wait(0.177);
+         t_wait(0.255);
       end
       t_wait(0.250)
       enemy_set_velocity(e, 100, 100);
@@ -1063,7 +1063,7 @@ function wave_2_sub5()
       goon[1] = enemy_new();
       enemy_set_visual(goon[1], ENTITY_SPRITE_SKULL_A);
       enemy_set_scale(goon[1], 10, 10);
-      enemy_set_hp(goon[1], 750);
+      enemy_set_hp(goon[1], 5000);
       enemy_set_position(goon[1], 50, 80);
       t_wait(1.0);
       goon[2] = enemy_new();
@@ -1075,7 +1075,7 @@ function wave_2_sub5()
       goon[3] = enemy_new();
       enemy_set_scale(goon[3], 10, 10);
       enemy_set_visual(goon[3], ENTITY_SPRITE_SKULL_A);
-      enemy_set_hp(goon[3], 750);
+      enemy_set_hp(goon[3], 5000);
       enemy_set_position(goon[3], play_area_width() - 50, 80);
       t_wait(1.0);
 
@@ -1304,7 +1304,7 @@ function wave_2()
    t_wait(0.5);
    async_task_lambda(
       function()
-         for i=1, 8 do
+         for i=1, 10 do
             E0_1_1S(
                v2(0, -10),
                v2(150, 205),
@@ -1320,7 +1320,7 @@ function wave_2()
    t_wait(1.35);
    async_task_lambda(
       function()
-         for i=1, 8 do
+         for i=1, 10 do
             E0_1_1S(
                v2(play_area_width(), -10),
                v2(-150, 205),
@@ -1544,7 +1544,7 @@ function stage_task()
          125,
          45,
          
-         PROJECTILE_SPRITE_NEGATIVE_ELECTRIC
+         PROJECTILE_SPRITE_PURPLE_ELECTRIC
       );
       enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
    end
@@ -1633,6 +1633,7 @@ function stage_task()
       end
    )
    t_wait(11);
+   convert_all_bullets_to_score();
    --t_wait_for_no_danger();
    t_complete_stage();
 end
