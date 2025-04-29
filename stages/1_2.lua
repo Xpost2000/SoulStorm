@@ -586,6 +586,90 @@ end
 function preboss_wave()
    -- laser frenzy
    -- Curtain Close
+   async_task_lambda(
+      function()
+      async_task_lambda(
+         function()
+            for i=1, 20 do
+               E0_1_1S(
+                  v2(50, -10),
+                  v2(150, 165),
+                  dir_to_player(v2(0, -10)), -- SHOT DIR
+                  0.35, 0.57, -- FIRE SPEED, FIRE DELAY
+                  0.90, -- TIME UNTIL ACCEL
+                  v2(400, 100) -- ACCEL WHERE
+               );
+               t_wait(0.13)
+            end
+         end
+      )
+      t_wait(1.5);
+      async_task_lambda(
+         function()
+            for i=1, 20 do
+               E0_1_1S(
+                  v2(play_area_width(), -10),
+                  v2(-100, 165),
+                  dir_to_player(v2(play_area_width(), -10)), -- SHOT DIR
+                  0.35, 0.57, -- FIRE SPEED, FIRE DELAY
+                  1.00, -- TIME UNTIL ACCEL
+                  v2(400, 100) -- ACCEL WHERE
+               );
+               t_wait(0.17)
+            end
+         end
+      )
+      t_wait(3);
+      async_task_lambda(
+         function()
+            for i=1, 26 do
+               E0_1_1S(
+                  v2(play_area_width()/2, -10),
+                  v2(100, 77),
+                  dir_to_player(v2(play_area_width()/2, -10)), -- SHOT DIR
+                  0.35, 0.76, -- FIRE SPEED, FIRE DELAY
+                  1.25, -- TIME UNTIL ACCEL
+                  v2(-100, 0) -- ACCEL WHERE
+               );
+               t_wait(0.18)
+            end
+         end
+      )
+      t_wait(1.5);
+      async_task_lambda(
+         function()
+            for i=1, 12 do
+               E0_1_1S(
+                  v2(0, play_area_height()+20),
+                  v2(100, -150),
+                  dir_to_player(v2(0, play_area_height()+20)), -- SHOT DIR
+                  0.60, 0.76, -- FIRE SPEED, FIRE DELAY
+                  1.55, -- TIME UNTIL ACCEL
+                  v2(-100, 100) -- ACCEL WHERE
+               );
+               t_wait(0.18)
+            end
+         end
+      )
+      t_wait(2.0);
+      async_task_lambda(
+         function()
+            for i=1, 13 do
+               E0_1_1S(
+                  v2(10, -10),
+                  v2(20, 105),
+                  dir_to_player(v2(10, -10)), -- SHOT DIR
+                  0.35, 0.76, -- FIRE SPEED, FIRE DELAY
+                  2.05, -- TIME UNTIL ACCEL
+                  v2(200, 100) -- ACCEL WHERE
+               );
+               t_wait(0.25)
+            end
+         end
+      )
+      t_wait(1.5);
+      end
+   )
    do
       for i=1,3 do
          local offset = i * 45;
@@ -601,7 +685,7 @@ function preboss_wave()
          t_wait(0.4);
       end
       t_wait(4);
-      LaserChaser_Vertical_1_2(8, 1.5);
+      LaserChaser_Vertical_1_2(6, 1.5);
       t_wait(1.2);
    end
    MainBoss1_RainCloud_Attack2(1997, 3.5)
@@ -626,7 +710,72 @@ function preboss_wave()
    end
    t_wait(4.0);
    Stage1_Batflood();
-   t_wait(12.0); -- TODO check if they're actually off the screen.
+   t_wait(1);
+   async_task_lambda(
+      function()
+         for i=1, 30 do
+            E0_1_1S(
+               v2(0, -10),
+               v2(150, 205),
+               dir_to_player(v2(0, -10)), -- SHOT DIR
+               0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+               0.90, -- TIME UNTIL ACCEL
+               v2(400, 170) -- ACCEL WHERE
+            );
+            t_wait(0.13)
+         end
+      end
+   )
+   t_wait(1.35);
+   async_task_lambda(
+      function()
+         for i=1, 30 do
+            E0_1_1S(
+               v2(play_area_width(), -10),
+               v2(-150, 205),
+               dir_to_player(v2(play_area_width(), -10)), -- SHOT DIR
+               0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+               1.00, -- TIME UNTIL ACCEL
+               v2(400, 100) -- ACCEL WHERE
+            );
+            t_wait(0.17)
+         end
+      end
+   )
+   t_wait(5.0); -- TODO check if they're actually off the screen.
+   async_task_lambda(
+      function()
+         E2_1_1_SPINTRIP_1(
+            play_area_width() - 50,
+            200,
+            40, 3.5, PROJECTILE_SPRITE_GREEN_DISK, v2(-1, -1));
+         t_wait(1.0);
+         E2_1_1_SPINTRIP_1(
+            play_area_width() - 120,
+            150,
+            40, 5.5, PROJECTILE_SPRITE_PURPLE_DISK, v2(-1, -1));
+         E2_1_1_SPINTRIP_1(
+            play_area_width() - 160,
+            120,
+            40, 7.5, PROJECTILE_SPRITE_GREEN_DISK, v2(-1, -1));
+      end
+   )
+   t_wait(3);
+   async_task_lambda(
+      function()
+         for i=1, 13 do
+            E0_1_1S(
+               v2(40, -10),
+               v2(20, 105),
+               dir_to_player(v2(10, -10)), -- SHOT DIR
+               0.35, 0.76, -- FIRE SPEED, FIRE DELAY
+               2.05, -- TIME UNTIL ACCEL
+               v2(200, 100) -- ACCEL WHERE
+            );
+            t_wait(0.25)
+         end
+      end
+   )
    kill_all_enemies();
    -- Dialogue point with midboss!
    -- fight the midboss! EXPECT 30 seconds
@@ -762,10 +911,80 @@ function stage_task()
       enemy_set_visual(e3, ENTITY_SPRITE_BAT_B);
    end
    t_wait(4.5);
-   LaserChaser_Horizontal_1_2(8, 1.5);
-   LaserChaser_Horizontal_1_2(4, 0.75);
-   LaserChaser_Vertical_1_2(4, 2.5);
-   LaserChaser_Vertical_1_2(4, 0.85);
+   async_task_lambda(
+      function()
+      async_task_lambda(
+         function()
+            for i=1, 30 do
+               E0_1_1S(
+                  v2(0, -10),
+                  v2(150, 205),
+                  dir_to_player(v2(0, -10)), -- SHOT DIR
+                  0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+                  0.90, -- TIME UNTIL ACCEL
+                  v2(400, 170) -- ACCEL WHERE
+               );
+               t_wait(0.13)
+            end
+         end
+      )
+      t_wait(1.5);
+      async_task_lambda(
+         function()
+            for i=1, 30 do
+               E0_1_1S(
+                  v2(play_area_width(), -10),
+                  v2(-150, 205),
+                  dir_to_player(v2(play_area_width(), -10)), -- SHOT DIR
+                  0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+                  1.00, -- TIME UNTIL ACCEL
+                  v2(400, 100) -- ACCEL WHERE
+               );
+               t_wait(0.17)
+            end
+         end
+      )
+      end
+   )
+   LaserChaser_Horizontal_1_2(3, 1.5);
+   LaserChaser_Horizontal_1_2(3, 0.75);
+   async_task_lambda(
+      function()
+      async_task_lambda(
+         function()
+            for i=1, 20 do
+               E0_1_1S(
+                  v2(50, -10),
+                  v2(150, 165),
+                  dir_to_player(v2(0, -10)), -- SHOT DIR
+                  0.35, 0.57, -- FIRE SPEED, FIRE DELAY
+                  0.90, -- TIME UNTIL ACCEL
+                  v2(400, 100) -- ACCEL WHERE
+               );
+               t_wait(0.13)
+            end
+         end
+      )
+      t_wait(1.5);
+      async_task_lambda(
+         function()
+            for i=1, 20 do
+               E0_1_1S(
+                  v2(play_area_width(), -10),
+                  v2(-100, 165),
+                  dir_to_player(v2(play_area_width(), -10)), -- SHOT DIR
+                  0.35, 0.57, -- FIRE SPEED, FIRE DELAY
+                  1.00, -- TIME UNTIL ACCEL
+                  v2(400, 100) -- ACCEL WHERE
+               );
+               t_wait(0.17)
+            end
+         end
+      )
+      end
+   )
+   LaserChaser_Vertical_1_2(3, 2.5);
+   LaserChaser_Vertical_1_2(3, 0.85);
 
    wait_no_danger();
    t_complete_stage();
