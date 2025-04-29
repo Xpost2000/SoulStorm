@@ -2477,7 +2477,12 @@ void Pickup_Entity::default_behavior_update(Game_State* state, f32 dt) {
         // don't have a concept of "visual and logical separation" outside of their
         // sprite, which I'm not rendering right now b/c I don't have sprites for these yet.
         // I'll draw them later!
-        position.y = animation_start_position.y + (t_since_spawn-PICKUP_ENTITY_ANIMATION_T_LENGTH) * 100; /*+ sinf(t_since_spawn) * (scale.y);*/
+        if (type == PICKUP_ATTACKPOWER) {
+          position.y = animation_start_position.y + (t_since_spawn - PICKUP_ENTITY_ANIMATION_T_LENGTH) * 100; /*+ sinf(t_since_spawn) * (scale.y);*/
+        }
+        else {
+          position.y = animation_start_position.y + sinf(t_since_spawn) * (scale.y);
+        }
         lifetime.update(dt);
     }
 }

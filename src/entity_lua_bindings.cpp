@@ -1135,6 +1135,7 @@ void bind_entity_lualib(lua_State* L) {
         lua_register(L, "enemy_set_scale", _lua_bind_enemy_set_scale);
         lua_register(L, "enemy_set_velocity", _lua_bind_enemy_set_velocity);
         lua_register(L, "enemy_set_score_value", _lua_bind_enemy_set_score_value);
+        lua_register(L, "enemy_set_burst_score_value", _lua_bind_enemy_set_burst_score_value);
         lua_register(L, "enemy_set_burst_gain_value", _lua_bind_enemy_set_burst_gain_value);
         lua_register(L, "enemy_set_acceleration", _lua_bind_enemy_set_acceleration);
         lua_register(L, "enemy_set_animation_frame", _lua_bind_enemy_set_animation_frame);
