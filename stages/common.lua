@@ -1204,6 +1204,7 @@ function E0_1_1(
       function (e)
          for b=1,3 do
          for i=1,4 do
+            if enemy_valid(e) then
             local eposition = enemy_final_position(e);
             local bullet = bullet_new(BULLET_SOURCE_ENEMY);
             bullet_set_position(bullet, eposition[1], eposition[2]);
@@ -1213,6 +1214,7 @@ function E0_1_1(
             bullet_set_visual_scale(bullet, 0.5, 0.5);
             bullet_set_velocity(bullet, fire_dir[1] * 135, fire_dir[2] * 135);
             t_wait(fire_speed);
+            end
          end
          t_wait(delay_per_burst);
          end
@@ -1222,7 +1224,9 @@ function E0_1_1(
       e,
       function (e)
          t_wait(time_until_accel)
-         enemy_set_acceleration(e, accel[1], accel[2])
+         if enemy_valid(e) then
+            enemy_set_acceleration(e, accel[1], accel[2])
+         end
       end
    );
 end
@@ -1257,6 +1261,7 @@ function E0_1_1S(
       function (e)
          for b=1,3 do
          for i=1,4 do
+            if enemy_valid(e) then
             local eposition = enemy_final_position(e);
             local bullet = bullet_new(BULLET_SOURCE_ENEMY);
             bullet_set_position(bullet, eposition[1], eposition[2]);
@@ -1266,6 +1271,7 @@ function E0_1_1S(
             bullet_set_visual_scale(bullet, 0.5, 0.5);
             bullet_set_velocity(bullet, fire_dir[1] * 115, fire_dir[2] * 115);
             t_wait(fire_speed);
+            end
          end
          t_wait(delay_per_burst);
          end
@@ -1275,7 +1281,9 @@ function E0_1_1S(
       e,
       function (e)
          t_wait(time_until_accel)
-         enemy_set_acceleration(e, accel[1], accel[2])
+         if enemy_valid(e) then
+            enemy_set_acceleration(e, accel[1], accel[2])
+         end
       end
    );
 end
@@ -1317,6 +1325,7 @@ function E1_1_1_CSF_CW(
       function (e)
          for b=1,4 do
          for i=1,360,36 do
+            if enemy_valid(e) then
             local fire_dir = v2_direction_from_degree(i);
             local eposition = enemy_final_position(e);
             local bullet = bullet_new(BULLET_SOURCE_ENEMY);
@@ -1327,6 +1336,7 @@ function E1_1_1_CSF_CW(
             bullet_start_trail(bullet, 3);
             bullet_set_visual_scale(bullet, 0.5, 0.5);
             bullet_set_velocity(bullet, fire_dir[1] * 200, fire_dir[2] * 200);
+            end
          end
          t_wait(delay_per_burst);
          end
@@ -1336,7 +1346,9 @@ function E1_1_1_CSF_CW(
       e,
       function (e)
          t_wait(time_until_accel)
-         enemy_set_acceleration(e, accel[1], accel[2])
+         if enemy_valid(e) then
+            enemy_set_acceleration(e, accel[1], accel[2])
+         end
       end
    );
 end
