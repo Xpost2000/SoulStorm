@@ -1026,6 +1026,7 @@ void player_burst_fire_focus_tier3(Player* player, Game_State* state, u32 _unuse
 
 bool player_burst_bomb_focus_tier0(Player* player, Game_State* state, u32 _unused);
 bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, u32 _unused);
+bool player_burst_bomb_focus_bullet_shield_lesser(Player* player, Game_State* state, u32 _unused);
 bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u32 _unused);
 bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _unused);
 
@@ -1050,12 +1051,13 @@ local Player_Burst_Action g_player_burst_actions[] = {
     {
         player_burst_fire_focus_tier2,
         player_burst_fire_wide_focus_tier2,
-        player_burst_bomb_focus_bullet_shield,
+        player_burst_bomb_focus_bullet_shield_lesser,
+        //player_burst_bomb_focus_bullet_shield,
     },
     {
         player_burst_fire_focus_tier3,
         player_burst_fire_wide_focus_tier3,
-        player_burst_bomb_focus_bkg_clear,
+        player_burst_bomb_focus_bullet_shield,
     },
 };
 
@@ -1409,8 +1411,29 @@ bool player_burst_bomb_focus_bullet_shield(Player* player, Game_State* state, u3
     controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
     camera_traumatize(&state->gameplay_data.main_camera, 0.5f);
     player->burst_absorption_shield_ability_timer = PLAYER_BURST_SHIELD_ABILITY_MAX_T;
+    player->shield_mode = 1;
     player->current_burst_ability_max_t = PLAYER_BURST_SHIELD_ABILITY_MAX_T;
     return true;
+}
+
+bool player_burst_bomb_focus_bullet_shield_lesser(Player* player, Game_State* state, u32 _unused) {
+  if (PLAYER_BURST_SHIELD_REQUIRES_AT_LEAST_ONE_LIFE && state->gameplay_data.tries < 1) {
+    return false;
+  }
+
+  player->add_burst_ability_usage(2);
+  s32 usage_count = player->get_burst_ability_usage(2);
+  player->halt_burst_charge_regeneration(
+    calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_SHIELD_COOLDOWN_DEPLETION_APPROX)
+  );
+  state->gameplay_data.notify_score(PLAYER_BURST_SHIELD_USE_SCORE_AWARD, true);
+  Audio::play(state->resources->random_explosion_sound(&state->gameplay_data.prng_unessential));
+  controller_rumble(Input::get_gamepad(0), 0.7f, 0.7f, 200);
+  camera_traumatize(&state->gameplay_data.main_camera, 0.5f);
+  player->burst_absorption_shield_ability_timer = PLAYER_BURST_SHIELD_ABILITY_MAX_T;
+  player->shield_mode = 0;
+  player->current_burst_ability_max_t = PLAYER_BURST_SHIELD_ABILITY_MAX_T;
+  return true;
 }
 
 bool player_burst_bomb_focus_bkg_clear(Player* player, Game_State* state, u32 _unused) {
@@ -1766,7 +1789,6 @@ void Player::update(Game_State* state, f32 dt) {
     {
         auto& emitter = emitters[1];
         if (burst_absorption_shield_ability_timer > 0) {
-            firing = true;
             // hackme
             burst_charge = 2;
 
@@ -1793,44 +1815,47 @@ void Player::update(Game_State* state, f32 dt) {
                 auto& emitter = emitters[0];
                 emitter.flags &= ~PARTICLE_EMITTER_FLAGS_ACTIVE;
             }
-            if (attack()) {
-              auto resources = state->resources;
-              state->set_led_target_color_anim(
-                color32u8(255, 0, 0, 255),
-                DEFAULT_FIRING_COOLDOWN / 2,
-                false,
-                true
-              );
-              Audio::play(
-                resources->random_attack_sound(
-                  &state->gameplay_data.prng_unessential
-                )
-              );
-              controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 85);
-            
-              // NOTE(jerry) (4/28/2025): 
-              // Dirty code, I'm tired today and just want to get stuff in quick
-              //
-              // Game overhaul will take a few days to adjust things, but it is for the better.
-              for (int i = 0; i < 360; i += 18) {
-                f32 angle = i + burst_absorption_shield_ability_timer*30;
-                V2 current_arc_direction = V2_direction_from_degree(angle);
-                V2 position = this->position + current_arc_direction;
-                auto b = bullet_upwards_linear(state, position, current_arc_direction, 650.0f, PROJECTILE_SPRITE_GREEN_ELECTRIC, BULLET_SOURCE_PLAYER);
-                b.flags |= BULLET_FLAGS_BREAKS_OTHER_BULLETS;
-                state->gameplay_data.add_bullet(
-                  b
+
+            if (shield_mode == 1) {
+              firing = true;
+              if (attack()) {
+                auto resources = state->resources;
+                state->set_led_target_color_anim(
+                  color32u8(255, 0, 0, 255),
+                  DEFAULT_FIRING_COOLDOWN / 2,
+                  false,
+                  true
                 );
-              }
-              for (int i = 0; i < 360; i += 18) {
-                f32 angle = i - burst_absorption_shield_ability_timer * 30;
-                V2 current_arc_direction = V2_direction_from_degree(angle);
-                V2 position = this->position + current_arc_direction;
-                auto b = bullet_upwards_linear(state, position, current_arc_direction, 650.0f, PROJECTILE_SPRITE_GREEN_ELECTRIC, BULLET_SOURCE_PLAYER);
-                b.flags |= BULLET_FLAGS_BREAKS_OTHER_BULLETS;
-                state->gameplay_data.add_bullet(
-                  b
+                Audio::play(
+                  resources->random_attack_sound(
+                    &state->gameplay_data.prng_unessential
+                  )
                 );
+                controller_rumble(Input::get_gamepad(0), 0.25f, 0.63f, 85);
+                // NOTE(jerry) (4/28/2025): 
+                // Dirty code, I'm tired today and just want to get stuff in quick
+                //
+                // Game overhaul will take a few days to adjust things, but it is for the better.
+                for (int i = 0; i < 360; i += 18) {
+                  f32 angle = i + burst_absorption_shield_ability_timer * 30;
+                  V2 current_arc_direction = V2_direction_from_degree(angle);
+                  V2 position = this->position + current_arc_direction;
+                  auto b = bullet_upwards_linear(state, position, current_arc_direction, 650.0f, PROJECTILE_SPRITE_GREEN_ELECTRIC, BULLET_SOURCE_PLAYER);
+                  b.flags |= BULLET_FLAGS_BREAKS_OTHER_BULLETS;
+                  state->gameplay_data.add_bullet(
+                    b
+                  );
+                }
+                for (int i = 0; i < 360; i += 18) {
+                  f32 angle = i - burst_absorption_shield_ability_timer * 30;
+                  V2 current_arc_direction = V2_direction_from_degree(angle);
+                  V2 position = this->position + current_arc_direction;
+                  auto b = bullet_upwards_linear(state, position, current_arc_direction, 650.0f, PROJECTILE_SPRITE_GREEN_ELECTRIC, BULLET_SOURCE_PLAYER);
+                  b.flags |= BULLET_FLAGS_BREAKS_OTHER_BULLETS;
+                  state->gameplay_data.add_bullet(
+                    b
+                  );
+                }
               }
             }
         } else if (burst_ray_attack_ability_timer > 0) {

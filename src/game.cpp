@@ -7058,7 +7058,7 @@ void Game::handle_all_bullet_collisions(f32 dt) {
                 if (p.burst_absorption_shield_ability_timer > 0) {
                     convert_bullets_to_score_pickups(
                         PLAYER_BURST_SHIELD_ABILITY_RADIUS,
-                      500
+                      50
                     );
                 } else {
                     if (rectangle_f32_intersect(player_rect, bullet_rect)) {

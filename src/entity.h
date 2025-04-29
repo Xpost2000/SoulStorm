@@ -415,6 +415,7 @@ struct Player : public Entity {
     f32  burst_charge_recharge_max_t = 0.0f;
     f32  burst_charge_recharge_t = 0.0f;
 
+    s32  shield_mode = 0; // 0 - tier2, 1 - tier3
     f32  burst_absorption_shield_ability_timer = 0.0f;
     f32  burst_ray_attack_ability_timer = 0.0f;
     f32  current_burst_ability_max_t = 0.0f;

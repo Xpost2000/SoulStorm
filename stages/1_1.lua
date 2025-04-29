@@ -1301,7 +1301,40 @@ function wave_2()
    wave_2_sub4();
    -- t_wait_for_no_danger();
    -- the change in behavior makes this wrong!
-   t_wait(9.5);
+   t_wait(0.5);
+   async_task_lambda(
+      function()
+         for i=1, 5 do
+            E0_1_1S(
+               v2(0, -10),
+               v2(150, 205),
+               dir_to_player(v2(0, -10)), -- SHOT DIR
+               0.3, 0.50, -- FIRE SPEED, FIRE DELAY
+               0.90, -- TIME UNTIL ACCEL
+               v2(-400, 170) -- ACCEL WHERE
+            );
+            t_wait(0.13)
+         end
+      end
+   )
+   t_wait(1.35);
+   async_task_lambda(
+      function()
+         for i=1, 4 do
+            E0_1_1S(
+               v2(play_area_width(), -10),
+               v2(-150, 205),
+               dir_to_player(v2(play_area_width(), -10)), -- SHOT DIR
+               0.3, 0.50, -- FIRE SPEED, FIRE DELAY
+               1.00, -- TIME UNTIL ACCEL
+               v2(400, 100) -- ACCEL WHERE
+            );
+            t_wait(0.17)
+         end
+      end
+   )
+   t_wait(1.5);
+   t_wait(9);
 
    async_task_lambda(
       function()
@@ -1318,6 +1351,39 @@ function wave_2()
    t_wait(11.0);
    -- here are some standard shmup waves.
    wave_2_sub2();
+   t_wait(0.5);
+   async_task_lambda(
+      function()
+         for i=1, 10 do
+            E0_1_1S(
+               v2(100, -10),
+               v2(150, 205),
+               dir_to_player(v2(100, -10)), -- SHOT DIR
+               0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+               0.90, -- TIME UNTIL ACCEL
+               v2(400, 170) -- ACCEL WHERE
+            );
+            t_wait(0.13)
+         end
+      end
+   )
+   t_wait(1.35);
+   async_task_lambda(
+      function()
+         for i=1, 10 do
+            E0_1_1S(
+               v2(play_area_width(), -10),
+               v2(0, 205),
+               dir_to_player(v2(0, -10)), -- SHOT DIR
+               0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+               1.00, -- TIME UNTIL ACCEL
+               v2(400, 100) -- ACCEL WHERE
+            );
+            t_wait(0.17)
+         end
+      end
+   )
+   t_wait(1.5);
    Make_BrainDead_Enemy_Popcorn1(
       10,
       v2(play_area_width() + 10, play_area_height()/2 - 30),
@@ -1403,7 +1469,39 @@ function stage_task()
 -- end stage setup background
 
    wave_1();
-   t_wait(5.5);
+   t_wait(0.5);
+   async_task_lambda(
+      function()
+         for i=1, 10 do
+            E0_1_1S(
+               v2(0, -10),
+               v2(150, 205),
+               dir_to_player(v2(0, -10)), -- SHOT DIR
+               0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+               0.90, -- TIME UNTIL ACCEL
+               v2(400, 170) -- ACCEL WHERE
+            );
+            t_wait(0.13)
+         end
+      end
+   )
+   t_wait(1.35);
+   async_task_lambda(
+      function()
+         for i=1, 10 do
+            E0_1_1S(
+               v2(play_area_width(), -10),
+               v2(-150, 205),
+               dir_to_player(v2(play_area_width(), -10)), -- SHOT DIR
+               0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+               1.00, -- TIME UNTIL ACCEL
+               v2(400, 100) -- ACCEL WHERE
+            );
+            t_wait(0.17)
+         end
+      end
+   )
+   t_wait(1.5);
    Make_BrainDead_Enemy_Popcorn1(
       10,
       v2(play_area_width() + 10, play_area_height()/2 - 30),
@@ -1450,10 +1548,91 @@ function stage_task()
       );
       enemy_set_visual(e, ENTITY_SPRITE_BAT_A);
    end
-
-   t_wait(6.67);
+   t_wait(1);
+   async_task_lambda(
+      function()
+         for i=1, 20 do
+            E0_1_1S(
+               v2(0, -10),
+               v2(150, 205),
+               dir_to_player(v2(0, -10)), -- SHOT DIR
+               0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+               0.90, -- TIME UNTIL ACCEL
+               v2(400, 170) -- ACCEL WHERE
+            );
+            t_wait(0.14)
+         end
+      end
+   )
+   t_wait(1.35);
+   async_task_lambda(
+      function()
+         for i=1, 20 do
+            E0_1_1S(
+               v2(play_area_width(), -10),
+               v2(-150, 205),
+               dir_to_player(v2(play_area_width(), -10)), -- SHOT DIR
+               0.23, 0.50, -- FIRE SPEED, FIRE DELAY
+               1.00, -- TIME UNTIL ACCEL
+               v2(400, 100) -- ACCEL WHERE
+            );
+            t_wait(0.17)
+         end
+      end
+   )
+   t_wait(3.67);
    wave_2();
-   t_wait(12);
+   t_wait(1);
+   async_task_lambda(
+      function()
+         E2_1_1_SPINTRIP_1(
+            play_area_width() - 50,
+            200,
+            40, 3.5, PROJECTILE_SPRITE_GREEN_DISK, v2(-1, -1));
+         t_wait(1.0);
+         E2_1_1_SPINTRIP_1(
+            play_area_width() - 120,
+            150,
+            40, 5.5, PROJECTILE_SPRITE_PURPLE_DISK, v2(-1, -1));
+         E2_1_1_SPINTRIP_1(
+            play_area_width() - 160,
+            120,
+            40, 7.5, PROJECTILE_SPRITE_GREEN_DISK, v2(-1, -1));
+      end
+   )
+   t_wait(1);
+   async_task_lambda(
+      function()
+         for i=1, 13 do
+            E0_1_1S(
+               v2(40, -10),
+               v2(20, 105),
+               dir_to_player(v2(10, -10)), -- SHOT DIR
+               0.35, 0.76, -- FIRE SPEED, FIRE DELAY
+               2.05, -- TIME UNTIL ACCEL
+               v2(200, 100) -- ACCEL WHERE
+            );
+            t_wait(0.25)
+         end
+      end
+   )
+   t_wait(1.5);
+   async_task_lambda(
+      function()
+         for i=1, 12 do
+            E0_1_1S(
+               v2(play_area_width()-70, -10),
+               v2(-40, 105),
+               dir_to_player(v2(play_area_width()-10, -10)), -- SHOT DIR
+               0.35, 0.76, -- FIRE SPEED, FIRE DELAY
+               1.00, -- TIME UNTIL ACCEL
+               v2(-200, 100) -- ACCEL WHERE
+            );
+            t_wait(0.45)
+         end
+      end
+   )
+   t_wait(11);
    --t_wait_for_no_danger();
    t_complete_stage();
 end
