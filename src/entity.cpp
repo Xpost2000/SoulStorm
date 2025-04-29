@@ -1817,7 +1817,17 @@ void Player::update(Game_State* state, f32 dt) {
               for (int i = 0; i < 360; i += 18) {
                 f32 angle = i + burst_absorption_shield_ability_timer*30;
                 V2 current_arc_direction = V2_direction_from_degree(angle);
-                V2 position = position + current_arc_direction;
+                V2 position = this->position + current_arc_direction;
+                auto b = bullet_upwards_linear(state, position, current_arc_direction, 650.0f, PROJECTILE_SPRITE_GREEN_ELECTRIC, BULLET_SOURCE_PLAYER);
+                b.flags |= BULLET_FLAGS_BREAKS_OTHER_BULLETS;
+                state->gameplay_data.add_bullet(
+                  b
+                );
+              }
+              for (int i = 0; i < 360; i += 18) {
+                f32 angle = i - burst_absorption_shield_ability_timer * 30;
+                V2 current_arc_direction = V2_direction_from_degree(angle);
+                V2 position = this->position + current_arc_direction;
                 auto b = bullet_upwards_linear(state, position, current_arc_direction, 650.0f, PROJECTILE_SPRITE_GREEN_ELECTRIC, BULLET_SOURCE_PLAYER);
                 b.flags |= BULLET_FLAGS_BREAKS_OTHER_BULLETS;
                 state->gameplay_data.add_bullet(
@@ -1982,6 +1992,11 @@ void Bullet::update(Game_State* state, f32 dt) {
     );
 
     Entity::update(state, dt);
+
+    // Projectiles outside of the play area should stop existing.
+    if (!state->gameplay_data.play_area.is_inside_logical(get_rect())) {
+      die = true;
+    }
 }
 
 void Bullet::reset_movement() {
