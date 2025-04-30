@@ -277,7 +277,7 @@ int _lua_bind_random_attack_sound(lua_State* L) {
     lua_getglobal(L, "_gamestate");
     Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
     auto        resources = state->resources;
-    auto        result = resources->random_attack_sound(&state->gameplay_data.prng);
+    auto        result = resources->random_attack_sound(&state->gameplay_data.prng_unessential);
     lua_pushinteger(L, result.index);
     return 1;
 }
