@@ -129,6 +129,8 @@ V2 gameplay_frame_input_packet_quantify_axes(const Gameplay_Frame_Input_Packet& 
     f32 x = (f32)input_packet.axes[0] / 127.0f;
     f32 y = (f32)input_packet.axes[1] / 127.0f;
     auto result = V2(x, y);
+    if (result.magnitude_sq() > 1.0f) result = result.normalized();
+
     apply_vector_quantization_deadzone_adjustment(result);
     return result;
 }

@@ -1347,6 +1347,7 @@ void Game::reset_stage_simulation_state() {
     state->current_stage_timer = 0.0f;
     state->started_system_time = system_get_current_time();
     state->triggered_stage_completion_cutscene = false;
+    state->complete_stage.reset();
     state->queue_bomb_use = false;
 
     // setup recording file for recording or playback.
