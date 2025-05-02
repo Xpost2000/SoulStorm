@@ -5441,7 +5441,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
           f32 border_right = min<f32>(resolution.x, 1000); // place an artifical limit on centering (for super widescreen)
           f32 width_of_right_side = border_right - border_left;
           f32 box_w = 200;
-          f32 box_x = (width_of_right_side / 2.0f) - box_w/2;
+          f32 box_x = (width_of_right_side / 2.f) - box_w/2;
 
           render_commands_push_quad(
             ui_render_commands,

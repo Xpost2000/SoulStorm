@@ -885,6 +885,36 @@ void Player::draw(Game_State* const state, struct render_commands* render_comman
             BLEND_MODE_ALPHA
         );
     }
+
+    // NOTE(jerry):
+    // draw critical point approximation (you should be using focus to get the accurate number, but this will
+    // be helpful in general...)
+    {
+      Texture_Atlas& texture_atlas = resources->gameplay_texture_atlas;
+      struct image_buffer* image = graphics_assets_get_image_by_id(&resources->graphics_assets, resources->circle);
+
+      rectangle_f32 r;
+      auto pos = get_real_position();
+      float radius = 4;
+      r.x = pos.x - radius;
+      r.y = pos.y - radius;
+      r.w = radius * 2;
+      r.h = radius * 2;
+
+      color32f32 modulation = color32f32(1, 0.25, 0.15, 0.5);
+
+      render_commands_push_image_ext(
+        render_commands,
+        image,
+        r,
+        RECTANGLE_F32_NULL,
+        modulation,
+        V2(0.5, 0.5),
+        0.0,
+        0,
+        BLEND_MODE_ALPHA
+      );
+    }
 }
 
 void Player::disable_burst_charge_regeneration(void) {
