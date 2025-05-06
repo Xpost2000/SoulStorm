@@ -5,7 +5,7 @@
     Stage {
         string_literal("Witch's Playpen"),
             string_literal("Magical wonderland! Or not?"),
-            1,
+            1, 0,
             {
                 Level {
                     string_literal("Reception Room"),
@@ -30,7 +30,7 @@
     Stage {
         string_literal("The Doghouse"),
             string_literal("Where the goodest of boys belong."),
-            1,
+            1, 0,
             {
                 Level {
                     string_literal("River Styx"),
@@ -55,7 +55,7 @@
     Stage {
         string_literal("The Deep Sea"),
             string_literal("A big space for big fishies."),
-            1,
+            1, 0,
             {
                 Level {
                     string_literal("School"),
@@ -82,7 +82,7 @@
     Stage {
         string_literal("Insanity"),
             string_literal("Battling away for eternity."),
-            1,
+            1, 0,
             {
                 Level {
                     string_literal("Pride"),

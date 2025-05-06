@@ -31,6 +31,7 @@ struct Stage {
     string name;
     string subtitle;
     s32    unlocked_levels;
+    s32    best_score_run;
     // all levels are expected to be filled.
     Level  levels[MAX_LEVELS_PER_STAGE];
 };

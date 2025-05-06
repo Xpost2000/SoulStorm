@@ -324,11 +324,12 @@ local bool game_will_be_new_high_score(s32 stage_index, s32 level_index, s32 new
     return (new_score > level.best_score);
 }
 
-local void game_update_stage_score(s32 stage_index, s32 level_index, s32 new_score) {
+local void game_update_stage_score(s32 stage_index, s32 level_index, s32 new_score, s32 cumulative_score) {
     _debugprintf("Updating level (%d-%d) with score value: %d", stage_index, level_index, new_score);
     auto& level = stage_list[stage_index].levels[level_index];
     level.last_score = new_score;
     level.best_score = max(new_score, level.best_score);
+    stage_list[stage_index].best_score_run = max(cumulative_score, stage_list[stage_index].best_score_run);
 }
 
 // NOTE: attempts are recorded when you start a stage at all.
@@ -1912,7 +1913,7 @@ bool Gameplay_Data::any_living_danger() const {
 void Gameplay_Data::notify_score(s32 amount, bool interesting) {
     auto pet_data = game_get_pet_data(selected_pet);
     current_score += amount * pet_data->score_modifier;
-
+    total_run_score = current_score;
     s32 score_delta = current_score - score_awarded_points;
     
     // First 3 extra lives are generally pretty easy to obtain,a
@@ -3712,6 +3713,10 @@ GAME_UI_SCREEN(update_and_render_stage_select_menu) {
                 render_commands_push_text(commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2.0f, V2(commands->screen_width - (font_cache_text_width(resources->get_font(MENU_FONT_COLOR_GOLD), level.subtitle, 2.0f)*1.2), commands->screen_height/2), level.subtitle, color, BLEND_MODE_ALPHA);
 #endif
             }
+            else {
+              color32f32 color = color32f32(1, 1, 1, 1);
+              render_commands_push_text(commands, resources->get_font(MENU_FONT_COLOR_WHITE), 2.0f, V2(commands->screen_width - 250, commands->screen_height / 2 - 200), string_from_cstring(format_temp("Best Total Score: %d", stage.best_score_run)), color, BLEND_MODE_ALPHA);
+            }
 
             if (enter_level != -1) {
                 state->mainmenu_data.stage_id_level_in_stage_select = enter_level;
@@ -3846,6 +3851,8 @@ void Game::update_and_render_stage_pet_select_menu(struct render_commands* comma
             [&](void*) mutable {
                 switch_ui(UI_STATE_INACTIVE);
                 switch_screen(GAME_SCREEN_INGAME);
+                // reset score here
+                gameplay_data.total_run_score = 0;
                 setup_stage_start();
                 Transitions::do_shuteye_out(
                     color32f32(0, 0, 0, 1),
@@ -4827,6 +4834,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
               state->gameplay_data.current_score - death_count_deducation_score +
               perfect_clear_score_addition + campaign_clear_perfect_score_addition +
               burst_usage_count_score_addition + remaining_lives_score_addition;
+            state->gameplay_data.total_run_score += state->gameplay_data.total_run_score;
             Audio::stop_music_fadeout(1000);
             complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT;
           }
@@ -4869,7 +4877,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
                 s32 completion_type =  GAME_COMPLETE_STAGE_UNLOCK_LEVEL_REPLAY;
 
                 if (!state->gameplay_data.recording.in_playback) {
-                    game_update_stage_score(stage_id, level_id, state->gameplay_data.total_score);
+                    game_update_stage_score(stage_id, level_id, state->gameplay_data.total_score, state->gameplay_data.total_run_score);
                     game_register_stage_completion(stage_id, level_id);
                     completion_type = game_complete_stage_level(stage_id, level_id, state->gameplay_data.playing_practice_mode);
                     _debugprintf("completion type = %d", completion_type);
@@ -5480,42 +5488,56 @@ GAME_SCREEN(update_and_render_game_ingame) {
               string_literal("PRACTICE"), color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
           }
 #endif
-          
-          auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("SCORE: %d", state->current_score)));
-
-          // show scoring notifications (for interesting scoring reasons like picking up points or killing an enemy)
-          // you'll gradually accumulate score just from surviving on a map...
-          // NOTE: hitmarker scores are rendered on the game layer.
           {
-            for (s32 index = 0; index < state->score_notifications.size; ++index) {
-              auto& s = state->score_notifications[index];
-              auto score_text =
-                string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("%d", s.additional_score)));
-              s.lifetime.update(dt);
+            auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("LVL SCORE: %d", state->current_score)));
 
-              if (s.lifetime.triggered()) {
-                state->score_notifications.pop_and_swap(index);
-                continue;
+            // show scoring notifications (for interesting scoring reasons like picking up points or killing an enemy)
+            // you'll gradually accumulate score just from surviving on a map...
+            // NOTE: hitmarker scores are rendered on the game layer.
+            {
+              for (s32 index = 0; index < state->score_notifications.size; ++index) {
+                auto& s = state->score_notifications[index];
+                auto score_text =
+                  string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("%d", s.additional_score)));
+                s.lifetime.update(dt);
+
+                if (s.lifetime.triggered()) {
+                  state->score_notifications.pop_and_swap(index);
+                  continue;
+                }
+
+                render_commands_push_text(ui_render_commands,
+                  font1,
+                  2,
+                  V2(ui_cursor_x_left + 25 + font_cache_text_width(font, string_literal("LVL SCORE:"), 2),
+                    45 + normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
+                  score_text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
               }
-
-              render_commands_push_text(ui_render_commands,
-                font1,
-                2,
-                V2(ui_cursor_x_left + 25 + font_cache_text_width(font, string_literal("SCORE: "), 2),
-                  45 + normalized_sinf(s.lifetime.percentage()) * -GAMEPLAY_UI_SCORE_NOTIFICATION_RISE_AMOUNT),
-                score_text, color32f32(1, 1, 1, 1), BLEND_MODE_ALPHA);
             }
-          }
 
-          render_commands_push_text(
-            ui_render_commands, 
-            font, 
-            2, 
-            V2(ui_cursor_x_left + 20, ui_cursor_y),
-            text, 
-            color32f32(1, 1, 1, 1), 
-            BLEND_MODE_ALPHA
-          );
+            render_commands_push_text(
+              ui_render_commands,
+              font,
+              2,
+              V2(ui_cursor_x_left + 20, ui_cursor_y),
+              text,
+              color32f32(1, 1, 1, 1),
+              BLEND_MODE_ALPHA
+            );
+          }
+          ui_cursor_y += 30;
+          {
+            auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("SCORE: %d", state->total_run_score)));
+            render_commands_push_text(
+              ui_render_commands,
+              font,
+              2,
+              V2(ui_cursor_x_left + 20, ui_cursor_y),
+              text,
+              color32f32(1, 1, 1, 1),
+              BLEND_MODE_ALPHA
+            );
+          }
           ui_cursor_y += 30;
         }
         // Render_Time
@@ -7264,6 +7286,7 @@ Save_File Game::construct_save_data() {
         save_data.version = SAVE_FILE_VERSION_CURRENT;
         {
             for (int stage_index = 0; stage_index < 4; ++stage_index) {
+              save_data.stage_full_run_best_score[stage_index] = stage_list[stage_index].best_score_run;
                 for (int level_index = 0; level_index < MAX_LEVELS_PER_STAGE; ++level_index) {
                     auto& level = stage_list[stage_index].levels[level_index];
                     save_data.stage_last_scores[stage_index][level_index] = level.last_score;
@@ -7305,7 +7328,7 @@ void Game::update_from_save_data(Save_File* save_data) {
     for (int stage_index = 0; stage_index < 4; ++stage_index) {
         auto& stage = stage_list[stage_index];
         stage.unlocked_levels = save_data->stage_unlocks[stage_index];
-
+        stage.best_score_run = save_data->stage_full_run_best_score[stage_index];
         for (int level_index = 0; level_index < MAX_LEVELS_PER_STAGE; ++level_index) {
             auto& level = stage.levels[level_index];
             level.last_score  = save_data->stage_last_scores[stage_index][level_index];
@@ -7419,6 +7442,38 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
                 }
             } break;
 
+            case SAVE_FILE_VERSION_DEMO_AND_INITIAL_RELEASE_0_1: {
+              for (int stage_index = 0; stage_index < 4; ++stage_index) {
+                for (int level_index = 0; level_index < MAX_LEVELS_PER_STAGE; ++level_index) {
+                  serialize_s32(serializer, &save_data.stage_last_scores[stage_index][level_index]);
+                  serialize_s32(serializer, &save_data.stage_best_scores[stage_index][level_index]);
+                  serialize_s32(serializer, &save_data.stage_attempts[stage_index][level_index]);
+                  serialize_s32(serializer, &save_data.stage_completions[stage_index][level_index]);
+                }
+              }
+              for (int stage_index = 0; stage_index < 4; ++stage_index) {
+                serialize_s32(serializer, &save_data.stage_unlocks[stage_index]);
+              }
+
+              serialize_u8(serializer, &save_data.post_game);
+              serialize_u8(serializer, &save_data.beat_demo);
+              serialize_f32(serializer, &save_data.playtime);
+              serialize_s32(serializer, &save_data.first_load);
+              serialize_s32(serializer, &save_data.pets_unlocked);
+
+              // serialize all achievements
+              // NOTE: slices are writable in my "library of code" so I'm
+              // just going to take advantage of this.
+              {
+                auto achievements = Achievements::get_all();
+
+                for (int achievement_index = 0; achievement_index < achievements.length; ++achievement_index) {
+                  auto achievement = &achievements[achievement_index];
+                  serialize_achievement(serializer, achievement);
+                }
+              }
+            } break;
+
             case SAVE_FILE_VERSION_CURRENT:
             default: {
               for (int stage_index = 0; stage_index < 4; ++stage_index) {
@@ -7448,6 +7503,12 @@ Save_File Game::serialize_game_state(struct binary_serializer* serializer) {
                 for (int achievement_index = 0; achievement_index < achievements.length; ++achievement_index) {
                   auto achievement = &achievements[achievement_index];
                   serialize_achievement(serializer, achievement);
+                }
+              }
+
+              {
+                for (int stage_index = 0; stage_index < 4; ++stage_index) {
+                  serialize_s32(serializer, &save_data.stage_full_run_best_score[stage_index]);
                 }
               }
             } break;

@@ -507,6 +507,7 @@ struct Gameplay_Data {
     int  death_count = 0;
     int  burst_usage_count = 0;
     int  total_score = 0; // calculate after adjustments
+    s32  total_run_score = 0;
 
     f32  focus_tint_fade_t = 0.0f;
     f32  focus_hitbox_fade_t = 0.0f;
