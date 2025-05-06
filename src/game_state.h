@@ -318,7 +318,7 @@ struct Gameplay_Stage_Complete_Stage_Sequence {
 
 // NOTE: you can achieve this through various different things
 // like maximizing your score.
-#define MAX_TRIES_ALLOWED (15)
+#define MAX_TRIES_ALLOWED (10)
 #define MAX_BASE_TRIES (5)
 
 // will do a small jump before dying.
@@ -494,6 +494,11 @@ struct Gameplay_Data_Gameplay_Alert {
   char text[256];
 };
 
+struct Try_Continues_Data {
+  f32 count_down;
+  bool continued_once;
+};
+
 struct Gameplay_Data {
     bool campaign_perfect_clear;
     bool stage_perfect_clear;
@@ -507,6 +512,7 @@ struct Gameplay_Data {
     int  death_count = 0;
     int  burst_usage_count = 0;
     int  total_score = 0; // calculate after adjustments
+    int  continue_count = 0;
     s32  total_run_score = 0;
 
     f32  focus_tint_fade_t = 0.0f;
@@ -524,6 +530,7 @@ struct Gameplay_Data {
     void border_stop_all_notifications(void);
     void border_notify_current_status(void);
 
+    Try_Continues_Data try_continues_data;
     Stage_State stage_state;
     Particle_Pool particle_pool;
     Particle_Pool death_particle_pool;
@@ -532,6 +539,8 @@ struct Gameplay_Data {
     // TODO: allow player name configuration
     /* char          player_name[64]; */
     void build_current_input_packet();
+
+    void reset_for_new_run(void);
 
     Gameplay_Frame_Input_Packet current_input_packet;
     Gameplay_Demo_Viewer        demo_viewer;
@@ -804,9 +813,11 @@ struct Dialogue_State {
 
 enum DeathScreen_Phase {
     DEATH_SCREEN_PHASE_SLIDE_IN      = 0,
+    DEATH_SCREEN_PHASE_TRY_FOR_REPLAY = 5,
     DEATH_SCREEN_PHASE_FADE_IN_TEXT  = 1,
     DEATH_SCREEN_PHASE_FADE_OUT_TEXT = 2,
-    DEATH_SCREEN_PHASE_BYE           = 3,
+    DEATH_SCREEN_PHASE_SLIDE_OUT     = 3, // allowing a replay...
+    DEATH_SCREEN_PHASE_BYE           = 4,
 };
 /*
   NOTE:
@@ -981,6 +992,7 @@ enum Portal_Image_Frame {
 enum UI_HP_Icon_Type {
     UI_HP_ICON_TYPE_DEAD   = 0,
     UI_HP_ICON_TYPE_LIVING = 1,
+    UI_HP_ICON_TYPE_CONTINUE = 2,
 };
 
 enum Game_Side_Marquee_Neo_Theme {
@@ -1011,7 +1023,7 @@ struct Game_Resources {
     image_id main_menu_portal_images[PORTAL_IMAGE_FRAME_COUNT];
 
     image_id main_menu_clutter_poop;
-    image_id ui_hp_icons[2];
+    image_id ui_hp_icons[4];
 
     // TODO: would like to load these from files.
     // I can't really hot reload these because of the way sprites work and my memory allocation

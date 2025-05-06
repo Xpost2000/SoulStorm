@@ -78,6 +78,7 @@
 #define DEFAULT_FIRING_COOLDOWN                    (g_game_rules.default_firing_cooldown)
 #define DEFAULT_ENTITY_SCORE_VALUE_PER_HIT         (g_game_rules.default_entity_score_value_per_hit)
 #define DEFAULT_ENTITY_SCORE_KILL_VALUE_MULTIPLIER (g_game_rules.default_entity_score_kill_value_multiplier)
+#define DEFAULT_CONTINUE_COUNT                     (g_game_rules.continue_count)
 
 // These aren't really rules that matter much, as these are purely visual.
 #define INVINCIBILITY_FLASH_TIME_PERIOD (PLAYER_INVINICIBILITY_TIME / 20) / 2
@@ -98,7 +99,8 @@
  * more rules, but just in-case...
  */
 #define GAME_RULES_VERSION_0       (0)
-#define GAME_RULES_VERSION_CURRENT (GAME_RULES_VERSION_0)
+#define GAME_RULES_VERSION_1       (1)
+#define GAME_RULES_VERSION_CURRENT (GAME_RULES_VERSION_1)
 struct Game_Rules {
     s32 version = GAME_RULES_VERSION_CURRENT;
 
@@ -159,6 +161,8 @@ struct Game_Rules {
     s32    pet_data_fish_lives          = 1;
     f32    pet_data_fish_score_modifier = 4.00f;
     f32    pet_data_fish_speed_modifier = 0.875f;
+
+    s32    continue_count = 3;
 };
 
 extern Game_Rules g_game_rules;

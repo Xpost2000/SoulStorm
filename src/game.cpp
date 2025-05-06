@@ -738,6 +738,11 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
                 &resources->graphics_assets,
                 string_literal("res/img/ui/ui_hp_living.png")
             );
+        resources->ui_hp_icons[UI_HP_ICON_TYPE_CONTINUE] =
+          graphics_assets_load_image(
+            &resources->graphics_assets,
+            string_literal("res/img/ui/ui_continue_stalk.png")
+          );
     }
 
     {
@@ -968,6 +973,7 @@ void Game::init_graphics_resources(Graphics_Driver* driver) {
 
             images[i++] = resources->ui_hp_icons[0];
             images[i++] = resources->ui_hp_icons[1];
+            images[i++] = resources->ui_hp_icons[2];
 
             for (int j = 0; j < BUTTON_COUNT; ++j) {
                 if (resources->ui_controller_button_icons[j].index) {
@@ -3075,6 +3081,13 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
     };
     int action = REPLAY_SAVE_MENU_ACTION_PENDING;
 
+    // If we ever continued, replays cannot be made.
+    //
+    // This is a "punishment" but also because I don't want to rearchitect some stuff...
+    if (!Transitions::fading() && state->gameplay_data.try_continues_data.continued_once) {
+      action = REPLAY_SAVE_MENU_ACTION_DO_NOT_SAVE_RECORDING; // just skip the prompt and don't do anything.
+    }
+
 #ifndef BUILD_DEMO
     if (state->gameplay_data.recording.in_playback || state->gameplay_data.manual_menu_quit_out) {
         if (!Transitions::fading()) {
@@ -3860,7 +3873,7 @@ void Game::update_and_render_stage_pet_select_menu(struct render_commands* comma
                 switch_ui(UI_STATE_INACTIVE);
                 switch_screen(GAME_SCREEN_INGAME);
                 // reset score here
-                gameplay_data.total_run_score = 0;
+                gameplay_data.reset_for_new_run();
                 setup_stage_start();
                 Transitions::do_shuteye_out(
                     color32f32(0, 0, 0, 1),
@@ -3898,6 +3911,7 @@ bool Game::safely_resurrect_player() {
         );
         state->gameplay_data.player.begin_invincibility();
         state->gameplay_data.player.heal(1);
+        state->gameplay_data.player.visible = true;
         state->gameplay_data.focus_hitbox_fade_t = 2.15f;
 
         {
@@ -3919,13 +3933,65 @@ GAME_UI_SCREEN(update_and_render_game_death_maybe_retry_menu) {
     float text_height = font_cache_text_height(font) * text_scale;
     V2 text_position = V2(commands->screen_width / 2 - text_width / 2, commands->screen_height / 2 - text_height / 2);
 
+    Audio::pause_music();
     switch (deathscreen_data.phase) {
         case DEATH_SCREEN_PHASE_SLIDE_IN: {
             if (deathscreen_data.black_fade_t < MAX_DEATH_BLACK_FADE_T) {
                 deathscreen_data.black_fade_t += dt;
             } else {
-                deathscreen_data.phase = DEATH_SCREEN_PHASE_FADE_IN_TEXT;
+                deathscreen_data.phase = DEATH_SCREEN_PHASE_TRY_FOR_REPLAY;
             }
+        } break;
+        case DEATH_SCREEN_PHASE_SLIDE_OUT: {
+          if (deathscreen_data.black_fade_t > 0.0f) {
+            deathscreen_data.black_fade_t -= dt;
+          }
+          else {
+            if (state->gameplay_data.continue_count > 0) {
+              state->convert_bullets_to_score_pickups(300, 1.0f);
+              state->gameplay_data.tries = state->gameplay_data.max_tries+1;
+              safely_resurrect_player();
+              switch_ui(state->last_ui_state);
+              state->gameplay_data.try_continues_data.count_down = 10.0f;
+              state->gameplay_data.continue_count -= 1;
+              state->gameplay_data.total_run_score = 0;
+              state->gameplay_data.total_score = 0;
+              state->gameplay_data.current_score = 0;
+              state->gameplay_data.try_continues_data.continued_once = true;
+              Audio::resume_music();
+            }
+            else {
+              deathscreen_data.phase = DEATH_SCREEN_PHASE_SLIDE_IN;
+            }
+          }
+        } break;
+        case DEATH_SCREEN_PHASE_TRY_FOR_REPLAY: {
+          if (state->gameplay_data.continue_count <= 0 || state->gameplay_data.try_continues_data.count_down <= 0) {
+            deathscreen_data.phase = DEATH_SCREEN_PHASE_FADE_IN_TEXT;
+          }
+          else {
+            // show continues menu...
+            GameUI::begin_frame(commands, &resources->graphics_assets);
+            GameUI::set_wobbly_contribution(0.0f);
+            {
+              f32 y = 100;
+              GameUI::set_font(resources->get_font(MENU_FONT_COLOR_STEEL));
+              GameUI::label(V2(120, y), string_from_cstring(format_temp("CONTINUES: %d, USE?", (int)state->gameplay_data.continue_count)), color32f32(1, 1, 1, 1), 4);
+              y += 45;
+              GameUI::label(V2(120, y), string_from_cstring(format_temp("COUNTDOWN: %d", (int)state->gameplay_data.try_continues_data.count_down)), color32f32(1, 1, 1, 1), 4);
+              y += 45;
+              GameUI::set_font(resources->get_font(MENU_FONT_COLOR_WHITE));
+              if (GameUI::button(V2(120, y), string_literal("YES"), color32f32(1, 1, 1, 1), 2.0f, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                deathscreen_data.phase = DEATH_SCREEN_PHASE_SLIDE_OUT;
+              }
+              y += 30;
+              if (GameUI::button(V2(120, y), string_literal("NO"), color32f32(1, 1, 1, 1), 2.0f, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
+                deathscreen_data.phase = DEATH_SCREEN_PHASE_SLIDE_IN;
+              }
+            }
+            GameUI::end_frame();
+            state->gameplay_data.try_continues_data.count_down -= dt;
+          }
         } break;
         case DEATH_SCREEN_PHASE_FADE_IN_TEXT: {
             f32 effective_t = clamp<f32>(deathscreen_data.text_fade_t / MAX_DEATH_TEXT_FADE_T, 0.0f, 1.0f);
@@ -5533,7 +5599,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
               BLEND_MODE_ALPHA
             );
           }
-          ui_cursor_y += 30;
+          ui_cursor_y += 25;
           {
             auto text = string_clone(&Global_Engine()->scratch_arena, string_from_cstring(format_temp("SCORE: %d", state->total_run_score)));
             render_commands_push_text(
@@ -5647,7 +5713,68 @@ GAME_SCREEN(update_and_render_game_ingame) {
 
             lives_widget_position.x += 35;
           }
-          ui_cursor_y = lives_widget_position.y + 36 + 15;
+          ui_cursor_y = lives_widget_position.y + 36;
+        }
+
+        // Render_Continues
+        {
+          auto font = resources->get_font(MENU_FONT_COLOR_LIME);
+          f32  lives_widget_position_x = (ui_cursor_x_left + 20);
+          render_commands_push_text(
+            ui_render_commands,
+            font,
+            2,
+            V2(lives_widget_position_x, ui_cursor_y),
+            string_literal("CONTINUES"),
+            color32f32(1, 1, 1, 1),
+            BLEND_MODE_ALPHA
+          );
+          ui_cursor_y += 30;
+          V2   lives_widget_position = V2(lives_widget_position_x, ui_cursor_y);
+          for (unsigned index = 0; index < DEFAULT_CONTINUE_COUNT; ++index) {
+            if (index && (index % 5) == 0) {
+              lives_widget_position.y += 36;
+              lives_widget_position.x = lives_widget_position_x;
+            }
+
+            auto destination_rect =
+              rectangle_f32(
+                lives_widget_position.x,
+                lives_widget_position.y + sinf(Global_Engine()->global_elapsed_time) * 3,
+                32,
+                32
+              );
+
+            auto modulation = color32f32(1, 1, 1, 1);
+            auto image = resources->ui_hp_icons[UI_HP_ICON_TYPE_CONTINUE];
+
+            if ((index + 1) > state->continue_count) {
+              image = resources->ui_hp_icons[UI_HP_ICON_TYPE_DEAD];
+            }
+
+            {
+              auto& texture_atlas = resources->ui_texture_atlas;
+              auto image_buffer = graphics_assets_get_image_by_id(&resources->graphics_assets, texture_atlas.atlas_image_id);
+
+              auto subrect = texture_atlas.get_subrect(image);
+
+              render_commands_push_image_ext2(
+                ui_render_commands,
+                image_buffer,
+                destination_rect,
+                subrect,
+                modulation,
+                V2(0, 0),
+                0,
+                0,
+                NO_FLAGS,
+                BLEND_MODE_ALPHA
+              );
+            }
+
+            lives_widget_position.x += 35;
+          }
+          ui_cursor_y = lives_widget_position.y + 36+ 5;
         }
 
         // Render Burst Meter
@@ -6144,7 +6271,9 @@ GAME_SCREEN(update_and_render_game_ingame) {
         Audio::pause_music();
       }
       else if (this->state->ui_state == UI_STATE_INACTIVE) {
-        Audio::resume_music();
+        if (this->state->gameplay_data.tries > 0) {
+          Audio::resume_music();
+        }
       }
     }
 
@@ -6671,6 +6800,8 @@ void Game::on_player_death() {
         // I have "CONTINUES" support
         _debugprintf("record status (%d) %d\n", state->recording.frame_count, state->recording.in_playback);
         if (state->recording.in_playback) {
+          // NOTE(jerry): for continues, you cannot save replays, so this cannot happen
+          // if this happens. Weird stuff might happen. Replays are currently still only per stage.
             _debugprintf("TODO handle continues?");
             state->triggered_stage_completion_cutscene = true;
             state->complete_stage.begin_sequence(true);
@@ -6683,7 +6814,7 @@ void Game::on_player_death() {
                 state->player.visible = false;
             }
             {
-              Audio::stop_music();
+              Audio::pause_music();
               auto& deathanimation_data                           = this->state->deathanimation_data;
                 deathanimation_data.phase                           = DEATH_ANIMATION_PHASE_FLASH;
                 this->state->gameplay_data.invalid_usage_flash_count = 32;
@@ -6909,6 +7040,14 @@ void Game::handle_all_explosions(f32 dt) {
             }
         }
     }
+}
+
+void Gameplay_Data::reset_for_new_run(void)
+{
+  total_run_score = 0;
+  continue_count = DEFAULT_CONTINUE_COUNT;
+  try_continues_data.count_down = 10.0f;
+  try_continues_data.continued_once = false;
 }
 
 image_id Gameplay_Data::script_load_image(Game_Resources* resources, char* where) {
