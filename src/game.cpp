@@ -3075,6 +3075,7 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
     };
     int action = REPLAY_SAVE_MENU_ACTION_PENDING;
 
+#ifndef BUILD_DEMO
     if (state->gameplay_data.recording.in_playback || state->gameplay_data.manual_menu_quit_out) {
         if (!Transitions::fading()) {
             action = REPLAY_SAVE_MENU_ACTION_DO_NOT_SAVE_RECORDING; // just skip the prompt and don't do anything.
@@ -3095,6 +3096,11 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
             }
         }
     }
+#else
+    if (!Transitions::fading()) {
+      action = REPLAY_SAVE_MENU_ACTION_DO_NOT_SAVE_RECORDING; // just skip the prompt and don't do anything.
+    }
+#endif
 
     if (action != REPLAY_SAVE_MENU_ACTION_PENDING) {
         Transitions::do_shuteye_in(
@@ -3529,10 +3535,12 @@ GAME_UI_SCREEN(update_and_render_pause_menu) {
         y += 30;
 #endif
 
+#ifndef BUILD_DEMO
         if (GameUI::button(V2(100, y), string_literal("Replays"), color32f32(1, 1, 1, 1), 2, !Transitions::fading() && state->screen_mode != GAME_SCREEN_INGAME) == WIDGET_ACTION_ACTIVATE) {
             switch_ui(UI_STATE_REPLAY_COLLECTION);
         }
         y += 30;
+#endif
 
 #ifndef BUILD_DEMO
 #ifndef RELEASE
