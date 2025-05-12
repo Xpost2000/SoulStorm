@@ -13,7 +13,7 @@ boss_state = {
     next_think_action_t = -9999,
 };
 
-BOSS_HP = 1970;
+BOSS_HP = 2122;
 
 function _Boss_Intro(e)
     enemy_begin_invincibility(e, true, 2.5);
