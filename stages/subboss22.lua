@@ -13,7 +13,7 @@ boss_state = {
     next_think_action_t = -9999,
 };
 
-BOSS_HP = 1655;
+BOSS_HP = 2004;
 
 function _Boss_Intro(e)
     enemy_begin_invincibility(e, true, 2.5);
@@ -28,7 +28,9 @@ end
 function SubBoss22_UnravelAttack1(epos, displacement, v)
     for i=0, 13 do
         local bspeed = i*20 + 70;
-        for ang=90, 180, 15 do
+        for ang=90, 180, 16 do
+            if (not enemy_valid(boss_state.me)) then return end;
+
             local arcdir = v2_direction_from_degree(ang-i + displacement);
             local b = bullet_make(
             BULLET_SOURCE_ENEMY,
@@ -41,6 +43,8 @@ function SubBoss22_UnravelAttack1(epos, displacement, v)
             bullet_set_velocity(b, arcdir[1] * bspeed, arcdir[2] * bspeed);
         end
         for ang=0, 90, 15 do
+            if (not enemy_valid(boss_state.me)) then return end;
+
             local arcdir = v2_direction_from_degree(ang+i + displacement);
             local b = bullet_make(
             BULLET_SOURCE_ENEMY,
@@ -59,7 +63,9 @@ end
 function SubBoss22_WhipAttack1(epos)
     local bspeed = 125;
     for i=0,7 do
-        for ang=0, 360, 15 do
+        for ang=0, 360, 20 do
+            if (not enemy_valid(boss_state.me)) then return end;
+
             local arcdir = v2_direction_from_degree(ang+i*10);
             local b = bullet_make(
             BULLET_SOURCE_ENEMY,
@@ -100,15 +106,17 @@ end
 function SubBoss22_ChaseDrop1(epos)
     async_task_lambda(
         function()
-            local bspeed = 170;
+            local bspeed = 100;
             for i=0, 20 do
-                local bpos = v2(20 * i, 30);
+                if (not enemy_valid(boss_state.me)) then return end;
+
+                local bpos = v2(30 * i, 30);
                 local b = bullet_make(
                     BULLET_SOURCE_ENEMY,
                     bpos,
                     PROJECTILE_SPRITE_CAUSTIC,
-                    v2(1, 1),
-                    v2(10, 10)
+                    v2(0.9, 0.9),
+                    v2(9, 9)
                 );
         
                 local arcdir = dir_to_player(bpos);
@@ -120,9 +128,11 @@ function SubBoss22_ChaseDrop1(epos)
 
     async_task_lambda(
         function()
-            local bspeed = 160;
+            local bspeed = 110;
             for i=0, 20 do
-                local bpos = v2(play_area_width() - 20 * i, 30);
+                if (not enemy_valid(boss_state.me)) then return end;
+
+                local bpos = v2(play_area_width() - 30 * i, 30);
                 local b = bullet_make(
                     BULLET_SOURCE_ENEMY,
                     bpos,
@@ -149,8 +159,10 @@ end
 
 function SubBoss22_VomitDirected(epos)
     for j=0,4 do
-    for i=0,16 do
+    for i=0,14 do
         for ang=-15, 15,(3+j) do
+            if (not enemy_valid(boss_state.me)) then return end;
+
             local bspeed = 35+(i*14);
             local arcdir = dir_to_player(epos);
             local deg = math.atan(arcdir[2], arcdir[1]);
@@ -180,19 +192,31 @@ function _Boss_AttackPattern_Logic(e)
     while enemy_valid(e) and (once==1) do
         local epos = enemy_final_position(e);
         SubBoss22_Attack0(epos);
+        if not enemy_valid(e) then return end;
         SubBoss22_Attack1(epos);
-        t_wait(0.75);
+        if (not enemy_valid(e)) then return end;
+        t_wait(2.20);
+        if (not enemy_valid(e)) then return end;
         SubBoss22_Attack0(epos);
+        t_wait(1.5);
+        if (not enemy_valid(e)) then return end;
         SubBoss22_VomitDirected(epos);
-        t_wait(0.88);
+        if (not enemy_valid(e)) then return end;
+        t_wait(1.5);
+        if (not enemy_valid(e)) then return end;
         SubBoss22_Attack0(epos);
-        t_wait(1.2);
+        if (not enemy_valid(e)) then return end;
+        t_wait(1.7);
+        if (not enemy_valid(e)) then return end;
         SubBoss22_VomitDirected(epos);
+        if (not enemy_valid(e)) then return end;
         t_wait(0.75);
+        if (not enemy_valid(e)) then return end;
         SubBoss22_VomitDirected(epos);
+        if (not enemy_valid(e)) then return end;
         SubBoss22_Attack1(epos);
+        if (not enemy_valid(e)) then return end;
         -- SubBoss22_WhipAttack1(epos);
-        once = 0;
         t_yield();
     end
 end
@@ -200,6 +224,16 @@ end
 function _Boss_Logic(e)
     _Boss_Intro(e);
     async_task_lambda(_Boss_AttackPattern_Logic, e);
+    local epos = enemy_final_position(e);
+    while enemy_valid(e) do
+        t_yield();
+    end
+    convert_all_bullets_to_score();
+    local initial_boss_pos = epos;
+    explosion_hazard_new(initial_boss_pos[1], initial_boss_pos[2], 32, 0.01, 0.01);
+    explosion_hazard_new(initial_boss_pos[1], initial_boss_pos[2], 64, 0.01, 0.01);
+    explosion_hazard_new(initial_boss_pos[1], initial_boss_pos[2], 16, 0.01, 0.01);
+    explosion_hazard_new(initial_boss_pos[1], initial_boss_pos[2], 128, 0.01, 0.01);
 end
 
 function _Boss_Movement_Logic(e)
