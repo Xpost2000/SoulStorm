@@ -1435,6 +1435,7 @@ bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, 
     player->burst_ray_attack_ability_timer = PLAYER_BURST_RAY_ABILITY_MAX_T;
     // safety buffer
     player->burst_absorption_shield_ability_timer = PLAYER_BURST_SHIELD_ABILITY_MAX_T/6;
+    player->shield_mode = 0;
     player->current_burst_ability_max_t = PLAYER_BURST_RAY_ABILITY_MAX_T;
     return true;
 }
