@@ -1,3 +1,5 @@
+-- Handful of attack patterns but meant to be pretty short...
+
 boss_state = {
     me,
     last_good_position, -- for if the entity is deleted for any reason

@@ -7161,7 +7161,7 @@ void Game::handle_all_bullet_collisions(f32 dt) {
 
                     // TODO(jerry): save to replay!
                     {
-                      state->player.burst_charge += e.hit_gain_value;
+                      state->player.add_burst_charge(resources, e.hit_gain_value);
                     }
                     spawn_game_entity_hit_particle_emitter(state->particle_emitters, e.position, resources);
 

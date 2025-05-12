@@ -813,6 +813,17 @@ void Cosmetic_Pet::set_id(s32 id, Game_Resources* resources) {
     this->id = id;
 }
 
+void Player::add_burst_charge(Game_Resources* resources, float amount)
+{
+  int current_tier = get_burst_rank();
+  burst_charge += amount;
+  int new_tier = get_burst_rank();
+
+  if (new_tier != current_tier) {
+    Audio::play(resources->score_pickup_sound, 45);
+  }
+}
+
 // PlayerActor
 s32 Player::currently_grazing(Game_State* state) {
     s32 grazed_bullets = 0;
@@ -1422,6 +1433,8 @@ bool player_burst_bomb_focus_neutralizer_ray(Player* player, Game_State* state, 
         calculate_amount_of_burst_depletion_flashes_for(PLAYER_BURST_RAY_COOLDOWN_DEPLETION_APPROX)
     );
     player->burst_ray_attack_ability_timer = PLAYER_BURST_RAY_ABILITY_MAX_T;
+    // safety buffer
+    player->burst_absorption_shield_ability_timer = PLAYER_BURST_SHIELD_ABILITY_MAX_T/6;
     player->current_burst_ability_max_t = PLAYER_BURST_RAY_ABILITY_MAX_T;
     return true;
 }

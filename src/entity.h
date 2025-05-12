@@ -394,6 +394,9 @@ struct Player : public Entity {
 
     void show_border_status_when_close(Game_State* state);
 
+    // I know, this is... not good parameter design.
+    void add_burst_charge(Game_Resources* resources, float amount);
+
     f32 grazing_award_timer = 0.0f;
     f32 grazing_award_score_pickup_timer = 0.0f;
     f32 grazing_delay       = PLAYER_DEFAULT_GRAZING_DELAY;
