@@ -3,6 +3,8 @@
 -- which makes Stage 1 incredibly inconsistent/different in quality compared to
 -- everything else which is supposed to be significantly better otherwise.)
 
+-- TODO fix bug with invalid vectors (due to dead enemy).
+
 BOSS0_HP=2620;
 BOSS1_HP=900;
 boss_state_0 = {
