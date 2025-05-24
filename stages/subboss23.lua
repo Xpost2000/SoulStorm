@@ -3,8 +3,8 @@
 -- which makes Stage 1 incredibly inconsistent/different in quality compared to
 -- everything else which is supposed to be significantly better otherwise.)
 
-BOSS0_HP=2222;
-BOSS1_HP=2222;
+BOSS0_HP=2620;
+BOSS1_HP=900;
 boss_state_0 = {
    last_good_position,
    me,
@@ -17,6 +17,14 @@ boss_state_1 = {
 };
 
 -- BOSS 1
+
+function BossFight_Complete()
+   if (not enemy_valid(e)) and (not enemy_valid(e1)) then
+      return true;
+   end
+
+   return false;
+end
 
 function _Boss_Intro0(e)
    enemy_begin_invincibility(e, true, 2.5);
@@ -129,6 +137,76 @@ function SubBoss23_Sprinkler1_AttackPattern(e)
    end
 end
 
+function SubBoss23_Sprinkler2_AttackPattern(e)
+   for burst=0,10 do
+      async_task_lambda(
+         function()
+            local bspeed = 50;
+            for angle=20,140,15 do
+               local epos = enemy_final_position(e);
+               if not enemy_valid(e) then
+                  return;
+               end
+
+               local arcdir = v2_direction_from_degree(angle+burst);
+               local b = bullet_make(
+                  BULLET_SOURCE_ENEMY,
+                  epos,
+                  PROJECTILE_SPRITE_RED,
+                  v2(0.5, 0.5),
+                  v2(5, 5)
+               )
+
+               bullet_set_velocity(b, arcdir[1] * bspeed, arcdir[2] * bspeed);
+               t_wait(0.065);
+            end
+         end
+      )
+      async_task_lambda(
+         function()
+            local bspeed = 125;
+            for angle=50,170,12 do
+               local epos = enemy_final_position(e);
+               if not enemy_valid(e) then
+                  return;
+               end
+
+               local arcdir = v2_direction_from_degree(angle-burst);
+               local b = bullet_make(
+                  BULLET_SOURCE_ENEMY,
+                  epos,
+                  PROJECTILE_SPRITE_PURPLE,
+                  v2(0.25, 0.25),
+                  v2(2.5, 2.5)
+               )
+
+               bullet_set_velocity(b, arcdir[1] * bspeed, arcdir[2] * bspeed);
+               t_wait(0.090);
+            end
+            for angle=170,30,-12 do
+               local epos = enemy_final_position(e);
+               if not enemy_valid(e) then
+                  return;
+               end
+
+               local arcdir = v2_direction_from_degree(angle+burst);
+               local b = bullet_make(
+                  BULLET_SOURCE_ENEMY,
+                  epos,
+                  PROJECTILE_SPRITE_PURPLE,
+                  v2(0.25, 0.25),
+                  v2(2.5, 2.5)
+               )
+
+               bullet_set_velocity(b, arcdir[1] * bspeed, arcdir[2] * bspeed);
+               t_wait(0.100);
+            end
+         end
+      )
+      t_wait(0.6);
+   end
+end
+
 function _Boss_Logic0(e)
    _Boss_Intro0(e);
 
@@ -151,42 +229,46 @@ function _Boss_Logic0(e)
          -- this shouldn't really slide.
          --
 
-         async_task_lambda(SubBoss23_UnravelAttack1, epos, 30, PROJECTILE_SPRITE_RED);
-         if not enemy_valid(e) then return end;
-         t_wait(0.40)
-         async_task_lambda(SubBoss23_UnravelAttack1, epos, 50, PROJECTILE_SPRITE_CAUSTIC);
-         if not enemy_valid(e) then return end;
+         if true then
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, 30, PROJECTILE_SPRITE_RED);
+            if not enemy_valid(e) then return end;
+            t_wait(0.40)
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, 50, PROJECTILE_SPRITE_CAUSTIC);
+            if not enemy_valid(e) then return end;
 
-         t_wait(1.8);
+            t_wait(1.8);
 
-         async_task_lambda(SubBoss23_UnravelAttack1, epos, -40, PROJECTILE_SPRITE_GREEN);
-         async_task_lambda(SubBoss23_UnravelAttack1, epos, 40, PROJECTILE_SPRITE_GREEN);
-         if not enemy_valid(e) then return end;
-         t_wait(1.20)
-         async_task_lambda(SubBoss23_UnravelAttack1, epos, -70, PROJECTILE_SPRITE_BLUE);
-         t_wait(0.5)
-         async_task_lambda(SubBoss23_UnravelAttack1, epos, 70, PROJECTILE_SPRITE_BLUE);
-         if not enemy_valid(e) then return end;
-         t_wait(1.5)
-         async_task_lambda(SubBoss23_UnravelAttack1, epos, -60, PROJECTILE_SPRITE_PURPLE);
-         async_task_lambda(SubBoss23_UnravelAttack1, epos, 60, PROJECTILE_SPRITE_RED);
-         if not enemy_valid(e) then return end;
-         t_wait(0.90)
-         async_task_lambda(SubBoss23_UnravelAttack1, epos, -80, PROJECTILE_SPRITE_RED);
-         t_wait(0.20)
-         async_task_lambda(SubBoss23_UnravelAttack1, epos, 80, PROJECTILE_SPRITE_PURPLE);
-         if not enemy_valid(e) then return end;
-         t_wait(1.2)
-         async_task_lambda(SubBoss23_UnravelAttack1, epos, -80, PROJECTILE_SPRITE_RED);
-         t_wait(0.10)
-         async_task_lambda(SubBoss23_UnravelAttack1, epos, 80, PROJECTILE_SPRITE_PURPLE);
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, -40, PROJECTILE_SPRITE_GREEN);
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, 40, PROJECTILE_SPRITE_GREEN);
+            if not enemy_valid(e) then return end;
+            t_wait(1.20)
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, -70, PROJECTILE_SPRITE_BLUE);
+            t_wait(0.5)
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, 70, PROJECTILE_SPRITE_BLUE);
+            if not enemy_valid(e) then return end;
+            t_wait(1.5)
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, -60, PROJECTILE_SPRITE_PURPLE);
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, 60, PROJECTILE_SPRITE_RED);
+            if not enemy_valid(e) then return end;
+            t_wait(0.90)
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, -80, PROJECTILE_SPRITE_RED);
+            t_wait(0.20)
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, 80, PROJECTILE_SPRITE_PURPLE);
+            if not enemy_valid(e) then return end;
+            t_wait(1.2)
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, -80, PROJECTILE_SPRITE_RED);
+            t_wait(0.10)
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, 80, PROJECTILE_SPRITE_PURPLE);
 
-         t_wait(3.5);
+            t_wait(3.5);
 
-         -- Sprinkler with some light attacks
-         async_task_lambda(SubBoss23_Sprinkler1_AttackPattern, e);
-         t_wait(5.5);
+            -- Sprinkler with some light attacks
+            async_task_lambda(SubBoss23_Sprinkler1_AttackPattern, e);
+            t_wait(5.5);
+         end
+
          Game_Spawn_Stage2_3_SubBoss1();
+         async_task_lambda(_Boss_Synchronized_Logic);
          summoned_next = true;
 
          enemy_set_acceleration(e, -120, 0);
@@ -198,6 +280,9 @@ function _Boss_Logic0(e)
 
          boss_state_0.phase = 1;
       elseif boss_state_0.phase == 1 then
+         -- Sync boss mode, run BossLogic_Synced
+      elseif boss_state_0.phase == 2 then
+         -- Last Stand Patterns when returning to center
       end
       t_yield();
    end
@@ -239,6 +324,47 @@ end
 
 function _Boss_Logic1(e)
    _Boss_Intro1(e);
+
+   while enemy_valid(e) do
+      local epos = enemy_final_position(e);
+      if boss_state_1.phase == 0 then
+         -- Sync boss mode, run BossLogic_Synced
+      elseif boss_state_1.phase == 1 then
+      end
+      t_yield();
+   end
+end
+
+-- Control both, and use specific patterns for both bosses
+-- Boss Sync Phase
+function _Boss_Synchronized_Logic()
+   local e = boss_state_0.me;
+   local e1 = boss_state_1.me;
+   
+   t_wait(3.5);
+   while enemy_valid(e) and enemy_valid(e1) do
+      async_task_lambda(SubBoss23_Sprinkler2_AttackPattern, e);
+      async_task_lambda(SubBoss23_Sprinkler2_AttackPattern, e1);
+      t_wait(5.5);
+      t_wait(5.65);
+      async_task_lambda(SubBoss23_Sprinkler1_AttackPattern, e);
+      t_wait(5.0);
+      t_wait(5.65);
+      async_task_lambda(SubBoss23_Sprinkler1_AttackPattern, e1);
+      t_wait(5.65);
+
+      t_yield()
+   end
+
+   -- Advance the survivor to their single boss phase
+
+   if enemy_valid(e) then
+      boss_state_0.phase = 2;
+   end
+
+   if enemy_valid(e1) then
+      boss_state_1.phase = 1;
+   end
 end
 
 function Game_Spawn_Stage2_3_SubBoss1()

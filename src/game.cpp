@@ -3986,7 +3986,7 @@ GAME_UI_SCREEN(update_and_render_game_death_maybe_retry_menu) {
               }
               y += 30;
               if (GameUI::button(V2(120, y), string_literal("NO"), color32f32(1, 1, 1, 1), 2.0f, !Transitions::fading()) == WIDGET_ACTION_ACTIVATE) {
-                deathscreen_data.phase = DEATH_SCREEN_PHASE_SLIDE_IN;
+                deathscreen_data.phase = DEATH_SCREEN_PHASE_FADE_IN_TEXT;
               }
             }
             GameUI::end_frame();
