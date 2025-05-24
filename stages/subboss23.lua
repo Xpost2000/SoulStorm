@@ -181,13 +181,20 @@ function _Boss_Logic0(e)
          t_wait(0.10)
          async_task_lambda(SubBoss23_UnravelAttack1, epos, 80, PROJECTILE_SPRITE_PURPLE);
 
-        t_wait(3.5);
+         t_wait(3.5);
 
          -- Sprinkler with some light attacks
          async_task_lambda(SubBoss23_Sprinkler1_AttackPattern, e);
-         t_wait(2.5);
-         Game_Spawn_Stage2_3_SubBoss0();
+         t_wait(5.5);
+         Game_Spawn_Stage2_3_SubBoss1();
          summoned_next = true;
+
+         enemy_set_acceleration(e, -120, 0);
+         t_wait(1.0);
+         enemy_set_acceleration(e, 120, 0);
+         t_wait(1.0);
+         enemy_set_acceleration(e, 0, 0);
+         enemy_set_velocity(e, 0, 0);
 
          boss_state_0.phase = 1;
       elseif boss_state_0.phase == 1 then
@@ -198,7 +205,7 @@ function _Boss_Logic0(e)
    --... I'm not sure when this could happen because it should be impossible to
    -- do this, but yeah.
    if summoned_next == false then
-      Game_Spawn_Stage2_3_SubBoss0();
+      Game_Spawn_Stage2_3_SubBoss1();
    end
 end
 
@@ -220,9 +227,35 @@ function Game_Spawn_Stage2_3_SubBoss0()
 end
 
 -- BOSS 2
+function _Boss_Intro1(e)
+   enemy_begin_invincibility(e, true, 2.5);
+   enemy_set_acceleration(e, 120, 120);
+   t_wait(1.0);
+   enemy_set_acceleration(e, -120, -120);
+   t_wait(1.0);
+   enemy_set_acceleration(e, 0, 0);
+   enemy_set_velocity(e, 0, 0);
+end
+
+function _Boss_Logic1(e)
+   _Boss_Intro1(e);
+end
 
 function Game_Spawn_Stage2_3_SubBoss1()
    local e = enemy_new();
+   local initial_boss_position = v2(play_area_width()/2, -50);
+
+   enemy_set_hp(e, BOSS1_HP);
+   enemy_set_position(e, initial_boss_position[1], initial_boss_position[2]);
+   enemy_set_scale(e, 50, 48);
+   t_wait(1.0);
+
+   enemy_set_burst_gain_value(e, 0.215);
+   enemy_show_boss_hp(e, "BONEWINGS");
+   async_task_lambda(_Boss_Logic1, e);
+   boss_state_1.me = e;
+   boss_state_1.last_good_position = initial_boss_position;
+   boss_state_1.phase = 0;
 end
 
 function Game_Spawn_Stage2_3_SubBoss()
