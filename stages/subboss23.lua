@@ -207,6 +207,15 @@ function SubBoss23_Sprinkler2_AttackPattern(e)
    end
 end
 
+function _Boss_TakeOver0(e)
+   enemy_set_acceleration(e, 120, 0);
+   t_wait(1.0);
+   enemy_set_acceleration(e, -120, 0);
+   t_wait(1.0);
+   enemy_set_acceleration(e, 0, 0);
+   enemy_set_velocity(e, 0, 0);
+end
+
 function _Boss_Logic0(e)
    _Boss_Intro0(e);
 
@@ -283,6 +292,12 @@ function _Boss_Logic0(e)
          -- Sync boss mode, run BossLogic_Synced
       elseif boss_state_0.phase == 2 then
          -- Last Stand Patterns when returning to center
+         print("Take Over 0");
+         _Boss_TakeOver0(e);
+         print("End Take Over 0");
+         boss_state_0.phase = 3;
+      elseif boss_state_0.phase == 3 then
+
       end
       t_yield();
    end
@@ -322,6 +337,15 @@ function _Boss_Intro1(e)
    enemy_set_velocity(e, 0, 0);
 end
 
+function _Boss_TakeOver1(e)
+   enemy_set_acceleration(e, -120, 0);
+   t_wait(1.0);
+   enemy_set_acceleration(e, 120, 0);
+   t_wait(1.0);
+   enemy_set_acceleration(e, 0, 0);
+   enemy_set_velocity(e, 0, 0);
+end
+
 function _Boss_Logic1(e)
    _Boss_Intro1(e);
 
@@ -330,6 +354,11 @@ function _Boss_Logic1(e)
       if boss_state_1.phase == 0 then
          -- Sync boss mode, run BossLogic_Synced
       elseif boss_state_1.phase == 1 then
+         print("Take Over 1");
+         _Boss_TakeOver1(e);
+         print("End Take Over 1");
+         boss_state_1.phase = 2;
+      elseif boss_state_1.phase == 2 then
       end
       t_yield();
    end
@@ -342,15 +371,45 @@ function _Boss_Synchronized_Logic()
    local e1 = boss_state_1.me;
    
    t_wait(3.5);
+
+   -- Copy and paste here since the semantics for this kind of thing
+   -- don't really exist in the language...
    while enemy_valid(e) and enemy_valid(e1) do
+      if not (enemy_valid(e) and enemy_valid(e1)) then
+         break;
+      end
       async_task_lambda(SubBoss23_Sprinkler2_AttackPattern, e);
+      if not (enemy_valid(e) and enemy_valid(e1)) then
+         break;
+      end
       async_task_lambda(SubBoss23_Sprinkler2_AttackPattern, e1);
+      if not (enemy_valid(e) and enemy_valid(e1)) then
+         break;
+      end
       t_wait(5.5);
+      if not (enemy_valid(e) and enemy_valid(e1)) then
+         break;
+      end
       t_wait(5.65);
+      if not (enemy_valid(e) and enemy_valid(e1)) then
+         break;
+      end
       async_task_lambda(SubBoss23_Sprinkler1_AttackPattern, e);
+      if not (enemy_valid(e) and enemy_valid(e1)) then
+         break;
+      end
       t_wait(5.0);
+      if not (enemy_valid(e) and enemy_valid(e1)) then
+         break;
+      end
       t_wait(5.65);
+      if not (enemy_valid(e) and enemy_valid(e1)) then
+         break;
+      end
       async_task_lambda(SubBoss23_Sprinkler1_AttackPattern, e1);
+      if not (enemy_valid(e) and enemy_valid(e1)) then
+         break;
+      end
       t_wait(5.65);
 
       t_yield()
