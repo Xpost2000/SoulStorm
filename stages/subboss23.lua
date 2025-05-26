@@ -3,8 +3,8 @@
 -- which makes Stage 1 incredibly inconsistent/different in quality compared to
 -- everything else which is supposed to be significantly better otherwise.)
 
-BOSS0_HP=2200;
-BOSS1_HP=900;
+BOSS0_HP=2400;
+BOSS1_HP=950;
 boss_state_0 = {
    last_good_position,
    me,
@@ -248,6 +248,7 @@ function _Boss_Logic0(e)
             t_wait(1.8);
 
             async_task_lambda(SubBoss23_UnravelAttack1, epos, -40, PROJECTILE_SPRITE_GREEN);
+            if not enemy_valid(e) then return end;
             async_task_lambda(SubBoss23_UnravelAttack1, epos, 40, PROJECTILE_SPRITE_GREEN);
             if not enemy_valid(e) then return end;
             t_wait(1.20)
@@ -297,7 +298,23 @@ function _Boss_Logic0(e)
          print("End Take Over 0");
          boss_state_0.phase = 3;
       elseif boss_state_0.phase == 3 then
-
+            t_wait(1.0)
+            if not enemy_valid(e) then return end;
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, -60, PROJECTILE_SPRITE_PURPLE);
+            if not enemy_valid(e) then return end;
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, 60, PROJECTILE_SPRITE_RED);
+            if not enemy_valid(e) then return end;
+            t_wait(0.90)
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, -80, PROJECTILE_SPRITE_RED);
+            t_wait(0.45)
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, 80, PROJECTILE_SPRITE_PURPLE);
+            if not enemy_valid(e) then return end;
+            t_wait(1.35)
+            if not enemy_valid(e) then return end;
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, -80, PROJECTILE_SPRITE_RED);
+            t_wait(0.45)
+            if not enemy_valid(e) then return end;
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, 80, PROJECTILE_SPRITE_PURPLE);
       end
       t_yield();
    end
@@ -359,6 +376,19 @@ function _Boss_Logic1(e)
          print("End Take Over 1");
          boss_state_1.phase = 2;
       elseif boss_state_1.phase == 2 then
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, 30, PROJECTILE_SPRITE_RED);
+            if not enemy_valid(e) then return end;
+            t_wait(0.70)
+            async_task_lambda(SubBoss23_UnravelAttack1, epos, 50, PROJECTILE_SPRITE_CAUSTIC);
+            if not enemy_valid(e) then return end;
+            async_task_lambda(SubBoss23_Sprinkler2_AttackPattern, e);
+            t_wait(5.5)
+            if not enemy_valid(e) then return end;
+            async_task_lambda(SubBoss23_Sprinkler2_AttackPattern, e);
+            t_wait(3.5)
+            if not enemy_valid(e) then return end;
+            async_task_lambda(SubBoss23_Sprinkler2_AttackPattern, e);
+            if not enemy_valid(e) then return end;
       end
       t_yield();
    end
