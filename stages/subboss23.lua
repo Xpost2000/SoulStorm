@@ -3,7 +3,7 @@
 -- which makes Stage 1 incredibly inconsistent/different in quality compared to
 -- everything else which is supposed to be significantly better otherwise.)
 
-BOSS0_HP=2620;
+BOSS0_HP=2200;
 BOSS1_HP=900;
 boss_state_0 = {
    last_good_position,
@@ -46,7 +46,7 @@ function SubBoss23_UnravelAttack1(epos, displacement, v)
             epos,
             v,
             v2(0.5, 0.5),
-            v2(5, 5)
+            v2(3, 3)
             )
 
             bullet_set_velocity(b, arcdir[1] * bspeed, arcdir[2] * bspeed);
@@ -58,7 +58,7 @@ function SubBoss23_UnravelAttack1(epos, displacement, v)
             epos,
             v,
             v2(0.5, 0.5),
-            v2(5, 5)
+            v2(3, 3)
             )
 
             bullet_set_velocity(b, arcdir[1] * bspeed, arcdir[2] * bspeed);
@@ -84,7 +84,7 @@ function SubBoss23_Sprinkler1_AttackPattern(e)
                   epos,
                   PROJECTILE_SPRITE_RED,
                   v2(0.5, 0.5),
-                  v2(5, 5)
+                  v2(3, 3)
                )
 
                bullet_set_velocity(b, arcdir[1] * bspeed, arcdir[2] * bspeed);
@@ -94,7 +94,7 @@ function SubBoss23_Sprinkler1_AttackPattern(e)
       )
       async_task_lambda(
          function()
-            local bspeed = 255;
+            local bspeed = 200;
             for angle=50,170,6 do
                if not enemy_valid(e) then
                   return;
@@ -107,7 +107,7 @@ function SubBoss23_Sprinkler1_AttackPattern(e)
                   epos,
                   PROJECTILE_SPRITE_PURPLE,
                   v2(0.5, 0.5),
-                  v2(5, 5)
+                  v2(3, 3)
                )
 
                bullet_set_velocity(b, arcdir[1] * bspeed, arcdir[2] * bspeed);
@@ -125,7 +125,7 @@ function SubBoss23_Sprinkler1_AttackPattern(e)
                   epos,
                   PROJECTILE_SPRITE_PURPLE,
                   v2(0.5, 0.5),
-                  v2(5, 5)
+                  v2(3, 3)
                )
 
                bullet_set_velocity(b, arcdir[1] * bspeed, arcdir[2] * bspeed);
@@ -154,7 +154,7 @@ function SubBoss23_Sprinkler2_AttackPattern(e)
                   epos,
                   PROJECTILE_SPRITE_RED,
                   v2(0.5, 0.5),
-                  v2(5, 5)
+                  v2(3, 3)
                )
 
                bullet_set_velocity(b, arcdir[1] * bspeed, arcdir[2] * bspeed);
