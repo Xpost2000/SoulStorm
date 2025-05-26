@@ -73,10 +73,10 @@ function SubBoss23_Sprinkler1_AttackPattern(e)
          function()
             local bspeed = 100;
             for angle=20,140,10 do
-               local epos = enemy_final_position(e);
                if not enemy_valid(e) then
                   return;
                end
+               local epos = enemy_final_position(e);
 
                local arcdir = v2_direction_from_degree(angle+burst);
                local b = bullet_make(
@@ -96,10 +96,10 @@ function SubBoss23_Sprinkler1_AttackPattern(e)
          function()
             local bspeed = 255;
             for angle=50,170,6 do
-               local epos = enemy_final_position(e);
                if not enemy_valid(e) then
                   return;
                end
+               local epos = enemy_final_position(e);
 
                local arcdir = v2_direction_from_degree(angle-burst);
                local b = bullet_make(
@@ -114,10 +114,10 @@ function SubBoss23_Sprinkler1_AttackPattern(e)
                t_wait(0.038);
             end
             for angle=170,30,-8 do
-               local epos = enemy_final_position(e);
                if not enemy_valid(e) then
                   return;
                end
+               local epos = enemy_final_position(e);
 
                local arcdir = v2_direction_from_degree(angle+burst);
                local b = bullet_make(
@@ -143,10 +143,10 @@ function SubBoss23_Sprinkler2_AttackPattern(e)
          function()
             local bspeed = 50;
             for angle=20,140,15 do
-               local epos = enemy_final_position(e);
                if not enemy_valid(e) then
                   return;
                end
+               local epos = enemy_final_position(e);
 
                local arcdir = v2_direction_from_degree(angle+burst);
                local b = bullet_make(
@@ -164,12 +164,12 @@ function SubBoss23_Sprinkler2_AttackPattern(e)
       )
       async_task_lambda(
          function()
-            local bspeed = 125;
+            local bspeed = 90;
             for angle=50,170,12 do
-               local epos = enemy_final_position(e);
                if not enemy_valid(e) then
                   return;
                end
+               local epos = enemy_final_position(e);
 
                local arcdir = v2_direction_from_degree(angle-burst);
                local b = bullet_make(
@@ -184,10 +184,10 @@ function SubBoss23_Sprinkler2_AttackPattern(e)
                t_wait(0.090);
             end
             for angle=170,30,-12 do
-               local epos = enemy_final_position(e);
                if not enemy_valid(e) then
                   return;
                end
+               local epos = enemy_final_position(e);
 
                local arcdir = v2_direction_from_degree(angle+burst);
                local b = bullet_make(
