@@ -1,7 +1,7 @@
 engine_dofile("stages/common.lua")
+engine_dofile("stages/subboss31.lua")
 -- engine_dofile("stages/subboss22.lua")
-
-engine_dofile("stages/subboss23.lua")
+-- engine_dofile("stages/subboss23.lua")
 
 function stage_task()
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_2.png", 0.15, 0, -25);
@@ -16,5 +16,5 @@ function stage_task()
    play_area_set_edge_behavior(PLAY_AREA_EDGE_BOTTOM, PLAY_AREA_EDGE_BLOCKING);
    play_area_set_edge_behavior(PLAY_AREA_EDGE_LEFT, PLAY_AREA_EDGE_BLOCKING);
    play_area_set_edge_behavior(PLAY_AREA_EDGE_RIGHT, PLAY_AREA_EDGE_BLOCKING);
-   Game_Spawn_Stage2_3_SubBoss();
+   Game_Spawn_Stage3_1_SubBoss();
 end
