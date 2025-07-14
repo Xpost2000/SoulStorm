@@ -12,7 +12,7 @@
 
 // I wish I made this up.
 //#define UNUSUAL_INTEL_UHD_OPENGL_FULLSCREEN_FIX 
-//#define NO_FANCY_FADEIN_INTRO
+#define NO_FANCY_FADEIN_INTRO
 #define JDR_COROUTINE_IMPLEMENTATION
 #include "common.h"
 
@@ -553,8 +553,6 @@ void handle_sdl_events(void) {
 void initialize() {
     SDL_Init(SDL_INIT_EVERYTHING);
     
-    start_launcher_banner();
-    
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, 0);
     SDL_GameControllerAddMappingsFromFile("./gamecontrollerdb.txt");
 
@@ -613,6 +611,8 @@ void initialize() {
                                           REAL_SCREEN_WIDTH,
                                           REAL_SCREEN_HEIGHT,
                                           flags);
+    start_launcher_banner();
+    
     set_graphics_device(game.preferences.renderer_type);
     Thread_Pool::initialize();
 

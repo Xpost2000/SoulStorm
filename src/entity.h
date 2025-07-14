@@ -263,10 +263,16 @@ struct Enemy_Entity;
 using Enemy_Entity_Fire_Fn = std::function<void(Enemy_Entity*, Game_State*, f32)>;
 using Enemy_Entity_Velocity_Fn = std::function<void(Enemy_Entity*, Game_State* const, f32)>;
 
+enum Enemy_Flags {
+  ENEMY_FLAGS_NONE = 0,
+  ENEMY_FLAGS_CANCEL_BULLETS_ON_DEATH = BIT(0),
+};
+
 struct Enemy_Entity : public Entity {
     Timer outside_boundaries_lifetime_timer = Timer(10.0f);
     Enemy_Entity_Velocity_Fn velocity_function = nullptr;
     Enemy_Entity_Fire_Fn     on_fire_function  = nullptr;
+    u8 flags = 0;
 
     void update(Game_State* state, f32 dt);
 
@@ -491,6 +497,7 @@ struct Bullet : public Entity {
       There's never a reason to explicitly know which exact
       entity shot the bullet.
      */
+    u64   parent_uid=-1;
     s32   source_type;
     u8    flags;
 

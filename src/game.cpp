@@ -6678,6 +6678,21 @@ void Game_State::kill_all_bullets() {
     }
 }
 
+void Game_State::cancel_bullets_by_uid(uint64_t uid)
+{
+  auto state = &gameplay_data;
+  for (unsigned index = 0; index < state->bullets.size; ++index) {
+    auto& b = state->bullets[index];
+    
+    if (b.die)
+      continue;
+    
+    if (b.parent_uid == uid) {
+      b.kill();
+    }
+  }
+}
+
 void Game_State::kill_all_enemies() {
     auto state = &gameplay_data;
 
@@ -6927,6 +6942,10 @@ void Game::cleanup_dead_entities(void) {
             //pe.seek_towards_player = true;
             //pe.sprite.modulation = color32f32(242.0f / 255.0f, 121.0f / 255.0f, 53.0f / 255.0f, 1.0f);
             state->add_pickup_entity(pe);
+          }
+
+          if (e.flags & ENEMY_FLAGS_CANCEL_BULLETS_ON_DEATH) {
+            this->state->cancel_bullets_by_uid(e.uid);
           }
 
           state->enemies.pop_and_swap(i);

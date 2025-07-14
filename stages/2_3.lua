@@ -1,6 +1,6 @@
 engine_dofile("stages/common.lua")
--- engine_dofile("stages/subboss22.lua")
 
+-- engine_dofile("stages/subboss22.lua")
 engine_dofile("stages/subboss23.lua")
 
 function stage_task()
@@ -17,4 +17,5 @@ function stage_task()
    play_area_set_edge_behavior(PLAY_AREA_EDGE_LEFT, PLAY_AREA_EDGE_BLOCKING);
    play_area_set_edge_behavior(PLAY_AREA_EDGE_RIGHT, PLAY_AREA_EDGE_BLOCKING);
    Game_Spawn_Stage2_3_SubBoss();
+   -- Game_Spawn_Stage2_2_SubBoss();
 end
