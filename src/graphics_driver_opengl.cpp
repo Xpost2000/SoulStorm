@@ -82,7 +82,7 @@ uniform sampler2D sampler_texture;
 
 out vec4 out_color;
 void main() {
-    out_color = texture2D(sampler_texture, out_vertex_texcoords) * out_vertex_colors;
+    out_color = texture(sampler_texture, out_vertex_texcoords) * out_vertex_colors;
 }
 )shader";
 

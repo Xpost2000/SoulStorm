@@ -21,7 +21,7 @@ endif
 .phony: all clean run run-debug docgen distribute build-run-tree zip msbuild-release msbuild-debug msbuild-debug-release
 
 # CC=clang++
-CFLAGS:=-fpermissive -Wno-unused -Wno-unused-but-set-variable -std=c++17 -w
+CFLAGS:=-fpermissive -Wno-unused -Wno-unused-but-set-variable -Wno-c++11-narrowing -std=c++17 -w
 ifeq ($(DEMO), True)
 	CFLAGS+=-DBUILD_DEMO
 endif
@@ -32,8 +32,7 @@ ifeq ($(TARGET), win64)
 		   -ld3d11 -ld3dcompiler -ldxguid -lOpenGL32 -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse4 -m64
 else
 	# TODO: compile using the version of lua that's in the repository.
-	CLIBS:=-I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -L./. -ldl -lGL -lGLEW\
-		   -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse4 -m64
+	CLIBS:=-I./glad/include/ -I./dependencies/ `pkg-config --libs --cflags glew sdl2 sdl2_mixer lua` -ldl
 endif
 
 ifeq ($(DISCORD_INTEGRATION), YES)
