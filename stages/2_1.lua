@@ -157,6 +157,32 @@ function wave1()
       enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A);
    end
 
+   t_wait(3.0);
+   do
+      DramaticExplosion_SpawnSpinnerObstacle1_2_1(
+          play_area_width()/2,
+          play_area_height()/2,
+          ENTITY_SPRITE_SKULL_A,
+          12,
+          30,
+          PROJECTILE_SPRITE_GREEN_DISK,
+          v2(0, 1),
+          0
+       );
+   t_wait(4);
+   
+   DramaticExplosion_SpawnSpinnerObstacle1_2_1(
+      20,
+      play_area_height()-20,
+      ENTITY_SPRITE_SKULL_B,
+      -9,
+      30,
+      PROJECTILE_SPRITE_RED,
+      v2(-1, -1),
+      5
+   );
+   t_wait(4);
+   end
    -- Spawn a small semi circle of 4 exploder enemies
    -- it should be possible to dodge them once they're killed. I hope. If not, I'll just make the explosion
    -- radius pretty small.
@@ -487,13 +513,14 @@ function wave3()
    explosion_hazard_new(player_position_x(), player_position_y(), 50, 1, 1);
    t_wait(6.5);
    explosion_hazard_new(player_position_x(), player_position_y(), 80, 1, 1);
-   t_wait(9.5);
+   t_wait(7.5);
    explosion_hazard_new(player_position_x(), player_position_y(), 120, 1, 1);
    enable_grazing();
    enable_bullet_to_points();
 
    -- Add an enemy flood wave (should be dog sprites [TODO: modify dog hero sprite])
    -- and use them as the new enemies.
+   Stage1_Batflood();
 end
 
 function wave4()
@@ -565,7 +592,7 @@ function stage_task()
    play_area_set_edge_behavior(PLAY_AREA_EDGE_LEFT, PLAY_AREA_EDGE_BLOCKING);
    play_area_set_edge_behavior(PLAY_AREA_EDGE_RIGHT, PLAY_AREA_EDGE_BLOCKING);
    -- setup stage background
-   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage2bkg_1.png", 0.50, 0, 0); -- TODO come up with new design
+   Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage2bkg_1.png", 0.70, 0, 0); -- TODO come up with new design
 
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star0.png", 0.357, 225, 125);
    -- Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage1bkg1_star1.png", 0.147, -150, 245);
@@ -585,11 +612,11 @@ function stage_task()
    wave2();
    t_wait(3.5);
    wave3();
-   t_wait(17);
+   t_wait(9.5);
    convert_all_enemies_to_score();
    convert_all_bullets_to_score();
-   t_wait(3);
    wave4();
+   t_wait(4);
    
    wait_no_danger();
    t_complete_stage();

@@ -163,7 +163,7 @@ function wave1()
             ENTITY_SPRITE_SKULL_A
          );
       end
-      t_wait(12);
+      t_wait(10);
       do
          Make_BrainDead_Enemy_Popcorn1(
             45,
@@ -186,7 +186,6 @@ end
 
 function wave2()
    if true then
-      t_wait(2);
       -- new enemy type, I need a new sprite
       for i=1,4 do
          local e = Make_Enemy_Spinner_1_1_2(
