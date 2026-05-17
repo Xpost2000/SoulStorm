@@ -1291,7 +1291,13 @@ void Game::reset_stage_simulation_state() {
         state->paused_from_death                       = false;
         state->player.t_since_spawn                    = 0;
         state->player.trail_ghost_count                = 0;
+#ifdef BUILD_DEMO
         state->player.scale                            = V2(1.5, 1.5);
+#else
+        /// very very slightly adjusted. I want to avoid releasing more demo builds
+        /// so yeah...
+        state->player.scale = V2(1.25, 1.25);
+#endif
         state->player.end_invincibility();
         state->player.grazing_award_timer              = 0.0f;
         state->player.grazing_award_score_pickup_timer = 0.0f;
