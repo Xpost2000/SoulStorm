@@ -138,6 +138,8 @@ function _Boss_Logic(e)
             t_wait(1.0);
             -- light little attacks sprouted after
         elseif boss_state.phase == 1 then
+            _Boss_Bombing_Run_1(e);
+            t_wait(1.2);
         end
 
         t_yield();
@@ -165,7 +167,7 @@ end
       enemy_set_hp(e, BOSS_HP);
       enemy_set_position(e, initial_boss_position[1], initial_boss_position[2]);
       enemy_set_scale(e, 60, 60);
-      enemy_show_boss_hp(e, "GREAT EYE");
+      enemy_show_boss_hp(e, "GREATER SKULL");
 
       t_wait(0.7);
       enemy_set_acceleration(e, -120, 0);

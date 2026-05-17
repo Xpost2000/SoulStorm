@@ -5,7 +5,6 @@ engine_dofile("stages/subboss31.lua")
 
 -- engine_dofile("stages/subboss22.lua")
 engine_dofile("stages/subboss23.lua")
->>>>>>> refs/remotes/origin/master
 
 function stage_task()
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_2.png", 0.15, 0, -25);
