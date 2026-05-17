@@ -616,7 +616,7 @@ function stage_task()
    convert_all_enemies_to_score();
    convert_all_bullets_to_score();
    wave4();
-   t_wait(4);
+   t_wait(3);
    
    wait_no_danger();
    t_complete_stage();

@@ -1385,3 +1385,92 @@ function E2_1_1_SPINTRIP_1(
    enemy_set_visual_scale(e, 1.3, 1.3);
    return e;
 end
+
+function Make_Enemy_Helix_Turret_2_2(
+   hp,
+   initial_position,
+   target_position,
+   target_position_lerp_t,
+
+   fire_delay,
+   burst_count,
+   burst_delay,
+   bullet_velocity,
+
+   exit_direction,
+   exit_velocity,
+   exit_acceleration,
+
+   helix_height,
+   helix_length,
+
+   bullet_visual,
+   bullet_visual1,
+   trailcount
+)
+   local e = enemy_new();
+   enemy_set_hp(e, hp);
+   enemy_set_position(e, initial_position[1], initial_position[2]);
+   local tcount = trailcount or 0;
+   exit_direction = v2_normalized(exit_direction);
+   local bullet_direction = v2_normalized(bullet_velocity);
+   local bullet_direction_perp = v2(-bullet_direction[2], bullet_direction[1]);
+
+   enemy_task_lambda(
+      e,
+      function(e)
+         -- cannot use asymptopic movement yet
+         enemy_linear_move_to(e, target_position[1], target_position[2], target_position_lerp_t);
+         t_wait(fire_delay);
+
+         -- fire helix in here.
+         -- NOTE: this helix is static, should be animated
+         -- though...
+         local ex = enemy_position_x(e);
+         local ey = enemy_position_y(e);
+         
+         for burst=0,burst_count do
+            for helixi=0,helix_length do
+               local cyclepercent = (helixi/helix_length) * 2*3.141592654;
+               local y1 = math.sin(cyclepercent);
+               local y2 = math.cos(cyclepercent);
+               -- helix r1
+               do
+                  local bullet = bullet_new(BULLET_SOURCE_ENEMY);
+                  bullet_set_position(bullet, 
+                  ex + bullet_direction_perp[1]*y1*helix_height, 
+                  ey + bullet_direction_perp[2]*y1*helix_height);
+                  bullet_set_visual(bullet, bullet_visual);
+                  bullet_set_lifetime(bullet, 15);
+                  bullet_set_scale(bullet, 3, 3);
+                  bullet_start_trail(bullet, tcount);
+                  bullet_set_trail_modulation(bullet, 0.8,0.8,0.8,0.3);
+                  bullet_set_visual_scale(bullet, 0.3, 0.3);
+                  bullet_set_velocity(bullet, bullet_velocity[1], bullet_velocity[2]);
+               end
+               -- -- helix r2
+               do
+                  local bullet = bullet_new(BULLET_SOURCE_ENEMY);
+                  bullet_set_position(bullet, ex + bullet_direction_perp[1]*y2*helix_height , ey + bullet_direction_perp[2]*y2*helix_height);
+                  bullet_set_visual(bullet, bullet_visual1);
+                  bullet_set_lifetime(bullet, 15);
+                  bullet_set_scale(bullet, 3, 3);
+                  bullet_start_trail(bullet, tcount);
+                  bullet_set_trail_modulation(bullet, 0.8,0.8,0.8,0.3);
+                  bullet_set_visual_scale(bullet, 0.3, 0.3);
+                  bullet_set_velocity(bullet, bullet_velocity[1], bullet_velocity[2]);
+               end
+               play_sound(random_attack_sound());
+               t_wait(0.005);
+            end
+            t_wait(burst_delay);
+         end
+
+         t_wait(0.75);
+         enemy_set_velocity(e, exit_direction[1] * exit_velocity, exit_direction[2] * exit_velocity);
+         enemy_set_acceleration(e, exit_direction[1] * exit_acceleration, exit_direction[2] * exit_acceleration);
+      end
+   );
+   return e;
+end
+
