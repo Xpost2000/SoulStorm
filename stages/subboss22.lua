@@ -13,7 +13,7 @@ boss_state = {
     next_think_action_t = -9999,
 };
 
-BOSS_HP = 2400;
+BOSS_HP = 5350;
 
 function _Boss_Intro(e)
     enemy_begin_invincibility(e, true, 2.5);
@@ -179,7 +179,7 @@ function SubBoss22_VomitDirected(epos)
 
             bullet_set_velocity(b, arcdir[1] * bspeed, arcdir[2] * bspeed);
             bullet_set_acceleration(b, arcdir[1] * bspeed/6, arcdir[2] * bspeed/6);
-            t_wait(off*0.0136);
+            t_wait(off*0.01);
         end
     end
 end
@@ -198,7 +198,7 @@ function _Boss_AttackPattern_Logic(e)
         t_wait(2.20);
         if (not enemy_valid(e)) then return end;
         SubBoss22_Attack0(epos);
-        t_wait(1.5);
+        t_wait(1.1);
         if (not enemy_valid(e)) then return end;
         SubBoss22_VomitDirected(epos);
         if (not enemy_valid(e)) then return end;
@@ -210,7 +210,7 @@ function _Boss_AttackPattern_Logic(e)
         if (not enemy_valid(e)) then return end;
         SubBoss22_VomitDirected(epos);
         if (not enemy_valid(e)) then return end;
-        t_wait(0.75);
+        t_wait(0.45);
         if (not enemy_valid(e)) then return end;
         SubBoss22_VomitDirected(epos);
         if (not enemy_valid(e)) then return end;
