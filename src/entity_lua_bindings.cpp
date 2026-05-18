@@ -400,7 +400,7 @@ int _lua_bind_enemy_stop_trail(lua_State* L) {
 int _lua_bind_enemy_kill(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
-    u64 want_explosion = luaL_checkinteger(L, 2);
+    s32 want_explosion = lua_tointeger(L, 2); // soft check
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
         e->kill();

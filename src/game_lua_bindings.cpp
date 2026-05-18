@@ -282,6 +282,15 @@ int _lua_bind_random_attack_sound(lua_State* L) {
     return 1;
 }
 
+int _lua_bind_random_explosion_sound(lua_State* L) {
+  lua_getglobal(L, "_gamestate");
+  Game_State* state = (Game_State*)lua_touserdata(L, lua_gettop(L));
+  auto        resources = state->resources;
+  auto        result = resources->random_explosion_sound(&state->gameplay_data.prng_unessential);
+  lua_pushinteger(L, result.index);
+  return 1;
+}
+
 int _lua_bind_play_area_edge_behavior(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     auto& play_area = state->gameplay_data.play_area;
@@ -495,6 +504,7 @@ lua_State* Game_State::alloc_lua_bindings() {
         // Some really basic engine bindings.
         lua_register(L, "load_image", _lua_bind_load_image);
         lua_register(L, "random_attack_sound", _lua_bind_random_attack_sound);
+        lua_register(L, "random_explosion_sound", _lua_bind_random_explosion_sound);
 
         bind_gameplay_dialogue_lualib(L);
 #if 1
