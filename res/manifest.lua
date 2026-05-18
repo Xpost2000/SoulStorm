@@ -385,4 +385,16 @@ entities = {
            {"res/img/skull/skullwormbaring5.png", nil, 0.0}, -- hexbinder
        }
    }
+   -- SHADOW boss3
+   {
+       {
+           {"res/img/boss3/shadow_idle_float_f.png", nil, 0.0}
+       },
+       {
+           {"res/img/boss3/shadow_idle_float_b_lean_r.png", nil, 0.0}
+       },
+       {
+           {"res/img/boss3/shadow_idle_float_b_lean_l.png", nil, 0.0}
+       },
+   }
 };
