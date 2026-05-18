@@ -384,7 +384,7 @@ entities = {
        {
            {"res/img/skull/skullwormbaring5.png", nil, 0.0}, -- hexbinder
        }
-   }
+   },
    -- SHADOW boss3
    {
        {
