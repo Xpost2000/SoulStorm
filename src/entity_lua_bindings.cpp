@@ -400,9 +400,16 @@ int _lua_bind_enemy_stop_trail(lua_State* L) {
 int _lua_bind_enemy_kill(lua_State* L) {
     Game_State* state = lua_binding_get_gamestate(L);
     u64 uid = luaL_checkinteger(L, 1);
+    u64 want_explosion = luaL_checkinteger(L, 2);
     auto e = state->gameplay_data.lookup_enemy(uid);
     if (e) {
         e->kill();
+        // the extraflag is for backwards compatibility
+        // in-case I legitimately wanted to kill something without
+        // it exploding (for cleanup reasons for example.
+        if (want_explosion) {
+          state->gameplay_data.spawn_death_explosion(e->position);
+        }
     }
     return 0;
 }
