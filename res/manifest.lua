@@ -366,5 +366,15 @@ entities = {
          {"res/img/boss1/idle1.png", nil, 0.0},
          {"res/img/boss1/idle.png", nil, 0.0},
       }
+   },
+   -- Skull Worms
+   {
+       {
+           {"res/img/skull/skullwormbaring.png", nil, 0.0}, -- bone
+           {"res/img/skull/skullwormbaring2.png", nil, 0.0}, -- gold
+           {"res/img/skull/skullwormbaring3.png", nil, 0.0}, -- caustic
+           {"res/img/skull/skullwormbaring4.png", nil, 0.0}, -- devil
+           {"res/img/skull/skullwormbaring5.png", nil, 0.0}, -- hexbinder
+       }
    }
 };
