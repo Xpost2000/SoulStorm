@@ -41,6 +41,8 @@ PROJECTILE_SPRITE_CAUSTIC           = 29;
 PROJECTILE_SPRITE_CAUSTIC_STROBING  = 30;
 PROJECTILE_SPRITE_CAUSTIC_ELECTRIC  = 31;
 PROJECTILE_SPRITE_CAUSTIC_DISK      = 32;
+PROJECTILE_SPRITE_LASER_INVERSE     = 33;
+PROJECTILE_SPRITE_LASER_PURPLE      = 34;
 
 -- NOTE: this sprite has... different requirements when
 -- being used as a projectile since it's "very" small in it's sprite sheet
