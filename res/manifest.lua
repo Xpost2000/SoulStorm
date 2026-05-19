@@ -291,6 +291,18 @@ projectiles = {
          {"res/img/projectiles/projectile1_flat_caustic.png", nil, 0.0}
       }
    },
+   {
+      true,
+      {
+         {"res/img/projectiles/projectile1_1_1_inv_laser.png", nil, 0.0}
+      }
+   },
+   {
+      true,
+      {
+         {"res/img/projectiles/projectile1_1_1_purple_laser.png", nil, 0.0}
+      }
+   },
 };
 
 -- NOTE(jerry):
@@ -372,15 +384,23 @@ entities = {
        {
            {"res/img/skull/skullwormbaring.png", nil, 0.0}, -- bone
        },
+   },
+   {
        {
            {"res/img/skull/skullwormbaring2.png", nil, 0.0}, -- gold
        },
+   },
+   {
        {
            {"res/img/skull/skullwormbaring3.png", nil, 0.0}, -- caustic
        },
+   },
+   {
        {
            {"res/img/skull/skullwormbaring4.png", nil, 0.0}, -- devil
        },
+   },
+   {
        {
            {"res/img/skull/skullwormbaring5.png", nil, 0.0}, -- hexbinder
        }
@@ -390,9 +410,13 @@ entities = {
        {
            {"res/img/boss3/shadow_idle_float_f.png", nil, 0.0}
        },
+   },
+   {
        {
            {"res/img/boss3/shadow_idle_float_b_lean_r.png", nil, 0.0}
        },
+   },
+   {
        {
            {"res/img/boss3/shadow_idle_float_b_lean_l.png", nil, 0.0}
        },
