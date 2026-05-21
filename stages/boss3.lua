@@ -84,7 +84,42 @@ function _Stage_Boss_Animator(e)
     end
 end
 
+function set_phase(p)
+    if boss_state.phase ~= p then
+       boss_state.phase = p;
+       print("boss changed phase to: ", p);
+    end
+end
+
+function determine_boss_phase_based_on_hp(percent)
+    if (percent <= 0.75 and percent >= 0.65) then
+        set_phase(1);
+    elseif (percent < 0.65 and percent >= 0.5) then
+        set_phase(2);
+    elseif (percent < 0.5 and percent >= 0.35) then
+        set_phase(3);
+    elseif (percent < 0.35 and percent >= 0.20) then
+        set_phase(4);
+    elseif (percent < 0.20)
+        set_phase(5);
+    end
+end
+
 function _Stage_Boss_Thinker(e)
+    while enemy_valid(e) do
+        do -- determine boss phase            
+            local percent = enemy_health_percent(e);
+            determine_boss_phase_based_on_hp(percent);
+        end
+
+        if boss_state.phase == 0 then
+        elseif boss_state.phase == 1 then
+        elseif boss_state.phase == 2 then
+        elseif boss_state.phase == 3 then
+        elseif boss_state.phase == 4 then
+        elseif boss_state.phase == 5
+        end
+    end
     ---  enemy_set_velocity(e, -100, 40);
     ---  t_wait(2);
     ---  enemy_set_velocity(e, 250, 60);
