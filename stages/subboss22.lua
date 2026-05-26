@@ -13,6 +13,7 @@ boss_state = {
     next_think_action_t = -9999,
 };
 
+EARLY_BYE=false;
 BOSS_HP = 5350;
 
 function _Boss_Intro(e)
@@ -189,7 +190,7 @@ function _Boss_AttackPattern_Logic(e)
     local once=1;
 
     -- The boss doesn't really move or anything in this case. We're a static challenge.
-    while enemy_valid(e) and (once==1) do
+    while enemy_valid(e) and (once==1) and (EARLY_BYE==false) do
         local epos = enemy_final_position(e);
         SubBoss22_Attack0(epos);
         if not enemy_valid(e) then return end;
@@ -225,10 +226,24 @@ function _Boss_Logic(e)
     _Boss_Intro(e);
     async_task_lambda(_Boss_AttackPattern_Logic, e);
     local epos = enemy_final_position(e);
+    local early_exit_triggered=false;
     while enemy_valid(e) do
         t_yield();
+        if early_exit_triggered==false and EARLY_BYE==true then
+            early_exit_triggered=true;
+            async_task_lambda(function()
+                enemy_set_velocity(e, 0, -100);
+                t_wait(3.0);
+                disable_bullet_to_points();
+                disable_enemy_to_points();
+                enemy_kill(e);
+            end)          
+        end
     end
     convert_all_bullets_to_score();
+    enable_bullet_to_points();
+    enable_enemy_to_points();
+
     local initial_boss_pos = epos;
     explosion_hazard_new(initial_boss_pos[1], initial_boss_pos[2], 32, 0.01, 0.01);
     explosion_hazard_new(initial_boss_pos[1], initial_boss_pos[2], 64, 0.01, 0.01);

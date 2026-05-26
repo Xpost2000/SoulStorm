@@ -427,7 +427,7 @@ function stage_task()
    play_area_set_edge_behavior(PLAY_AREA_EDGE_LEFT, PLAY_AREA_EDGE_BLOCKING);
    play_area_set_edge_behavior(PLAY_AREA_EDGE_RIGHT, PLAY_AREA_EDGE_BLOCKING);
 
-   if true then
+   if false then
      MakeBoneWorm_2_3_Simple(
          play_area_width()/2, play_area_height()/2, v2(1, 0),16,
 
@@ -438,7 +438,7 @@ function stage_task()
      )
    end
 
-   if false then
+   if true then
        t_wait(1.5);
        wave1();
        t_wait(0.84);
