@@ -5029,6 +5029,11 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
     f32 dt = update_packet_data->dt;
     bool in_conversation = this->state->dialogue_state.in_conversation;
 
+    // stop the accumulator from leaking extra frames past the moment
+    // lua flagged stage completion or the player entered the death pause.
+    // both flags get set mid-frame so the triggering frame still runs in full.
+    if (state->paused_from_death || state->stage_completed) return;
+
     if (!Action::is_down(ACTION_USE_BOMB)) {
       state->just_used_bomb = false;
     }
@@ -5979,6 +5984,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
             viewer_ui.paused ^= 1;
           }
           y += 30;
+#ifndef RELEASE
           if (GameUI::button(V2(ui_cursor_x_left + 20, y), string_from_cstring(format_temp("[TIMESCALE %f]", replay_timescale_choices[viewer_ui.timescale_index])), color32f32(1, 1, 1, 1), 2, demo_recording_ui_allowed) == WIDGET_ACTION_ACTIVATE) {
             viewer_ui.timescale_index += 1;
             if (viewer_ui.timescale_index >= array_count(replay_timescale_choices)) {
@@ -5986,6 +5992,7 @@ GAME_SCREEN(update_and_render_game_ingame) {
             }
           }
           y += 30;
+#endif
           GameUI::label(V2(ui_cursor_x_left + 20, y), string_from_cstring(format_temp("FRAME %d/%d", state->recording.playback_frame_index + 1, state->recording.frame_count)), color32f32(1, 1, 1, 1), 2, demo_recording_ui_allowed);
           y += 30;
 #ifndef RELEASE
