@@ -7253,7 +7253,7 @@ void Game::handle_all_bullet_collisions(f32 dt) {
 
 
         if (!DebugUI::godmode_enabled()) {
-            if (!b.die && b.source_type == BULLET_SOURCE_NEUTRAL || b.source_type == BULLET_SOURCE_ENEMY) {
+            if (!b.die && b.source_type == BULLET_SOURCE_NEUTRAL || !b.die && b.source_type == BULLET_SOURCE_ENEMY) {
                 auto& p = state->player;
                 auto player_rect = p.get_rect();
 
