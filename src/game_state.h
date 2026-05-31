@@ -593,6 +593,10 @@ struct Gameplay_Data {
     bool triggered_stage_completion_cutscene = false;
     bool queue_bomb_use = false;
     bool just_used_bomb = false;
+    // the fast-replay path skips the death transition, so on_player_death
+    // would land mid-frame instead of between frames like normal play.
+    // defer it so the new pickups still reify on the same sim frame.
+    bool pending_player_death_cleanup = false;
 
     f32 fixed_tickrate_timer     = 0.0f;
     f32 fixed_tickrate_remainder = 0.0f;

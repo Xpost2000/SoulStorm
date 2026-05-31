@@ -1289,6 +1289,7 @@ void Game::reset_stage_simulation_state() {
         state->player.die                              = false;
         state->player_damage_level_taken               = 1;
         state->paused_from_death                       = false;
+        state->pending_player_death_cleanup            = false;
         state->player.t_since_spawn                    = 0;
         state->player.trail_ghost_count                = 0;
 #ifdef BUILD_DEMO
@@ -1357,6 +1358,7 @@ void Game::reset_stage_simulation_state() {
     state->score_awarded_points = 0;
     state->extra_life_awarded_count = 0;
     state->paused_from_death = false;
+    state->pending_player_death_cleanup = false;
     state->current_stage_timer = 0.0f;
     state->started_system_time = system_get_current_time();
     state->triggered_stage_completion_cutscene = false;
@@ -3439,6 +3441,8 @@ GAME_UI_SCREEN(update_and_render_replay_collection_menu) {
                                         state->gameplay_data.demo_viewer.paused = false;
                                         state->gameplay_data.demo_viewer.timescale_index = 3;
                                     }
+                                    // replays are per-stage, so don't carry the run-wide score in.
+                                    state->gameplay_data.total_run_score = 0;
                                     gameplay_recording_file_start_playback(
                                         &state->gameplay_data.recording
                                     );
@@ -5050,6 +5054,15 @@ void Game::simulate_game_frame(Entity_Loop_Update_Packet* update_packet_data) {
                 gameplay_recording_file_record_frame(&state->recording, state->current_input_packet);
             }
         }
+    }
+
+    // drain the deferred death handling from the previous sim frame
+    // (fast-replay path only). matches what the transition callback does
+    // between frames during normal play.
+    if (state->pending_player_death_cleanup) {
+        state->pending_player_death_cleanup = false;
+        on_player_death();
+        cleanup_dead_entities();
     }
 
     this->state->coroutine_tasks.schedule_by_type(this->state, dt, GAME_TASK_SOURCE_GAME_FIXED);
@@ -6979,9 +6992,12 @@ void Game::handle_all_dead_entities(f32 dt) {
             // unideal simulation conditions.
             // the transition would interrupt the simulation, so I cannot play the transition
             // without risking a desync.
-
-            on_player_death();
-            cleanup_dead_entities();
+            //
+            // running on_player_death/cleanup inline here would commit the
+            // resurrect-spawned pickups one sim frame earlier than normal play
+            // (since reify happens right after this call). drain it on the next
+            // sim frame instead so the timing lines up.
+            state->pending_player_death_cleanup = true;
         } else {
             // NOTE(jerry): 2/7/25
             // I don't really like using the transition system to do this, since
