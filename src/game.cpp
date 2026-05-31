@@ -4918,7 +4918,7 @@ void Game::ingame_update_complete_stage_sequence(struct render_commands* command
               state->gameplay_data.current_score - death_count_deducation_score +
               perfect_clear_score_addition + campaign_clear_perfect_score_addition +
               burst_usage_count_score_addition + remaining_lives_score_addition;
-            state->gameplay_data.total_run_score += state->gameplay_data.total_run_score;
+            state->gameplay_data.total_run_score += state->gameplay_data.total_score;
             Audio::stop_music_fadeout(1000);
             complete_stage_state.stage = GAMEPLAY_STAGE_COMPLETE_STAGE_SEQUENCE_STAGE_WAIT_UNTIL_FADE_OUT;
           }
