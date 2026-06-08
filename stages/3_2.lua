@@ -1,4 +1,5 @@
 engine_dofile("stages/common.lua")
+engine_dofile("stages/subboss23.lua")
 
 function _Stage_Boss_Spoke_Of_The_WheelAttack(e)
     disable_bullet_to_points();
@@ -44,7 +45,7 @@ function _Stage_Boss_Spoke_Of_The_WheelAttack(e)
 
                 bullet_set_position(bullet, position[1]+fire_dir[1]*16*j, position[2]+fire_dir[2]*16*j);
                 bullet_set_visual(bullet, PROJECTILE_SPRITE_LASER_PURPLE);
-                bullet_set_lifetime(bullet, 0.75);
+                bullet_set_lifetime(bullet, 0.93);
                 bullet_set_scale(bullet, 5, 5);
                 bullet_set_visual_scale(bullet, 1, 1);
 
@@ -55,38 +56,39 @@ function _Stage_Boss_Spoke_Of_The_WheelAttack(e)
        end
     end
 
-    function create_spoke(turn)
-       -- fake engine lasers, cause I don't have real ones
-       -- on the brightside, it means we can attack the laser spiral
-       for j=4,10 do
-          for i=0,spokes do
-             local ang = spoke_angle * i + turn;
-             do
-                local bullet = bullet_new(BULLET_SOURCE_ENEMY);
-                local fire_dir = v2_direction_from_degree(ang);
+    async_task_lambda(
+       grow_spoke,
+       preturn
+    );
+    t_wait(0.50);
+   
 
-                bullet_set_position(bullet, position[1]+fire_dir[1]*16*j, position[2]+fire_dir[2]*16*j);
-                bullet_set_visual(bullet, PROJECTILE_SPRITE_LASER_PURPLE);
-                bullet_set_lifetime(bullet, 0.75);
-                bullet_set_scale(bullet, 5, 5);
-                bullet_set_visual_scale(bullet, 1, 1);
-
-                bullet_set_velocity(bullet, fire_dir[1] * laser_speed, fire_dir[2] * laser_speed);
-             end
-          end
-       end
-    end
-
-
-    for adj=0,120 do
-       grow_spoke(preturn);
-    end
-
-    print("kelly");
     while enemy_valid(e) and running do
-       print("loop");
         local position = v2(enemy_position_x(e), enemy_position_y(e));
         local velocity = v2(enemy_velocity_x(e), enemy_velocity_y(e));
+
+        function create_spoke(turn)
+           -- fake engine lasers, cause I don't have real ones
+           -- on the brightside, it means we can attack the laser spiral
+           for j=4,10 do
+              for i=0,spokes do
+                 local ang = spoke_angle * i + turn;
+                 do
+                    local bullet = bullet_new(BULLET_SOURCE_ENEMY);
+                    local fire_dir = v2_direction_from_degree(ang);
+
+                    bullet_set_position(bullet, position[1]+fire_dir[1]*16*j, position[2]+fire_dir[2]*16*j);
+                    bullet_set_visual(bullet, PROJECTILE_SPRITE_LASER_PURPLE);
+                    bullet_set_lifetime(bullet, 0.75);
+                    bullet_set_scale(bullet, 5, 5);
+                    bullet_set_visual_scale(bullet, 1, 1);
+
+                    bullet_set_velocity(bullet, fire_dir[1] * laser_speed, fire_dir[2] * laser_speed);
+                 end
+              end
+           end
+        end
+
 
         while radius_buildup < 48 do
             radius_buildup = radius_buildup + 1.5;
@@ -117,7 +119,7 @@ end
 function Game_Spawn_Stage_BossCameo()
    local e = enemy_new();
    local initial_boss_pos = v2(play_area_width()/2, 200);
-   enemy_set_hp(e, 1999999999);
+   enemy_set_hp(e, 9999999);
    enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
    enemy_set_visual(e, ENTITY_SPRITE_BOSS3_FACE_FRONT);
    enemy_set_burst_gain_value(e, 0.55);
@@ -132,7 +134,7 @@ function Game_Spawn_Stage_BossCameo()
 end
 
 function wave1()
-   if false then
+   if true then
       -- want to use boneworm here. would be neat.
       t_wait(4);
       do
@@ -158,7 +160,7 @@ function wave1()
             15
          );
       end
-      t_wait(1.9);
+      t_wait(2.5);
       do
          for i=1,6 do
             local e = Make_Enemy_Spinner_1_1_2(
@@ -253,7 +255,7 @@ function wave1()
          enemy_set_visual(e0, ENTITY_SPRITE_SKULL_A1);
          enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A1);
       end
-      t_wait(1.0);
+      t_wait(7.5);
    end
 
 
@@ -264,8 +266,29 @@ function wave1()
       t_wait(1.5);
       local e = Game_Spawn_Stage_BossCameo();
       async_task_lambda(_Stage_Boss_Spoke_Of_The_WheelAttack, e);
+      t_wait(7.5);
+      enemy_kill(e, 1);
    end;
-   t_wait(3);
+
+   MainBoss1_RainCloud_Attack2(2026, 7.7)
+   async_task_lambda( -- NOTE: async timeline
+      function()
+         DramaticExplosion_SpawnSpinnerObstacle1_2_1(
+            play_area_width()/2,
+            play_area_height()/2 - 150,
+            ENTITY_SPRITE_SKULL_B1,
+            23,
+            15,
+            PROJECTILE_SPRITE_WRM,
+            v2(0, 1)
+         );
+      end
+   )
+   t_wait(9.35);
+
+   BOSS0_HP = 2300;
+   BOSS1_HP = 1000;
+   Game_Spawn_Stage2_3_SubBoss();
 end
 
 function stage_task()
@@ -282,6 +305,7 @@ function stage_task()
 
    wave1();
 
+   t_wait(2.5);
    wait_no_danger();
    t_complete_stage();
 end
