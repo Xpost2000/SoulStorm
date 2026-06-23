@@ -5,6 +5,7 @@
 
 BOSS0_HP=2400;
 BOSS1_HP=950;
+SPAWNED_TWIN=false;
 boss_state_0 = {
    last_good_position,
    me,
@@ -459,7 +460,6 @@ end
 function Game_Spawn_Stage2_3_SubBoss1()
    local e = enemy_new();
    local initial_boss_position = v2(play_area_width()/2, -50);
-
    enemy_set_hp(e, BOSS1_HP);
    enemy_set_position(e, initial_boss_position[1], initial_boss_position[2]);
    enemy_set_scale(e, 50, 48);
@@ -471,6 +471,7 @@ function Game_Spawn_Stage2_3_SubBoss1()
    boss_state_1.me = e;
    boss_state_1.last_good_position = initial_boss_position;
    boss_state_1.phase = 0;
+   SPAWNED_TWIN=true;
 end
 
 function Game_Spawn_Stage2_3_SubBoss()

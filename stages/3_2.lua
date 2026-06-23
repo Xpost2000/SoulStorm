@@ -133,6 +133,122 @@ function Game_Spawn_Stage_BossCameo()
    return e;
 end
 
+-- Could be harder.
+function wave1_sub2_from_1_2()
+   -- Use popcorn to funnel player into center lane.
+   -- and have some enemies that try to take pot shots
+   -- and a tankier enemy that comes down the center lane near the end.
+
+   -- Time Mark: +0:18 for the popcorns
+   do -- NOTE: need these to happen at the same time
+      local popcorn_radius = 120;
+      local popcorn_flood_width = 30;
+      async_task_lambda(
+         function()
+            Make_BrainDead_Enemy_Popcorn1(64, v2(play_area_width()/2 - popcorn_radius, -20), 0.20, 5, 0, 90, popcorn_flood_width, 20, -1, 2);
+         end
+      );
+      async_task_lambda(
+         function()
+            Make_BrainDead_Enemy_Popcorn1(64, v2(play_area_width()/2 + popcorn_radius, -20), 0.20, 5, 0, 90, popcorn_flood_width, 20, -1, 2);
+         end
+      );
+   end
+   t_wait(1.5);
+
+   local e0 = Make_Enemy_ArcPattern2_1_1_2(
+      15,
+      v2(-15, 50),
+      v2(30, 50),
+      1.5,
+
+      0.25,
+      4,
+
+      45,
+      4,
+      v2(100, 60),
+      5,
+
+      v2(-1, -1),
+      50,
+      10,
+
+      PROJECTILE_SPRITE_GREEN_ELECTRIC
+   )
+   enemy_set_visual(e0, ENTITY_SPRITE_SKULL_B);
+   t_wait(1.5);
+   local e1 = Make_Enemy_ArcPattern2_1_1_2(
+      15,
+      v2(play_area_width()+15, 100),
+      v2(play_area_width()-15, 400),
+      1.5,
+
+      0.25,
+      4,
+
+      45,
+      4,
+      v2(-100, -70),
+      5,
+
+      v2(1, -1),
+      50,
+      10,
+
+      PROJECTILE_SPRITE_GREEN_ELECTRIC
+   )
+   enemy_set_visual(e1, ENTITY_SPRITE_SKULL_A);
+   t_wait(1.5);
+   local e2 = Make_Enemy_ArcPattern2_1_1_2(
+      15,
+      v2(play_area_width()+15, 100),
+      v2(play_area_width()-15, 100),
+      1.5,
+
+      0.25,
+      4,
+
+      45,
+      4,
+      v2(-100, 70),
+      5,
+
+      v2(1, -1),
+      50,
+      10,
+
+      PROJECTILE_SPRITE_GREEN_ELECTRIC
+   )
+   enemy_set_visual(e2, ENTITY_SPRITE_SKULL_A);
+   t_wait(2.0);
+
+   -- two tunneling bigger enemies
+   do
+      for i=1,6  do
+         do
+            local e = enemy_new();
+            enemy_set_hp(e, 60); -- requires focus to break
+            enemy_set_position(e, play_area_width()/2 - 25, -30);
+            enemy_set_scale(e, 30, 30);
+            enemy_move_linear(e, v2(0, 1), 120);
+            enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+            enemy_set_visual_scale(e, 2, 2);
+         end
+         do
+            local e = enemy_new();
+            enemy_set_hp(e, 60); -- requires focus to break
+            enemy_set_position(e, play_area_width()/2 + 25, -30);
+            enemy_set_scale(e, 30, 30);
+            enemy_move_linear(e, v2(0, 1), 120);
+            enemy_set_visual(e, ENTITY_SPRITE_BAT_B);
+            enemy_set_visual_scale(e, 2, 2);
+         end
+         t_wait(1.25);
+      end
+   end
+end
+
 function wave1()
    if true then
       -- want to use boneworm here. would be neat.
@@ -289,6 +405,73 @@ function wave1()
    BOSS0_HP = 2300;
    BOSS1_HP = 1000;
    Game_Spawn_Stage2_3_SubBoss();
+   while SPAWNED_TWIN == false do -- need this to prevent skipping if you kill the first one too fast..
+    t_yield();
+   end;
+   wait_no_danger();
+
+   -- BOSS_CAMEO again
+   do
+      local enemy_position = v2(play_area_width()/2, 200);
+      explosion_hazard_new(enemy_position[1], enemy_position[2], 15, 0.05, 0.15);
+      t_wait(1.5);
+      local e = Game_Spawn_Stage_BossCameo();
+      async_task_lambda(_Stage_Boss_Spoke_Of_The_WheelAttack, e);
+      t_wait(7.5);
+      enemy_kill(e, 1);
+   end;
+
+   MainBoss1_RainCloud_Attack2(80085, 12);
+
+   t_wait(2);
+    DramaticExplosion_SpawnShotgunSpread(
+    play_area_width() * 0.65, 20, ENTITY_SPRITE_SKULL_B1,
+    70, 8, 10, PROJECTILE_SPRITE_PURPLE_STROBING, 1.5, 0.55, v2(0, 1), 45,
+    10
+    );
+   t_wait(6);
+    DramaticExplosion_SpawnShotgunSpread(
+    play_area_width() * 0.35, 10, ENTITY_SPRITE_SKULL_B,
+    70, 8, 10, PROJECTILE_SPRITE_PURPLE_STROBING, 1.5, 0.55, v2(0.2, 1), 55,
+    15
+    );
+
+    --- wait more.
+    wave1_sub2_from_1_2();
+
+   t_wait(2);
+    DramaticExplosion_SpawnShotgunSpread(
+    play_area_width() * 0.65, 20, ENTITY_SPRITE_SKULL_B1,
+    70, 8, 10, PROJECTILE_SPRITE_PURPLE_STROBING, 1.5, 0.55, v2(0, 1), 45,
+    10
+    );
+   t_wait(2);
+    DramaticExplosion_SpawnShotgunSpread(
+    play_area_width() * 0.35, 10, ENTITY_SPRITE_SKULL_B,
+    70, 8, 10, PROJECTILE_SPRITE_PURPLE_STROBING, 1.5, 0.55, v2(0.2, 1), 55,
+    15
+    );
+
+    t_wait(3);
+    wave1_sub2_from_1_2();
+
+     -- BOSS_CAMEO again
+   do
+      local enemy_position = v2(play_area_width()/2, 200);
+      explosion_hazard_new(enemy_position[1], enemy_position[2], 15, 0.05, 0.15);
+      t_wait(1.5);
+      local e = Game_Spawn_Stage_BossCameo();
+      async_task_lambda(_Stage_Boss_Spoke_Of_The_WheelAttack, e);
+      t_wait(3.5);
+      Stage1_Batflood();
+      t_wait(1.5);
+      LaserChaser_Vertical_1_2(6, 1.5);
+      LaserChaser_Horizontal_1_2(1, 1.55);
+      t_wait(4.5);
+      enemy_kill(e, 1);
+      t_wait(2.0);
+   end;
+
 end
 
 function stage_task()
