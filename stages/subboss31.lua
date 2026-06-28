@@ -1,7 +1,7 @@
-BOSS_HP=3750;
-enable_boss_intro=false
+SUBBOSS31_HP=3750;
+enable_boss_intro=true
 
-boss_state = {
+subboss31_state = {
    last_good_position,
    me,
    phase
@@ -123,11 +123,11 @@ end
 function _Boss_Logic(e)
     while enemy_valid(e) do
         local hp_percent = enemy_hp_percent(e);
-        if hp_percent <= 0.75 and boss_state.phase < 1 then
-           boss_state.phase = 1;
+        if hp_percent <= 0.75 and subboss31_state.phase < 1 then
+           subboss31_state.phase = 1;
         end
 
-        if boss_state.phase == 0 then
+        if subboss31_state.phase == 0 then
             _Boss_Bombing_Run_0(e);
             t_wait(3.5);
             _Boss_Bombing_Run_1(e);
@@ -137,7 +137,7 @@ function _Boss_Logic(e)
             _Boss_Bombing_Run_1(e);
             t_wait(1.0);
             -- light little attacks sprouted after
-        elseif boss_state.phase == 1 then
+        elseif subboss31_state.phase == 1 then
             _Boss_Bombing_Run_1(e);
             t_wait(1.2);
         end
@@ -164,7 +164,7 @@ end
 
       local e = enemy_new();
       enemy_begin_invincibility(e, true, 2.5);
-      enemy_set_hp(e, BOSS_HP);
+      enemy_set_hp(e, SUBBOSS31_HP);
       enemy_set_position(e, initial_boss_position[1], initial_boss_position[2]);
       enemy_set_scale(e, 60, 60);
       enemy_show_boss_hp(e, "GREATER SKULL");
@@ -175,8 +175,9 @@ end
       enemy_set_acceleration(e, 0, 0);
       enemy_set_velocity(e, 0, 0);
 
-      boss_state.me = e;
-      boss_state.phase = 0;
-      boss_state.last_good_position = enemy_final_position(e);
+      subboss31_state.me = e;
+      subboss31_state.phase = 0;
+      subboss31_state.last_good_position = enemy_final_position(e);
       async_task_lambda(_Boss_Logic, e);
+      return e;
 end

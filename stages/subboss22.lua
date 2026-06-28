@@ -1,6 +1,6 @@
 -- Handful of attack patterns but meant to be pretty short...
 
-boss_state = {
+subboss22_state = {
     me,
     last_good_position, -- for if the entity is deleted for any reason
     starting_position,
@@ -14,7 +14,7 @@ boss_state = {
 };
 
 EARLY_BYE=false;
-BOSS_HP = 5350;
+SUBBOSS22_HP = 5350;
 
 function _Boss_Intro(e)
     enemy_begin_invincibility(e, true, 2.5);
@@ -30,7 +30,7 @@ function SubBoss22_UnravelAttack1(epos, displacement, v)
     for i=0, 13 do
         local bspeed = i*20 + 70;
         for ang=90, 180, 16 do
-            if (not enemy_valid(boss_state.me)) then return end;
+            if (not enemy_valid(subboss22_state.me)) then return end;
 
             local arcdir = v2_direction_from_degree(ang-i + displacement);
             local b = bullet_make(
@@ -44,7 +44,7 @@ function SubBoss22_UnravelAttack1(epos, displacement, v)
             bullet_set_velocity(b, arcdir[1] * bspeed, arcdir[2] * bspeed);
         end
         for ang=0, 90, 15 do
-            if (not enemy_valid(boss_state.me)) then return end;
+            if (not enemy_valid(subboss22_state.me)) then return end;
 
             local arcdir = v2_direction_from_degree(ang+i + displacement);
             local b = bullet_make(
@@ -65,7 +65,7 @@ function SubBoss22_WhipAttack1(epos)
     local bspeed = 125;
     for i=0,7 do
         for ang=0, 360, 20 do
-            if (not enemy_valid(boss_state.me)) then return end;
+            if (not enemy_valid(subboss22_state.me)) then return end;
 
             local arcdir = v2_direction_from_degree(ang+i*10);
             local b = bullet_make(
@@ -109,7 +109,7 @@ function SubBoss22_ChaseDrop1(epos)
         function()
             local bspeed = 100;
             for i=0, 20 do
-                if (not enemy_valid(boss_state.me)) then return end;
+                if (not enemy_valid(subboss22_state.me)) then return end;
 
                 local bpos = v2(30 * i, 30);
                 local b = bullet_make(
@@ -131,7 +131,7 @@ function SubBoss22_ChaseDrop1(epos)
         function()
             local bspeed = 110;
             for i=0, 20 do
-                if (not enemy_valid(boss_state.me)) then return end;
+                if (not enemy_valid(subboss22_state.me)) then return end;
 
                 local bpos = v2(play_area_width() - 30 * i, 30);
                 local b = bullet_make(
@@ -162,7 +162,7 @@ function SubBoss22_VomitDirected(epos)
     for j=0,4 do
     for i=0,14 do
         for ang=-15, 15,(3+j) do
-            if (not enemy_valid(boss_state.me)) then return end;
+            if (not enemy_valid(subboss22_state.me)) then return end;
 
             local bspeed = 35+(i*14);
             local arcdir = dir_to_player(epos);
@@ -186,7 +186,7 @@ function SubBoss22_VomitDirected(epos)
 end
 end
 
-function _Boss_AttackPattern_Logic(e)
+function _SubBoss22_AttackPattern_Logic(e)
     local once=1;
 
     -- The boss doesn't really move or anything in this case. We're a static challenge.
@@ -222,9 +222,9 @@ function _Boss_AttackPattern_Logic(e)
     end
 end
 
-function _Boss_Logic(e)
+function _SubBoss22_Logic(e)
     _Boss_Intro(e);
-    async_task_lambda(_Boss_AttackPattern_Logic, e);
+    async_task_lambda(_SubBoss22_AttackPattern_Logic, e);
     local epos = enemy_final_position(e);
     local early_exit_triggered=false;
     while enemy_valid(e) do
@@ -257,19 +257,19 @@ end
 function Game_Spawn_Stage2_2_SubBoss()
     local e = enemy_new();
     local initial_boss_pos = v2(play_area_width()/2, -30);
-    enemy_set_hp(e, BOSS_HP); -- TODO for now
+    enemy_set_hp(e, SUBBOSS22_HP); -- TODO for now
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
     enemy_set_scale(e, 70, 64); -- chunky.
     -- enemy_set_visual(e, ENTITY_SPRITE_BOSS1);
     enemy_set_burst_gain_value(e, 0.325);
     enemy_show_boss_hp(e, "BONEWINGS");
     -- The boss takes "three threads" of logic.
-    async_task_lambda(_Boss_Logic, e);
+    async_task_lambda(_SubBoss22_Logic, e);
     -- async_task_lambda(_Boss_Movement_Logic, e);
     -- async_task_lambda(_Boss_ImmunityToBurstLaser_Logic, e);
     -- async_task_lambda(_Boss_MusicPlayer, e);
-    boss_state.me = e;
-    boss_state.starting_position = initial_boss_pos;
+    subboss22_state.me = e;
+    subboss22_state.starting_position = initial_boss_pos;
  
     return e;
  end

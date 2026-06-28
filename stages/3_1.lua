@@ -478,5 +478,6 @@ function stage_task()
    wave2();
 
    wait_no_danger();
+   convert_all_bullets_to_score();
    t_complete_stage();
 end
