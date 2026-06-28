@@ -12,9 +12,10 @@ enum Gameplay_Recording_File_Version {
     //                     (used to use same prng source as game)
     //
     // This is not backwards compatible at all :(
-    GAMEPLAY_RECORDING_FILE_VERSION_3 = 2,
+  GAMEPLAY_RECORDING_FILE_VERSION_3 = 2,
+  GAMEPLAY_RECORDING_FILE_VERSION_4 = 3,
 
-    GAMEPLAY_RECORDING_FILE_CURRENT_VERSION = GAMEPLAY_RECORDING_FILE_VERSION_3
+    GAMEPLAY_RECORDING_FILE_CURRENT_VERSION = GAMEPLAY_RECORDING_FILE_VERSION_4
 };
 
 #define GAMEPLAY_FRAME_INPUT_PACKET_ACTION_ACTION_BIT   (0)
@@ -37,6 +38,7 @@ struct Gameplay_Recording_File {
     struct random_state          prng;
     struct random_state          old_prng; // For session restoration.
     s32                          frame_count;
+    u8                           start_lives; // For cumulative lives support
     u8                           stage_id;
     u8                           level_id;
     s8                           selected_pet;

@@ -59,6 +59,14 @@ bool gameplay_recording_file_serialize(Gameplay_Recording_File* recording, Memor
     } else {
         recording->selected_pet = GAME_PET_ID_NONE;
     }
+
+    if (recording->version >= GAMEPLAY_RECORDING_FILE_VERSION_3) {
+      serialize_u8(serializer, &recording->start_lives);
+    }
+    else {
+      recording->start_lives = pets_data[recording->selected_pet].maximum_lives;
+    }
+
     _debugprintf("Serializing recording version: %d", recording->version);
     _debugprintf("Serializing recording tickrate: %d", recording->tickrate);
     _debugprintf(

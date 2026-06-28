@@ -1376,6 +1376,7 @@ void Game::reset_stage_simulation_state() {
             state->recording.stage_id = stage_id;
             state->recording.level_id = level_id;
             state->recording.selected_pet = pet_id;
+            state->recording.start_lives = state->tries;
         } else {
             state->recording.old_prng = state->prng;
             state->prng               = state->recording.prng;
@@ -3237,6 +3238,7 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
             case GAME_COMPLETE_STAGE_UNLOCK_NEXT_LEVEL: {
                 Transitions::register_on_finish(
                     [&](void*) mutable {
+                        int last_lives = state->gameplay_data.tries;
                         switch_ui(UI_STATE_INACTIVE);
                         state->mainmenu_data.stage_id_level_in_stage_select += 1;
                         if (state->mainmenu_data.stage_id_level_in_stage_select >= array_count(stage_list->levels)) {
@@ -3253,6 +3255,9 @@ GAME_UI_SCREEN(update_and_render_replay_save_menu) {
                         else {
                           _debugprintf("Hi, booting you to the next level.");
                           setup_stage_start();
+                          // HACKME(jerry):
+                          // stupid hack to allow continuously carried lives within a campaign play.
+                          state->gameplay_data.tries = last_lives;
                           Transitions::do_color_transition_out(
                             color32f32(0, 0, 0, 1),
                             0.15f,

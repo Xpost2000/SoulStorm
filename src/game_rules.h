@@ -104,7 +104,7 @@
 struct Game_Rules {
     s32 version = GAME_RULES_VERSION_CURRENT;
 
-    f32 player_invincibility_time_after_damage = 1.35f;
+    f32 player_invincibility_time_after_damage = 1.65f;
     f32 player_graze_projectile_radius         = 45.0f; // pixels
 
     f32 grazing_score_fire_radius              = 150.0f;
@@ -146,15 +146,15 @@ struct Game_Rules {
     s32 default_entity_score_value_per_hit = 30;
     s32 default_entity_score_kill_value_multiplier = 5;
 
-    s32    pet_data_none_lives          = 5; // MAX_BASE_TRIES
+    s32    pet_data_none_lives          = 4; // MAX_BASE_TRIES
     f32    pet_data_none_score_modifier = 1.0f;
-    f32    pet_data_none_speed_modifier = 1.0f;
+    f32    pet_data_none_speed_modifier = 0.9f;
 
     s32    pet_data_cat_lives          = 9;
     f32    pet_data_cat_score_modifier = 0.35f;
     f32    pet_data_cat_speed_modifier = 1.0f;
 
-    s32    pet_data_dog_lives          = 3;
+    s32    pet_data_dog_lives          = 2;
     f32    pet_data_dog_score_modifier = 1.5f;
     f32    pet_data_dog_speed_modifier = 1.25f;
 
