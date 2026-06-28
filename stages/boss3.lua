@@ -1,5 +1,4 @@
 -- final boss code, meant to be included in stage file
-
 local track1 = load_music("res/snds/music_1_3_bossloop.ogg"); -- todo replace
 
 enable_boss_death_explosion = false;
@@ -100,7 +99,7 @@ function determine_boss_phase_based_on_hp(percent)
         set_phase(3);
     elseif (percent < 0.35 and percent >= 0.20) then
         set_phase(4);
-    elseif (percent < 0.20)
+    elseif (percent < 0.20) then
         set_phase(5);
     end
 end
@@ -108,7 +107,7 @@ end
 function _Stage_Boss_Thinker(e)
     while enemy_valid(e) do
         do -- determine boss phase            
-            local percent = enemy_health_percent(e);
+            local percent = enemy_hp_percent(e);
             determine_boss_phase_based_on_hp(percent);
         end
 
@@ -117,8 +116,9 @@ function _Stage_Boss_Thinker(e)
         elseif boss_state.phase == 2 then
         elseif boss_state.phase == 3 then
         elseif boss_state.phase == 4 then
-        elseif boss_state.phase == 5
+        elseif boss_state.phase == 5 then
         end
+        t_yield();
     end
     ---  enemy_set_velocity(e, -100, 40);
     ---  t_wait(2);
@@ -193,13 +193,13 @@ function _Stage_Boss_Spoke_Of_The_WheelAttack(e)
         end
 
         for adj=0,120 do
-            preturn = preturn + 0.2;
+            preturn = preturn + 0.3;
             create_spoke(preturn);
             t_yield();
         end
         
         for adj=0,240 do
-            preturn = preturn - 1.1;
+            preturn = preturn - 0.5;
             create_spoke(preturn);
             t_yield();
         end
