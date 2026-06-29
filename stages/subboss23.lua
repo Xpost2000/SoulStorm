@@ -332,6 +332,7 @@ function Game_Spawn_Stage2_3_SubBoss0()
    local initial_boss_position = v2(play_area_width()/2, -50);
 
    enemy_set_hp(e, BOSS0_HP);
+   enemy_set_visual(e, ENTITY_SPRITE_SUBBOSS22_0);
    enemy_set_position(e, initial_boss_position[1], initial_boss_position[2]);
    enemy_set_scale(e, 50, 48);
    t_wait(1.0);
@@ -467,6 +468,7 @@ function Game_Spawn_Stage2_3_SubBoss1()
 
    enemy_set_burst_gain_value(e, 0.215);
    enemy_show_boss_hp(e, "BONEWINGS");
+    enemy_set_visual(e, ENTITY_SPRITE_SUBBOSS22_0);
    async_task_lambda(_Boss_Logic1, e);
    boss_state_1.me = e;
    boss_state_1.last_good_position = initial_boss_position;
