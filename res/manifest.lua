@@ -405,6 +405,12 @@ entities = {
            {"res/img/skull/skullwormbaring5.png", nil, 0.0}, -- hexbinder
        }
    },
+   -- SUBBOSS31 - Greater Skull
+   {
+	   {
+           {"res/img/subboss31/0.png", nil, 0.0}
+	   },
+   },
    -- SHADOW boss3
    {
        {
