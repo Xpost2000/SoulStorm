@@ -259,8 +259,8 @@ function Game_Spawn_Stage2_2_SubBoss()
     local initial_boss_pos = v2(play_area_width()/2, -30);
     enemy_set_hp(e, SUBBOSS22_HP); -- TODO for now
     enemy_set_position(e, initial_boss_pos[1], initial_boss_pos[2]);
-    enemy_set_scale(e, 70, 64); -- chunky.
-    -- enemy_set_visual(e, ENTITY_SPRITE_BOSS1);
+    enemy_set_scale(e, 55, 40); -- chunky.
+    enemy_set_visual(e, ENTITY_SPRITE_SUBBOSS22_0);
     enemy_set_burst_gain_value(e, 0.325);
     enemy_show_boss_hp(e, "BONEWINGS");
     -- The boss takes "three threads" of logic.

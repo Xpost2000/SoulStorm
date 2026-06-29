@@ -411,6 +411,12 @@ entities = {
            {"res/img/subboss31/0.png", nil, 0.0}
 	   },
    },
+   -- SUBBOSS22 - BONEWINGS - PALE BONE VARIANT
+   {
+	   {
+           {"res/img/subboss22/0.png", nil, 0.0}
+	   },
+   },
    -- SHADOW boss3
    {
        {
