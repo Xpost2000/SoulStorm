@@ -32,7 +32,7 @@ ifeq ($(TARGET), win64)
 		   -ld3d11 -ld3dcompiler -ldxguid -lOpenGL32 -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse4 -m64
 else
 	# TODO: compile using the version of lua that's in the repository.
-	CLIBS:=-I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -L./. -ldl -lGL -lGLEW\
+	CLIBS:=-I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -L./. -L./lua54src/src -ldl -lGL -lGLEW\
 		   -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse4 -m64
 endif
 
@@ -433,6 +433,9 @@ endif
 	$(CC) -o $@ -c src/banner_launcher.cpp $(CFLAGS) $(CLIBS) 
 
 ## end modules
+./lua54src/src/liblua.a:
+	cd lua54src && make
+
 docgen: src/lua_metagen.cpp
 	$(CC) src/lua_metagen.cpp -o ./metagen$(EXEC_EXT)
 	./metagen$(EXEC_EXT)
@@ -446,15 +449,15 @@ docgen: src/lua_metagen.cpp
 	@echo Building bigfile packer.
 	$(EXEC_PATH_PREPEND)Bigfilepacker$(EXEC_EXT) data.bigfile res/ stages/
 
-./game$(EXEC_EXT): ./build_intermediaries/ ./data.bigfile docgen $(OBJECT_FILES) $(HEADER_FILES)
+./game$(EXEC_EXT): ./build_intermediaries/ ./data.bigfile ./lua54src/src/liblua.a docgen $(OBJECT_FILES) $(HEADER_FILES)
 	@echo Building release build.
 	$(CC) -o $@ $(OBJECT_FILES) $(CFLAGS) $(CLIBS) 
 
-./game-debug$(EXEC_EXT): ./build_intermediaries/ docgen $(DOBJECT_FILES) $(HEADER_FILES)
+./game-debug$(EXEC_EXT): ./build_intermediaries/ ./lua54src/src/liblua.a docgen $(DOBJECT_FILES) $(HEADER_FILES)
 	@echo Building debug build.
 	$(CC) -o $@  $(DOBJECT_FILES) $(CFLAGS) $(CLIBS) 
 
-./game-debug-release$(EXEC_EXT): ./build_intermediaries/ docgen $(DROBJECT_FILES) $(HEADER_FILES)
+./game-debug-release$(EXEC_EXT): ./build_intermediaries/ ./lua54src/src/liblua.a docgen $(DROBJECT_FILES) $(HEADER_FILES)
 	@echo Building debug build.
 	$(CC) -o $@  $(DROBJECT_FILES) $(CFLAGS) $(CLIBS) 
 
