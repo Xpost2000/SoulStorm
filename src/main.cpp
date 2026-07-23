@@ -614,6 +614,7 @@ void initialize() {
     start_launcher_banner();
     
     set_graphics_device(game.preferences.renderer_type);
+
     Thread_Pool::initialize();
 
     // NOTE(jerry): It might be worth repopulating this often, but that requires remembering which monitor
@@ -684,6 +685,16 @@ void update_preferences(Game_Preferences* a, Game_Preferences* b) {
     auto display_mode = Graphics_Driver::get_display_modes()[b->resolution_option_index];
     a->width          = display_mode.width;
     a->height         = display_mode.height;
+
+#ifndef _WIN32
+    // D3D11 is the "default" renderer path
+    // but obviously if we're not on windows D3D11 doesn't exist.
+    //
+    // Resync to pick the next best renderer for the platform target.
+    if (a->renderer_type == GRAPHICS_DEVICE_D3D11) {
+        a->renderer_type = GRAPHICS_DEVICE_OPENGL;
+    }
+#endif
 }
 
 void actually_confirm_and_update_preferences(Game_Preferences* preferences, Game_Resources* resources) {
