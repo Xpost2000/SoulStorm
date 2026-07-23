@@ -1,7 +1,11 @@
+*.o
 *.dll
 *.exe
 *.out
 *.x86_64
+*.aarch64
+*.arm64
+*.x86
 asm/
 runtree/
 build_intermediaries/
@@ -17,6 +21,7 @@ lua_engine_api.md
 ## produced by build
 lua54.lib
 lua54.exp
+liblua.a
 data.bigfile
 .vs/
 

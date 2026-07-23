@@ -7,15 +7,18 @@ TARGET=
 EXEC_EXT=
 EXEC_PATH_PREPEND=
 DISCORD_INTEGRATION=NO
+ARCH=
 DEMO=
 
 ifeq ($(OS),Windows_NT)
+	ARCH:=x86_64
 	TARGET:=win64
 	EXEC_EXT:=.exe
 else
+	ARCH:=$(shell uname -m)
 	TARGET:=linux_generic
 	# generic executable name really. eh
-	EXEC_EXT:=.x86_64
+	EXEC_EXT:=.$(ARCH)
 	EXEC_PATH_PREPEND=./
 endif
 
@@ -37,7 +40,6 @@ ifeq ($(TARGET), win64)
 		   -I./dependencies/ -I./dependencies/x86-64/include -I./dependencies/x86-64/include/SDL2\
 		   -ld3d11 -ld3dcompiler -ldxguid -lOpenGL32 -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse4 -m64
 else
-	ARCH:=$(shell uname -m)
 	# TODO: compile using the version of lua that's in the repository.
 	ifeq ($(ARCH), x86_64)
 		CLIBS:=-I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -L./. -L./lua54src/src -ldl -lGL -lGLEW\
