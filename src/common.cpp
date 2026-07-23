@@ -14,7 +14,11 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#ifndef __APPLE__
 #include <sys/sysmacros.h>
+#endif
+
 #include <sys/mman.h>
 #include <unistd.h>
 #endif

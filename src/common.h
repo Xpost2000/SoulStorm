@@ -3,7 +3,11 @@
 #define NO_FLAGS (0)
 
 #ifndef __EMSCRIPTEN__
+
+#ifndef __aarch64__
 #include <immintrin.h> 
+#endif
+
 #endif
 //#include <x86intrin.h>
 
