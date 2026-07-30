@@ -1935,11 +1935,11 @@ void Gameplay_Data::notify_score(s32 amount, bool interesting) {
     // everything else is a bit harder.
     local s32 extra_life_score_table[] = {
       POINTS_TO_AWARD_EXTRA_LIFE,
-      POINTS_TO_AWARD_EXTRA_LIFE * 1.25,
-      POINTS_TO_AWARD_EXTRA_LIFE * 1.50,
-      POINTS_TO_AWARD_EXTRA_LIFE * 1.50,
-      POINTS_TO_AWARD_EXTRA_LIFE * 1.75,
-      POINTS_TO_AWARD_EXTRA_LIFE * 2.0,
+      (int)(POINTS_TO_AWARD_EXTRA_LIFE * 1.25),
+      (int)(POINTS_TO_AWARD_EXTRA_LIFE * 1.50),
+      (int)(POINTS_TO_AWARD_EXTRA_LIFE * 1.50),
+      (int)(POINTS_TO_AWARD_EXTRA_LIFE * 1.75),
+      (int)(POINTS_TO_AWARD_EXTRA_LIFE * 2.0),
     };
 
     if (score_delta >= extra_life_score_table[extra_life_awarded_count]) {

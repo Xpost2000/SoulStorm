@@ -7,14 +7,18 @@ TARGET=
 EXEC_EXT=
 EXEC_PATH_PREPEND=
 DISCORD_INTEGRATION=NO
+ARCH=
 DEMO=
 
 ifeq ($(OS),Windows_NT)
+	ARCH:=x86_64
 	TARGET:=win64
 	EXEC_EXT:=.exe
 else
+	ARCH:=$(shell uname -m)
 	TARGET:=linux_generic
-	EXEC_EXT:=.x86_64
+	# generic executable name really. eh
+	EXEC_EXT:=.$(ARCH)
 	EXEC_PATH_PREPEND=./
 endif
 
@@ -26,14 +30,23 @@ ifeq ($(DEMO), True)
 	CFLAGS+=-DBUILD_DEMO
 endif
 
+# NOTE(jerry): This build system only really works for x86_64 which
+# is the only official supported target. Might want to adjust this
+# but the main way to build on Windows (and main way to build at all) is
+# through MSBuild
+
 ifeq ($(TARGET), win64)
 	CLIBS:=-lmingw32 -L./dependencies/x86-64/lib/ -L./dependencies/x86-64/bin/ -L./. -I./glad/include/\
 		   -I./dependencies/ -I./dependencies/x86-64/include -I./dependencies/x86-64/include/SDL2\
 		   -ld3d11 -ld3dcompiler -ldxguid -lOpenGL32 -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse4 -m64
 else
 	# TODO: compile using the version of lua that's in the repository.
-	CLIBS:=-I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -L./. -L./lua54src/src -ldl -lGL -lGLEW\
-		   -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse4 -m64
+	ifeq ($(ARCH), x86_64)
+		CLIBS:=-I./glad/include/ -I./dependencies/ -I./dependencies/x86-64/include -L./. -L./lua54src/src -ldl -lGL -lGLEW\
+				 -lSDL2main -lSDL2 -lSDL2_mixer -llua -msse4 -m64
+	else
+		CLIBS:=-I./glad/include/ -I./dependencies/ `pkg-config --libs --cflags glew sdl2 sdl2_mixer lua` -ldl
+	endif
 endif
 
 ifeq ($(DISCORD_INTEGRATION), YES)

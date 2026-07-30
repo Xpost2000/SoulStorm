@@ -11,7 +11,11 @@
 #define GRAPHICS_H
 
 #ifndef __EMSCRIPTEN__
+
+#ifndef __aarch64__
 #define USE_SIMD_OPTIMIZATIONS
+#endif
+
 #define MULTITHREADED_EXPERIMENTAL
 #endif
 
