@@ -611,7 +611,9 @@ void initialize() {
                                           REAL_SCREEN_WIDTH,
                                           REAL_SCREEN_HEIGHT,
                                           flags);
+#if 0
     start_launcher_banner();
+#endif
     
     set_graphics_device(game.preferences.renderer_type);
     Thread_Pool::initialize();

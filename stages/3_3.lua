@@ -409,18 +409,27 @@ function stage_task()
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.800, -70, 200);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage_boss0_starpattern0.png", 0.552, 90, 50);
    Generic_Infinite_Stage_ScrollV_BG("res/img/stagebkg/stage2bkg2_1.png", 0.150, 0, 125);
-   wave1();
-   t_wait(1);
-   wave2();
-   wait_no_danger();
-   t_wait(1.0);
-   local subboss1 = Game_Spawn_Stage3_1_SubBoss();
-   while enemy_valid(subboss1) do
-     t_yield();
-   end;
-   wave2();
-   wait_no_danger();
-   t_wait(1.0);
+   
+   if false then
+	   wave1();
+	   t_wait(1);
+	   wave2();
+	   wait_no_danger();
+	   t_wait(1.0);
+   end
+   
+   if true then
+	   local subboss1 = Game_Spawn_Stage3_1_SubBoss();
+	   while enemy_valid(subboss1) do
+		 t_yield();
+	   end;
+   end
+   
+   if false then
+	   wave2();
+	   wait_no_danger();
+	   t_wait(1.0);
+   end
    
    local subboss2 = Game_Spawn_Stage2_2_SubBoss();
    while enemy_valid(subboss2) do

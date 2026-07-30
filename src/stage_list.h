@@ -1,5 +1,108 @@
 #ifndef STAGE_LIST_H
 #define STAGE_LIST_H
+#if ANONYMOUS
+// Stage 1
+// easy and slow themed.
+Stage{
+    string_literal("Stage 1"),
+        string_literal(""),
+        1, 0,
+        {
+            Level {
+                string_literal("Intro"),
+                    string_literal("Wait in line, just like everyone else!"),
+                    0,
+                    },
+            Level {
+                string_literal("Middle"),
+                    string_literal("Aren't you just entertained?"),
+                    0,
+                    },
+            Level {
+                string_literal("Boss"),
+                    string_literal("She's gonna put a spell on you!"),
+                    1,
+            },
+        }
+},
+
+// Stage 2
+// this is "normal"
+Stage{
+    string_literal("Stage 2"),
+        string_literal(""),
+        1, 0,
+        {
+            Level {
+                string_literal("Intro"),
+                    string_literal("Try not to forget the way out!"),
+                    0
+                    },
+            Level {
+                string_literal("Middle"),
+                    string_literal("Play fetch with bullets!"),
+                    0,
+                    },
+            Level {
+                string_literal("Boss"),
+                    string_literal("Three heads is better than one!"),
+                    1,
+                    },
+                }
+},
+
+// Stage 3
+// this is "hard"
+Stage{
+    string_literal("Stage 3"),
+        string_literal(""),
+        1, 0,
+        {
+            Level {
+                string_literal("Intro"),
+                    string_literal("The fish kind."),
+                    0
+                    },
+            Level {
+                string_literal("Middle"),
+                    string_literal(""),
+                    0,
+                    },
+            Level {
+                string_literal("Boss"),
+                    string_literal("The real top of the foodchain."),
+                    1,
+                    },
+                }
+},
+
+// Stage 4: Bonus
+// This is going to be a bonus stage that honestly I'm not sure if
+// I can design to be beatable since I'm not a pro LOL.
+// NOTE: all stages are boss stages.
+Stage{
+    string_literal("Stage 4"),
+        string_literal("Battling away for eternity."),
+        1, 0,
+        {
+            Level {
+                string_literal("Pride"),
+                    string_literal("Where it begins."),
+                    1
+                    },
+            Level {
+                string_literal("Hubris"),
+                    string_literal("Where it grows."),
+                    1,
+                    },
+            Level {
+                string_literal("Arrogance"),
+                    string_literal("Where it ends."),
+                    1,
+                    },
+                }
+},
+#else
 // Stage 1
 // easy and slow themed.
     Stage {
@@ -101,5 +204,5 @@
                         },
                     }
     },
-
+#endif
 #endif

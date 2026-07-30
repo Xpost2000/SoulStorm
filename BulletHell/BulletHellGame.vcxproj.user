@@ -2,28 +2,46 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)..\</LocalDebuggerWorkingDirectory>
-    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <DebuggerFlavor>XboxPCRemoteCppDebugger</DebuggerFlavor>
     <LocalDebuggerCommand>$(TargetPath)</LocalDebuggerCommand>
+    <DeploymentDirectory>$(SolutionDir)\../</DeploymentDirectory>
+    <RemoteEndpointName>10.0.0.182</RemoteEndpointName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDemo|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)..\</LocalDebuggerWorkingDirectory>
-    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <DebuggerFlavor>XboxPCRemoteCppDebugger</DebuggerFlavor>
     <LocalDebuggerCommand>$(TargetPath)</LocalDebuggerCommand>
+    <DeploymentDirectory>$(SolutionDir)\../</DeploymentDirectory>
+    <RemoteEndpointName>10.0.0.182</RemoteEndpointName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)..\</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <DeploymentDirectory>$(SolutionDir)\../</DeploymentDirectory>
+    <RemoteEndpointName>10.0.0.182</RemoteEndpointName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDebugEdition|x64'">
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)..\</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>XboxPCRemoteCppDebugger</DebuggerFlavor>
+    <DeploymentDirectory>$(SolutionDir)\../</DeploymentDirectory>
+    <RemoteEndpointName>10.0.0.182</RemoteEndpointName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DemoRelease|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)..\</LocalDebuggerWorkingDirectory>
-    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <DebuggerFlavor>XboxPCRemoteCppDebugger</DebuggerFlavor>
+    <DeploymentDirectory>$(SolutionDir)\../</DeploymentDirectory>
+    <RemoteEndpointName>10.0.0.182</RemoteEndpointName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelaseWithDebugInfo|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)..\</LocalDebuggerWorkingDirectory>
-    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <DebuggerFlavor>XboxPCRemoteCppDebugger</DebuggerFlavor>
+    <DeploymentDirectory>$(SolutionDir)\../</DeploymentDirectory>
+    <RemoteEndpointName>10.0.0.182</RemoteEndpointName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DemoReleaseWithDebugInfo|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)..\</LocalDebuggerWorkingDirectory>
-    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <DebuggerFlavor>XboxPCRemoteCppDebugger</DebuggerFlavor>
+    <DeploymentDirectory>$(SolutionDir)\../</DeploymentDirectory>
+    <RemoteEndpointName>10.0.0.182</RemoteEndpointName>
   </PropertyGroup>
 </Project>
