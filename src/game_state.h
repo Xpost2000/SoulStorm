@@ -207,7 +207,7 @@ enum Game_Screen_Modes {
     // The demo is always with the title screen
   GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_TITLE_SCREEN,
 #else
-#if RELEASE && !PLAYTEST
+#if RELEASE && !PLAYTEST /*flag broke*/
     // Testing purposes I want to skip the intro.
     GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_TITLE_SCREEN,
     //GAME_SCREEN_DEFAULT_MODE = GAME_SCREEN_ENDING,

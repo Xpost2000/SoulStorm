@@ -3702,7 +3702,7 @@ GAME_UI_SCREEN(update_and_render_stage_select_menu) {
                 s = format_temp("[DEBUG] %d - %d", (stage_id+1), (i+1));
                 is_unlocked = true;
 #endif
-#if PLAYTEST
+#ifdef PLAYTEST
                 is_unlocked = true;
 #endif
 
