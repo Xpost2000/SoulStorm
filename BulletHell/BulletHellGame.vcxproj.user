@@ -20,6 +20,12 @@
     <DeploymentDirectory>$(SolutionDir)\../</DeploymentDirectory>
     <RemoteEndpointName>10.0.0.182</RemoteEndpointName>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleasePlaytest|x64'">
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)..\</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <DeploymentDirectory>$(SolutionDir)\../</DeploymentDirectory>
+    <RemoteEndpointName>10.0.0.182</RemoteEndpointName>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDebugEdition|x64'">
     <LocalDebuggerWorkingDirectory>$(ProjectDir)..\</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>XboxPCRemoteCppDebugger</DebuggerFlavor>

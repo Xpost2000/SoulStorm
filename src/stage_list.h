@@ -1,5 +1,6 @@
 #ifndef STAGE_LIST_H
 #define STAGE_LIST_H
+#define ANONYMOUS 1
 #if ANONYMOUS
 // Stage 1
 // easy and slow themed.

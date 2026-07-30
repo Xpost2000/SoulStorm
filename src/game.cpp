@@ -3702,6 +3702,9 @@ GAME_UI_SCREEN(update_and_render_stage_select_menu) {
                 s = format_temp("[DEBUG] %d - %d", (stage_id+1), (i+1));
                 is_unlocked = true;
 #endif
+#if PLAYTEST
+                is_unlocked = true;
+#endif
 
                 s32 button_status = (GameUI::button(V2(100, y), string_from_cstring(s), color32f32(1, 1, 1, 1), 2, is_unlocked && !Transitions::fading()));
                 y += 30;
