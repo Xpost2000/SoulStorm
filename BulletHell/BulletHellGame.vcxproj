@@ -632,13 +632,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectCapability Include="Gaming.Xbox.PC.Remote" />
-  </ItemGroup>
-  <Import Condition="'$(XboxPCRemotePath)'!='' AND Exists('$(XboxPCRemotePath)XboxPCcppDebugger.props')" Project="$(XboxPCRemotePath)XboxPCcppDebugger.props" />
-  <ItemGroup>
-    <PropertyPageSchema Condition="'$(XboxPCRemotePath)'!=''" Include="$(XboxPCRemotePath)XboxPCcppDebugger.xml" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\Bigfilepacker\bigfile.cpp" />
     <ClCompile Include="..\glad\src\glad.c" />
     <ClCompile Include="..\src\achievements.cpp" />
